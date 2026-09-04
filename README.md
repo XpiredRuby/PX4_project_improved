@@ -57,6 +57,6 @@ and in-person supervision from Dr. Benedict or Vishnu Saj. Review
 
 ## Publishing status
 
-This directory is GitHub-ready but has not been pushed or made public. Ownership,
-attribution, and license must be confirmed by the research team before publication.
+This repository is private and has not been made public. Ownership, attribution,
+and license must be confirmed by the research team before publication.
 See [`docs/PUBLISHING_CHECKLIST.md`](docs/PUBLISHING_CHECKLIST.md).
