@@ -1,0 +1,13 @@
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+exclude = ["controller/trajectory.csv", "presentation_plots"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B"]
+ignore = ["E741"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
