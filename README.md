@@ -1,9 +1,8 @@
-# PX4 Vishnu Research Controller
+# PX4 Research Controller
 
 Research-grade PX4 multicopter position-control overlay, jerk-limited trajectory
 generator, offline analysis tools, and regression tests developed for Texas A&M
-research with Vishnu Saj and Dr. Moble Benedict.
-
+research
 ## Current evidence
 
 - Final exact-source SITL regression completed with PX4 native LAND and disarm.
