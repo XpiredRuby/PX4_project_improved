@@ -1,0 +1,7 @@
+COMPLETE
+TEST=5/5
+LABEL=finished
+PASS=5
+FAIL=0
+RESULTS=/mnt/f/PX4/logs/visible-five-results.tsv
+TIME=2026-09-20T21:30:52-05:00

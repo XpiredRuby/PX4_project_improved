@@ -17,11 +17,27 @@ research
 
 These results are software-in-the-loop evidence, not flight certification.
 
+## Session 2 — robust randomized-start landing
+
+The complete mentor-facing Session 2 submission is in
+[`session_2_robust_landing/`](session_2_robust_landing/README_SUBMISSION.md).
+
+- Five randomized/boundary SITL trials completed: 5/5
+- PX4 native LAND and automatic disarm: 5/5
+- Maximum terminal XY error: 0.065 m
+- Maximum absolute terminal Z error: 0.065 m
+- Maximum handoff vertical speed: 0.105 m/s
+- Full exact-source snapshots, launchers, trial summaries, validation reports,
+  raw proof telemetry, post-disarm logs, tests, and SHA-256 checksums included
+- Current randomized overlay tests: 19/19 passed
+- Protected fixed-baseline tests: 11/11 passed
+
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
 | `controller/` | Validated MAVLink outer-loop controller and safe runner |
+| `session_2_robust_landing/` | Complete randomized-start landing implementation and validation package |
 | `trajectory_generator/` | Deterministic jerk-limited mission generator |
 | `analysis/` | Run analysis and presentation-ready plot generation |
 | `tests/` | Portable controller, trajectory, analysis, and plot tests |
@@ -56,6 +72,6 @@ and in-person supervision from Dr. Benedict or Vishnu Saj. Review
 
 ## Publishing status
 
-This repository is private and has not been made public. Ownership, attribution,
-and license must be confirmed by the research team before publication.
+This repository is currently public. Ownership, attribution, and license terms
+must still be confirmed by the research team before broader redistribution.
 See [`docs/PUBLISHING_CHECKLIST.md`](docs/PUBLISHING_CHECKLIST.md).

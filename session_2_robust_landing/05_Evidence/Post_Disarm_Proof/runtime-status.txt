@@ -1,0 +1,33 @@
+SUCCESS
+KIND=jerk
+ROWS=1781
+DURATION=89.000000
+DT_FIRST=0.050000
+SCHEMA_OK=yes
+RUNTIME=/home/xpire/vishnu-runtime
+RESEARCH_OVERLAY=enabled
+PROFILE=randomized
+OVERLAY=/mnt/f/PX4/research/randomized
+GENERATOR_OVERLAY=/mnt/f/PX4/research/randomized/Trajectory_jerk
+ROWS=1803
+DURATION=90.063730
+DT_MIN=0.031635901
+DT_MAX=0.050000000
+SCHEMA_OK=yes
+DERIVATIVE_SCHEMA=yes
+a7278e6c9f310829fdd978f2e59165075af8b0d9248f45ee032e0f361ed5b1ae  PID_position_new.py
+60da43d605af48f0c92253095133a6bfe780470a0e7225034339d3161af63b47  PID_Controller.py
+8876f18e845818ad8de010c5e542c26841403e480bbfe24b7104786b20062983  VehicleState.py
+38ab9a17e1f1d18e20dedacb927aa971261dba5613c49627258f0f330bf922b1  trajectory.py
+884500775e9c2caf025e3c8e2c3d835313ed724ad9060761913bff55fe318c0f  vishnu_offboard_runner.py
+8c0bc680e3df225921737c557802e76a0d563c5ddeda98997f60f9ee3453d66c  RandomizedPositionController.py
+26a56f6a549a3abd354f742bdad497baf9cc92e86a8a5e2d70c849de2a83d00b  spawn_config.py
+2cf0e8b9b99c03dcfef26eae6ad41808b0dcb03de5dfbc77317d86a24f27fc10  /mnt/f/PX4/research/randomized/Trajectory_jerk/commands.py
+e63f64f3734881e11ff5e5786c83ced121b176370f3da5077eeb03d56034e557  /mnt/f/PX4/research/randomized/Trajectory_jerk/export.py
+4e230965296e28e106b5c9fd313997b3721c32848593d32bb476f567be2a9858  /mnt/f/PX4/research/randomized/Trajectory_jerk/main.py
+e6f52f606715d0faa344e27df5ab9320c94de1ebdd197c698757afeedc719a7b  /mnt/f/PX4/research/randomized/Trajectory_jerk/planner.py
+d7fab932c3c20d13206ed081d83cdc38aa49ccf9e30a4920f7e6a5b185474c39  /mnt/f/PX4/research/randomized/Trajectory_jerk/plot.py
+1865efeff935dbcebb508768bc46a5347571657284ad8e1795152c076890c219  /mnt/f/PX4/research/randomized/Trajectory_jerk/pose.py
+786eed8dc40fe86a40ba46265244c707e6afaa7baa067e2aeb9071a9ecd8d8bd  /mnt/f/PX4/research/randomized/Trajectory_jerk/profiles.py
+17ec942e39102d676434bb2b8722b6b7d76f002bc555fcf420ebae10b32831e1  /mnt/f/PX4/research/randomized/Trajectory_jerk/segments.py
+90768b5d4911e9bdbaada1c5e69006f55064b56ecff69d36500564de8f16eab2  /mnt/f/PX4/research/randomized/Trajectory_jerk/trajectory.py

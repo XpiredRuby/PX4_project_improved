@@ -1,0 +1,59 @@
+{
+  "acceptance_limits": {
+    "max_stabilization_excursion_m": 2.0,
+    "max_stabilization_horizontal_speed_m_s": 2.0,
+    "max_stabilization_vertical_excursion_m": 1.0,
+    "max_stabilization_vertical_speed_m_s": 1.5
+  },
+  "archive": "/mnt/f/PX4/logs/20260920-211757-research-randomized-jerk",
+  "ground_reference_error_m": -0.4389281098461151,
+  "ground_target_source": "stored_ground_reference",
+  "landing": {
+    "final_armed": "False",
+    "final_vz_m_s": -0.0007103896350599825,
+    "final_xy_error_m": 0.04410158899125774,
+    "final_z_error_to_ground_reference_m": -0.018711090087890625,
+    "handoff_height_above_target_m": 0.23223234713077545,
+    "handoff_vz_m_s": 0.10081187635660172,
+    "handoff_xy_error_m": 0.012893047538310314,
+    "max_commanded_descent_m_s": 0.5,
+    "max_measured_descent_m_s": 0.5184758901596069,
+    "native_landing_disarm_confirmed": true,
+    "rows": 358
+  },
+  "phase_transition_elapsed_s": {
+    "LAND->DONE": 114.050170261,
+    "STABILIZE->TRAJECTORY": 6.000318357000005,
+    "TRAJECTORY->LAND": 96.150120644
+  },
+  "realized_spawn_height_m": 7.55654,
+  "requested_spawn": {
+    "mode": "random",
+    "model": "x500_0",
+    "pitch_deg": 0.1435280172267568,
+    "roll_deg": -1.710254853329829,
+    "seed": 7,
+    "world": "default",
+    "x": -0.7046689406673505,
+    "y": -1.3966033043019923,
+    "yaw_deg": -48.35198991146922,
+    "z": 7.556541311278976
+  },
+  "rows": 2397,
+  "stabilization": {
+    "duration_s": 6.000318357000005,
+    "max_abs_pitch_deg": 1.8262736960811692,
+    "max_abs_roll_deg": 4.773830946786182,
+    "max_abs_vertical_speed_m_s": 0.5746106505393982,
+    "max_horizontal_excursion_m": 0.42098317752042336,
+    "max_horizontal_speed_m_s": 0.33414277918168817,
+    "max_vertical_excursion_m": 0.44877099990844727
+  },
+  "success": true,
+  "trajectory": {
+    "rows": 1801,
+    "x_rmse_m": 0.174119432486668,
+    "y_rmse_m": 0.16281950185765345,
+    "z_rmse_m": 0.015178609393853704
+  }
+}

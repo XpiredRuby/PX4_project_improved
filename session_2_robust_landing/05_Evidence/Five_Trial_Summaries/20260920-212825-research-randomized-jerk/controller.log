@@ -1,0 +1,175 @@
+[runner] Randomized initialization:
+{
+  "mode": "manual",
+  "model": "x500_0",
+  "pitch_deg": -2.0,
+  "roll_deg": 2.0,
+  "seed": 3637565058,
+  "world": "default",
+  "x": 1.0,
+  "y": -1.0,
+  "yaw_deg": 90.0,
+  "z": 5.0
+}
+[runner] Connecting to PX4 SITL...
+Connecting to udp:127.0.0.1:14540...
+Connected to PX4 autopilot! (System 1, Component 1)
+[runner] PX4 parameter NAV_DLL_ACT=0 confirmed
+[runner] PX4 parameter SDLOG_MODE=0 confirmed
+[research] Requested telemetry: MAVLINK_MSG_ID_LOCAL_POSITION_NED=30Hz, MAVLINK_MSG_ID_ATTITUDE=30Hz, MAVLINK_MSG_ID_HIGHRES_IMU=20Hz, MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED=20Hz, MAVLINK_MSG_ID_ATTITUDE_TARGET=20Hz, MAVLINK_MSG_ID_ACTUATOR_OUTPUT_STATUS=20Hz, MAVLINK_MSG_ID_SERVO_OUTPUT_RAW=20Hz
+Started MAVLink receiver thread.
+Waiting for fresh position, attitude, and heartbeat telemetry...
+[runner] Ground reference captured before airborne initialization: x=-0.011 y=0.020 z=0.058 yaw=1.686
+[runner] Initial heartbeat main_mode=4 sub_mode=3 armed=False
+[runner] Moving disarmed vehicle into randomized airborne fixture...
+[runner] Gazebo world paused
+[runner] Gazebo set_pose accepted for x500_0: data: true
+[runner] Gazebo spawn fixture attached: data: true
+[runner] Gazebo world resumed
+[runner] Fixture height verified in Gazebo: z=5.000m requested=5.000m
+[runner] Airborne PX4 estimator settled after Gazebo move: local=(-1.025,0.906,-4.685) launcher_height=5.000m
+Waiting for fresh position, attitude, and heartbeat telemetry...
+[randomized] Airborne origin: x=-1.025 y=0.906 z=-4.685 yaw=1.506
+[randomized] Realized launcher height / backup local ground: height=5.000 backup_ground_z=0.315
+[randomized] Landing ground target: z=0.058 source=stored_ground_reference
+[randomized] Ground-reference cross-check: reference_z=0.058 prediction_error=0.257m
+Research logging: research_log_1789957716.csv
+[runner] Pre-streaming neutral setpoints for 2.0s...
+[runner] Requesting OFFBOARD at held airborne pose...
+[runner] OFFBOARD confirmed
+[runner] Requesting arm at held airborne pose...
+[runner] Armed confirmed
+[runner] Spooling propulsion to measured release readiness...
+[runner] Release propulsion ready: thrust=0.637 min_motor=579.0 mean_motor=692.0 duration=2.06s
+[runner] Gazebo spawn fixture detached
+[randomized] Fixture released; free-flight origin: x=-1.096 y=0.934 z=-5.014
+[runner] Starting randomized-initialization controller...
+Starting fixed research controller loop
+STABILIZE    UNKNOWN      Armed=True Pos=(-1.10, 0.93, -5.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0000
+STABILIZE    UNKNOWN      Armed=True Pos=(-0.63, 0.91, -4.59) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.37, 0.02, -0.42) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-0.17, 0.64, -4.64) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.74, 0.23, -0.37) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(0.24, 1.44, -4.77) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-1.07, -0.40, -0.24) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-0.42, 2.34, -4.85) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.54, -1.13, -0.16) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-1.64, 2.00, -4.93) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.43, -0.85, -0.08) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-1.88, 1.07, -4.96) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.63, -0.11, -0.05) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-1.39, 0.48, -4.98) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.23, 0.36, -0.03) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-0.79, 0.58, -5.00) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.24, 0.28, -0.02) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-0.68, 1.02, -5.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.33, -0.07, -0.00) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-0.90, 1.23, -5.03) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.16, -0.24, 0.02) dt=0.0504
+STABILIZE    UNKNOWN      Armed=True Pos=(-1.14, 1.20, -5.04) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.04, -0.21, 0.02) dt=0.0500
+STABILIZE    UNKNOWN      Armed=True Pos=(-1.25, 1.04, -5.04) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.13, -0.09, 0.02) dt=0.0500
+[research] Phase transition STABILIZE->TRAJECTORY
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.26, 1.03, -5.04) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.13, -0.07, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.16, 0.91, -5.03) PlanVel=(0.60, 0.00, 0.00) CmdVel=(0.83, 0.02, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.30, 0.79, -5.04) PlanVel=(1.64, 0.00, 0.00) CmdVel=(2.13, 0.12, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(1.85, 0.62, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(2.36, 0.25, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(4.27, 0.64, -5.05) PlanVel=(2.00, 0.00, 0.00) CmdVel=(2.03, 0.24, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(6.51, 0.89, -5.03) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.92, 0.04, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(8.64, 1.09, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.89, -0.12, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(10.61, 1.13, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.92, -0.15, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(12.63, 1.11, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.98, -0.14, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(14.78, 1.06, -5.05) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.94, -0.10, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(16.78, 1.02, -5.05) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.94, -0.07, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(18.83, 0.98, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.98, -0.04, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(20.96, 0.94, -5.05) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.95, -0.01, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(23.01, 0.93, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.99, 0.01, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(25.18, 0.91, -5.04) PlanVel=(2.00, 0.00, 0.00) CmdVel=(1.94, 0.02, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(27.21, 0.92, -5.04) PlanVel=(1.79, 0.00, 0.00) CmdVel=(1.75, 0.01, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(29.01, 0.94, -5.02) PlanVel=(1.04, 0.00, 0.00) CmdVel=(0.71, -0.01, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(29.88, 1.00, -5.03) PlanVel=(1.00, -0.02, 0.00) CmdVel=(0.78, -0.08, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(30.68, 0.97, -5.04) PlanVel=(0.99, -0.13, 0.00) CmdVel=(0.97, -0.22, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(31.65, 0.77, -5.03) PlanVel=(0.97, -0.23, 0.00) CmdVel=(1.00, -0.31, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(32.64, 0.46, -5.03) PlanVel=(0.94, -0.33, 0.00) CmdVel=(0.99, -0.40, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(33.63, 0.06, -5.04) PlanVel=(0.90, -0.43, 0.00) CmdVel=(0.93, -0.49, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(34.53, -0.41, -5.03) PlanVel=(0.86, -0.52, 0.00) CmdVel=(0.87, -0.58, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(35.41, -1.02, -5.03) PlanVel=(0.80, -0.60, 0.00) CmdVel=(0.80, -0.66, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(36.24, -1.73, -5.03) PlanVel=(0.73, -0.68, 0.00) CmdVel=(0.72, -0.71, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(36.97, -2.48, -5.02) PlanVel=(0.66, -0.76, 0.00) CmdVel=(0.63, -0.79, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(37.64, -3.33, -5.02) PlanVel=(0.57, -0.82, 0.00) CmdVel=(0.53, -0.83, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.16, -4.19, -5.03) PlanVel=(0.49, -0.87, 0.00) CmdVel=(0.46, -0.88, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.60, -5.11, -5.02) PlanVel=(0.39, -0.92, 0.00) CmdVel=(0.38, -0.94, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.96, -6.12, -5.02) PlanVel=(0.29, -0.96, 0.00) CmdVel=(0.28, -0.95, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.25, -7.09, -5.04) PlanVel=(0.20, -0.98, 0.00) CmdVel=(0.15, -0.98, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.43, -8.11, -5.03) PlanVel=(0.09, -1.00, 0.00) CmdVel=(0.02, -1.01, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.45, -9.15, -5.02) PlanVel=(-0.01, -1.00, 0.00) CmdVel=(-0.06, -1.02, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.36, -10.19, -5.01) PlanVel=(-0.11, -0.99, 0.00) CmdVel=(-0.14, -0.98, -0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.19, -11.21, -5.02) PlanVel=(-0.21, -0.98, 0.00) CmdVel=(-0.24, -0.98, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.92, -12.28, -5.03) PlanVel=(-0.32, -0.95, 0.00) CmdVel=(-0.35, -0.90, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.54, -13.23, -5.03) PlanVel=(-0.41, -0.91, 0.00) CmdVel=(-0.45, -0.88, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.03, -14.20, -5.02) PlanVel=(-0.51, -0.86, 0.00) CmdVel=(-0.52, -0.81, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(37.46, -15.06, -5.02) PlanVel=(-0.59, -0.80, 0.00) CmdVel=(-0.61, -0.76, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(36.79, -15.85, -5.02) PlanVel=(-0.68, -0.74, 0.00) CmdVel=(-0.69, -0.71, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(36.08, -16.57, -5.02) PlanVel=(-0.75, -0.66, 0.00) CmdVel=(-0.80, -0.65, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(35.24, -17.24, -5.02) PlanVel=(-0.81, -0.58, 0.00) CmdVel=(-0.85, -0.55, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(34.26, -17.87, -5.03) PlanVel=(-0.87, -0.48, 0.00) CmdVel=(-0.90, -0.44, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(33.28, -18.35, -5.03) PlanVel=(-0.92, -0.39, 0.00) CmdVel=(-0.92, -0.32, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(32.30, -18.69, -5.03) PlanVel=(-0.96, -0.29, 0.00) CmdVel=(-0.95, -0.24, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(31.32, -18.90, -5.03) PlanVel=(-0.98, -0.19, 0.00) CmdVel=(-0.97, -0.17, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(30.33, -19.05, -5.03) PlanVel=(-1.00, -0.10, 0.00) CmdVel=(-0.98, -0.07, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(29.25, -19.10, -5.02) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.97, 0.03, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(28.22, -19.08, -5.01) PlanVel=(-1.22, -0.00, 0.00) CmdVel=(-1.24, 0.01, -0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(26.84, -19.06, -5.02) PlanVel=(-1.96, -0.00, 0.00) CmdVel=(-2.24, -0.00, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(24.68, -19.21, -5.02) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-2.24, 0.12, 0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(22.28, -19.22, -5.03) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-2.00, 0.12, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(20.13, -19.05, -5.02) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.95, -0.01, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(18.12, -18.92, -5.03) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.95, -0.12, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(16.02, -18.93, -5.02) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.95, -0.11, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(13.97, -18.96, -5.02) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.99, -0.08, 0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(11.98, -19.00, -5.03) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-2.00, -0.05, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(9.84, -19.01, -5.03) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.96, -0.04, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(7.77, -19.04, -5.02) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.99, -0.02, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(5.63, -19.10, -5.04) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.96, 0.03, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(3.64, -19.09, -5.03) PlanVel=(-2.00, -0.00, 0.00) CmdVel=(-1.96, 0.02, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(1.65, -19.07, -5.02) PlanVel=(-1.99, -0.00, 0.00) CmdVel=(-1.96, 0.01, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.35, -19.06, -5.01) PlanVel=(-1.34, -0.00, 0.00) CmdVel=(-1.18, -0.00, -0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.67, -18.96, -5.02) PlanVel=(-0.31, -0.00, 0.00) CmdVel=(0.21, -0.09, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.63, -18.74, -5.03) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.43, -0.26, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.15, -18.77, -5.04) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.05, -0.24, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.99, -19.05, -5.02) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.09, -0.01, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.96, -19.23, -5.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.11, 0.13, -0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.00, -19.26, -5.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.08, 0.16, -0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.01, -19.22, -5.00) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.07, 0.12, -0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.01, -19.16, -5.02) PlanVel=(-0.00, 0.20, 0.00) CmdVel=(-0.07, 0.31, 0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.02, -18.80, -5.03) PlanVel=(-0.00, 1.18, 0.00) CmdVel=(-0.06, 1.56, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.04, -17.38, -5.03) PlanVel=(-0.00, 1.95, 0.00) CmdVel=(-0.05, 2.49, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.02, -14.91, -5.02) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(-0.06, 2.24, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.03, -12.62, -5.03) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(-0.05, 2.01, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.09, -10.45, -5.02) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(-0.01, 1.95, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.13, -8.42, -5.02) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(0.03, 1.93, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.15, -6.29, -5.01) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(0.04, 1.90, -0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.12, -4.31, -5.01) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(0.02, 1.92, -0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.09, -2.26, -5.01) PlanVel=(-0.00, 2.00, 0.00) CmdVel=(-0.00, 1.96, -0.00) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.09, -0.13, -5.02) PlanVel=(-0.00, 1.57, 0.00) CmdVel=(-0.01, 1.40, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.10, 1.33, -5.03) PlanVel=(-0.00, 0.57, 0.00) CmdVel=(0.00, 0.09, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.15, 1.57, -5.04) PlanVel=(-0.00, 0.00, 0.00) CmdVel=(0.04, -0.51, 0.03) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.18, 1.16, -5.03) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.07, -0.18, 0.02) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.15, 0.94, -5.03) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.05, -0.01, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.09, 0.86, -5.02) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.00, 0.06, 0.01) dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-1.01, 0.88, -5.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.07, 0.04, -0.00) dt=0.0500
+[research] Phase transition TRAJECTORY->LAND
+LAND         UNKNOWN      Armed=True Pos=(-1.02, 0.89, -5.02) PlanVel=(0.00, 0.00, 0.01) CmdVel=(-0.06, 0.03, 0.01) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.06, 0.87, -4.88) PlanVel=(0.00, 0.00, 0.33) CmdVel=(-0.03, 0.05, 0.33) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.06, 0.87, -4.43) PlanVel=(0.00, 0.00, 0.50) CmdVel=(-0.03, 0.05, 0.50) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.09, 0.89, -3.89) PlanVel=(0.00, 0.00, 0.50) CmdVel=(-0.01, 0.04, 0.50) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.10, 0.92, -3.35) PlanVel=(0.00, 0.00, 0.50) CmdVel=(0.00, 0.01, 0.50) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.09, 0.91, -2.84) PlanVel=(0.00, 0.00, 0.50) CmdVel=(-0.00, 0.02, 0.50) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.09, 0.93, -2.33) PlanVel=(0.00, 0.00, 0.50) CmdVel=(-0.00, 0.01, 0.50) dt=0.0499
+LAND         UNKNOWN      Armed=True Pos=(-1.10, 0.92, -1.81) PlanVel=(0.00, 0.00, 0.50) CmdVel=(0.00, 0.01, 0.50) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.13, 0.93, -1.29) PlanVel=(0.00, 0.00, 0.50) CmdVel=(0.03, 0.00, 0.50) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.11, 0.93, -0.79) PlanVel=(0.00, 0.00, 0.38) CmdVel=(0.01, 0.00, 0.38) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.10, 0.91, -0.46) PlanVel=(0.00, 0.00, 0.23) CmdVel=(0.00, 0.02, 0.23) dt=0.0500
+LAND         UNKNOWN      Armed=True Pos=(-1.10, 0.93, -0.27) PlanVel=(0.00, 0.00, 0.15) CmdVel=(0.00, 0.00, 0.15) dt=0.0500
+[research] Phase transition LAND->DONE
+DONE         UNKNOWN      Armed=True Pos=(-1.11, 0.92, -0.18) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0500
+[runner] Controlled approach reached landing handoff
+[runner] Handing final touchdown to PX4 LAND...
+DONE         LAND         Armed=True Pos=(-1.10, 0.89, 0.04) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0500
+DONE         LAND         Armed=True Pos=(-1.12, 0.87, 0.02) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0500
+DONE         LAND         Armed=True Pos=(-1.13, 0.88, 0.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0500
+DONE         LAND         Armed=True Pos=(-1.16, 0.90, 0.00) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0500
+DONE         LAND         Armed=True Pos=(-1.16, 0.91, -0.01) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, 0.00) dt=0.0500
+[runner] PX4 native landing/disarm confirmed
+Stopping controller...
+[research] MAVLink message counts: {'ACTUATOR_OUTPUT_STATUS': 2678, 'ALTITUDE': 1340, 'ATTITUDE': 4019, 'ATTITUDE_QUATERNION': 6699, 'ATTITUDE_TARGET': 2679, 'BATTERY_STATUS': 67, 'COMMAND_ACK': 10, 'COMMAND_LONG': 6, 'ESTIMATOR_STATUS': 134, 'EXTENDED_SYS_STATE': 670, 'GLOBAL_POSITION_INT': 6699, 'GPS_RAW_INT': 4059, 'HEARTBEAT': 135, 'HIGHRES_IMU': 2680, 'HOME_POSITION': 67, 'LOCAL_POSITION_NED': 4019, 'MISSION_CURRENT': 133, 'ODOMETRY': 4019, 'OPEN_DRONE_ID_LOCATION': 134, 'OPEN_DRONE_ID_SYSTEM': 134, 'PING': 134, 'POSITION_TARGET_GLOBAL_INT': 48, 'POSITION_TARGET_LOCAL_NED': 2679, 'SCALED_PRESSURE': 134, 'SERVO_OUTPUT_RAW': 2679, 'SYSTEM_TIME': 134, 'SYS_STATUS': 670, 'TIMESYNC': 1340, 'VFR_HUD': 1340, 'VIBRATION': 67}
+Controller stopped.
+[runner] SUCCESS seed=3637565058 spawn=(1.000,-1.000,5.000)

@@ -1,0 +1,76 @@
+{
+  "controller": {
+    "airborne_local_origin": {
+      "x": -0.01753602735698223,
+      "y": -1.558669924736023,
+      "yaw": 1.6932796239852905,
+      "z": -6.572399139404297
+    },
+    "fixture_released": true,
+    "ground_reference_error_m": 0.001018264660835655,
+    "ground_reference_local": {
+      "x": -0.011697075329720974,
+      "y": -8.963111031334847e-05,
+      "yaw": 1.684704065322876,
+      "z": 0.009342595934867859
+    },
+    "ground_target_source": "stored_ground_reference",
+    "height_backup_ground_local_z": 0.010360860595703514,
+    "landing_policy": {
+      "handoff_height_m": 0.28,
+      "handoff_xy_m": 0.3,
+      "max_descent_rate_m_s": 0.5,
+      "slow_height_m": 1.0
+    },
+    "predicted_ground_local_z": 0.009342595934867859,
+    "spawn_height_m": 6.58276,
+    "spawn_pose": {
+      "mode": "random",
+      "model": "x500_0",
+      "pitch_deg": -1.5894525979721608,
+      "roll_deg": 1.4400023505971018,
+      "seed": 2026,
+      "world": "default",
+      "x": -1.5235204601441477,
+      "y": 0.01006302092500233,
+      "yaw_deg": -99.61755959592337,
+      "z": 6.582758989411497
+    },
+    "stabilization_policy": {
+      "max_excursion_m": 2.0,
+      "max_horizontal_speed_m_s": 2.0,
+      "max_vertical_excursion_m": 1.0,
+      "max_vertical_speed_m_s": 1.5
+    }
+  },
+  "gazebo_held_pose": [
+    -1.52352,
+    0.010063,
+    6.58276,
+    0.025133,
+    -0.027741,
+    -1.73865
+  ],
+  "release_spool": {
+    "actuator_age_s": 0.01395650099999557,
+    "attitude_target_age_s": 0.041708603000017774,
+    "commanded_vz_m_s": -0.8,
+    "duration_s": 2.2114889590000075,
+    "mean_motor_output": 694.25,
+    "min_motor_output": 617.0,
+    "ready_hold_s": 0.15072321100001318,
+    "target_thrust": 0.6381353735923767
+  },
+  "requested": {
+    "mode": "random",
+    "model": "x500_0",
+    "pitch_deg": -1.5894525979721608,
+    "roll_deg": 1.4400023505971018,
+    "seed": 2026,
+    "world": "default",
+    "x": -1.5235204601441477,
+    "y": 0.01006302092500233,
+    "yaw_deg": -99.61755959592337,
+    "z": 6.582758989411497
+  }
+}
