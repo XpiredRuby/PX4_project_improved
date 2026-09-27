@@ -1,7 +1,7 @@
 class PIDController:
     """PID controller with explicit term instrumentation.
 
-    The returned output matches Vishnu's original implementation.  The
+    The returned output matches the baseline implementation.  The
     additional last_* fields make P/I/D behavior observable in logs.
     """
 

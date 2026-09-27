@@ -9,12 +9,12 @@ from pathlib import Path
 
 
 OVERLAY = Path("/mnt/f/PX4/research/randomized")
-RUNTIME = Path("/home/xpire/vishnu-runtime/Position_Controller")
+RUNTIME = Path("/home/xpire/px4-runtime/Position_Controller")
 sys.path.insert(0, str(OVERLAY))
 os.chdir(RUNTIME)
 
 from RandomizedPositionController import RandomizedPositionController
-from vishnu_offboard_runner import release_propulsion_ready
+from px4_offboard_runner import release_propulsion_ready
 from spawn_config import build_pose, parser, quaternion_from_rpy_deg, validate_pose
 
 

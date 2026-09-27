@@ -225,7 +225,7 @@ class FixedOverlayTests(unittest.TestCase):
 
     def test_runner_deadlines_use_monotonic_clock(self):
         source = (
-            FIXED / "vishnu_offboard_runner.py"
+            FIXED / "offboard_runner.py"
         ).read_text(encoding="utf-8")
         self.assertNotIn("time.time()", source)
         self.assertIn("time.monotonic()", source)

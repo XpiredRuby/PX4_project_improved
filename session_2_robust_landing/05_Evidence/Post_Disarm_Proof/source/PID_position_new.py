@@ -21,7 +21,7 @@ def wrapped_angle(value):
 
 
 class PositionController:
-    """Measured-data fixes around Vishnu's outer-loop controller."""
+    """Measured-data fixes around the baseline outer-loop controller."""
 
     def __init__(self):
         self.connection_string = "udp:127.0.0.1:14540"

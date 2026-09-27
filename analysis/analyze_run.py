@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Analyze one instrumented Vishnu/PX4 research archive."""
+"""Analyze one instrumented PX4 research archive."""
 
 import argparse
 import json
@@ -288,7 +288,7 @@ def plot_outer_terms(df, output, intervals):
         axis.grid(True, alpha=0.3)
     axes[0].legend(ncol=3)
     axes[-1].set_xlabel("Elapsed time (s)")
-    fig.suptitle("Vishnu outer-loop command decomposition")
+    fig.suptitle("PX4 outer-loop command decomposition")
     save_figure(fig, output / "03_outer_loop_terms.png")
 
 
@@ -1100,7 +1100,7 @@ def write_report(
         ),
         "",
         "The `planned_*` signals are trajectory feedforward. The "
-        "`cmd_*` signals are the final Vishnu outer-loop velocity "
+        "`cmd_*` signals are the final PX4 outer-loop velocity "
         "commands after PID correction.",
         "",
         "## Tracking lag",

@@ -80,7 +80,7 @@ kill -0 "$SITL_PID" 2>/dev/null
 sleep 1
 
 write_status RUNNING_MISSION "mode=$MODE"
-timeout 280s bash "$PX4_ROOT/internal/vishnu-research-mission-job.sh" \
+timeout 280s bash "$PX4_ROOT/internal/research-mission-job.sh" \
     jerk randomized >> "$RUN_LOG" 2>&1
 ARCHIVE="$(tr -d '\r\n' < "$PX4_ROOT/logs/last-research-run.txt")"
 [[ -d "$ARCHIVE" ]]

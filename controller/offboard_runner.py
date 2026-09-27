@@ -195,7 +195,7 @@ def main():
         # takeoff and the trajectory share one current origin.
         c.initialize_target()
 
-        print("[runner] Starting Vishnu position controller...")
+        print("[runner] Starting position controller...")
         worker = threading.Thread(target=c.run, daemon=True)
         worker.start()
 
@@ -221,10 +221,10 @@ def main():
                 print(f"[runner] LAND request failed: {exc}")
             raise RuntimeError(f"Mission did not complete; final phase={c.phase}")
 
-        # Vishnu's controller marks DONE just above the point where PX4's own
+        # baseline's controller marks DONE just above the point where PX4's own
         # land detector may declare touchdown. Hand the final touchdown to PX4
         # AUTO/LAND and wait for PX4 to auto-disarm natively.
-        print("[runner] Vishnu mission DONE; handing touchdown to PX4 LAND...")
+        print("[runner] Mission DONE; handing touchdown to PX4 LAND...")
         request_mode(c, "LAND")
         land_mode = wait_heartbeat_state(
             c,

@@ -1,4 +1,4 @@
-/home/xpire/vishnu-runtime/Trajectory/plot.py:169: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+/home/xpire/px4-runtime/Trajectory/plot.py:169: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
   plt.show()
 Generated 1803 points
 Saved to trajetory.csv

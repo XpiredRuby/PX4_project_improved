@@ -4,7 +4,7 @@ ROWS=1781
 DURATION=89.000000
 DT_FIRST=0.050000
 SCHEMA_OK=yes
-RUNTIME=/home/xpire/vishnu-runtime
+RUNTIME=/home/xpire/px4-runtime
 RESEARCH_OVERLAY=enabled
 PROFILE=randomized
 OVERLAY=/mnt/f/PX4/research/randomized
@@ -19,7 +19,7 @@ a7278e6c9f310829fdd978f2e59165075af8b0d9248f45ee032e0f361ed5b1ae  PID_position_n
 60da43d605af48f0c92253095133a6bfe780470a0e7225034339d3161af63b47  PID_Controller.py
 8876f18e845818ad8de010c5e542c26841403e480bbfe24b7104786b20062983  VehicleState.py
 38ab9a17e1f1d18e20dedacb927aa971261dba5613c49627258f0f330bf922b1  trajectory.py
-b12bbedbebc053efa43ce571b76777ed5874fa7e3d8e191681a8fd214abf8398  vishnu_offboard_runner.py
+b12bbedbebc053efa43ce571b76777ed5874fa7e3d8e191681a8fd214abf8398  offboard_runner.py
 8c0bc680e3df225921737c557802e76a0d563c5ddeda98997f60f9ee3453d66c  RandomizedPositionController.py
 26a56f6a549a3abd354f742bdad497baf9cc92e86a8a5e2d70c849de2a83d00b  spawn_config.py
 2cf0e8b9b99c03dcfef26eae6ad41808b0dcb03de5dfbc77317d86a24f27fc10  /mnt/f/PX4/research/randomized/Trajectory_jerk/commands.py

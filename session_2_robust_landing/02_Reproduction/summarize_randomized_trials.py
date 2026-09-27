@@ -141,7 +141,7 @@ def main():
     source_files = [
         root / "research/randomized/RandomizedPositionController.py",
         root / "research/randomized/spawn_config.py",
-        root / "research/randomized/vishnu_offboard_runner.py",
+        root / "research/randomized/offboard_runner.py",
         root / "research/analysis/run_randomized_regression.sh",
         root / "research/analysis/analyze_randomized_run.py",
     ]
