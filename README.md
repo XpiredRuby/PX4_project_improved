@@ -38,6 +38,7 @@ The complete mentor-facing Session 2 submission is in
 |---|---|
 | `controller/` | Validated MAVLink outer-loop controller and safe runner |
 | `session_2_robust_landing/` | Complete randomized-start landing implementation and validation package |
+| `reference/vishnu_original_baseline/` | Vishnu Saj's original baseline source and untouched archive |
 | `trajectory_generator/` | Deterministic jerk-limited mission generator |
 | `analysis/` | Run analysis and presentation-ready plot generation |
 | `tests/` | Portable controller, trajectory, analysis, and plot tests |
@@ -63,6 +64,18 @@ Generate mentor-facing plots from the exported CSV package:
 ```bash
 python analysis/presentation_plots.py /path/to/plot-ready-csvs presentation_plots
 ```
+
+## Code lineage
+
+1. [Vishnu Saj original baseline](reference/vishnu_original_baseline/README.md)
+   preserves the supplied starting controller, trajectory generators, datasets,
+   and untouched original ZIP.
+2. The root `controller/`, `trajectory_generator/`, `analysis/`, and
+   `tests/` directories contain the first validated improvement phase.
+3. [`session_2_robust_landing/`](session_2_robust_landing/README_SUBMISSION.md)
+   contains the active randomized-start stabilization, trajectory return,
+   controlled PX4 LAND handoff, automatic-disarm proof, and complete validation
+   evidence.
 
 ## Safety boundary
 
