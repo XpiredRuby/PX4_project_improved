@@ -77,6 +77,7 @@ class MissionConfig:
     mission_timeout_s: float = 240.0
     return_recovery_timeout_s: float = 120.0
     land_timeout_s: float = 120.0
+    max_offboard_loss_timeout_s: float = 1.0
 
     def validate(self):
         required_height = self.ground_offset_max_m + self.terrain_clearance_m
@@ -132,6 +133,7 @@ class MissionConfig:
             self.home_required_horizontal_accuracy_m,
             self.home_max_yaw_spread_deg,
             self.return_recovery_timeout_s,
+            self.max_offboard_loss_timeout_s,
         ) <= 0.0:
             raise ValueError("navigation limits and recovery timeout must be positive")
         if not (

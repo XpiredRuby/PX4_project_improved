@@ -5,6 +5,7 @@ import time
 
 from pymavlink import mavutil
 
+from mission_state import FailureAction
 from PID_position_new import PositionController
 
 
@@ -27,6 +28,11 @@ EKF2_SOURCE_PARAMETERS = (
     "EKF2_EV_CTRL",
     "EKF2_RNG_CTRL",
     "EKF2_AGP_CTRL",
+)
+PX4_SAFETY_PARAMETERS = (
+    "COM_OF_LOSS_T",
+    "COM_OBL_RC_ACT",
+    "COM_DISARM_LAND",
 )
 
 
@@ -74,11 +80,56 @@ def check_gps_imu_estimator_config(parameters):
         )
 
 
-def audit_gps_imu_estimator(controller, attempts=3, timeout_s=0.7):
-    """Read EKF2 source controls over MAVLink before starting telemetry RX."""
+def check_px4_safety_config(
+    parameters,
+    max_offboard_loss_s=1.0,
+    landing_timeout_s=120.0,
+):
+    """Verify that command loss lands and confirmed landing auto-disarms."""
+    missing = sorted(set(PX4_SAFETY_PARAMETERS) - parameters.keys())
+    if missing:
+        raise RuntimeError(
+            "Cannot verify PX4 failsafe configuration: " + ", ".join(missing)
+        )
+    offboard_loss_s = float(parameters["COM_OF_LOSS_T"])
+    auto_disarm_s = float(parameters["COM_DISARM_LAND"])
+    action_raw = float(parameters["COM_OBL_RC_ACT"])
+    if not all(
+        math.isfinite(value)
+        for value in (offboard_loss_s, auto_disarm_s, action_raw)
+    ):
+        raise RuntimeError("PX4 failsafe parameters must be finite")
+    if not action_raw.is_integer():
+        raise RuntimeError(f"Invalid PX4 parameter COM_OBL_RC_ACT={action_raw}")
+
+    mismatch = []
+    if not 0.0 <= offboard_loss_s <= max_offboard_loss_s:
+        mismatch.append(
+            f"COM_OF_LOSS_T={offboard_loss_s:g}s "
+            f"(expected 0..{max_offboard_loss_s:g}s)"
+        )
+    if int(action_raw) != 4:
+        mismatch.append(
+            f"COM_OBL_RC_ACT={int(action_raw)} (expected 4/Land)"
+        )
+    if not 0.0 < auto_disarm_s < landing_timeout_s:
+        mismatch.append(
+            f"COM_DISARM_LAND={auto_disarm_s:g}s "
+            f"(expected >0 and <{landing_timeout_s:g}s)"
+        )
+    if mismatch:
+        raise RuntimeError(
+            "PX4 failsafe does not match mission assumptions: "
+            + "; ".join(mismatch)
+            + ". Configure PX4 while disarmed, then retry."
+        )
+
+
+def read_px4_parameters(controller, names, attempts=3, timeout_s=0.7):
+    """Read named parameters before the telemetry receiver owns recv_match."""
     master = controller.master
     parameters = {}
-    for name in EKF2_SOURCE_PARAMETERS:
+    for name in names:
         for _ in range(attempts):
             with controller.mav_send_lock:
                 master.mav.param_request_read_send(
@@ -109,8 +160,26 @@ def audit_gps_imu_estimator(controller, attempts=3, timeout_s=0.7):
             if name in parameters:
                 break
 
+    return parameters
+
+
+def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
+    """Read and verify sensor-fusion and failure-response configuration."""
+    names = EKF2_SOURCE_PARAMETERS + PX4_SAFETY_PARAMETERS
+    parameters = read_px4_parameters(
+        controller,
+        names,
+        attempts=attempts,
+        timeout_s=timeout_s,
+    )
+
     check_gps_imu_estimator_config(parameters)
-    print("[runner] PX4 EKF2 GPS/IMU fusion settings verified")
+    check_px4_safety_config(
+        parameters,
+        max_offboard_loss_s=controller.config.max_offboard_loss_timeout_s,
+        landing_timeout_s=controller.config.land_timeout_s,
+    )
+    print("[runner] PX4 GPS/IMU and failure-response settings verified")
 
 
 def snapshot(controller):
@@ -321,7 +390,7 @@ def wait_for_native_landing(controller, after_sequence, timeout):
             main_mode != PX4_MAIN_MODE_AUTO
             or sub_mode != PX4_AUTO_SUB_MODE_LAND
         ):
-            controller.failure_action = "PX4_FAILSAFE"
+            controller.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError(
                 "PX4 left LAND before auto-disarm "
                 f"(main_mode={main_mode}, sub_mode={sub_mode})"
@@ -357,7 +426,7 @@ def main():
     try:
         print("[runner] Connecting to PX4...")
         c.connect()
-        audit_gps_imu_estimator(c)
+        audit_px4_configuration(c)
 
         c.start_receiver()
         c.wait_for_fresh_telemetry()
@@ -402,18 +471,19 @@ def main():
         while time.monotonic() < deadline:
             if c.worker_error is not None:
                 raise RuntimeError(f"Controller failed: {c.worker_error}")
-            if c.phase == "HANDOFF":
+            if c.handoff_ready_event.wait(timeout=0.05):
                 break
             if not worker.is_alive():
+                phase = c.phase_snapshot()
                 raise RuntimeError(
-                    f"Controller stopped before handoff; phase={c.phase}"
+                    f"Controller stopped before handoff; phase={phase}"
                 )
-            time.sleep(0.05)
         else:
             if not c.request_return_home("mission timeout"):
+                phase = c.phase_snapshot()
                 raise TimeoutError(
                     f"Mission did not reach handoff within "
-                    f"{c.config.mission_timeout_s:.0f}s; phase={c.phase}"
+                    f"{c.config.mission_timeout_s:.0f}s; phase={phase}"
                 )
             recovery_deadline = (
                 time.monotonic() + c.config.return_recovery_timeout_s
@@ -421,14 +491,14 @@ def main():
             while time.monotonic() < recovery_deadline:
                 if c.worker_error is not None:
                     raise RuntimeError(f"Controller failed: {c.worker_error}")
-                if c.phase == "HANDOFF":
+                if c.handoff_ready_event.wait(timeout=0.05):
                     break
                 if not worker.is_alive():
+                    phase = c.phase_snapshot()
                     raise RuntimeError(
                         "Controller stopped during timeout recovery; "
-                        f"phase={c.phase}"
+                        f"phase={phase}"
                     )
-                time.sleep(0.05)
             else:
                 raise TimeoutError(
                     "Safe return did not reach handoff within "
@@ -455,9 +525,10 @@ def main():
         controller_stopped = True
         main_mode, sub_mode, armed = heartbeat_snapshot(c)
         landed_state, _, _ = landing_snapshot(c)
+        phase = c.phase_snapshot()
         print(
             f"[runner] Final state main_mode={main_mode} sub_mode={sub_mode} "
-            f"armed={armed} landed_state={landed_state} phase={c.phase}"
+            f"armed={armed} landed_state={landed_state} phase={phase}"
         )
         print("[runner] SUCCESS")
 
@@ -466,18 +537,19 @@ def main():
         try:
             main_mode, sub_mode, armed = heartbeat_snapshot(c)
             if armed:
-                if c.failure_action == "PX4_FAILSAFE":
+                phase = c.phase_snapshot()
+                if c.failure_action_snapshot() == FailureAction.PX4_FAILSAFE:
                     print(
                         "[runner] Failure cleanup: stopping Offboard "
                         "commands and yielding to PX4 failsafe "
-                        f"(phase={c.phase}, main_mode={main_mode}, "
+                        f"(phase={phase}, main_mode={main_mode}, "
                         f"sub_mode={sub_mode})"
                     )
                     wait_for_failsafe_takeover(c)
                 else:
                     print(
                         "[runner] Failure cleanup: handing control to PX4 LAND "
-                        f"(phase={c.phase}, main_mode={main_mode}, "
+                        f"(phase={phase}, main_mode={main_mode}, "
                         f"sub_mode={sub_mode})"
                     )
                     _, _, land_sequence = landing_snapshot(c)

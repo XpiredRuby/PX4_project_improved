@@ -10,6 +10,14 @@ import time
 from pymavlink import mavutil
 
 from mission_config import MissionConfig
+from mission_state import (
+    FailureAction,
+    MISSION_TRANSITIONS,
+    NAVIGATION_TRANSITIONS,
+    MissionPhase,
+    NavigationState,
+    require_transition,
+)
 from minimum_jerk import MinimumJerkSegment
 from PID_Controller import PIDController
 from VehicleState import VehicleState
@@ -41,9 +49,12 @@ class PositionController:
         self.master = None
         self.state = VehicleState()
         self.state_lock = threading.Lock()
+        self.mission_lock = threading.RLock()
         self.mav_send_lock = threading.Lock()
         self.setpoint_lock = threading.Lock()
         self.setpoint_watchdog_stop = threading.Event()
+        self.return_request_event = threading.Event()
+        self.handoff_ready_event = threading.Event()
         self.running = False
         self.control_running = False
         self.native_land_active = False
@@ -77,14 +88,14 @@ class PositionController:
         self.navigation_confidence_updated_at = None
         self.navigation_raw_confidence = 1.0
         self.navigation_confidence = 1.0
-        self.navigation_state = "HEALTHY"
+        self.navigation_state = NavigationState.HEALTHY
         self.navigation_reasons = []
         self.navigation_hold_reference = None
+        self.last_trusted_navigation_reference = None
         self.effective_horizontal_speed_limit = self.max_horizontal_speed
         self.effective_vertical_speed_limit = self.max_vertical_speed
         self.previous_velocity_command = (0.0, 0.0, 0.0)
-        self.failure_action = "LAND"
-        self.return_requested = False
+        self.failure_action = FailureAction.LAND
         self.return_request_reason = ""
 
         # Baseline gains are intentionally unchanged.
@@ -104,7 +115,7 @@ class PositionController:
         self.home_sample_count = 0
         self.cruise_height_m = self.config.cruise_height_m
 
-        self.phase = "TAKEOFF"
+        self.phase = MissionPhase.TAKEOFF
         self.phase_enter_time = None
         self.phase_clock_s = 0.0
         self.last_phase_transition = ""
@@ -1028,16 +1039,24 @@ class PositionController:
         self.align_ready_since = None
         self.navigation_unhealthy_since = None
         self.navigation_recovered_since = None
-        self.navigation_state = "HEALTHY"
+        self.navigation_state = NavigationState.HEALTHY
         self.navigation_reasons = []
         self.navigation_hold_reference = None
+        self.last_trusted_navigation_reference = (
+            self.x0,
+            self.y0,
+            self.z0,
+            self.yaw0,
+        )
         self.native_land_active = False
         self.handoff_requested = False
-        self.failure_action = "LAND"
-        self.return_requested = False
+        self.set_failure_action(FailureAction.LAND)
+        self.return_request_event.clear()
         self.return_request_reason = ""
+        self.handoff_ready_event.clear()
         self.previous_velocity_command = (0.0, 0.0, 0.0)
-        self.phase = "TAKEOFF"
+        with self.mission_lock:
+            self.phase = MissionPhase.TAKEOFF
         self.phase_enter_time = time.monotonic()
         self.phase_clock_s = 0.0
 
@@ -1238,25 +1257,51 @@ class PositionController:
         print(f"Research logging: {self.filename}")
 
     def _transition(self, new_phase, now_mono):
-        old_phase = self.phase
-        self.phase = new_phase
-        self.phase_enter_time = now_mono
-        self.phase_clock_s = 0.0
-        self.last_phase_transition = f"{old_phase}->{new_phase}"
+        with self.mission_lock:
+            old_phase = self.phase
+            self.phase = require_transition(
+                old_phase,
+                new_phase,
+                MISSION_TRANSITIONS,
+                "mission",
+            )
+            self.phase_enter_time = now_mono
+            self.phase_clock_s = 0.0
+            self.last_phase_transition = f"{old_phase}->{self.phase}"
+            if self.phase == MissionPhase.HANDOFF:
+                self.handoff_ready_event.set()
         print(f"[research] Phase transition {self.last_phase_transition}")
+
+    def phase_snapshot(self):
+        with self.mission_lock:
+            return self.phase
+
+    def set_failure_action(self, action):
+        with self.mission_lock:
+            self.failure_action = FailureAction(action)
+
+    def failure_action_snapshot(self):
+        with self.mission_lock:
+            return self.failure_action
 
     def _reset_position_pids(self):
         for pid in (self.pid_x, self.pid_y, self.pid_z):
             pid.reset()
 
     def request_return_home(self, reason):
-        if self.phase not in ("TRAJECTORY", "RETURN_HOME", "ALIGN", "HANDOFF"):
-            return False
-        if self.phase == "TRAJECTORY":
-            self.return_requested = True
-            self.return_request_reason = str(reason)
-            print(f"[research] Safe return requested: {reason}")
-        return True
+        with self.mission_lock:
+            if self.phase not in (
+                MissionPhase.TRAJECTORY,
+                MissionPhase.RETURN_HOME,
+                MissionPhase.ALIGN,
+                MissionPhase.HANDOFF,
+            ):
+                return False
+            if self.phase == MissionPhase.TRAJECTORY:
+                self.return_request_reason = str(reason)
+                self.return_request_event.set()
+                print(f"[research] Safe return requested: {reason}")
+            return True
 
     def _start_return_home(self, x, y, z, snapshot, now_mono):
         self.land_x = self.x0
@@ -1282,12 +1327,12 @@ class PositionController:
         self.pid_y.setpoint = self.land_y
         self.pid_z.setpoint = self.target_z
         self._reset_position_pids()
-        self.return_requested = False
-        self._transition("RETURN_HOME", now_mono)
+        self.return_request_event.clear()
+        self._transition(MissionPhase.RETURN_HOME, now_mono)
 
     def update_phase(self, x, y, z, now_mono, snapshot=None):
         self.last_phase_transition = ""
-        if self.navigation_state == "HOLD":
+        if self.navigation_state == NavigationState.HOLD:
             return
         if snapshot is None:
             snapshot = self._snapshot(now_mono)
@@ -1297,7 +1342,7 @@ class PositionController:
         vz = snapshot["vz"]
         phase_elapsed = self.phase_clock_s
 
-        if self.phase == "TAKEOFF":
+        if self.phase == MissionPhase.TAKEOFF:
             position_error = math.sqrt(
                 (self.target_x - x) ** 2
                 + (self.target_y - y) ** 2
@@ -1323,19 +1368,19 @@ class PositionController:
                 self.trajectory.reset()
                 self.trajectory_start_time = now_mono
                 self.mission_time = 0.0
-                self._transition("TRAJECTORY", now_mono)
+                self._transition(MissionPhase.TRAJECTORY, now_mono)
 
-        elif self.phase == "TRAJECTORY":
-            if self.trajectory.finished or self.return_requested:
+        elif self.phase == MissionPhase.TRAJECTORY:
+            if self.trajectory.finished or self.return_request_event.is_set():
                 self._start_return_home(x, y, z, snapshot, now_mono)
 
-        elif self.phase == "RETURN_HOME":
+        elif self.phase == MissionPhase.RETURN_HOME:
             if self.return_segment.finished(phase_elapsed):
                 self.align_ready_since = None
                 self._reset_position_pids()
-                self._transition("ALIGN", now_mono)
+                self._transition(MissionPhase.ALIGN, now_mono)
 
-        elif self.phase == "ALIGN":
+        elif self.phase == MissionPhase.ALIGN:
             xy_error = math.hypot(self.land_x - x, self.land_y - y)
             z_error = abs(self.target_z - z)
             horizontal_speed = math.hypot(vx, vy)
@@ -1365,7 +1410,7 @@ class PositionController:
                 and now_mono - self.align_ready_since
                 >= self.config.align_hold_s
             ):
-                self._transition("HANDOFF", now_mono)
+                self._transition(MissionPhase.HANDOFF, now_mono)
 
     @staticmethod
     def _zero_pid_terms():
@@ -1425,19 +1470,33 @@ class PositionController:
         return snapshot["estimator_flags"] & required == required
 
     def _set_navigation_state(self, new_state, snapshot):
+        new_state = NavigationState(new_state)
         if new_state == self.navigation_state:
             return
         old_state = self.navigation_state
-        self.navigation_state = new_state
-        if new_state == "HOLD" and self.navigation_hold_reference is None:
+        self.navigation_state = require_transition(
+            old_state,
+            new_state,
+            NAVIGATION_TRANSITIONS,
+            "navigation",
+        )
+        if (
+            new_state == NavigationState.HOLD
+            and self.navigation_hold_reference is None
+        ):
+            # Freeze the last state that passed every health gate. Using the
+            # latest degraded estimate would turn a GPS jump into a command.
             self.navigation_hold_reference = (
-                snapshot["x"],
-                snapshot["y"],
-                snapshot["z"],
-                snapshot["yaw"],
+                self.last_trusted_navigation_reference
+                or (
+                    snapshot["x"],
+                    snapshot["y"],
+                    snapshot["z"],
+                    snapshot["yaw"],
+                )
             )
             self._reset_position_pids()
-        if new_state == "HEALTHY":
+        if new_state == NavigationState.HEALTHY:
             self.navigation_hold_reference = None
             self._reset_position_pids()
         print(f"[research] Navigation state {old_state}->{new_state}")
@@ -1458,49 +1517,63 @@ class PositionController:
                 and unhealthy_for
                 >= self.config.navigation_degraded_entry_s
             ):
-                self.failure_action = "PX4_FAILSAFE"
-                self._set_navigation_state("LOST", snapshot)
+                self.set_failure_action(FailureAction.PX4_FAILSAFE)
+                self._set_navigation_state(NavigationState.LOST, snapshot)
                 raise NavigationEstimateLost(
                     "Local position estimate is no longer valid: "
                     + "; ".join(self.navigation_reasons)
                 )
             if unhealthy_for >= self.config.navigation_abort_s:
-                self.failure_action = "LAND"
-                self._set_navigation_state("LOST", snapshot)
+                self.set_failure_action(FailureAction.LAND)
+                self._set_navigation_state(NavigationState.LOST, snapshot)
                 raise RuntimeError(
                     "Navigation remained unhealthy for "
                     f"{unhealthy_for:.1f}s: "
                     + "; ".join(self.navigation_reasons)
                 )
             if unhealthy_for >= self.config.navigation_hold_entry_s:
-                self._set_navigation_state("HOLD", snapshot)
+                self._set_navigation_state(NavigationState.HOLD, snapshot)
             elif unhealthy_for >= self.config.navigation_degraded_entry_s:
-                self._set_navigation_state("DEGRADED", snapshot)
+                self._set_navigation_state(NavigationState.DEGRADED, snapshot)
             return
+
+        self.last_trusted_navigation_reference = (
+            snapshot["x"],
+            snapshot["y"],
+            snapshot["z"],
+            snapshot["yaw"],
+        )
 
         if self.navigation_unhealthy_since is not None:
             if self.navigation_recovered_since is None:
                 self.navigation_recovered_since = now_mono
             recovered_for = now_mono - self.navigation_recovered_since
             if recovered_for < self.config.navigation_recovery_s:
-                if self.navigation_state != "HOLD":
-                    self._set_navigation_state("DEGRADED", snapshot)
+                if self.navigation_state != NavigationState.HOLD:
+                    self._set_navigation_state(
+                        NavigationState.DEGRADED,
+                        snapshot,
+                    )
                 return
 
         self.navigation_unhealthy_since = None
         self.navigation_recovered_since = None
-        self._set_navigation_state("HEALTHY", snapshot)
+        self._set_navigation_state(NavigationState.HEALTHY, snapshot)
 
     def _advance_phase_clock(self, loop_dt):
         self.trajectory_clock_limited = False
-        if self.phase not in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME"):
+        if self.phase not in (
+            MissionPhase.TAKEOFF,
+            MissionPhase.TRAJECTORY,
+            MissionPhase.RETURN_HOME,
+        ):
             return
-        if self.navigation_state == "HOLD":
+        if self.navigation_state == NavigationState.HOLD:
             return
         step = min(max(0.0, loop_dt), self.max_trajectory_clock_step_s)
         self.trajectory_clock_limited = loop_dt > self.max_trajectory_clock_step_s
         self.phase_clock_s += step * self._navigation_speed_scale()
-        if self.phase == "TRAJECTORY":
+        if self.phase == MissionPhase.TRAJECTORY:
             self.mission_time = self.phase_clock_s
 
     def _limit_velocity_command(self, vx, vy, vz):
@@ -1556,6 +1629,21 @@ class PositionController:
         limited_z = limited_vz != vz
         self.previous_velocity_command = (vx, vy, limited_vz)
         return (vx, vy, limited_vz), (limited_x, limited_y, limited_z)
+
+    def _assert_command_invariants(self, command, yaw_command):
+        vx, vy, vz = command
+        if not all(math.isfinite(value) for value in (*command, yaw_command)):
+            raise RuntimeError("Refusing non-finite control command")
+        horizontal_speed = math.hypot(vx, vy)
+        if horizontal_speed > self.max_horizontal_speed + 1e-9:
+            raise RuntimeError(
+                "Horizontal command invariant violated: "
+                f"{horizontal_speed:.3f}m/s"
+            )
+        if abs(vz) > self.max_vertical_speed + 1e-9:
+            raise RuntimeError(
+                f"Vertical command invariant violated: {vz:.3f}m/s"
+            )
 
     def takeoff_controller(self, x, y, z, yaw, dt):
         elapsed = self.phase_clock_s
@@ -1900,12 +1988,12 @@ class PositionController:
     def _validate_runtime_health(self, snapshot, now_mono=None):
         now_mono = time.monotonic() if now_mono is None else now_mono
         if self.receiver_error is not None:
-            self.failure_action = "PX4_FAILSAFE"
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError(
                 f"MAVLink receiver failed: {self.receiver_error}"
             )
         if self.setpoint_error is not None:
-            self.failure_action = "PX4_FAILSAFE"
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError(
                 f"Setpoint watchdog failed: {self.setpoint_error}"
             )
@@ -1924,7 +2012,7 @@ class PositionController:
                 )
             )
         if snapshot.get("position_source_regressed", False):
-            self.failure_action = "PX4_FAILSAFE"
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError("Local position timestamp moved backwards")
         stale = [
             f"{name}={age:.3f}s>{limit:.3f}s"
@@ -1932,7 +2020,7 @@ class PositionController:
             if not math.isfinite(age) or age > limit
         ]
         if stale:
-            self.failure_action = "PX4_FAILSAFE"
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError(
                 "Stale runtime telemetry: " + ", ".join(stale)
             )
@@ -1957,17 +2045,17 @@ class PositionController:
             if not math.isfinite(snapshot[name])
         ]
         if nonfinite:
-            self.failure_action = "PX4_FAILSAFE"
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError(
                 "Non-finite navigation state: " + ", ".join(nonfinite)
             )
 
         active_phases = (
-            "TAKEOFF",
-            "TRAJECTORY",
-            "RETURN_HOME",
-            "ALIGN",
-            "HANDOFF",
+            MissionPhase.TAKEOFF,
+            MissionPhase.TRAJECTORY,
+            MissionPhase.RETURN_HOME,
+            MissionPhase.ALIGN,
+            MissionPhase.HANDOFF,
         )
         if self.phase in active_phases:
             radius = math.hypot(
@@ -2013,12 +2101,12 @@ class PositionController:
                 and snapshot["heartbeat_sub_mode"] == 6
             )
             expected_mode = offboard_mode or (
-                self.phase == "HANDOFF"
+                self.phase == MissionPhase.HANDOFF
                 and self.handoff_requested
                 and land_mode
             )
             if not expected_mode:
-                self.failure_action = "PX4_FAILSAFE"
+                self.set_failure_action(FailureAction.PX4_FAILSAFE)
                 raise RuntimeError(
                     "PX4 entered an unexpected mode during active phase "
                     f"{self.phase}: main_mode="
@@ -2067,26 +2155,29 @@ class PositionController:
                 self._advance_phase_clock(0.0 if count == 0 else loop_dt)
                 self.update_phase(x, y, z, loop_start, snapshot)
 
-                if self.navigation_state == "HOLD":
+                if self.navigation_state == NavigationState.HOLD:
                     control = self.navigation_hold_controller(
                         x, y, z, snapshot["yaw"], effective_dt
                     )
-                elif self.phase == "TAKEOFF":
+                elif self.phase == MissionPhase.TAKEOFF:
                     control = self.takeoff_controller(
                         x, y, z, snapshot["yaw"], effective_dt
                     )
-                elif self.phase == "TRAJECTORY":
+                elif self.phase == MissionPhase.TRAJECTORY:
                     control = self.trajectory_controller(
                         x, y, z, effective_dt
                     )
-                elif self.phase == "RETURN_HOME":
+                elif self.phase == MissionPhase.RETURN_HOME:
                     control = self.return_home_controller(
                         x,
                         y,
                         z,
                         effective_dt,
                     )
-                elif self.phase in ("ALIGN", "HANDOFF"):
+                elif self.phase in (
+                    MissionPhase.ALIGN,
+                    MissionPhase.HANDOFF,
+                ):
                     control = self.align_controller(
                         x,
                         y,
@@ -2111,16 +2202,10 @@ class PositionController:
                     )
                 )
                 cmd_vx, cmd_vy, cmd_vz = command
-                if not all(
-                    math.isfinite(value)
-                    for value in (
-                        cmd_vx,
-                        cmd_vy,
-                        cmd_vz,
-                        control["yaw_cmd"],
-                    )
-                ):
-                    raise RuntimeError("Refusing non-finite control command")
+                self._assert_command_invariants(
+                    command,
+                    control["yaw_cmd"],
+                )
                 self.publish_velocity(
                     cmd_vx,
                     cmd_vy,

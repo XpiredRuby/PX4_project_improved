@@ -10,6 +10,8 @@ autonomous landing without a supplied ground height.
 - Averaged home reference and pre-arm trajectory checks
 - Cruise height includes GPS vertical uncertainty and tracking margin
 - Hold/recover on short GPS degradation; timeout requests return home
+- Guarded mission state transitions and thread-safe return/handoff signals
+- Last trusted position is retained for degraded-navigation hold
 - Command slew limits and flight-envelope guards
 - Stable position/attitude gate before landing
 - Continuous logs through PX4 landing and automatic-disarm verification
@@ -44,7 +46,9 @@ heading), GPS height reference (`EKF2_HGT_REF=1`), no magnetometer
 (`EKF2_MAG_TYPE=5`), and disable `EKF2_BARO_CTRL`, `EKF2_OF_CTRL`,
 `EKF2_EV_CTRL`, `EKF2_RNG_CTRL`, and `EKF2_AGP_CTRL`; reboot PX4. Single-GPS
 yaw may require movement to initialize, so preflight can legitimately reject
-an unaligned vehicle. Verify actual sensor fusion in PX4 logs.
+an unaligned vehicle. The runner also requires a bounded Offboard-loss delay,
+Land as the Offboard-loss action, and enabled landing auto-disarm. Verify actual
+sensor fusion and failsafe activation in PX4 logs.
 
 ## Local validation
 

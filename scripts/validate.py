@@ -35,6 +35,7 @@ def main() -> None:
     for test_file in (
         "test_fixed_overlay.py",
         "test_safety_supervisor.py",
+        "test_fault_injection.py",
         "test_trajectory_generator.py",
         "test_analysis_pipeline.py",
         "test_presentation_plots.py",
