@@ -2,6 +2,7 @@
 # ruff: noqa: E402
 """MAVLink runner tests using deterministic protocol doubles."""
 
+import struct
 import sys
 import threading
 import unittest
@@ -14,7 +15,7 @@ sys.path.insert(0, str(ROOT / "controller"))
 import offboard_runner
 from mission_state import FailureAction, MissionOutcome
 from pymavlink import mavutil
-from px4_policy import read_px4_parameters
+from px4_policy import decode_px4_parameter_value, read_px4_parameters
 
 
 class FakeMav:
@@ -30,11 +31,19 @@ class FakeMav:
 
 
 class FakeParameterMessage:
-    def __init__(self, system, component, name, value):
+    def __init__(
+        self,
+        system,
+        component,
+        name,
+        value,
+        param_type=mavutil.mavlink.MAV_PARAM_TYPE_REAL32,
+    ):
         self._system = system
         self._component = component
         self.param_id = name
         self.param_value = value
+        self.param_type = param_type
 
     def get_srcSystem(self):
         return self._system
@@ -113,6 +122,34 @@ class RunnerProtocolTests(unittest.TestCase):
             master.mav.parameter_requests,
             [(1, 1, b"COM_OF_LOSS_T", -1)],
         )
+
+    def test_parameter_reader_decodes_px4_bytewise_int32(self):
+        packed_value = struct.unpack(">f", struct.pack(">i", 7))[0]
+        master = FakeMaster([
+            FakeParameterMessage(
+                1,
+                1,
+                b"EKF2_GPS_CTRL",
+                packed_value,
+                mavutil.mavlink.MAV_PARAM_TYPE_INT32,
+            )
+        ])
+
+        result = read_px4_parameters(
+            FakeController(master),
+            ("EKF2_GPS_CTRL",),
+            attempts=1,
+            timeout_s=0.05,
+        )
+
+        self.assertEqual(result, {"EKF2_GPS_CTRL": 7})
+
+    def test_parameter_decoder_rejects_unsupported_64_bit_type(self):
+        with self.assertRaisesRegex(RuntimeError, "Unsupported MAVLink"):
+            decode_px4_parameter_value(
+                0.0,
+                mavutil.mavlink.MAV_PARAM_TYPE_INT64,
+            )
 
     def test_mode_requests_encode_px4_offboard_and_land(self):
         controller = FakeController()
