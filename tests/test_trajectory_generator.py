@@ -2,6 +2,7 @@
 # ruff: noqa: E402
 
 import csv
+import importlib.util
 from itertools import pairwise
 import math
 import sys
@@ -18,7 +19,14 @@ from planner import TrajectoryPlanner
 from pose import Pose
 from profiles import SCurveProfile, TrapezoidalProfile
 from segments import MotionProfile
-from trajectory import TrajectoryGenerator
+
+_trajectory_spec = importlib.util.spec_from_file_location(
+    "px4_trajectory_generator",
+    GENERATOR / "trajectory.py",
+)
+_trajectory_module = importlib.util.module_from_spec(_trajectory_spec)
+_trajectory_spec.loader.exec_module(_trajectory_module)
+TrajectoryGenerator = _trajectory_module.TrajectoryGenerator
 
 
 class FixedTrajectoryGeneratorTests(unittest.TestCase):
