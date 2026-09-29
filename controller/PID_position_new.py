@@ -73,14 +73,16 @@ class PositionController:
         self.setpoint_send_count = 0
         self.setpoint_control_sends = 0
         self.setpoint_watchdog_resends = 0
-        self.setpoint_watchdog_timeout = 0.10
+        self.setpoint_watchdog_timeout = (
+            self.config.setpoint_watchdog_timeout_s
+        )
         self.setpoint_watchdog_poll = 0.02
 
         self.max_position_age_s = 0.25
         self.max_attitude_age_s = 0.25
         self.max_heartbeat_age_s = 1.50
-        self.max_horizontal_speed = 3.0
-        self.max_vertical_speed = 1.0
+        self.max_horizontal_speed = self.config.max_horizontal_speed_m_s
+        self.max_vertical_speed = self.config.max_vertical_speed_m_s
         self.max_trajectory_clock_step_s = 0.10
         self.trajectory_clock_limited = False
         self.navigation_unhealthy_since = None
@@ -100,13 +102,31 @@ class PositionController:
 
         # Baseline gains are intentionally unchanged.
         self.pid_x = PIDController(
-            Kp=0.8, Ki=0.0, Kd=0.0, output_limits=(-3.0, 3.0)
+            Kp=0.8,
+            Ki=0.0,
+            Kd=0.0,
+            output_limits=(
+                -self.config.max_horizontal_speed_m_s,
+                self.config.max_horizontal_speed_m_s,
+            ),
         )
         self.pid_y = PIDController(
-            Kp=0.8, Ki=0.0, Kd=0.0, output_limits=(-3.0, 3.0)
+            Kp=0.8,
+            Ki=0.0,
+            Kd=0.0,
+            output_limits=(
+                -self.config.max_horizontal_speed_m_s,
+                self.config.max_horizontal_speed_m_s,
+            ),
         )
         self.pid_z = PIDController(
-            Kp=1.0, Ki=0.0, Kd=0.0, output_limits=(-1.0, 1.0)
+            Kp=1.0,
+            Ki=0.0,
+            Kd=0.0,
+            output_limits=(
+                -self.config.max_vertical_speed_m_s,
+                self.config.max_vertical_speed_m_s,
+            ),
         )
 
         self.target_x = self.target_y = self.target_z = 0.0
@@ -252,41 +272,44 @@ class PositionController:
                 msg = self.master.recv_match(blocking=True, timeout=0.2)
                 if msg is None:
                     continue
-                msg_type = msg.get_type()
-                if msg_type == "BAD_DATA":
-                    continue
-                if not self._message_is_from_target(msg):
-                    continue
-
-                with self.state_lock:
-                    self.state.note_message(msg_type)
-                    if msg_type == "LOCAL_POSITION_NED":
-                        self.state.update_position(msg)
-                    elif msg_type == "ATTITUDE":
-                        self.state.update_attitude(msg)
-                    elif msg_type == "HEARTBEAT":
-                        self.state.update_heartbeat(msg)
-                    elif msg_type == "HIGHRES_IMU":
-                        self.state.update_highres_imu(msg)
-                    elif msg_type == "POSITION_TARGET_LOCAL_NED":
-                        self.state.update_position_target(msg)
-                    elif msg_type == "ATTITUDE_TARGET":
-                        self.state.update_attitude_target(msg)
-                    elif msg_type == "ACTUATOR_OUTPUT_STATUS":
-                        self.state.update_actuator_output_status(msg)
-                    elif msg_type == "SERVO_OUTPUT_RAW":
-                        self.state.update_servo_output_raw(msg)
-                    elif msg_type == "GPS_RAW_INT":
-                        self.state.update_gps_raw_int(msg)
-                    elif msg_type == "EXTENDED_SYS_STATE":
-                        self.state.update_extended_sys_state(msg)
-                    elif msg_type == "ESTIMATOR_STATUS":
-                        self.state.update_estimator_status(msg)
-                    elif msg_type == "COMMAND_ACK":
-                        self.state.update_command_ack(msg)
+                self.handle_mavlink_message(msg)
         except Exception as exc:
             self.receiver_error = repr(exc)
             print(f"[research] MAVLink receiver failed: {exc!r}")
+
+    def handle_mavlink_message(self, msg):
+        """Apply one target-system message; reusable for deterministic replay."""
+        msg_type = msg.get_type()
+        if msg_type == "BAD_DATA" or not self._message_is_from_target(msg):
+            return False
+
+        with self.state_lock:
+            self.state.note_message(msg_type)
+            if msg_type == "LOCAL_POSITION_NED":
+                self.state.update_position(msg)
+            elif msg_type == "ATTITUDE":
+                self.state.update_attitude(msg)
+            elif msg_type == "HEARTBEAT":
+                self.state.update_heartbeat(msg)
+            elif msg_type == "HIGHRES_IMU":
+                self.state.update_highres_imu(msg)
+            elif msg_type == "POSITION_TARGET_LOCAL_NED":
+                self.state.update_position_target(msg)
+            elif msg_type == "ATTITUDE_TARGET":
+                self.state.update_attitude_target(msg)
+            elif msg_type == "ACTUATOR_OUTPUT_STATUS":
+                self.state.update_actuator_output_status(msg)
+            elif msg_type == "SERVO_OUTPUT_RAW":
+                self.state.update_servo_output_raw(msg)
+            elif msg_type == "GPS_RAW_INT":
+                self.state.update_gps_raw_int(msg)
+            elif msg_type == "EXTENDED_SYS_STATE":
+                self.state.update_extended_sys_state(msg)
+            elif msg_type == "ESTIMATOR_STATUS":
+                self.state.update_estimator_status(msg)
+            elif msg_type == "COMMAND_ACK":
+                self.state.update_command_ack(msg)
+        return True
 
     def _estimated_px4_boot_ms(self):
         with self.state_lock:
@@ -1071,8 +1094,9 @@ class PositionController:
             f"duration={self.takeoff_segment.duration:.1f}s"
         )
 
-    def setup_logger(self):
-        self.filename = f"research_log_{int(time.time())}.csv"
+    def setup_logger(self, run_id=None):
+        suffix = run_id or str(int(time.time()))
+        self.filename = f"research_log_{suffix}.csv"
         self.log_fields = [
             "count",
             "wall_time",
@@ -1158,6 +1182,7 @@ class PositionController:
             "latest_setpoint_age_s",
             "setpoint_last_gap_s",
             "setpoint_max_gap_s",
+            "offboard_stream_max_gap_s",
             "setpoint_send_count",
             "setpoint_control_sends",
             "setpoint_watchdog_resends",
@@ -1926,6 +1951,9 @@ class PositionController:
             ),
             "effective_vertical_speed_limit": (
                 self.effective_vertical_speed_limit
+            ),
+            "offboard_stream_max_gap_s": (
+                self.config.offboard_stream_max_gap_s
             ),
             "desired_x": desired_x,
             "x": snapshot["x"],

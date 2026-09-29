@@ -1,0 +1,99 @@
+{
+  "description": "Target filtering and monotonic telemetry sequence",
+  "events": [
+    {
+      "type": "LOCAL_POSITION_NED",
+      "source_system": 1,
+      "source_component": 1,
+      "fields": {
+        "time_boot_ms": 100,
+        "x": 1.0,
+        "y": -2.0,
+        "z": -15.0,
+        "vx": 0.1,
+        "vy": -0.1,
+        "vz": 0.0
+      }
+    },
+    {
+      "type": "GPS_RAW_INT",
+      "source_system": 1,
+      "source_component": 1,
+      "fields": {
+        "time_usec": 1000000,
+        "fix_type": 3,
+        "satellites_visible": 12,
+        "eph": 90,
+        "epv": 120,
+        "h_acc": 800,
+        "v_acc": 1500,
+        "lat": 304000000,
+        "lon": -963000000,
+        "alt": 120000
+      }
+    },
+    {
+      "type": "ESTIMATOR_STATUS",
+      "source_system": 1,
+      "source_component": 1,
+      "fields": {
+        "flags": 7,
+        "vel_ratio": 0.2,
+        "pos_horiz_ratio": 0.25,
+        "pos_vert_ratio": 0.3,
+        "mag_ratio": 0.0,
+        "hagl_ratio": 0.0
+      }
+    },
+    {
+      "type": "EXTENDED_SYS_STATE",
+      "source_system": 1,
+      "source_component": 1,
+      "fields": {
+        "landed_state": 2
+      }
+    },
+    {
+      "type": "LOCAL_POSITION_NED",
+      "source_system": 42,
+      "source_component": 1,
+      "fields": {
+        "time_boot_ms": 200,
+        "x": 999.0,
+        "y": 999.0,
+        "z": 999.0,
+        "vx": 0.0,
+        "vy": 0.0,
+        "vz": 0.0
+      }
+    },
+    {
+      "type": "LOCAL_POSITION_NED",
+      "source_system": 1,
+      "source_component": 1,
+      "fields": {
+        "time_boot_ms": 200,
+        "x": 1.2,
+        "y": -2.1,
+        "z": -15.1,
+        "vx": 0.1,
+        "vy": -0.1,
+        "vz": -0.05
+      }
+    },
+    {
+      "type": "LOCAL_POSITION_NED",
+      "source_system": 1,
+      "source_component": 1,
+      "fields": {
+        "time_boot_ms": 150,
+        "x": 500.0,
+        "y": 500.0,
+        "z": 500.0,
+        "vx": 0.0,
+        "vy": 0.0,
+        "vz": 0.0
+      }
+    }
+  ]
+}

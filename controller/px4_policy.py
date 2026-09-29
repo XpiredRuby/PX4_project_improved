@@ -167,3 +167,4 @@ def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
         landing_timeout_s=controller.config.land_timeout_s,
     )
     print("[runner] PX4 GPS/IMU and failure-response settings verified")
+    return parameters

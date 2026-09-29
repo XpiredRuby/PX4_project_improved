@@ -24,6 +24,10 @@ class MissionConfig:
     minimum_segment_duration_s: float = 2.0
     command_xy_accel_limit_m_s2: float = 1.5
     command_z_accel_limit_m_s2: float = 1.0
+    max_horizontal_speed_m_s: float = 3.0
+    max_vertical_speed_m_s: float = 1.0
+    setpoint_watchdog_timeout_s: float = 0.10
+    offboard_stream_max_gap_s: float = 0.50
 
     max_operating_radius_m: float = 80.0
     max_height_above_launch_m: float = 30.0
@@ -99,8 +103,16 @@ class MissionConfig:
             self.max_jerk_m_s3,
             self.command_xy_accel_limit_m_s2,
             self.command_z_accel_limit_m_s2,
+            self.max_horizontal_speed_m_s,
+            self.max_vertical_speed_m_s,
+            self.setpoint_watchdog_timeout_s,
+            self.offboard_stream_max_gap_s,
         ) <= 0.0:
             raise ValueError("motion limits must be positive")
+        if self.setpoint_watchdog_timeout_s >= self.offboard_stream_max_gap_s:
+            raise ValueError(
+                "setpoint watchdog must resend before the Offboard gap limit"
+            )
         if not 0.0 < self.minimum_navigation_speed_scale <= 1.0:
             raise ValueError("minimum navigation speed scale must be in (0, 1]")
         if not (

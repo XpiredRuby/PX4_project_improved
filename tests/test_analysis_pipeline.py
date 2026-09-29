@@ -83,6 +83,7 @@ class AnalysisPipelineTests(unittest.TestCase):
             "effective_horizontal_speed_limit": [3.0] * 6,
             "effective_vertical_speed_limit": [1.0] * 6,
             "setpoint_max_gap_s": [0.05] * 6,
+            "offboard_stream_max_gap_s": [0.5] * 6,
             "position_source_regressed": [False] * 6,
             "gps_source_regressed": [False] * 6,
             "navigation_state": ["HEALTHY"] * 6,

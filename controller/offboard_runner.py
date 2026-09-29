@@ -4,9 +4,10 @@ import time
 
 from pymavlink import mavutil
 
-from mission_state import FailureAction
+from mission_state import FailureAction, MissionOutcome
 from PID_position_new import PositionController
 from px4_policy import audit_px4_configuration
+from run_record import RunRecord
 
 
 PRESTREAM_SECONDS = 2.0
@@ -254,15 +255,44 @@ def wait_for_failsafe_takeover(controller, timeout=MODE_TIMEOUT):
     raise TimeoutError("PX4 did not take control after Offboard commands stopped")
 
 
+def final_state_snapshot(controller):
+    main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+    landed_state, _, _ = landing_snapshot(controller)
+    return {
+        "heartbeat_main_mode": main_mode,
+        "heartbeat_sub_mode": sub_mode,
+        "armed": armed,
+        "landed_state": landed_state,
+        "mission_phase": str(controller.phase_snapshot()),
+        "failure_action": str(controller.failure_action_snapshot()),
+    }
+
+
+def classify_failure(controller, vehicle_was_armed):
+    if controller.failure_action_snapshot() == FailureAction.PX4_FAILSAFE:
+        return MissionOutcome.PX4_FAILSAFE
+    if vehicle_was_armed:
+        return MissionOutcome.ABORTED_TO_LAND
+    return MissionOutcome.PREARM_REJECTED
+
+
 def main():
+    run_record = RunRecord()
     c = PositionController()
+    run_record.attach_context(c, {})
     worker = None
     controller_stopped = False
+    vehicle_was_armed = False
+    outcome = MissionOutcome.PREARM_REJECTED
+    outcome_reason = "Mission did not reach arming"
+    cleanup_status = "not_required"
+    cleanup_error = None
 
     try:
         print("[runner] Connecting to PX4...")
         c.connect()
-        audit_px4_configuration(c)
+        px4_parameters = audit_px4_configuration(c)
+        run_record.attach_context(c, px4_parameters)
 
         c.start_receiver()
         c.wait_for_fresh_telemetry()
@@ -271,7 +301,7 @@ def main():
         home_snapshot = c.capture_home_reference()
         c.configure_cruise_height(home_snapshot)
         c.validate_mission_plan()
-        c.setup_logger()
+        c.setup_logger(run_id=run_record.run_id)
 
         print(
             f"[runner] Pre-streaming neutral setpoints for "
@@ -292,6 +322,7 @@ def main():
             ARM_TIMEOUT,
         )
         wait_for_armed(c, ARM_TIMEOUT)
+        vehicle_was_armed = True
         print("[runner] Armed confirmed")
 
         c.initialize_target()
@@ -356,6 +387,8 @@ def main():
             timeout=c.config.land_timeout_s,
         )
         print("[runner] PX4 ON_GROUND and automatic disarm confirmed")
+        outcome = MissionOutcome.SUCCESS
+        outcome_reason = "PX4 ON_GROUND and automatic disarm confirmed"
 
         c.stop()
         controller_stopped = True
@@ -367,6 +400,11 @@ def main():
             f"armed={armed} landed_state={landed_state} phase={phase}"
         )
         print("[runner] SUCCESS")
+
+    except BaseException as exc:
+        outcome_reason = f"{type(exc).__name__}: {exc}"
+        outcome = classify_failure(c, vehicle_was_armed)
+        raise
 
     finally:
         # Never force-disarm a vehicle that PX4 may still consider airborne.
@@ -382,6 +420,7 @@ def main():
                         f"sub_mode={sub_mode})"
                     )
                     wait_for_failsafe_takeover(c)
+                    cleanup_status = "px4_failsafe_takeover_confirmed"
                 else:
                     print(
                         "[runner] Failure cleanup: handing control to PX4 LAND "
@@ -397,14 +436,31 @@ def main():
                         after_sequence=land_sequence,
                         timeout=c.config.land_timeout_s,
                     )
+                    cleanup_status = "px4_land_and_disarm_confirmed"
         except Exception as exc:
+            cleanup_status = "failed"
+            cleanup_error = repr(exc)
             print(f"[runner] Failure LAND cleanup error: {exc!r}")
         finally:
             try:
                 if c.master is not None and not controller_stopped:
                     c.stop()
             except Exception as exc:
+                if cleanup_error is None:
+                    cleanup_status = "failed"
+                    cleanup_error = repr(exc)
                 print(f"[runner] Controller cleanup error: {exc!r}")
+            try:
+                run_record.finalize(
+                    outcome=outcome,
+                    reason=outcome_reason,
+                    final_state=final_state_snapshot(c),
+                    cleanup_status=cleanup_status,
+                    cleanup_error=cleanup_error,
+                )
+                print(f"[runner] Run manifest: {run_record.path}")
+            except Exception as exc:
+                print(f"[runner] Run manifest error: {exc!r}")
 
 
 if __name__ == "__main__":

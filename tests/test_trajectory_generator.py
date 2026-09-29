@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 
 import csv
+from itertools import pairwise
 import math
 import sys
 import tempfile
@@ -51,7 +53,7 @@ class FixedTrajectoryGeneratorTests(unittest.TestCase):
                 self.assertAlmostEqual(states[-1].jerk, 0.0)
                 intervals = [
                     right.time - left.time
-                    for left, right in zip(states, states[1:])
+                    for left, right in pairwise(states)
                 ]
                 self.assertTrue(all(interval > 0.0 for interval in intervals))
                 self.assertLessEqual(max(intervals), 0.05 + 1e-10)
@@ -208,7 +210,7 @@ class FixedTrajectoryGeneratorTests(unittest.TestCase):
         self.assertTrue(
             all(
                 right.time > left.time
-                for left, right in zip(first, first[1:])
+                for left, right in pairwise(first)
             )
         )
         final = generator.pose
@@ -248,7 +250,7 @@ class FixedTrajectoryGeneratorTests(unittest.TestCase):
 
         moving_turn_steps = [
             abs(right.yaw_rate - left.yaw_rate)
-            for left, right in zip(first, first[1:])
+            for left, right in pairwise(first)
             if math.hypot(left.vx, left.vy) > 0.5
             and math.hypot(right.vx, right.vy) > 0.5
         ]

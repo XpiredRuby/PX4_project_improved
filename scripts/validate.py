@@ -37,6 +37,8 @@ def main() -> None:
         "test_safety_supervisor.py",
         "test_fault_injection.py",
         "test_runner_protocol.py",
+        "test_telemetry_replay.py",
+        "test_run_record.py",
         "test_trajectory_generator.py",
         "test_analysis_pipeline.py",
         "test_presentation_plots.py",

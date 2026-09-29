@@ -33,3 +33,9 @@
 6. Keep raw logs immutable and generate plots/reports into separate directories.
 7. Report unavailable fields as unavailable rather than estimating them.
 
+Current runs write `run_manifest_<run-id>.json` beside the matching
+`research_log_<run-id>.csv`. The manifest records the outcome and reason,
+cleanup result, controller configuration, audited PX4 parameters, source and
+trajectory hashes, software versions, and final PX4 state. This mission is
+deterministic, so the manifest records `random_seed: null` rather than
+inventing a seed.

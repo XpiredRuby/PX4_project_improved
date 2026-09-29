@@ -14,7 +14,6 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
@@ -110,7 +109,7 @@ def save(fig: plt.Figure, output: Path) -> None:
 def plot_position(data_dir: Path, output_dir: Path) -> None:
     frame = fixed_run(load_csv(data_dir, "01_state_tracking_all.csv"))
     fig, axes = plt.subplots(3, 1, figsize=(12.5, 9.5), sharex=True)
-    for axis, letter in zip(axes, "xyz"):
+    for axis, letter in zip(axes, "xyz", strict=True):
         add_phase_context(axis, frame)
         axis.plot(
             frame["elapsed_s"], frame[f"desired_{letter}_m"],
@@ -193,7 +192,7 @@ def plot_outer_inner(data_dir: Path, output_dir: Path) -> None:
 def plot_acceleration(data_dir: Path, output_dir: Path) -> None:
     frame = fixed_run(load_csv(data_dir, "04_acceleration_jerk.csv"))
     fig, axes = plt.subplots(3, 1, figsize=(12.5, 9.5), sharex=True)
-    for axis, letter in zip(axes, "xyz"):
+    for axis, letter in zip(axes, "xyz", strict=True):
         add_phase_context(axis, frame)
         axis.plot(
             frame["elapsed_s"], frame[f"planned_a{letter}_mps2"],
@@ -255,7 +254,9 @@ def plot_pair_effects(data_dir: Path, output_dir: Path) -> None:
     colors = np.where(high < 0, "#16a34a", "#64748b")
     fig, axis = plt.subplots(figsize=(11.8, 6.8))
     axis.axvline(0.0, color="#111827", linewidth=1.0)
-    for yi, mean, lower, upper, color in zip(y, means, low, high, colors):
+    for yi, mean, lower, upper, color in zip(
+        y, means, low, high, colors, strict=True
+    ):
         axis.errorbar(
             mean,
             yi,
@@ -280,7 +281,7 @@ def plot_pair_effects(data_dir: Path, output_dir: Path) -> None:
         "Points are pairwise mean percent changes; whiskers are paired 95% confidence intervals (n=5). Green intervals exclude zero.",
         transform=axis.transAxes, fontsize=9, color="#475569",
     )
-    for yi, mean in zip(y, means):
+    for yi, mean in zip(y, means, strict=True):
         axis.annotate(
             f"{mean:+.1f}%", (mean, yi), xytext=(6 if mean >= 0 else -6, 7),
             textcoords="offset points", ha="left" if mean >= 0 else "right",

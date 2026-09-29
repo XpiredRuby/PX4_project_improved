@@ -12,6 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "controller"))
 
 import offboard_runner
+from mission_state import FailureAction, MissionOutcome
+from pymavlink import mavutil
 from px4_policy import read_px4_parameters
 
 
@@ -62,7 +64,36 @@ class FakeController:
         self.native_samples += 1
 
 
+class TickClock:
+    def __init__(self, step=0.05):
+        self.value = -step
+        self.step = step
+
+    def __call__(self):
+        self.value += self.step
+        return self.value
+
+
 class RunnerProtocolTests(unittest.TestCase):
+    def test_failure_outcome_distinguishes_prearm_land_and_px4_failsafe(self):
+        controller = FakeController()
+        controller.failure_action_snapshot = lambda: FailureAction.LAND
+        self.assertEqual(
+            offboard_runner.classify_failure(controller, False),
+            MissionOutcome.PREARM_REJECTED,
+        )
+        self.assertEqual(
+            offboard_runner.classify_failure(controller, True),
+            MissionOutcome.ABORTED_TO_LAND,
+        )
+        controller.failure_action_snapshot = (
+            lambda: FailureAction.PX4_FAILSAFE
+        )
+        self.assertEqual(
+            offboard_runner.classify_failure(controller, True),
+            MissionOutcome.PX4_FAILSAFE,
+        )
+
     def test_parameter_reader_filters_other_vehicle_and_matches_bytes_id(self):
         master = FakeMaster([
             FakeParameterMessage(9, 1, b"COM_OF_LOSS_T", 99.0),
@@ -92,6 +123,81 @@ class RunnerProtocolTests(unittest.TestCase):
         requests = controller.master.mav.mode_requests
         self.assertEqual(requests[0][2], 6 << 16)
         self.assertEqual(requests[1][2], (6 << 24) | (4 << 16))
+
+    def test_ensure_mode_retries_then_times_out(self):
+        controller = FakeController()
+        controller.control_dt = 0.05
+
+        with (
+            patch.object(offboard_runner.time, "monotonic", TickClock()),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+            patch.object(
+                offboard_runner,
+                "heartbeat_snapshot",
+                return_value=(4, 0, True),
+            ),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "did not enter OFFBOARD"):
+                offboard_runner.ensure_mode(
+                    controller,
+                    "OFFBOARD",
+                    timeout=0.3,
+                    keep_streaming=False,
+                )
+
+        self.assertGreaterEqual(len(controller.master.mav.mode_requests), 1)
+
+    def test_ensure_mode_accepts_confirmed_offboard(self):
+        controller = FakeController()
+        controller.control_dt = 0.05
+
+        with patch.object(
+            offboard_runner,
+            "heartbeat_snapshot",
+            return_value=(6, 0, True),
+        ):
+            offboard_runner.ensure_mode(
+                controller,
+                "OFFBOARD",
+                timeout=1.0,
+                keep_streaming=False,
+            )
+
+        self.assertEqual(len(controller.master.mav.mode_requests), 1)
+
+    def test_command_rejection_and_ack_timeout_are_explicit(self):
+        command = mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+        controller = FakeController()
+
+        with patch.object(
+            offboard_runner,
+            "command_ack_snapshot",
+            return_value=(2, mavutil.mavlink.MAV_RESULT_DENIED, 0),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "rejected command"):
+                offboard_runner.wait_for_command_ack(
+                    controller,
+                    command,
+                    after_sequence=1,
+                    timeout=1.0,
+                )
+
+        with (
+            patch.object(offboard_runner.time, "monotonic", TickClock()),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+            patch.object(
+                offboard_runner,
+                "command_ack_snapshot",
+                return_value=(1, -1, -1),
+            ),
+        ):
+            with self.assertRaisesRegex(TimeoutError, "No COMMAND_ACK"):
+                offboard_runner.wait_for_command_ack(
+                    controller,
+                    command,
+                    after_sequence=1,
+                    timeout=0.3,
+                )
 
     def test_native_landing_requires_new_on_ground_report_and_disarm(self):
         controller = FakeController()

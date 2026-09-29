@@ -15,6 +15,6 @@ controller/trajectory.csv
 trajectory_generator/trajectory.csv
 presentation_plots/
 research_log_*.csv
+run_manifest_*.json
 analysis/metrics.json
 analysis/diagnostics.json
-

@@ -10,6 +10,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pymavlink import mavutil
 
 
 PHASE_COLORS = {
@@ -30,8 +31,6 @@ NOMINAL_PHASE_SEQUENCE = (
     "HANDOFF",
     "PX4_LAND",
 )
-PX4_LANDED_STATE_ON_GROUND = 1
-OFFBOARD_STREAM_MAX_GAP_S = 0.5
 
 
 def finite(series):
@@ -112,7 +111,7 @@ def build_safety_audit(df):
         final_landed = int(landed.iloc[-1])
         add(
             "PX4 touchdown confirmed",
-            final_landed == PX4_LANDED_STATE_ON_GROUND,
+            final_landed == mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND,
             f"final landed_state={final_landed}",
         )
 
@@ -160,19 +159,28 @@ def build_safety_audit(df):
             "missing fields: " + ", ".join(missing),
         )
 
-    gap_values = (
-        finite(df["setpoint_max_gap_s"]).dropna()
-        if "setpoint_max_gap_s" in df
-        else pd.Series(dtype=float)
-    )
-    if gap_values.empty:
-        add("Offboard stream continuity", False, "setpoint gap field missing")
+    if {
+        "setpoint_max_gap_s",
+        "offboard_stream_max_gap_s",
+    }.issubset(df.columns):
+        gap_values = finite(df["setpoint_max_gap_s"]).dropna()
+        gap_limits = finite(df["offboard_stream_max_gap_s"]).dropna()
     else:
-        max_gap = float(gap_values.max())
+        gap_values = pd.Series(dtype=float)
+        gap_limits = pd.Series(dtype=float)
+    if gap_values.empty or gap_limits.empty:
         add(
             "Offboard stream continuity",
-            max_gap <= OFFBOARD_STREAM_MAX_GAP_S,
-            f"maximum gap={max_gap:.3f}s",
+            False,
+            "setpoint gap or configured limit missing",
+        )
+    else:
+        max_gap = float(gap_values.max())
+        gap_limit = float(gap_limits.min())
+        add(
+            "Offboard stream continuity",
+            max_gap <= gap_limit,
+            f"maximum gap={max_gap:.3f}s, limit={gap_limit:.3f}s",
         )
 
     regression_columns = [
@@ -1423,6 +1431,7 @@ def main():
     for column in df.columns:
         if column not in numeric_exceptions:
             df[column] = finite(df[column])
+    df = df.copy()
 
     enrich_derived_signals(df)
 

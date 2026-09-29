@@ -28,6 +28,13 @@ class FailureAction(TextEnum):
     PX4_FAILSAFE = "PX4_FAILSAFE"
 
 
+class MissionOutcome(TextEnum):
+    PREARM_REJECTED = "PREARM_REJECTED"
+    SUCCESS = "SUCCESS"
+    ABORTED_TO_LAND = "ABORTED_TO_LAND"
+    PX4_FAILSAFE = "PX4_FAILSAFE"
+
+
 MISSION_TRANSITIONS = {
     MissionPhase.TAKEOFF: frozenset((MissionPhase.TRAJECTORY,)),
     MissionPhase.TRAJECTORY: frozenset((MissionPhase.RETURN_HOME,)),
@@ -63,4 +70,3 @@ def require_transition(current, requested, transition_map, label):
             f"Invalid {label} transition {current.value}->{requested.value}"
         )
     return requested
-

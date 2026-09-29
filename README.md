@@ -18,6 +18,9 @@ autonomous landing without a supplied ground height.
 - Setpoint watchdog, command acknowledgement, and safe timeouts
 - Automatic post-run audit of mission phases, touchdown, disarm, command
   limits, setpoint continuity, and telemetry integrity
+- Per-run JSON manifest with outcome, PX4 parameters, configuration, source
+  hashes, dependency versions, and final vehicle state
+- Deterministic MAVLink lifecycle and telemetry-sequence replay tests
 
 ## Repository layout
 
@@ -55,7 +58,8 @@ sensor fusion and failsafe activation in PX4 logs.
 ## Local validation
 
 ```bash
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-dev.txt
+python -m ruff check controller analysis scripts tests
 python scripts/validate.py
 ```
 
