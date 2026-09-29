@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
 
 from analyze_run import (
     body_specific_force_to_ned,
+    build_safety_audit,
     enrich_derived_signals,
     quaternion_to_euler,
 )
@@ -61,6 +62,59 @@ class AnalysisPipelineTests(unittest.TestCase):
         }
         self.assertTrue(expected.issubset(frame.columns))
         self.assertTrue(np.isfinite(frame[list(expected)].to_numpy()).all())
+
+    @staticmethod
+    def successful_run_frame():
+        phases = [
+            "TAKEOFF",
+            "TRAJECTORY",
+            "RETURN_HOME",
+            "ALIGN",
+            "HANDOFF",
+            "PX4_LAND",
+        ]
+        return pd.DataFrame({
+            "phase": phases,
+            "armed": [True, True, True, True, True, False],
+            "landed_state": [1, 2, 2, 2, 4, 1],
+            "cmd_vx": [0.0, 1.5, -1.0, 0.1, 0.0, np.nan],
+            "cmd_vy": [0.0, 0.5, 0.2, 0.0, 0.0, np.nan],
+            "cmd_vz": [-0.5, 0.0, 0.2, 0.0, 0.0, np.nan],
+            "effective_horizontal_speed_limit": [3.0] * 6,
+            "effective_vertical_speed_limit": [1.0] * 6,
+            "setpoint_max_gap_s": [0.05] * 6,
+            "position_source_regressed": [False] * 6,
+            "gps_source_regressed": [False] * 6,
+            "navigation_state": ["HEALTHY"] * 6,
+        })
+
+    def test_safety_audit_passes_complete_bounded_run(self):
+        audit = build_safety_audit(self.successful_run_frame())
+        self.assertTrue(audit["overall_passed"])
+        self.assertTrue(all(item["passed"] for item in audit["checks"]))
+
+    def test_safety_audit_exposes_command_and_completion_failures(self):
+        frame = self.successful_run_frame()
+        frame.loc[1, "cmd_vx"] = 3.5
+        frame.loc[5, "armed"] = True
+        frame.loc[2, "gps_source_regressed"] = True
+
+        audit = build_safety_audit(frame)
+        failed = {
+            item["name"]
+            for item in audit["checks"]
+            if not item["passed"]
+        }
+
+        self.assertFalse(audit["overall_passed"])
+        self.assertEqual(
+            failed,
+            {
+                "Automatic disarm confirmed",
+                "Command envelope respected",
+                "No telemetry time regression",
+            },
+        )
 
 
 if __name__ == "__main__":

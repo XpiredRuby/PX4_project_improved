@@ -3,7 +3,6 @@
 
 import argparse
 import json
-import math
 from pathlib import Path
 
 import matplotlib
@@ -16,9 +15,23 @@ import pandas as pd
 PHASE_COLORS = {
     "TAKEOFF": "#dbeafe",
     "TRAJECTORY": "#dcfce7",
-    "LAND": "#fef3c7",
-    "DONE": "#e5e7eb",
+    "RETURN_HOME": "#fef3c7",
+    "ALIGN": "#ede9fe",
+    "HANDOFF": "#fce7f3",
+    "PX4_LAND": "#fee2e2",
+    "PX4_FAILSAFE": "#fecaca",
 }
+
+NOMINAL_PHASE_SEQUENCE = (
+    "TAKEOFF",
+    "TRAJECTORY",
+    "RETURN_HOME",
+    "ALIGN",
+    "HANDOFF",
+    "PX4_LAND",
+)
+PX4_LANDED_STATE_ON_GROUND = 1
+OFFBOARD_STREAM_MAX_GAP_S = 0.5
 
 
 def finite(series):
@@ -32,6 +45,180 @@ def wrapped_error(desired, actual):
         np.sin(desired - actual),
         np.cos(desired - actual),
     )
+
+
+def boolean_values(series):
+    """Normalize bool-like CSV values without treating nonempty text as true."""
+    normalized = series.astype(str).str.strip().str.lower()
+    return normalized.map({
+        "true": True,
+        "1": True,
+        "1.0": True,
+        "false": False,
+        "0": False,
+        "0.0": False,
+    }).astype("boolean")
+
+
+def build_safety_audit(df):
+    """Summarize objective mission-completion and command-safety evidence."""
+    checks = []
+
+    def add(name, passed, detail):
+        checks.append({
+            "name": name,
+            "passed": bool(passed),
+            "detail": str(detail),
+        })
+
+    phases = [
+        str(value)
+        for value in df.get("phase", pd.Series(dtype=str)).dropna()
+    ]
+    observed_phases = [
+        phase
+        for index, phase in enumerate(phases)
+        if index == 0 or phase != phases[index - 1]
+    ]
+    expected = list(NOMINAL_PHASE_SEQUENCE)
+    add(
+        "Nominal phase sequence",
+        observed_phases == expected,
+        " -> ".join(observed_phases) if observed_phases else "no phases",
+    )
+
+    if "armed" in df and not df.empty:
+        parsed_armed = boolean_values(df["armed"].tail(1)).iloc[0]
+        if pd.isna(parsed_armed):
+            add("Automatic disarm confirmed", False, "final armed unreadable")
+        else:
+            final_armed = bool(parsed_armed)
+            add(
+                "Automatic disarm confirmed",
+                not final_armed,
+                f"final armed={final_armed}",
+            )
+    else:
+        add("Automatic disarm confirmed", False, "armed field missing")
+
+    landed = (
+        finite(df["landed_state"].tail(1))
+        if "landed_state" in df
+        else pd.Series(dtype=float)
+    )
+    if landed.empty or pd.isna(landed.iloc[0]):
+        add("PX4 touchdown confirmed", False, "final landed_state missing")
+    else:
+        final_landed = int(landed.iloc[-1])
+        add(
+            "PX4 touchdown confirmed",
+            final_landed == PX4_LANDED_STATE_ON_GROUND,
+            f"final landed_state={final_landed}",
+        )
+
+    command_columns = {
+        "cmd_vx",
+        "cmd_vy",
+        "cmd_vz",
+        "effective_horizontal_speed_limit",
+        "effective_vertical_speed_limit",
+    }
+    command_inputs = command_columns | {"phase"}
+    if command_inputs.issubset(df.columns):
+        external_rows = df["phase"].isin(NOMINAL_PHASE_SEQUENCE[:-1])
+        command_frame = df.loc[external_rows, list(command_columns)].apply(finite)
+        finite_rows = command_frame.dropna()
+        if command_frame.empty:
+            add("Command envelope respected", False, "no finite commands")
+        else:
+            horizontal = np.hypot(
+                finite_rows["cmd_vx"], finite_rows["cmd_vy"]
+            )
+            horizontal_limit = finite_rows[
+                "effective_horizontal_speed_limit"
+            ]
+            vertical = finite_rows["cmd_vz"].abs()
+            vertical_limit = finite_rows[
+                "effective_vertical_speed_limit"
+            ]
+            within = (
+                (horizontal <= horizontal_limit + 1e-6)
+                & (vertical <= vertical_limit + 1e-6)
+                & (horizontal_limit >= 0.0)
+                & (vertical_limit >= 0.0)
+            )
+            add(
+                "Command envelope respected",
+                len(finite_rows) == len(command_frame) and bool(within.all()),
+                f"checked {len(finite_rows)}/{len(command_frame)} commands",
+            )
+    else:
+        missing = sorted(command_inputs - set(df.columns))
+        add(
+            "Command envelope respected",
+            False,
+            "missing fields: " + ", ".join(missing),
+        )
+
+    gap_values = (
+        finite(df["setpoint_max_gap_s"]).dropna()
+        if "setpoint_max_gap_s" in df
+        else pd.Series(dtype=float)
+    )
+    if gap_values.empty:
+        add("Offboard stream continuity", False, "setpoint gap field missing")
+    else:
+        max_gap = float(gap_values.max())
+        add(
+            "Offboard stream continuity",
+            max_gap <= OFFBOARD_STREAM_MAX_GAP_S,
+            f"maximum gap={max_gap:.3f}s",
+        )
+
+    regression_columns = [
+        name
+        for name in ("position_source_regressed", "gps_source_regressed")
+        if name in df
+    ]
+    if len(regression_columns) == 2:
+        parsed_flags = [boolean_values(df[name]) for name in regression_columns]
+        unreadable = sum(int(values.isna().sum()) for values in parsed_flags)
+        regressions = sum(
+            int(values.fillna(False).sum()) for values in parsed_flags
+        )
+        add(
+            "No telemetry time regression",
+            regressions == 0 and unreadable == 0,
+            f"regression flags={regressions}, unreadable={unreadable}",
+        )
+    else:
+        add(
+            "No telemetry time regression",
+            False,
+            "position/GPS regression fields missing",
+        )
+
+    if "navigation_state" in df:
+        lost_count = int(
+            df["navigation_state"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+            .eq("LOST")
+            .sum()
+        )
+        add(
+            "No navigation loss",
+            lost_count == 0,
+            f"LOST samples={lost_count}",
+        )
+    else:
+        add("No navigation loss", False, "navigation_state field missing")
+
+    return {
+        "overall_passed": all(item["passed"] for item in checks),
+        "checks": checks,
+    }
 
 
 def quaternion_to_euler(q0, q1, q2, q3):
@@ -102,7 +289,7 @@ def enrich_derived_signals(df):
         ax, ay, az = body_specific_force_to_ned(
             *(finite(df[key]) for key in acceleration_columns)
         )
-        for axis, values in zip("xyz", (ax, ay, az)):
+        for axis, values in zip("xyz", (ax, ay, az), strict=True):
             derived[f"derived_actual_a{axis}_ned_raw"] = values
             derived[f"derived_actual_a{axis}_ned_filtered"] = (
                 pd.Series(values, index=df.index)
@@ -210,7 +397,7 @@ def save_figure(fig, path):
 
 def plot_position(df, output, intervals):
     fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
-    for axis, key in zip(axes, ("x", "y", "z")):
+    for axis, key in zip(axes, ("x", "y", "z"), strict=True):
         axis.plot(
             df["elapsed_s"],
             df[f"desired_{key}"],
@@ -234,7 +421,7 @@ def plot_position(df, output, intervals):
 
 def plot_velocity(df, output, intervals):
     fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
-    for axis, key in zip(axes, ("x", "y", "z")):
+    for axis, key in zip(axes, ("x", "y", "z"), strict=True):
         axis.plot(
             df["elapsed_s"],
             df[f"planned_v{key}"],
@@ -264,7 +451,7 @@ def plot_velocity(df, output, intervals):
 
 def plot_outer_terms(df, output, intervals):
     fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
-    for axis, key in zip(axes, ("x", "y", "z")):
+    for axis, key in zip(axes, ("x", "y", "z"), strict=True):
         axis.plot(
             df["elapsed_s"],
             df[f"planned_v{key}"],
@@ -324,7 +511,7 @@ def plot_yaw(df, output, intervals):
 
 def plot_errors(df, output, intervals):
     fig, axes = plt.subplots(4, 1, figsize=(12, 11), sharex=True)
-    for axis, key in zip(axes[:3], ("x", "y", "z")):
+    for axis, key in zip(axes[:3], ("x", "y", "z"), strict=True):
         error = df[f"desired_{key}"] - df[key]
         axis.plot(df["elapsed_s"], error, linewidth=1.1)
         axis.axhline(0.0, color="black", linewidth=0.8)
@@ -622,7 +809,7 @@ def plot_outer_inner_chain(df, output, intervals):
     column_titles = ("North X / Roll / p", "East Y / Pitch / q", "Down Z / Yaw / r")
 
     for column, (axis_name, attitude_name, rate_name) in enumerate(
-        zip(position_names, attitude_names, actual_rates)
+        zip(position_names, attitude_names, actual_rates, strict=True)
     ):
         axes[0, column].plot(
             df["elapsed_s"], df[f"desired_{axis_name}"],
@@ -695,7 +882,7 @@ def plot_acceleration_tracking(df, output, intervals):
         return False
 
     fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
-    for axis, name in zip(axes, "xyz"):
+    for axis, name in zip(axes, "xyz", strict=True):
         axis.plot(
             df["elapsed_s"], finite(df[f"planned_a{name}"]),
             label="Planned NED acceleration", linewidth=1.4,
@@ -846,6 +1033,7 @@ def build_metrics(df):
             "attitude_target_pitch_rate",
             "attitude_target_yaw_rate",
         ),
+        strict=True,
     ):
         if has_signal(trajectory, target_key) and has_signal(trajectory, axis):
             records.append(
@@ -1001,6 +1189,7 @@ def build_metrics(df):
         "telemetry_freshness": freshness,
         "phase_summary": phase_summary,
         "saturation_counts": saturation,
+        "safety_audit": build_safety_audit(df),
     }
 
 
@@ -1046,6 +1235,16 @@ def write_report(
         for item in metrics["phase_summary"]
     ]
 
+    safety_audit = metrics["safety_audit"]
+    safety_rows = [
+        [
+            "PASS" if item["passed"] else "FAIL",
+            item["name"],
+            item["detail"],
+        ]
+        for item in safety_audit["checks"]
+    ]
+
     lag_rows = []
     for signal, record in metrics["tracking_lag"].items():
         if record is None:
@@ -1088,9 +1287,20 @@ def write_report(
         )
 
     report = [
-        "# PX4 Instrumented Simulation Report",
+        "# PX4 Instrumented Run Report",
         "",
         f"Archive: `{archive}`",
+        "",
+        "## Safety audit",
+        "",
+        "**Overall: "
+        + ("PASS" if safety_audit["overall_passed"] else "FAIL")
+        + "**",
+        "",
+        markdown_table(
+            ["Result", "Check", "Evidence"],
+            safety_rows,
+        ),
         "",
         "## Tracking metrics",
         "",
@@ -1201,7 +1411,15 @@ def main():
     if missing:
         raise RuntimeError(f"Missing required log columns: {sorted(missing)}")
 
-    numeric_exceptions = {"phase", "phase_transition", "mode", "armed"}
+    numeric_exceptions = {
+        "phase",
+        "phase_transition",
+        "mode",
+        "armed",
+        "navigation_state",
+        "navigation_reasons",
+        "failure_action",
+    }
     for column in df.columns:
         if column not in numeric_exceptions:
             df[column] = finite(df[column])
@@ -1232,6 +1450,10 @@ def main():
 
     with (output / "metrics.json").open("w", encoding="utf-8") as handle:
         json.dump(metrics, handle, indent=2, allow_nan=False)
+    with (output / "safety_audit.json").open(
+        "w", encoding="utf-8"
+    ) as handle:
+        json.dump(metrics["safety_audit"], handle, indent=2)
     pd.DataFrame(metrics["tracking_metrics"]).to_csv(
         output / "tracking_metrics.csv",
         index=False,
@@ -1259,6 +1481,10 @@ def main():
     )
     print(f"OUTER_INNER_CHAIN_PLOT={str(chain_created).lower()}")
     print(f"ACCELERATION_TRACKING_PLOT={str(acceleration_created).lower()}")
+    print(
+        "SAFETY_AUDIT="
+        + ("pass" if metrics["safety_audit"]["overall_passed"] else "fail")
+    )
 
 
 if __name__ == "__main__":

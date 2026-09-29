@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "controller"))
 
 from mission_state import MissionPhase, NavigationState
-from offboard_runner import check_px4_safety_config
 from PID_position_new import PositionController
+from px4_policy import check_px4_safety_config
 from VehicleState import VehicleState
 
 

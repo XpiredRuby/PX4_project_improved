@@ -16,6 +16,8 @@ autonomous landing without a supplied ground height.
 - Stable position/attitude gate before landing
 - Continuous logs through PX4 landing and automatic-disarm verification
 - Setpoint watchdog, command acknowledgement, and safe timeouts
+- Automatic post-run audit of mission phases, touchdown, disarm, command
+  limits, setpoint continuity, and telemetry integrity
 
 ## Repository layout
 

@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT / "controller"))
 
 from PID_position_new import NavigationEstimateLost, PositionController
 from minimum_jerk import MinimumJerkSegment
-from offboard_runner import check_gps_imu_estimator_config
+from px4_policy import check_gps_imu_estimator_config
 
 
 class SafetySupervisorTests(unittest.TestCase):
