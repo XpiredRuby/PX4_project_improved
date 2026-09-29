@@ -1048,11 +1048,11 @@ class PositionController:
                 snapshot["y"],
                 snapshot["z"],
             )
-            start_velocity = (
-                snapshot["vx"],
-                snapshot["vy"],
-                snapshot["vz"],
-            )
+            # The bootstrap levels and commands zero velocity before this
+            # transition. Do not extend a residual downward velocity into the
+            # climb polynomial, which could briefly send the vehicle back
+            # toward the launch surface.
+            start_velocity = (0.0, 0.0, 0.0)
         else:
             segment_start = (self.x0, self.y0, self.z0)
             start_velocity = (0.0, 0.0, 0.0)
