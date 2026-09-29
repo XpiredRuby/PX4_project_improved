@@ -1,5 +1,7 @@
 import math
 
+import numpy as np
+
 from trajectory import TrajectoryPoint
 
 
@@ -90,7 +92,10 @@ class MinimumJerkSegment:
             raise ValueError("endpoint velocity exceeds segment speed limit")
 
         distance = math.sqrt(
-            sum((float(b) - float(a)) ** 2 for a, b in zip(start, finish))
+            sum(
+                (float(b) - float(a)) ** 2
+                for a, b in zip(start, finish, strict=True)
+            )
         )
         if distance <= 1e-9:
             duration = max(0.1, float(minimum_duration))
@@ -106,8 +111,7 @@ class MinimumJerkSegment:
                 jerk_time,
             )
         # Nonzero boundary velocity changes the extrema. Increase duration
-        # until sampled vector velocity, acceleration, and jerk all satisfy
-        # the requested limits. The extra 2% prevents rounding-edge chatter.
+        # until the vector-norm polynomial extrema satisfy all limits.
         for _ in range(20):
             segment = cls(
                 start,
@@ -185,23 +189,75 @@ class MinimumJerkSegment:
             jz=jerk[2],
         )
 
-    def peak_kinematics(self, sample_count=201):
+    @staticmethod
+    def _derivative_coefficients(coefficients, order):
+        values = np.asarray(coefficients, dtype=float)
+        for _ in range(order):
+            values = np.asarray(
+                [index * values[index] for index in range(1, len(values))],
+                dtype=float,
+            )
+        return values
+
+    def _vector_norm_extrema_times(self, derivative_order):
+        vectors = [
+            self._derivative_coefficients(coefficients, derivative_order)
+            * self.duration
+            ** np.arange(6 - derivative_order)
+            for coefficients in self._coefficients
+        ]
+        derivatives = [
+            self._derivative_coefficients(coefficients, 1)
+            for coefficients in vectors
+        ]
+        norm_derivative = np.asarray([0.0])
+        for vector, derivative in zip(vectors, derivatives, strict=True):
+            product = np.polynomial.polynomial.polymul(vector, derivative)
+            if len(product) > len(norm_derivative):
+                norm_derivative = np.pad(
+                    norm_derivative,
+                    (0, len(product) - len(norm_derivative)),
+                )
+            norm_derivative[: len(product)] += product
+
+        candidates = [0.0, self.duration]
+        peak_coefficient = max(abs(norm_derivative))
+        if peak_coefficient > 0.0:
+            normalized = np.polynomial.polynomial.polytrim(
+                norm_derivative / peak_coefficient, tol=1e-12
+            )
+            roots = np.polynomial.polynomial.polyroots(normalized)
+            candidates.extend(
+                float(root.real * self.duration)
+                for root in roots
+                if abs(root.imag) <= 1e-8
+                and -1e-9 <= root.real <= 1.0 + 1e-9
+            )
+        return candidates
+
+    def peak_kinematics(self, sample_count=None):
+        """Return vector-norm peaks at analytic polynomial extrema."""
         peak_speed = peak_acceleration = peak_jerk = 0.0
-        for index in range(sample_count):
-            elapsed_s = self.duration * index / (sample_count - 1)
-            point = self.sample(elapsed_s)
-            peak_speed = max(
-                peak_speed,
-                math.sqrt(point.vx**2 + point.vy**2 + point.vz**2),
-            )
-            peak_acceleration = max(
-                peak_acceleration,
-                math.sqrt(point.ax**2 + point.ay**2 + point.az**2),
-            )
-            peak_jerk = max(
-                peak_jerk,
-                math.sqrt(point.jx**2 + point.jy**2 + point.jz**2),
-            )
+        candidate_sets = (
+            self._vector_norm_extrema_times(1),
+            self._vector_norm_extrema_times(2),
+            self._vector_norm_extrema_times(3),
+        )
+        for quantity, candidates in enumerate(candidate_sets):
+            for elapsed_s in candidates:
+                point = self.sample(elapsed_s)
+                vectors = (
+                    (point.vx, point.vy, point.vz),
+                    (point.ax, point.ay, point.az),
+                    (point.jx, point.jy, point.jz),
+                )
+                magnitude = math.sqrt(sum(value**2 for value in vectors[quantity]))
+                if quantity == 0:
+                    peak_speed = max(peak_speed, magnitude)
+                elif quantity == 1:
+                    peak_acceleration = max(peak_acceleration, magnitude)
+                else:
+                    peak_jerk = max(peak_jerk, magnitude)
         return peak_speed, peak_acceleration, peak_jerk
 
     def finished(self, elapsed_s):

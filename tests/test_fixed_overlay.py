@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 
 import os
 import sys
-import threading
 import time
 import unittest
 from pathlib import Path
@@ -219,6 +219,7 @@ class FixedOverlayTests(unittest.TestCase):
             "heartbeat_age_s": 0.10,
             "armed": True,
             "heartbeat_main_mode": 6,
+            "heartbeat_sub_mode": 0,
         }
         controller._validate_runtime_health(healthy)
 

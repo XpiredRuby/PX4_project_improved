@@ -2,6 +2,8 @@
 
 import csv
 import math
+from pathlib import Path
+import statistics
 import threading
 import time
 
@@ -20,6 +22,10 @@ def clamp(value, low, high):
 
 def wrapped_angle(value):
     return math.atan2(math.sin(value), math.cos(value))
+
+
+class NavigationEstimateLost(RuntimeError):
+    """Raised when Offboard control should yield to PX4 failsafes."""
 
 
 class PositionController:
@@ -67,10 +73,19 @@ class PositionController:
         self.max_trajectory_clock_step_s = 0.10
         self.trajectory_clock_limited = False
         self.navigation_unhealthy_since = None
+        self.navigation_recovered_since = None
+        self.navigation_confidence_updated_at = None
+        self.navigation_raw_confidence = 1.0
         self.navigation_confidence = 1.0
+        self.navigation_state = "HEALTHY"
+        self.navigation_reasons = []
+        self.navigation_hold_reference = None
         self.effective_horizontal_speed_limit = self.max_horizontal_speed
         self.effective_vertical_speed_limit = self.max_vertical_speed
         self.previous_velocity_command = (0.0, 0.0, 0.0)
+        self.failure_action = "LAND"
+        self.return_requested = False
+        self.return_request_reason = ""
 
         # Baseline gains are intentionally unchanged.
         self.pid_x = PIDController(
@@ -85,9 +100,13 @@ class PositionController:
 
         self.target_x = self.target_y = self.target_z = 0.0
         self.x0 = self.y0 = self.z0 = self.yaw0 = 0.0
+        self.home_reference_ready = False
+        self.home_sample_count = 0
+        self.cruise_height_m = self.config.cruise_height_m
 
         self.phase = "TAKEOFF"
         self.phase_enter_time = None
+        self.phase_clock_s = 0.0
         self.last_phase_transition = ""
         self.trajectory_start_time = None
         self.mission_time = 0.0
@@ -112,8 +131,14 @@ class PositionController:
         self.log_fields = []
         self.log_flush_period = 1.0
         self.status_period = 1.0
+        self.log_lock = threading.Lock()
+        self.log_row_count = 0
+        self.controller_started_at = None
+        self.last_monitor_log_at = None
+        self.last_monitor_phase = None
 
-        self.trajectory = Trajectory("trajectory.csv")
+        trajectory_path = Path(__file__).with_name("trajectory.csv")
+        self.trajectory = Trajectory(str(trajectory_path))
         self.duration = self.trajectory.duration
         self.trajectory_origin = self.trajectory.points[0]
 
@@ -252,13 +277,22 @@ class PositionController:
             self.receiver_error = repr(exc)
             print(f"[research] MAVLink receiver failed: {exc!r}")
 
+    def _estimated_px4_boot_ms(self):
+        with self.state_lock:
+            boot_ms = self.state.position_time_boot_ms
+            received_at = self.state.position_received_at
+        if not math.isfinite(float(boot_ms)) or received_at is None:
+            return 0
+        elapsed_ms = max(0.0, time.monotonic() - received_at) * 1000.0
+        return int(boot_ms + elapsed_ms) & 0xFFFFFFFF
+
     def send_velocity(self, vx, vy, vz, yaw, source="direct"):
         # Ignore position, acceleration, and yaw rate. Use velocity and yaw.
         # The FORCE_SET bit is intentionally clear because acceleration is
         # ignored and this command is not a force setpoint.
         with self.mav_send_lock:
             self.master.mav.set_position_target_local_ned_send(
-                0,
+                self._estimated_px4_boot_ms(),
                 self.master.target_system,
                 self.master.target_component,
                 mavutil.mavlink.MAV_FRAME_LOCAL_NED,
@@ -409,6 +443,11 @@ class PositionController:
                 "heartbeat_main_mode": s.heartbeat_main_mode,
                 "heartbeat_sub_mode": s.heartbeat_sub_mode,
                 "position_age_s": age(s.position_received_at),
+                "position_source_age_s": age(
+                    s.position_source_advanced_at
+                ),
+                "position_time_boot_ms": s.position_time_boot_ms,
+                "position_source_regressed": s.position_source_regressed,
                 "attitude_age_s": age(s.attitude_received_at),
                 "heartbeat_age_s": age(s.heartbeat_received_at),
                 "imu_age_s": age(s.imu_received_at),
@@ -421,6 +460,9 @@ class PositionController:
                 "actuator_age_s": age(s.actuator_received_at),
                 "servo_age_s": age(s.servo_received_at),
                 "gps_age_s": age(s.gps_received_at),
+                "gps_source_age_s": age(s.gps_source_advanced_at),
+                "gps_time_usec": s.gps_time_usec,
+                "gps_source_regressed": s.gps_source_regressed,
                 "extended_state_age_s": age(
                     s.extended_state_received_at
                 ),
@@ -576,6 +618,13 @@ class PositionController:
         reasons = []
         if snapshot["gps_age_s"] > self.config.gps_max_age_s:
             reasons.append("GPS telemetry stale")
+        if (
+            "gps_source_age_s" in snapshot
+            and snapshot["gps_source_age_s"] > self.config.gps_max_age_s
+        ):
+            reasons.append("GPS measurement timestamp stopped advancing")
+        if snapshot.get("gps_source_regressed", False):
+            reasons.append("GPS measurement timestamp moved backwards")
         if snapshot["gps_fix_type"] < self.config.gps_min_fix_type:
             reasons.append(
                 f"GPS fix {snapshot['gps_fix_type']}<"
@@ -617,6 +666,15 @@ class PositionController:
                 f"{snapshot['gps_vertical_accuracy_m']:.2f}m>"
                 f"{self.config.gps_max_vertical_accuracy_m:.2f}m"
             )
+        if (
+            self.home_reference_ready
+            and self._required_cruise_height(
+                snapshot["gps_vertical_accuracy_m"]
+            )
+            > self.cruise_height_m
+            + self.config.clearance_budget_hysteresis_m
+        ):
+            reasons.append("vertical uncertainty exceeds planned clearance")
 
         if snapshot["estimator_age_s"] > self.config.estimator_max_age_s:
             reasons.append("estimator telemetry stale")
@@ -652,17 +710,10 @@ class PositionController:
         return (limit - value) / (limit - good)
 
     def _navigation_confidence(self, snapshot):
+        # DOP remains a hard health gate, but is not counted again in the
+        # continuous score because reported accuracy already includes GPS
+        # geometry. This avoids artificially multiplying correlated metrics.
         scores = (
-            self._quality_score(
-                snapshot["gps_hdop"],
-                self.config.gps_good_hdop,
-                self.config.gps_max_hdop,
-            ),
-            self._quality_score(
-                snapshot["gps_vdop"],
-                self.config.gps_good_vdop,
-                self.config.gps_max_vdop,
-            ),
             self._quality_score(
                 snapshot["gps_horizontal_accuracy_m"],
                 self.config.gps_good_horizontal_accuracy_m,
@@ -691,6 +742,221 @@ class PositionController:
         )
         return min(scores)
 
+    def _update_filtered_navigation_confidence(self, raw_score, now_mono):
+        raw_score = clamp(float(raw_score), 0.0, 1.0)
+        self.navigation_raw_confidence = raw_score
+        if self.navigation_confidence_updated_at is None:
+            self.navigation_confidence = raw_score
+            self.navigation_confidence_updated_at = now_mono
+            return self.navigation_confidence
+
+        dt = max(0.0, now_mono - self.navigation_confidence_updated_at)
+        self.navigation_confidence_updated_at = now_mono
+        tau = (
+            self.config.navigation_confidence_fall_tau_s
+            if raw_score < self.navigation_confidence
+            else self.config.navigation_confidence_rise_tau_s
+        )
+        alpha = 1.0 - math.exp(-dt / tau) if dt > 0.0 else 0.0
+        self.navigation_confidence += alpha * (
+            raw_score - self.navigation_confidence
+        )
+        return self.navigation_confidence
+
+    def configure_cruise_height(self, snapshot):
+        vertical_accuracy = snapshot["gps_vertical_accuracy_m"]
+        uncertainty_margin = self._vertical_uncertainty_margin(vertical_accuracy)
+        required_height = self._required_cruise_height(vertical_accuracy)
+        self.cruise_height_m = max(
+            self.config.cruise_height_m,
+            required_height,
+        )
+        if self.cruise_height_m > self.config.max_height_above_launch_m:
+            raise RuntimeError(
+                "Navigation uncertainty requires a cruise height of "
+                f"{self.cruise_height_m:.2f}m, above the configured "
+                f"{self.config.max_height_above_launch_m:.2f}m ceiling"
+            )
+        self.takeoff_altitude = -self.cruise_height_m
+        print(
+            "[research] Uncertainty-aware cruise height: "
+            f"{self.cruise_height_m:.2f}m "
+            f"(VAcc={vertical_accuracy:.2f}m, "
+            f"uncertainty margin={uncertainty_margin:.2f}m)"
+        )
+
+    def _vertical_uncertainty_margin(self, vertical_accuracy):
+        return max(
+            self.config.minimum_vertical_uncertainty_margin_m,
+            self.config.vertical_accuracy_multiplier * vertical_accuracy,
+        )
+
+    def _required_cruise_height(self, vertical_accuracy):
+        return (
+            self.config.ground_offset_max_m
+            + self.config.terrain_clearance_m
+            + self._vertical_uncertainty_margin(vertical_accuracy)
+            + self.config.altitude_tracking_margin_m
+        )
+
+    def capture_home_reference(self, duration=None):
+        duration = (
+            self.config.home_sample_duration_s
+            if duration is None
+            else float(duration)
+        )
+        deadline = time.monotonic() + duration
+        samples = []
+        reference_snapshot = None
+        previous_position_time = None
+        while time.monotonic() < deadline:
+            now = time.monotonic()
+            snapshot = self._snapshot(now)
+            reference_snapshot = snapshot
+            reasons = self._navigation_health_reasons(snapshot)
+            horizontal_speed = math.hypot(snapshot["vx"], snapshot["vy"])
+            if reasons:
+                raise RuntimeError(
+                    "Navigation degraded while capturing home: "
+                    + "; ".join(reasons)
+                )
+            if (
+                snapshot["position_age_s"] > self.max_position_age_s
+                or snapshot["position_source_age_s"] > self.max_position_age_s
+            ):
+                raise RuntimeError("Local position went stale while capturing home")
+            if (
+                horizontal_speed
+                > self.config.home_max_horizontal_speed_m_s
+                or abs(snapshot["vz"])
+                > self.config.home_max_vertical_speed_m_s
+            ):
+                raise RuntimeError(
+                    "Vehicle moved while capturing home reference"
+                )
+            if snapshot["position_time_boot_ms"] != previous_position_time:
+                samples.append(
+                    (
+                        snapshot["x"],
+                        snapshot["y"],
+                        snapshot["z"],
+                        snapshot["yaw"],
+                        snapshot["gps_vertical_accuracy_m"],
+                        snapshot["gps_horizontal_accuracy_m"],
+                    )
+                )
+                previous_position_time = snapshot["position_time_boot_ms"]
+            time.sleep(0.05)
+
+        if len(samples) < self.config.home_min_samples:
+            raise RuntimeError(
+                f"Only {len(samples)} home samples collected; "
+                f"need {self.config.home_min_samples}"
+            )
+
+        if (
+            max(sample[5] for sample in samples)
+            > self.config.home_required_horizontal_accuracy_m
+        ):
+            raise RuntimeError(
+                "GPS horizontal accuracy is insufficient for home landing"
+            )
+
+        median_x = statistics.median(value[0] for value in samples)
+        median_y = statistics.median(value[1] for value in samples)
+        median_z = statistics.median(value[2] for value in samples)
+        inliers = [
+            sample
+            for sample in samples
+            if (
+                math.hypot(sample[0] - median_x, sample[1] - median_y)
+                <= self.config.home_max_horizontal_spread_m
+                and abs(sample[2] - median_z)
+                <= self.config.home_max_vertical_spread_m
+            )
+        ]
+        if len(inliers) < self.config.home_min_samples:
+            raise RuntimeError(
+                "Home reference was not stable after outlier rejection: "
+                f"{len(inliers)}/{len(samples)} samples retained"
+            )
+        self.x0 = statistics.fmean(sample[0] for sample in inliers)
+        self.y0 = statistics.fmean(sample[1] for sample in inliers)
+        self.z0 = statistics.fmean(sample[2] for sample in inliers)
+        mean_sin = statistics.fmean(math.sin(sample[3]) for sample in inliers)
+        mean_cos = statistics.fmean(math.cos(sample[3]) for sample in inliers)
+        self.yaw0 = math.atan2(mean_sin, mean_cos)
+        yaw_spread = max(
+            abs(wrapped_angle(sample[3] - self.yaw0)) for sample in inliers
+        )
+        if yaw_spread > math.radians(self.config.home_max_yaw_spread_deg):
+            raise RuntimeError(
+                f"Heading was not stable during home capture: "
+                f"{math.degrees(yaw_spread):.1f}deg"
+            )
+        self.home_sample_count = len(inliers)
+        self.home_reference_ready = True
+        print(
+            "[research] Averaged home reference: "
+            f"x={self.x0:.3f} y={self.y0:.3f} z={self.z0:.3f} "
+            f"yaw={self.yaw0:.3f} samples={len(inliers)}"
+        )
+        reference_snapshot = dict(reference_snapshot)
+        reference_snapshot["gps_vertical_accuracy_m"] = max(
+            sample[4] for sample in inliers
+        )
+        return reference_snapshot
+
+    def validate_mission_plan(self):
+        if not self.home_reference_ready:
+            raise RuntimeError("Home reference must be captured before validation")
+
+        origin = self.trajectory_origin
+        violations = []
+        for index, point in enumerate(self.trajectory.points):
+            desired_x = self.x0 + point.x - origin.x
+            desired_y = self.y0 + point.y - origin.y
+            desired_z = self.z0 - self.cruise_height_m + point.z - origin.z
+            radius = math.hypot(desired_x - self.x0, desired_y - self.y0)
+            height = self.z0 - desired_z
+            horizontal_speed = math.hypot(point.vx, point.vy)
+            if radius > self.config.max_operating_radius_m:
+                violations.append(f"point {index}: radius {radius:.2f}m")
+            if height > self.config.max_height_above_launch_m:
+                violations.append(f"point {index}: height {height:.2f}m")
+            if desired_z - self.z0 > self.config.max_offboard_drop_below_launch_m:
+                violations.append(f"point {index}: below-launch command")
+            if horizontal_speed > self.max_horizontal_speed * 1.001:
+                violations.append(
+                    f"point {index}: horizontal speed {horizontal_speed:.2f}m/s"
+                )
+            if abs(point.vz) > self.max_vertical_speed * 1.001:
+                violations.append(
+                    f"point {index}: vertical speed {abs(point.vz):.2f}m/s"
+                )
+            acceleration = math.sqrt(
+                point.ax**2 + point.ay**2 + point.az**2
+            )
+            if acceleration > self.config.max_accel_m_s2 * 1.001:
+                violations.append(
+                    f"point {index}: acceleration {acceleration:.2f}m/s²"
+                )
+            if all(math.isfinite(v) for v in (point.jx, point.jy, point.jz)):
+                jerk = math.sqrt(point.jx**2 + point.jy**2 + point.jz**2)
+                if jerk > self.config.max_jerk_m_s3 * 1.001:
+                    violations.append(f"point {index}: jerk {jerk:.2f}m/s³")
+            if len(violations) >= 8:
+                break
+        if violations:
+            raise RuntimeError(
+                "Mission plan failed pre-arm validation: "
+                + "; ".join(violations)
+            )
+        print(
+            f"[research] Mission plan validated: "
+            f"{len(self.trajectory.points)} points inside flight envelope"
+        )
+
     def wait_for_preflight_ready(self, timeout=None):
         timeout = (
             self.config.preflight_timeout_s if timeout is None else timeout
@@ -713,7 +979,7 @@ class PositionController:
                     f"HAcc={snapshot['gps_horizontal_accuracy_m']:.2f}m "
                     f"VAcc={snapshot['gps_vertical_accuracy_m']:.2f}m"
                 )
-                return
+                return snapshot
             if self.receiver_error is not None:
                 raise RuntimeError(
                     f"MAVLink receiver failed during preflight: "
@@ -727,12 +993,10 @@ class PositionController:
 
     def initialize_target(self, timeout=8.0, freshness_limit=2.0):
         self.wait_for_fresh_telemetry(timeout, freshness_limit)
-
-        with self.state_lock:
-            self.x0 = self.state.x
-            self.y0 = self.state.y
-            self.z0 = self.state.z
-            self.yaw0 = self.state.yaw
+        if not self.home_reference_ready:
+            raise RuntimeError(
+                "Averaged home reference was not captured before arming"
+            )
 
         self.target_x = self.x0
         self.target_y = self.y0
@@ -763,14 +1027,22 @@ class PositionController:
         self.return_yaw_start = None
         self.align_ready_since = None
         self.navigation_unhealthy_since = None
+        self.navigation_recovered_since = None
+        self.navigation_state = "HEALTHY"
+        self.navigation_reasons = []
+        self.navigation_hold_reference = None
         self.native_land_active = False
         self.handoff_requested = False
+        self.failure_action = "LAND"
+        self.return_requested = False
+        self.return_request_reason = ""
         self.previous_velocity_command = (0.0, 0.0, 0.0)
         self.phase = "TAKEOFF"
         self.phase_enter_time = time.monotonic()
+        self.phase_clock_s = 0.0
 
         print(
-            f"Origin captured immediately before control: "
+            f"Using averaged home origin: "
             f"x={self.x0:.3f} y={self.y0:.3f} "
             f"z={self.z0:.3f} yaw={self.yaw0:.3f}"
         )
@@ -790,6 +1062,7 @@ class PositionController:
             "phase",
             "phase_transition",
             "phase_elapsed_s",
+            "phase_clock_s",
             "mode",
             "armed",
             "heartbeat_custom_mode",
@@ -804,10 +1077,19 @@ class PositionController:
             "trajectory_index",
             "trajectory_finished",
             "trajectory_clock_limited",
+            "navigation_state",
+            "navigation_reasons",
+            "navigation_raw_confidence",
             "navigation_confidence",
+            "cruise_height_m",
+            "home_sample_count",
+            "failure_action",
             "effective_horizontal_speed_limit",
             "effective_vertical_speed_limit",
             "position_age_s",
+            "position_source_age_s",
+            "position_time_boot_ms",
+            "position_source_regressed",
             "attitude_age_s",
             "heartbeat_age_s",
             "imu_age_s",
@@ -816,6 +1098,9 @@ class PositionController:
             "actuator_age_s",
             "servo_age_s",
             "gps_age_s",
+            "gps_source_age_s",
+            "gps_time_usec",
+            "gps_source_regressed",
             "extended_state_age_s",
             "estimator_age_s",
             "command_ack_age_s",
@@ -956,6 +1241,7 @@ class PositionController:
         old_phase = self.phase
         self.phase = new_phase
         self.phase_enter_time = now_mono
+        self.phase_clock_s = 0.0
         self.last_phase_transition = f"{old_phase}->{new_phase}"
         print(f"[research] Phase transition {self.last_phase_transition}")
 
@@ -963,15 +1249,53 @@ class PositionController:
         for pid in (self.pid_x, self.pid_y, self.pid_z):
             pid.reset()
 
+    def request_return_home(self, reason):
+        if self.phase not in ("TRAJECTORY", "RETURN_HOME", "ALIGN", "HANDOFF"):
+            return False
+        if self.phase == "TRAJECTORY":
+            self.return_requested = True
+            self.return_request_reason = str(reason)
+            print(f"[research] Safe return requested: {reason}")
+        return True
+
+    def _start_return_home(self, x, y, z, snapshot, now_mono):
+        self.land_x = self.x0
+        self.land_y = self.y0
+        self.land_yaw_unwrapped = self.yaw0
+        self.return_yaw_start = snapshot["yaw"]
+        start_velocity = (
+            snapshot["vx"],
+            snapshot["vy"],
+            snapshot["vz"],
+        )
+        start_speed = math.sqrt(sum(value**2 for value in start_velocity))
+        self.return_segment = MinimumJerkSegment.from_limits(
+            (x, y, z),
+            (self.land_x, self.land_y, self.target_z),
+            max_speed=max(self.config.return_max_speed_m_s, start_speed),
+            max_accel=self.config.max_accel_m_s2,
+            max_jerk=self.config.max_jerk_m_s3,
+            minimum_duration=self.config.minimum_segment_duration_s,
+            start_velocity=start_velocity,
+        )
+        self.pid_x.setpoint = self.land_x
+        self.pid_y.setpoint = self.land_y
+        self.pid_z.setpoint = self.target_z
+        self._reset_position_pids()
+        self.return_requested = False
+        self._transition("RETURN_HOME", now_mono)
+
     def update_phase(self, x, y, z, now_mono, snapshot=None):
         self.last_phase_transition = ""
+        if self.navigation_state == "HOLD":
+            return
         if snapshot is None:
             snapshot = self._snapshot(now_mono)
 
         vx = snapshot["vx"]
         vy = snapshot["vy"]
         vz = snapshot["vz"]
-        phase_elapsed = max(0.0, now_mono - self.phase_enter_time)
+        phase_elapsed = self.phase_clock_s
 
         if self.phase == "TAKEOFF":
             position_error = math.sqrt(
@@ -1002,30 +1326,8 @@ class PositionController:
                 self._transition("TRAJECTORY", now_mono)
 
         elif self.phase == "TRAJECTORY":
-            if self.trajectory.finished:
-                self.land_x = self.x0
-                self.land_y = self.y0
-                self.land_yaw_unwrapped = self.yaw0
-                self.return_yaw_start = snapshot["yaw"]
-                start_velocity = (vx, vy, vz)
-                start_speed = math.sqrt(sum(v**2 for v in start_velocity))
-                self.return_segment = MinimumJerkSegment.from_limits(
-                    (x, y, z),
-                    (self.land_x, self.land_y, self.target_z),
-                    max_speed=max(
-                        self.config.return_max_speed_m_s,
-                        start_speed,
-                    ),
-                    max_accel=self.config.max_accel_m_s2,
-                    max_jerk=self.config.max_jerk_m_s3,
-                    minimum_duration=self.config.minimum_segment_duration_s,
-                    start_velocity=start_velocity,
-                )
-                self.pid_x.setpoint = self.land_x
-                self.pid_y.setpoint = self.land_y
-                self.pid_z.setpoint = self.target_z
-                self._reset_position_pids()
-                self._transition("RETURN_HOME", now_mono)
+            if self.trajectory.finished or self.return_requested:
+                self._start_return_home(x, y, z, snapshot, now_mono)
 
         elif self.phase == "RETURN_HOME":
             if self.return_segment.finished(phase_elapsed):
@@ -1118,6 +1420,89 @@ class PositionController:
             * clamp(self.navigation_confidence, 0.0, 1.0)
         )
 
+    def _local_estimate_valid(self, snapshot):
+        required = self._required_estimator_mask()
+        return snapshot["estimator_flags"] & required == required
+
+    def _set_navigation_state(self, new_state, snapshot):
+        if new_state == self.navigation_state:
+            return
+        old_state = self.navigation_state
+        self.navigation_state = new_state
+        if new_state == "HOLD" and self.navigation_hold_reference is None:
+            self.navigation_hold_reference = (
+                snapshot["x"],
+                snapshot["y"],
+                snapshot["z"],
+                snapshot["yaw"],
+            )
+            self._reset_position_pids()
+        if new_state == "HEALTHY":
+            self.navigation_hold_reference = None
+            self._reset_position_pids()
+        print(f"[research] Navigation state {old_state}->{new_state}")
+
+    def _update_navigation_supervisor(self, snapshot, now_mono):
+        self.navigation_reasons = self._navigation_health_reasons(snapshot)
+        raw_confidence = self._navigation_confidence(snapshot)
+        self._update_filtered_navigation_confidence(raw_confidence, now_mono)
+
+        if self.navigation_reasons:
+            self.navigation_recovered_since = None
+            if self.navigation_unhealthy_since is None:
+                self.navigation_unhealthy_since = now_mono
+            unhealthy_for = now_mono - self.navigation_unhealthy_since
+
+            if (
+                not self._local_estimate_valid(snapshot)
+                and unhealthy_for
+                >= self.config.navigation_degraded_entry_s
+            ):
+                self.failure_action = "PX4_FAILSAFE"
+                self._set_navigation_state("LOST", snapshot)
+                raise NavigationEstimateLost(
+                    "Local position estimate is no longer valid: "
+                    + "; ".join(self.navigation_reasons)
+                )
+            if unhealthy_for >= self.config.navigation_abort_s:
+                self.failure_action = "LAND"
+                self._set_navigation_state("LOST", snapshot)
+                raise RuntimeError(
+                    "Navigation remained unhealthy for "
+                    f"{unhealthy_for:.1f}s: "
+                    + "; ".join(self.navigation_reasons)
+                )
+            if unhealthy_for >= self.config.navigation_hold_entry_s:
+                self._set_navigation_state("HOLD", snapshot)
+            elif unhealthy_for >= self.config.navigation_degraded_entry_s:
+                self._set_navigation_state("DEGRADED", snapshot)
+            return
+
+        if self.navigation_unhealthy_since is not None:
+            if self.navigation_recovered_since is None:
+                self.navigation_recovered_since = now_mono
+            recovered_for = now_mono - self.navigation_recovered_since
+            if recovered_for < self.config.navigation_recovery_s:
+                if self.navigation_state != "HOLD":
+                    self._set_navigation_state("DEGRADED", snapshot)
+                return
+
+        self.navigation_unhealthy_since = None
+        self.navigation_recovered_since = None
+        self._set_navigation_state("HEALTHY", snapshot)
+
+    def _advance_phase_clock(self, loop_dt):
+        self.trajectory_clock_limited = False
+        if self.phase not in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME"):
+            return
+        if self.navigation_state == "HOLD":
+            return
+        step = min(max(0.0, loop_dt), self.max_trajectory_clock_step_s)
+        self.trajectory_clock_limited = loop_dt > self.max_trajectory_clock_step_s
+        self.phase_clock_s += step * self._navigation_speed_scale()
+        if self.phase == "TRAJECTORY":
+            self.mission_time = self.phase_clock_s
+
     def _limit_velocity_command(self, vx, vy, vz):
         confidence_scale = self._navigation_speed_scale()
         self.effective_horizontal_speed_limit = (
@@ -1173,8 +1558,9 @@ class PositionController:
         return (vx, vy, limited_vz), (limited_x, limited_y, limited_z)
 
     def takeoff_controller(self, x, y, z, yaw, dt):
-        elapsed = max(0.0, time.monotonic() - self.phase_enter_time)
+        elapsed = self.phase_clock_s
         target = self.takeoff_segment.sample(elapsed)
+        speed_scale = self._navigation_speed_scale()
 
         self.pid_x.setpoint = target.x
         self.pid_y.setpoint = target.y
@@ -1184,15 +1570,19 @@ class PositionController:
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
         command, limited = self._limit_velocity_command(
-            target.vx + correction_x,
-            target.vy + correction_y,
-            target.vz + correction_z,
+            target.vx * speed_scale + correction_x,
+            target.vy * speed_scale + correction_y,
+            target.vz * speed_scale + correction_z,
         )
 
         return self._control_result(
             target=target,
             desired=(target.x, target.y, target.z),
-            planned=(target.vx, target.vy, target.vz),
+            planned=(
+                target.vx * speed_scale,
+                target.vy * speed_scale,
+                target.vz * speed_scale,
+            ),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
@@ -1205,6 +1595,7 @@ class PositionController:
 
     def trajectory_controller(self, x, y, z, dt):
         target = self.trajectory.get_target(self.mission_time)
+        speed_scale = self._navigation_speed_scale()
 
         desired_x = self.x0 + target.x - self.trajectory_origin.x
         desired_y = self.y0 + target.y - self.trajectory_origin.y
@@ -1219,9 +1610,9 @@ class PositionController:
         correction_z = self.pid_z.update(z, dt)
 
         command, limited = self._limit_velocity_command(
-            target.vx + correction_x,
-            target.vy + correction_y,
-            target.vz + correction_z,
+            target.vx * speed_scale + correction_x,
+            target.vy * speed_scale + correction_y,
+            target.vz * speed_scale + correction_z,
         )
 
         yaw_unwrapped = (
@@ -1230,7 +1621,11 @@ class PositionController:
         return self._control_result(
             target=target,
             desired=(desired_x, desired_y, desired_z),
-            planned=(target.vx, target.vy, target.vz),
+            planned=(
+                target.vx * speed_scale,
+                target.vy * speed_scale,
+                target.vz * speed_scale,
+            ),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
@@ -1242,8 +1637,9 @@ class PositionController:
         )
 
     def return_home_controller(self, x, y, z, dt):
-        elapsed = max(0.0, time.monotonic() - self.phase_enter_time)
+        elapsed = self.phase_clock_s
         target = self.return_segment.sample(elapsed)
+        speed_scale = self._navigation_speed_scale()
 
         self.pid_x.setpoint = target.x
         self.pid_y.setpoint = target.y
@@ -1253,9 +1649,9 @@ class PositionController:
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
         command, limited = self._limit_velocity_command(
-            target.vx + correction_x,
-            target.vy + correction_y,
-            target.vz + correction_z,
+            target.vx * speed_scale + correction_x,
+            target.vy * speed_scale + correction_y,
+            target.vz * speed_scale + correction_z,
         )
 
         ratio = clamp(elapsed / self.return_segment.duration, 0.0, 1.0)
@@ -1269,7 +1665,11 @@ class PositionController:
         return self._control_result(
             target=target,
             desired=(target.x, target.y, target.z),
-            planned=(target.vx, target.vy, target.vz),
+            planned=(
+                target.vx * speed_scale,
+                target.vy * speed_scale,
+                target.vz * speed_scale,
+            ),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
@@ -1318,6 +1718,41 @@ class PositionController:
             command=command,
             limited=limited,
             yaw_unwrapped=self.land_yaw_unwrapped,
+        )
+
+    def navigation_hold_controller(self, x, y, z, yaw, dt):
+        if self.navigation_hold_reference is None:
+            self.navigation_hold_reference = (x, y, z, yaw)
+        hold_x, hold_y, hold_z, hold_yaw = self.navigation_hold_reference
+        self.pid_x.setpoint = hold_x
+        self.pid_y.setpoint = hold_y
+        self.pid_z.setpoint = hold_z
+        correction_x = self.pid_x.update(x, dt)
+        correction_y = self.pid_y.update(y, dt)
+        correction_z = self.pid_z.update(z, dt)
+        command, limited = self._limit_velocity_command(
+            correction_x,
+            correction_y,
+            correction_z,
+        )
+        target = TrajectoryPoint(
+            x=hold_x - self.x0,
+            y=hold_y - self.y0,
+            z=hold_z - self.z0,
+            yaw=wrapped_angle(hold_yaw - self.yaw0),
+        )
+        return self._control_result(
+            target=target,
+            desired=(hold_x, hold_y, hold_z),
+            planned=(0.0, 0.0, 0.0),
+            pid_terms=(
+                self._pid_terms(self.pid_x),
+                self._pid_terms(self.pid_y),
+                self._pid_terms(self.pid_z),
+            ),
+            command=command,
+            limited=limited,
+            yaw_unwrapped=hold_yaw,
         )
 
     def landing_controller(self, x, y, z, yaw, dt):
@@ -1377,6 +1812,7 @@ class PositionController:
                 if self.phase_enter_time is None
                 else loop_start - self.phase_enter_time
             ),
+            "phase_clock_s": self.phase_clock_s,
             "mode": snapshot["mode"],
             "armed": snapshot["armed"],
             "loop_dt_s": loop_dt,
@@ -1390,7 +1826,13 @@ class PositionController:
             "trajectory_clock_limited": (
                 self.trajectory_clock_limited
             ),
+            "navigation_state": self.navigation_state,
+            "navigation_reasons": "; ".join(self.navigation_reasons),
+            "navigation_raw_confidence": self.navigation_raw_confidence,
             "navigation_confidence": self.navigation_confidence,
+            "cruise_height_m": self.cruise_height_m,
+            "home_sample_count": self.home_sample_count,
+            "failure_action": self.failure_action,
             "effective_horizontal_speed_limit": (
                 self.effective_horizontal_speed_limit
             ),
@@ -1455,27 +1897,42 @@ class PositionController:
         row.update(snapshot)
         return row
 
-    def _validate_runtime_health(self, snapshot):
+    def _validate_runtime_health(self, snapshot, now_mono=None):
+        now_mono = time.monotonic() if now_mono is None else now_mono
         if self.receiver_error is not None:
+            self.failure_action = "PX4_FAILSAFE"
             raise RuntimeError(
                 f"MAVLink receiver failed: {self.receiver_error}"
             )
         if self.setpoint_error is not None:
+            self.failure_action = "PX4_FAILSAFE"
             raise RuntimeError(
                 f"Setpoint watchdog failed: {self.setpoint_error}"
             )
 
-        limits = (
+        limits = [
             ("position", snapshot["position_age_s"], self.max_position_age_s),
             ("attitude", snapshot["attitude_age_s"], self.max_attitude_age_s),
             ("heartbeat", snapshot["heartbeat_age_s"], self.max_heartbeat_age_s),
-        )
+        ]
+        if "position_source_age_s" in snapshot:
+            limits.append(
+                (
+                    "position source timestamp",
+                    snapshot["position_source_age_s"],
+                    self.max_position_age_s,
+                )
+            )
+        if snapshot.get("position_source_regressed", False):
+            self.failure_action = "PX4_FAILSAFE"
+            raise RuntimeError("Local position timestamp moved backwards")
         stale = [
             f"{name}={age:.3f}s>{limit:.3f}s"
             for name, age, limit in limits
             if not math.isfinite(age) or age > limit
         ]
         if stale:
+            self.failure_action = "PX4_FAILSAFE"
             raise RuntimeError(
                 "Stale runtime telemetry: " + ", ".join(stale)
             )
@@ -1500,6 +1957,7 @@ class PositionController:
             if not math.isfinite(snapshot[name])
         ]
         if nonfinite:
+            self.failure_action = "PX4_FAILSAFE"
             raise RuntimeError(
                 "Non-finite navigation state: " + ", ".join(nonfinite)
             )
@@ -1560,6 +2018,7 @@ class PositionController:
                 and land_mode
             )
             if not expected_mode:
+                self.failure_action = "PX4_FAILSAFE"
                 raise RuntimeError(
                     "PX4 entered an unexpected mode during active phase "
                     f"{self.phase}: main_mode="
@@ -1567,28 +2026,8 @@ class PositionController:
                     f"{snapshot['heartbeat_sub_mode']}"
                 )
 
-            navigation_reasons = (
-                self._navigation_health_reasons(snapshot)
-                if "gps_age_s" in snapshot
-                else []
-            )
             if "gps_age_s" in snapshot:
-                self.navigation_confidence = self._navigation_confidence(
-                    snapshot
-                )
-            if navigation_reasons:
-                if self.navigation_unhealthy_since is None:
-                    self.navigation_unhealthy_since = time.monotonic()
-                unhealthy_for = (
-                    time.monotonic() - self.navigation_unhealthy_since
-                )
-                if unhealthy_for >= self.config.navigation_health_grace_s:
-                    raise RuntimeError(
-                        "Navigation health gate failed: "
-                        + "; ".join(navigation_reasons)
-                    )
-            else:
-                self.navigation_unhealthy_since = None
+                self._update_navigation_supervisor(snapshot, now_mono)
 
     def run(self):
         print("Starting fixed research controller loop")
@@ -1597,11 +2036,12 @@ class PositionController:
         self._start_setpoint_watchdog()
 
         controller_start = time.monotonic()
+        self.controller_started_at = controller_start
         previous_loop = controller_start
         next_tick = controller_start
         last_flush = controller_start
         last_status = -math.inf
-        count = 0
+        count = self.log_row_count
 
         try:
             while self.running and self.control_running:
@@ -1623,33 +2063,19 @@ class PositionController:
 
                 snapshot = self._snapshot(loop_start)
                 x, y, z = snapshot["x"], snapshot["y"], snapshot["z"]
-                self._validate_runtime_health(snapshot)
+                self._validate_runtime_health(snapshot, loop_start)
+                self._advance_phase_clock(0.0 if count == 0 else loop_dt)
                 self.update_phase(x, y, z, loop_start, snapshot)
 
-                self.trajectory_clock_limited = False
-                if self.phase == "TAKEOFF":
+                if self.navigation_state == "HOLD":
+                    control = self.navigation_hold_controller(
+                        x, y, z, snapshot["yaw"], effective_dt
+                    )
+                elif self.phase == "TAKEOFF":
                     control = self.takeoff_controller(
                         x, y, z, snapshot["yaw"], effective_dt
                     )
                 elif self.phase == "TRAJECTORY":
-                    if (
-                        self.last_phase_transition
-                        == "TAKEOFF->TRAJECTORY"
-                    ):
-                        self.mission_time = 0.0
-                    else:
-                        trajectory_step = min(
-                            loop_dt,
-                            self.max_trajectory_clock_step_s,
-                        )
-                        self.trajectory_clock_limited = (
-                            loop_dt
-                            > self.max_trajectory_clock_step_s
-                        )
-                        self.mission_time += (
-                            trajectory_step
-                            * self._navigation_speed_scale()
-                        )
                     control = self.trajectory_controller(
                         x, y, z, effective_dt
                     )
@@ -1681,7 +2107,7 @@ class PositionController:
                 control["limited"] = tuple(
                     existing or slew
                     for existing, slew in zip(
-                        control["limited"], slew_limited
+                        control["limited"], slew_limited, strict=True
                     )
                 )
                 cmd_vx, cmd_vy, cmd_vz = command
@@ -1719,7 +2145,8 @@ class PositionController:
                     snapshot=snapshot,
                     control=control,
                 )
-                self.writer.writerow(row)
+                with self.log_lock:
+                    self.writer.writerow(row)
 
                 now = time.monotonic()
                 should_flush = (
@@ -1727,7 +2154,8 @@ class PositionController:
                     or bool(self.last_phase_transition)
                 )
                 if should_flush:
-                    self.log_file.flush()
+                    with self.log_lock:
+                        self.log_file.flush()
                     last_flush = now
 
                 should_print = (
@@ -1743,12 +2171,14 @@ class PositionController:
                         f"{control['planned'][1]:.2f}, "
                         f"{control['planned'][2]:.2f}) "
                         f"CmdVel=({cmd_vx:.2f}, {cmd_vy:.2f}, "
-                        f"{cmd_vz:.2f}) Nav={self.navigation_confidence:.2f} "
+                        f"{cmd_vz:.2f}) Nav={self.navigation_state}/"
+                        f"{self.navigation_confidence:.2f} "
                         f"dt={loop_dt:.4f}"
                     )
                     last_status = now
 
                 count += 1
+                self.log_row_count = count
                 scheduled_tick = next_tick
                 next_tick = scheduled_tick + self.control_dt
                 sleep_time = next_tick - time.monotonic()
@@ -1764,7 +2194,65 @@ class PositionController:
             raise
         finally:
             if self.log_file is not None and not self.log_file.closed:
-                self.log_file.flush()
+                with self.log_lock:
+                    self.log_file.flush()
+
+    def log_native_landing_sample(self, phase="PX4_LAND"):
+        if self.writer is None or self.log_file is None or self.log_file.closed:
+            return
+        now = time.monotonic()
+        if (
+            self.last_monitor_log_at is not None
+            and now - self.last_monitor_log_at < self.control_dt * 0.9
+        ):
+            return
+        self.last_monitor_log_at = now
+        snapshot = self._snapshot(now)
+        control = self.done_controller(
+            snapshot["x"],
+            snapshot["y"],
+            snapshot["z"],
+            snapshot["yaw"],
+        )
+        start = self.controller_started_at or now
+        row = self._build_log_row(
+            count=self.log_row_count,
+            wall_time=time.time(),
+            loop_start=now,
+            controller_start=start,
+            loop_dt=self.control_dt,
+            effective_dt=self.control_dt,
+            loop_lateness=0.0,
+            missed_periods=0,
+            compute_time=0.0,
+            snapshot=snapshot,
+            control=control,
+        )
+        row["phase"] = phase
+        row["phase_transition"] = (
+            f"{self.last_monitor_phase or self.phase}->{phase}"
+            if self.last_monitor_phase != phase
+            else ""
+        )
+        self.last_monitor_phase = phase
+        # The external controller has stopped commanding. Keep PX4's
+        # reported target fields, but do not invent a tracking reference.
+        for field in (
+            "desired_x", "desired_y", "desired_z",
+            "planned_vx", "planned_vy", "planned_vz",
+            "planned_ax", "planned_ay", "planned_az",
+            "planned_jx", "planned_jy", "planned_jz",
+            "planned_yaw_rate", "planned_yaw_acceleration",
+            "planned_yaw_jerk", "target_yaw", "target_yaw_unwrapped",
+            "yaw_error", "cmd_vx", "cmd_vy", "cmd_vz",
+            "pid_x_error", "pid_y_error", "pid_z_error",
+            "pid_x_correction", "pid_y_correction", "pid_z_correction",
+        ):
+            row[field] = math.nan
+        with self.log_lock:
+            self.writer.writerow(row)
+            self.log_file.flush()
+        self.log_row_count += 1
 
     def prepare_native_land_handoff(self):
         """Allow the confirmed OFFBOARD-to-LAND transition."""
@@ -1773,6 +2261,17 @@ class PositionController:
     def begin_native_land_handoff(self):
         """Stop Offboard setpoints while preserving the telemetry receiver."""
         self.handoff_requested = True
+        self.native_land_active = True
+        self.control_running = False
+        self.setpoint_watchdog_stop.set()
+        if (
+            self.setpoint_thread is not None
+            and self.setpoint_thread is not threading.current_thread()
+        ):
+            self.setpoint_thread.join(timeout=1.0)
+
+    def begin_failsafe_handoff(self):
+        """Stop Offboard commands so PX4 can execute its configured failsafe."""
         self.native_land_active = True
         self.control_running = False
         self.setpoint_watchdog_stop.set()
@@ -1821,15 +2320,8 @@ class PositionController:
         print("Controller stopped.")
 
 
-def main():
-    controller = PositionController()
-    controller.connect()
-    controller.start_receiver()
-    time.sleep(1.0)
-    controller.initialize_target()
-    controller.setup_logger()
-    controller.run()
-
-
 if __name__ == "__main__":
+    # Route direct invocation through the same pre-arm and landing checks.
+    from offboard_runner import main
+
     main()

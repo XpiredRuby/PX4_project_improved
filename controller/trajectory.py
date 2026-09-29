@@ -35,7 +35,7 @@ class Trajectory:
         with open(filename, "r", newline="") as file:
             reader = csv.DictReader(file)
             for row in reader:
-                def value(name, default=0.0):
+                def value(name, default=0.0, row=row):
                     raw = row.get(name)
                     return default if raw in (None, "") else float(raw)
 
@@ -63,8 +63,21 @@ class Trajectory:
 
         if len(self.points) < 2:
             raise ValueError("trajectory must contain at least two points")
-        if any(b.time <= a.time for a, b in zip(self.points, self.points[1:])):
+        if any(
+            b.time <= a.time
+            for a, b in zip(self.points, self.points[1:], strict=False)
+        ):
             raise ValueError("trajectory time must be strictly increasing")
+        for index, point in enumerate(self.points):
+            required = (
+                point.time, point.x, point.y, point.z,
+                point.vx, point.vy, point.vz, point.yaw,
+                point.yaw_rate, point.ax, point.ay, point.az,
+            )
+            if not all(math.isfinite(value) for value in required):
+                raise ValueError(
+                    f"trajectory point {index} has non-finite required fields"
+                )
 
         self.duration = self.points[-1].time
 

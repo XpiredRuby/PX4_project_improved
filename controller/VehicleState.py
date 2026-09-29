@@ -48,6 +48,11 @@ class VehicleState:
 
         self.position_time_boot_ms = math.nan
         self.attitude_time_boot_ms = math.nan
+        self.gps_time_usec = math.nan
+        self.position_source_advanced_at = None
+        self.gps_source_advanced_at = None
+        self.position_source_regressed = False
+        self.gps_source_regressed = False
 
         self.imu_xacc = self.imu_yacc = self.imu_zacc = math.nan
         self.imu_xgyro = self.imu_ygyro = self.imu_zgyro = math.nan
@@ -101,9 +106,23 @@ class VehicleState:
         self.message_counts[msg_type] = self.message_counts.get(msg_type, 0) + 1
 
     def update_position(self, msg):
+        previous_timestamp = self.position_time_boot_ms
+        next_timestamp = getattr(msg, "time_boot_ms", math.nan)
+        if (
+            math.isfinite(float(previous_timestamp))
+            and math.isfinite(float(next_timestamp))
+            and next_timestamp < previous_timestamp
+        ):
+            self.position_source_regressed = True
+            return
         self.x, self.y, self.z = msg.x, msg.y, msg.z
         self.vx, self.vy, self.vz = msg.vx, msg.vy, msg.vz
-        self.position_time_boot_ms = getattr(msg, "time_boot_ms", math.nan)
+        self.position_time_boot_ms = next_timestamp
+        if (
+            math.isfinite(float(self.position_time_boot_ms))
+            and self.position_time_boot_ms != previous_timestamp
+        ):
+            self.position_source_advanced_at = self._now()
         self.position_received = True
         self.position_received_at = self._now()
 
@@ -211,6 +230,21 @@ class VehicleState:
         return math.inf if raw_value >= 0xFFFFFFFF else raw_value / 1000.0
 
     def update_gps_raw_int(self, msg):
+        previous_timestamp = self.gps_time_usec
+        next_timestamp = getattr(msg, "time_usec", math.nan)
+        if (
+            math.isfinite(float(previous_timestamp))
+            and math.isfinite(float(next_timestamp))
+            and next_timestamp < previous_timestamp
+        ):
+            self.gps_source_regressed = True
+            return
+        self.gps_time_usec = next_timestamp
+        if (
+            math.isfinite(float(self.gps_time_usec))
+            and self.gps_time_usec != previous_timestamp
+        ):
+            self.gps_source_advanced_at = self._now()
         self.gps_fix_type = int(msg.fix_type)
         satellites = int(msg.satellites_visible)
         self.gps_satellites_visible = 0 if satellites >= 255 else satellites

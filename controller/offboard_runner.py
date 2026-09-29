@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 import threading
 import time
 
@@ -14,6 +15,102 @@ ARM_TIMEOUT = 8.0
 PX4_MAIN_MODE_AUTO = 4
 PX4_MAIN_MODE_OFFBOARD = 6
 PX4_AUTO_SUB_MODE_LAND = 6
+
+# PX4 v1.17 EKF2 fusion controls. Read these before the receiver thread owns
+# recv_match; never alter persistent PX4 parameters from a mission run.
+EKF2_SOURCE_PARAMETERS = (
+    "EKF2_GPS_CTRL",
+    "EKF2_HGT_REF",
+    "EKF2_BARO_CTRL",
+    "EKF2_MAG_TYPE",
+    "EKF2_OF_CTRL",
+    "EKF2_EV_CTRL",
+    "EKF2_RNG_CTRL",
+    "EKF2_AGP_CTRL",
+)
+
+
+def check_gps_imu_estimator_config(parameters):
+    """Reject known EKF2 configurations that use other navigation sensors."""
+    missing = sorted(set(EKF2_SOURCE_PARAMETERS) - parameters.keys())
+    if missing:
+        raise RuntimeError(
+            "Cannot verify PX4 GPS/IMU fusion configuration: "
+            + ", ".join(missing)
+        )
+
+    values = {}
+    for name in EKF2_SOURCE_PARAMETERS:
+        raw = float(parameters[name])
+        if not math.isfinite(raw) or not raw.is_integer():
+            raise RuntimeError(f"Invalid PX4 parameter {name}={raw}")
+        values[name] = int(raw)
+
+    required = {
+        "EKF2_HGT_REF": 1,  # GPS height reference
+        "EKF2_BARO_CTRL": 0,
+        "EKF2_MAG_TYPE": 5,  # no magnetic initialization or fusion
+        "EKF2_OF_CTRL": 0,
+        "EKF2_EV_CTRL": 0,
+        "EKF2_RNG_CTRL": 0,
+        "EKF2_AGP_CTRL": 0,
+    }
+    mismatch = [
+        f"{name}={values[name]} (expected {expected})"
+        for name, expected in required.items()
+        if values[name] != expected
+    ]
+    # Bits 0-2 enable GNSS horizontal position, altitude, and 3D velocity;
+    # bit 3 optionally enables dual-antenna GNSS heading.
+    if values["EKF2_GPS_CTRL"] not in (7, 15):
+        mismatch.append(
+            f"EKF2_GPS_CTRL={values['EKF2_GPS_CTRL']} (expected 7 or 15)"
+        )
+    if mismatch:
+        raise RuntimeError(
+            "PX4 estimator does not match GPS/IMU mission: "
+            + "; ".join(mismatch)
+            + ". Configure PX4 while disarmed, reboot, then retry."
+        )
+
+
+def audit_gps_imu_estimator(controller, attempts=3, timeout_s=0.7):
+    """Read EKF2 source controls over MAVLink before starting telemetry RX."""
+    master = controller.master
+    parameters = {}
+    for name in EKF2_SOURCE_PARAMETERS:
+        for _ in range(attempts):
+            with controller.mav_send_lock:
+                master.mav.param_request_read_send(
+                    master.target_system,
+                    master.target_component,
+                    name.encode("ascii"),
+                    -1,
+                )
+            deadline = time.monotonic() + timeout_s
+            while time.monotonic() < deadline:
+                msg = master.recv_match(
+                    type="PARAM_VALUE",
+                    blocking=True,
+                    timeout=min(0.2, max(0.0, deadline - time.monotonic())),
+                )
+                if (
+                    msg is None
+                    or msg.get_srcSystem() != master.target_system
+                    or msg.get_srcComponent() != master.target_component
+                ):
+                    continue
+                param_id = msg.param_id
+                if isinstance(param_id, bytes):
+                    param_id = param_id.decode("ascii", errors="replace")
+                if param_id.rstrip("\x00") == name:
+                    parameters[name] = msg.param_value
+                    break
+            if name in parameters:
+                break
+
+    check_gps_imu_estimator_config(parameters)
+    print("[runner] PX4 EKF2 GPS/IMU fusion settings verified")
 
 
 def snapshot(controller):
@@ -58,38 +155,6 @@ def command_ack_snapshot(controller, command=None):
             state.command_ack_result,
             state.command_ack_progress,
         )
-
-
-def set_int_param_before_receiver(master, name, value, timeout=5.0):
-    encoded_name = name.encode("ascii")
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        master.mav.param_set_send(
-            master.target_system,
-            master.target_component,
-            encoded_name,
-            float(value),
-            mavutil.mavlink.MAV_PARAM_TYPE_INT32,
-        )
-        window_end = min(deadline, time.monotonic() + 1.0)
-        while time.monotonic() < window_end:
-            msg = master.recv_match(type="PARAM_VALUE", blocking=True, timeout=0.25)
-            if msg is None:
-                continue
-            param_id = msg.param_id
-            if isinstance(param_id, bytes):
-                param_id = param_id.decode("ascii", errors="ignore")
-            param_id = str(param_id).rstrip("\x00")
-            if param_id == name:
-                actual = int(round(float(msg.param_value)))
-                if actual != int(value):
-                    raise RuntimeError(
-                        f"PX4 parameter {name} acknowledged as {actual}, "
-                        f"expected {value}"
-                    )
-                print(f"[runner] PX4 parameter {name}={actual} confirmed")
-                return
-    raise RuntimeError(f"Timed out setting PX4 parameter {name}={value}")
 
 
 def send_neutral(controller):
@@ -236,19 +301,18 @@ def wait_for_initial_ground_state(controller, timeout=5.0):
 def wait_for_native_landing(controller, after_sequence, timeout):
     deadline = time.monotonic() + timeout
     on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
-    ground_confirmed = False
 
     while time.monotonic() < deadline:
+        controller.log_native_landing_sample()
         main_mode, sub_mode, armed = heartbeat_snapshot(controller)
         landed_state, age, sequence = landing_snapshot(controller)
-        if (
+        fresh_on_ground = (
             sequence > after_sequence
             and age <= 1.5
             and landed_state == on_ground
-        ):
-            ground_confirmed = True
+        )
         if armed is False:
-            if not ground_confirmed:
+            if not fresh_on_ground:
                 raise RuntimeError(
                     "Vehicle disarmed without a fresh PX4 ON_GROUND report"
                 )
@@ -257,6 +321,7 @@ def wait_for_native_landing(controller, after_sequence, timeout):
             main_mode != PX4_MAIN_MODE_AUTO
             or sub_mode != PX4_AUTO_SUB_MODE_LAND
         ):
+            controller.failure_action = "PX4_FAILSAFE"
             raise RuntimeError(
                 "PX4 left LAND before auto-disarm "
                 f"(main_mode={main_mode}, sub_mode={sub_mode})"
@@ -272,6 +337,18 @@ def wait_for_native_landing(controller, after_sequence, timeout):
     )
 
 
+def wait_for_failsafe_takeover(controller, timeout=MODE_TIMEOUT):
+    controller.begin_failsafe_handoff()
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        controller.log_native_landing_sample(phase="PX4_FAILSAFE")
+        main_mode, _, armed = heartbeat_snapshot(controller)
+        if armed is False or main_mode != PX4_MAIN_MODE_OFFBOARD:
+            return
+        time.sleep(0.05)
+    raise TimeoutError("PX4 did not take control after Offboard commands stopped")
+
+
 def main():
     c = PositionController()
     worker = None
@@ -280,16 +357,15 @@ def main():
     try:
         print("[runner] Connecting to PX4...")
         c.connect()
-
-        # This dedicated SITL workflow does not depend on QGC. PX4's separate
-        # Offboard-loss and navigation failsafes remain enabled.
-        set_int_param_before_receiver(c.master, "NAV_DLL_ACT", 0)
-        set_int_param_before_receiver(c.master, "SDLOG_MODE", 0)
+        audit_gps_imu_estimator(c)
 
         c.start_receiver()
         c.wait_for_fresh_telemetry()
         c.wait_for_preflight_ready()
         wait_for_initial_ground_state(c)
+        home_snapshot = c.capture_home_reference()
+        c.configure_cruise_height(home_snapshot)
+        c.validate_mission_plan()
         c.setup_logger()
 
         print(
@@ -334,10 +410,30 @@ def main():
                 )
             time.sleep(0.05)
         else:
-            raise TimeoutError(
-                f"Mission did not reach handoff within "
-                f"{c.config.mission_timeout_s:.0f}s; phase={c.phase}"
+            if not c.request_return_home("mission timeout"):
+                raise TimeoutError(
+                    f"Mission did not reach handoff within "
+                    f"{c.config.mission_timeout_s:.0f}s; phase={c.phase}"
+                )
+            recovery_deadline = (
+                time.monotonic() + c.config.return_recovery_timeout_s
             )
+            while time.monotonic() < recovery_deadline:
+                if c.worker_error is not None:
+                    raise RuntimeError(f"Controller failed: {c.worker_error}")
+                if c.phase == "HANDOFF":
+                    break
+                if not worker.is_alive():
+                    raise RuntimeError(
+                        "Controller stopped during timeout recovery; "
+                        f"phase={c.phase}"
+                    )
+                time.sleep(0.05)
+            else:
+                raise TimeoutError(
+                    "Safe return did not reach handoff within "
+                    f"{c.config.return_recovery_timeout_s:.0f}s"
+                )
 
         print("[runner] Stable over home; handing descent to PX4 LAND...")
         _, _, land_sequence = landing_snapshot(c)
@@ -370,20 +466,29 @@ def main():
         try:
             main_mode, sub_mode, armed = heartbeat_snapshot(c)
             if armed:
-                print(
-                    "[runner] Failure cleanup: handing control to PX4 LAND "
-                    f"(phase={c.phase}, main_mode={main_mode}, "
-                    f"sub_mode={sub_mode})"
-                )
-                _, _, land_sequence = landing_snapshot(c)
-                c.prepare_native_land_handoff()
-                ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
-                c.begin_native_land_handoff()
-                wait_for_native_landing(
-                    c,
-                    after_sequence=land_sequence,
-                    timeout=c.config.land_timeout_s,
-                )
+                if c.failure_action == "PX4_FAILSAFE":
+                    print(
+                        "[runner] Failure cleanup: stopping Offboard "
+                        "commands and yielding to PX4 failsafe "
+                        f"(phase={c.phase}, main_mode={main_mode}, "
+                        f"sub_mode={sub_mode})"
+                    )
+                    wait_for_failsafe_takeover(c)
+                else:
+                    print(
+                        "[runner] Failure cleanup: handing control to PX4 LAND "
+                        f"(phase={c.phase}, main_mode={main_mode}, "
+                        f"sub_mode={sub_mode})"
+                    )
+                    _, _, land_sequence = landing_snapshot(c)
+                    c.prepare_native_land_handoff()
+                    ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
+                    c.begin_native_land_handoff()
+                    wait_for_native_landing(
+                        c,
+                        after_sequence=land_sequence,
+                        timeout=c.config.land_timeout_s,
+                    )
         except Exception as exc:
             print(f"[runner] Failure LAND cleanup error: {exc!r}")
         finally:
