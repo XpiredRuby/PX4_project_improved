@@ -1,7 +1,10 @@
 """PX4 parameter contracts required by the mission runner."""
 
 import math
+import struct
 import time
+
+from pymavlink import mavutil
 
 
 # PX4 v1.17 EKF2 fusion controls. Read these before the receiver thread owns
@@ -21,6 +24,30 @@ PX4_SAFETY_PARAMETERS = (
     "COM_OBL_RC_ACT",
     "COM_DISARM_LAND",
 )
+
+
+_INTEGER_PARAM_FORMATS = {
+    mavutil.mavlink.MAV_PARAM_TYPE_UINT8: ">xxxB",
+    mavutil.mavlink.MAV_PARAM_TYPE_INT8: ">xxxb",
+    mavutil.mavlink.MAV_PARAM_TYPE_UINT16: ">xxH",
+    mavutil.mavlink.MAV_PARAM_TYPE_INT16: ">xxh",
+    mavutil.mavlink.MAV_PARAM_TYPE_UINT32: ">I",
+    mavutil.mavlink.MAV_PARAM_TYPE_INT32: ">i",
+}
+
+
+def decode_px4_parameter_value(raw_value, param_type):
+    """Decode MAVLink's byte-wise integer encoding used by PX4 parameters."""
+    if param_type == mavutil.mavlink.MAV_PARAM_TYPE_REAL32:
+        return float(raw_value)
+    try:
+        integer_format = _INTEGER_PARAM_FORMATS[param_type]
+    except KeyError as exc:
+        raise RuntimeError(
+            f"Unsupported MAVLink parameter type {param_type}"
+        ) from exc
+    packed = struct.pack(">f", float(raw_value))
+    return struct.unpack(integer_format, packed)[0]
 
 
 def check_gps_imu_estimator_config(parameters):
@@ -142,7 +169,10 @@ def read_px4_parameters(controller, names, attempts=3, timeout_s=0.7):
                 if isinstance(param_id, bytes):
                     param_id = param_id.decode("ascii", errors="replace")
                 if param_id.rstrip("\x00") == name:
-                    parameters[name] = msg.param_value
+                    parameters[name] = decode_px4_parameter_value(
+                        msg.param_value,
+                        msg.param_type,
+                    )
                     break
             if name in parameters:
                 break
