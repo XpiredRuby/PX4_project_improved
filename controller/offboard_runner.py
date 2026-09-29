@@ -341,12 +341,12 @@ def main():
 
         print("[runner] Stable over home; handing descent to PX4 LAND...")
         _, _, land_sequence = landing_snapshot(c)
+        c.prepare_native_land_handoff()
+        ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
         c.begin_native_land_handoff()
         worker.join(timeout=2.0)
         if worker.is_alive():
             raise RuntimeError("Offboard controller did not stop for LAND handoff")
-
-        ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
         print("[runner] PX4 LAND confirmed; waiting for touchdown + auto-disarm...")
         wait_for_native_landing(
             c,
@@ -376,8 +376,9 @@ def main():
                     f"sub_mode={sub_mode})"
                 )
                 _, _, land_sequence = landing_snapshot(c)
-                c.begin_native_land_handoff()
+                c.prepare_native_land_handoff()
                 ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
+                c.begin_native_land_handoff()
                 wait_for_native_landing(
                     c,
                     after_sequence=land_sequence,

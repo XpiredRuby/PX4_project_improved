@@ -18,6 +18,13 @@ class MissionConfig:
     max_accel_m_s2: float = 1.0
     max_jerk_m_s3: float = 1.5
     minimum_segment_duration_s: float = 2.0
+    command_xy_accel_limit_m_s2: float = 1.5
+    command_z_accel_limit_m_s2: float = 1.0
+
+    max_operating_radius_m: float = 80.0
+    max_height_above_launch_m: float = 30.0
+    max_offboard_drop_below_launch_m: float = 2.0
+    max_measured_speed_m_s: float = 8.0
 
     takeoff_position_tolerance_m: float = 0.20
     takeoff_speed_tolerance_m_s: float = 0.25
@@ -37,9 +44,15 @@ class MissionConfig:
     gps_max_vdop: float = 3.5
     gps_max_horizontal_accuracy_m: float = 5.0
     gps_max_vertical_accuracy_m: float = 8.0
+    gps_good_hdop: float = 1.0
+    gps_good_vdop: float = 1.5
+    gps_good_horizontal_accuracy_m: float = 1.0
+    gps_good_vertical_accuracy_m: float = 2.0
     gps_max_age_s: float = 1.5
     estimator_max_age_s: float = 1.5
     estimator_max_test_ratio: float = 1.0
+    estimator_good_test_ratio: float = 0.35
+    minimum_navigation_speed_scale: float = 0.25
     navigation_health_grace_s: float = 1.0
 
     preflight_timeout_s: float = 30.0
@@ -60,5 +73,20 @@ class MissionConfig:
             self.return_max_speed_m_s,
             self.max_accel_m_s2,
             self.max_jerk_m_s3,
+            self.command_xy_accel_limit_m_s2,
+            self.command_z_accel_limit_m_s2,
         ) <= 0.0:
             raise ValueError("motion limits must be positive")
+        if not 0.0 < self.minimum_navigation_speed_scale <= 1.0:
+            raise ValueError("minimum navigation speed scale must be in (0, 1]")
+        if not (
+            self.gps_good_hdop < self.gps_max_hdop
+            and self.gps_good_vdop < self.gps_max_vdop
+            and self.gps_good_horizontal_accuracy_m
+            < self.gps_max_horizontal_accuracy_m
+            and self.gps_good_vertical_accuracy_m
+            < self.gps_max_vertical_accuracy_m
+            and self.estimator_good_test_ratio
+            < self.estimator_max_test_ratio
+        ):
+            raise ValueError("navigation good thresholds must be below limits")

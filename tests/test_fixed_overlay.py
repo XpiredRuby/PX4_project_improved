@@ -202,6 +202,18 @@ class FixedOverlayTests(unittest.TestCase):
         controller = self.make_controller()
         controller.phase = "TRAJECTORY"
         healthy = {
+            "x": controller.x0,
+            "y": controller.y0,
+            "z": controller.target_z,
+            "vx": 0.0,
+            "vy": 0.0,
+            "vz": 0.0,
+            "roll": 0.0,
+            "pitch": 0.0,
+            "yaw": controller.yaw0,
+            "p": 0.0,
+            "q": 0.0,
+            "r": 0.0,
             "position_age_s": 0.01,
             "attitude_age_s": 0.01,
             "heartbeat_age_s": 0.10,
@@ -215,8 +227,24 @@ class FixedOverlayTests(unittest.TestCase):
             controller._validate_runtime_health(stale)
 
         wrong_mode = dict(healthy, heartbeat_main_mode=4)
-        with self.assertRaisesRegex(RuntimeError, "left OFFBOARD"):
+        with self.assertRaisesRegex(RuntimeError, "unexpected mode"):
             controller._validate_runtime_health(wrong_mode)
+
+    def test_return_segment_preserves_measured_start_velocity(self):
+        segment = MinimumJerkSegment.from_limits(
+            start=(5.0, -2.0, -15.0),
+            finish=(0.0, 0.0, -15.0),
+            max_speed=2.0,
+            max_accel=1.0,
+            max_jerk=1.5,
+            start_velocity=(0.4, -0.2, 0.0),
+        )
+        start = segment.sample(0.0)
+        finish = segment.sample(segment.duration)
+        self.assertAlmostEqual(start.vx, 0.4)
+        self.assertAlmostEqual(start.vy, -0.2)
+        self.assertAlmostEqual(finish.vx, 0.0, places=8)
+        self.assertAlmostEqual(finish.vy, 0.0, places=8)
 
     def test_foreign_heartbeat_cannot_override_px4_state(self):
         controller = self.make_controller()

@@ -5,10 +5,11 @@ autonomous landing without a supplied ground height.
 
 ## Highlights
 
-- Minimum-jerk takeoff and return-to-home motion
-- GPS and estimator health gates
+- Minimum-jerk takeoff and velocity-continuous return-to-home motion
+- GPS-confidence speed adaptation and estimator health gates
+- Command slew limits and flight-envelope guards
 - Stable position/attitude gate before landing
-- PX4 native landing detection and automatic-disarm verification
+- Gap-free PX4 landing handoff and automatic-disarm verification
 - Setpoint watchdog, command acknowledgement, and safe timeouts
 
 ## Repository layout

@@ -4,16 +4,67 @@ from trajectory import TrajectoryPoint
 
 
 class MinimumJerkSegment:
-    """Rest-to-rest quintic segment with bounded velocity/accel/jerk."""
+    """Boundary-continuous quintic segment with verified motion limits."""
 
-    def __init__(self, start, finish, duration):
+    def __init__(
+        self,
+        start,
+        finish,
+        duration,
+        start_velocity=(0.0, 0.0, 0.0),
+        finish_velocity=(0.0, 0.0, 0.0),
+        start_acceleration=(0.0, 0.0, 0.0),
+        finish_acceleration=(0.0, 0.0, 0.0),
+    ):
         if len(start) != 3 or len(finish) != 3:
             raise ValueError("minimum-jerk endpoints must be 3D")
         if duration <= 0.0:
             raise ValueError("minimum-jerk duration must be positive")
         self.start = tuple(float(value) for value in start)
         self.finish = tuple(float(value) for value in finish)
+        self.start_velocity = tuple(float(value) for value in start_velocity)
+        self.finish_velocity = tuple(float(value) for value in finish_velocity)
+        self.start_acceleration = tuple(
+            float(value) for value in start_acceleration
+        )
+        self.finish_acceleration = tuple(
+            float(value) for value in finish_acceleration
+        )
         self.duration = float(duration)
+        self._coefficients = tuple(
+            self._axis_coefficients(
+                self.start[index],
+                self.finish[index],
+                self.start_velocity[index],
+                self.finish_velocity[index],
+                self.start_acceleration[index],
+                self.finish_acceleration[index],
+            )
+            for index in range(3)
+        )
+
+    def _axis_coefficients(self, p0, pf, v0, vf, a0, af):
+        duration = self.duration
+        duration_2 = duration**2
+        c0 = p0
+        c1 = v0
+        c2 = 0.5 * a0
+        c3 = (
+            20.0 * (pf - p0)
+            - (8.0 * vf + 12.0 * v0) * duration
+            - (3.0 * a0 - af) * duration_2
+        ) / (2.0 * duration**3)
+        c4 = (
+            30.0 * (p0 - pf)
+            + (14.0 * vf + 16.0 * v0) * duration
+            + (3.0 * a0 - 2.0 * af) * duration_2
+        ) / (2.0 * duration**4)
+        c5 = (
+            12.0 * (pf - p0)
+            - (6.0 * vf + 6.0 * v0) * duration
+            - (a0 - af) * duration_2
+        ) / (2.0 * duration**5)
+        return c0, c1, c2, c3, c4, c5
 
     @classmethod
     def from_limits(
@@ -24,7 +75,20 @@ class MinimumJerkSegment:
         max_accel,
         max_jerk,
         minimum_duration=0.0,
+        start_velocity=(0.0, 0.0, 0.0),
+        finish_velocity=(0.0, 0.0, 0.0),
+        start_acceleration=(0.0, 0.0, 0.0),
+        finish_acceleration=(0.0, 0.0, 0.0),
     ):
+        if min(max_speed, max_accel, max_jerk) <= 0.0:
+            raise ValueError("motion limits must be positive")
+        endpoint_speeds = (
+            math.sqrt(sum(float(value) ** 2 for value in start_velocity)),
+            math.sqrt(sum(float(value) ** 2 for value in finish_velocity)),
+        )
+        if max(endpoint_speeds) > max_speed * 1.001:
+            raise ValueError("endpoint velocity exceeds segment speed limit")
+
         distance = math.sqrt(
             sum((float(b) - float(a)) ** 2 for a, b in zip(start, finish))
         )
@@ -41,22 +105,69 @@ class MinimumJerkSegment:
                 acceleration_time,
                 jerk_time,
             )
-        return cls(start, finish, duration)
+        # Nonzero boundary velocity changes the extrema. Increase duration
+        # until sampled vector velocity, acceleration, and jerk all satisfy
+        # the requested limits. The extra 2% prevents rounding-edge chatter.
+        for _ in range(20):
+            segment = cls(
+                start,
+                finish,
+                duration,
+                start_velocity=start_velocity,
+                finish_velocity=finish_velocity,
+                start_acceleration=start_acceleration,
+                finish_acceleration=finish_acceleration,
+            )
+            peak_speed, peak_accel, peak_jerk = segment.peak_kinematics()
+            scale = max(
+                1.0,
+                peak_speed / max_speed,
+                math.sqrt(peak_accel / max_accel),
+                (peak_jerk / max_jerk) ** (1.0 / 3.0),
+            )
+            if scale <= 1.0001:
+                return segment
+            duration *= 1.02 * scale
+        raise RuntimeError("unable to satisfy minimum-jerk motion limits")
+
+    @staticmethod
+    def _evaluate(coefficients, elapsed_s):
+        c0, c1, c2, c3, c4, c5 = coefficients
+        t = elapsed_s
+        position = (
+            c0
+            + c1 * t
+            + c2 * t**2
+            + c3 * t**3
+            + c4 * t**4
+            + c5 * t**5
+        )
+        velocity = (
+            c1
+            + 2.0 * c2 * t
+            + 3.0 * c3 * t**2
+            + 4.0 * c4 * t**3
+            + 5.0 * c5 * t**4
+        )
+        acceleration = (
+            2.0 * c2
+            + 6.0 * c3 * t
+            + 12.0 * c4 * t**2
+            + 20.0 * c5 * t**3
+        )
+        jerk = 6.0 * c3 + 24.0 * c4 * t + 60.0 * c5 * t**2
+        return position, velocity, acceleration, jerk
 
     def sample(self, elapsed_s):
         elapsed_s = max(0.0, min(float(elapsed_s), self.duration))
-        s = elapsed_s / self.duration
-
-        blend = 10.0 * s**3 - 15.0 * s**4 + 6.0 * s**5
-        blend_rate = (30.0 * s**2 - 60.0 * s**3 + 30.0 * s**4) / self.duration
-        blend_accel = (60.0 * s - 180.0 * s**2 + 120.0 * s**3) / self.duration**2
-        blend_jerk = (60.0 - 360.0 * s + 360.0 * s**2) / self.duration**3
-
-        delta = tuple(b - a for a, b in zip(self.start, self.finish))
-        values = tuple(a + blend * d for a, d in zip(self.start, delta))
-        velocity = tuple(blend_rate * d for d in delta)
-        acceleration = tuple(blend_accel * d for d in delta)
-        jerk = tuple(blend_jerk * d for d in delta)
+        samples = tuple(
+            self._evaluate(coefficients, elapsed_s)
+            for coefficients in self._coefficients
+        )
+        values = tuple(sample[0] for sample in samples)
+        velocity = tuple(sample[1] for sample in samples)
+        acceleration = tuple(sample[2] for sample in samples)
+        jerk = tuple(sample[3] for sample in samples)
 
         return TrajectoryPoint(
             time=elapsed_s,
@@ -73,6 +184,25 @@ class MinimumJerkSegment:
             jy=jerk[1],
             jz=jerk[2],
         )
+
+    def peak_kinematics(self, sample_count=201):
+        peak_speed = peak_acceleration = peak_jerk = 0.0
+        for index in range(sample_count):
+            elapsed_s = self.duration * index / (sample_count - 1)
+            point = self.sample(elapsed_s)
+            peak_speed = max(
+                peak_speed,
+                math.sqrt(point.vx**2 + point.vy**2 + point.vz**2),
+            )
+            peak_acceleration = max(
+                peak_acceleration,
+                math.sqrt(point.ax**2 + point.ay**2 + point.az**2),
+            )
+            peak_jerk = max(
+                peak_jerk,
+                math.sqrt(point.jx**2 + point.jy**2 + point.jz**2),
+            )
+        return peak_speed, peak_acceleration, peak_jerk
 
     def finished(self, elapsed_s):
         return elapsed_s >= self.duration
