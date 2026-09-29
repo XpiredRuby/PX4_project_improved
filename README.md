@@ -1,36 +1,37 @@
 # PX4 Research Controller
 
-PX4 SITL controller development for trajectory tracking, randomized-start
-stabilization, and reliable autonomous landing.
+PX4 controller development for GPS/IMU navigation, trajectory tracking, and
+autonomous landing without a supplied ground height.
 
 ## Highlights
 
-- MAVLink outer-loop position control
-- Jerk-limited trajectory generation
-- Randomized airborne initialization
-- Controlled handoff to PX4 LAND
-- Automatic-disarm verification
-- Analysis, regression tests, and reproducible evidence
+- Minimum-jerk takeoff and return-to-home motion
+- GPS and estimator health gates
+- Stable position/attitude gate before landing
+- PX4 native landing detection and automatic-disarm verification
+- Setpoint watchdog, command acknowledgement, and safe timeouts
 
 ## Repository layout
 
 | Path | Purpose |
 |---|---|
-| `controller/` | Initial improved controller |
+| `controller/` | Current unknown-ground landing controller |
 | `trajectory_generator/` | Jerk-limited trajectory tools |
 | `analysis/` | Flight-log analysis and plots |
 | `tests/` | Regression tests |
 | `reference/original_baseline/` | Original baseline source and archive |
-| `session_2_robust_landing/` | Current landing implementation and validation |
+| `session_2_robust_landing/` | Validated Session 2 implementation and evidence |
 
-## Validated results
+## Session 2 validated results
 
 - Five randomized/boundary trials: 5/5 successful
 - PX4 LAND and automatic disarm: 5/5
 - Maximum terminal XY error: 0.065 m
 - Maximum absolute terminal Z error: 0.065 m
 - Maximum handoff vertical speed: 0.105 m/s
-- Current tests: 19/19 randomized and 11/11 baseline
+- Session 2 tests: 19/19 randomized and 11/11 baseline
+
+The current unknown-ground revision has not yet been simulation-tested.
 
 ## Local validation
 

@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import threading
 import time
+
 from pymavlink import mavutil
+
 from PID_position_new import PositionController
+
 
 PRESTREAM_SECONDS = 2.0
 MODE_TIMEOUT = 8.0
 ARM_TIMEOUT = 8.0
-LAND_TIMEOUT = 35.0
-MISSION_TIMEOUT = 180.0
 
 PX4_MAIN_MODE_AUTO = 4
 PX4_MAIN_MODE_OFFBOARD = 6
@@ -28,6 +29,34 @@ def heartbeat_snapshot(controller):
             controller.state.heartbeat_main_mode,
             controller.state.heartbeat_sub_mode,
             controller.state.armed,
+        )
+
+
+def landing_snapshot(controller):
+    with controller.state_lock:
+        state = controller.state
+        age = (
+            float("inf")
+            if state.extended_state_received_at is None
+            else max(0.0, time.monotonic() - state.extended_state_received_at)
+        )
+        return (
+            state.landed_state,
+            age,
+            state.message_counts.get("EXTENDED_SYS_STATE", 0),
+        )
+
+
+def command_ack_snapshot(controller, command=None):
+    with controller.state_lock:
+        state = controller.state
+        if command is not None:
+            return state.command_ack_by_command.get(command, (0, -1, -1))
+        return (
+            state.message_counts.get("COMMAND_ACK", 0),
+            state.command_ack_command,
+            state.command_ack_result,
+            state.command_ack_progress,
         )
 
 
@@ -55,7 +84,8 @@ def set_int_param_before_receiver(master, name, value, timeout=5.0):
                 actual = int(round(float(msg.param_value)))
                 if actual != int(value):
                     raise RuntimeError(
-                        f"PX4 parameter {name} acknowledged as {actual}, expected {value}"
+                        f"PX4 parameter {name} acknowledged as {actual}, "
+                        f"expected {value}"
                     )
                 print(f"[runner] PX4 parameter {name}={actual} confirmed")
                 return
@@ -74,19 +104,6 @@ def stream_for(controller, seconds):
         time.sleep(controller.control_dt)
 
 
-def wait_heartbeat_state(controller, timeout, predicate, keep_streaming=True):
-    end = time.monotonic() + timeout
-    while time.monotonic() < end:
-        if keep_streaming:
-            send_neutral(controller)
-        main_mode, sub_mode, armed = heartbeat_snapshot(controller)
-        if predicate(main_mode, sub_mode, armed):
-            return True
-        time.sleep(controller.control_dt)
-    main_mode, sub_mode, armed = heartbeat_snapshot(controller)
-    return bool(predicate(main_mode, sub_mode, armed))
-
-
 def request_mode(controller, mode_name):
     master = controller.master
     mode_name = mode_name.upper()
@@ -94,197 +111,277 @@ def request_mode(controller, mode_name):
     with controller.mav_send_lock:
         if mode_name == "OFFBOARD":
             custom_mode = PX4_MAIN_MODE_OFFBOARD << 16
-            master.mav.set_mode_send(
-                master.target_system,
-                mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                custom_mode,
-            )
-            return
-
-        if mode_name == "LAND":
+        elif mode_name == "LAND":
             custom_mode = (
                 (PX4_AUTO_SUB_MODE_LAND << 24)
                 | (PX4_MAIN_MODE_AUTO << 16)
             )
-            master.mav.set_mode_send(
-                master.target_system,
-                mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
-                custom_mode,
-            )
+        else:
+            master.set_mode(mode_name)
             return
 
-        master.set_mode(mode_name)
+        master.mav.set_mode_send(
+            master.target_system,
+            mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
+            custom_mode,
+        )
 
 
-def request_arm(controller, arm=True):
+def ensure_mode(controller, mode_name, timeout, keep_streaming):
+    mode_name = mode_name.upper()
+
+    def selected(main_mode, sub_mode):
+        if mode_name == "OFFBOARD":
+            return main_mode == PX4_MAIN_MODE_OFFBOARD
+        if mode_name == "LAND":
+            return (
+                main_mode == PX4_MAIN_MODE_AUTO
+                and sub_mode == PX4_AUTO_SUB_MODE_LAND
+            )
+        return False
+
+    deadline = time.monotonic() + timeout
+    next_request = 0.0
+    while time.monotonic() < deadline:
+        now = time.monotonic()
+        if now >= next_request:
+            request_mode(controller, mode_name)
+            next_request = now + 1.0
+        if keep_streaming:
+            send_neutral(controller)
+        main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+        if selected(main_mode, sub_mode):
+            return
+        time.sleep(controller.control_dt)
+
+    main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+    raise RuntimeError(
+        f"PX4 did not enter {mode_name} "
+        f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed})"
+    )
+
+
+def request_arm(controller):
+    command = mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
+    before_sequence, _, _ = command_ack_snapshot(controller, command)
     with controller.mav_send_lock:
         controller.master.mav.command_long_send(
             controller.master.target_system,
             controller.master.target_component,
             mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
             0,
-            1.0 if arm else 0.0,
-            0, 0, 0, 0, 0, 0,
+            1.0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
         )
+    return before_sequence
+
+
+def wait_for_command_ack(controller, command, after_sequence, timeout):
+    accepted = {
+        mavutil.mavlink.MAV_RESULT_ACCEPTED,
+        mavutil.mavlink.MAV_RESULT_IN_PROGRESS,
+    }
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        sequence, result, progress = command_ack_snapshot(controller, command)
+        if sequence > after_sequence:
+            if result not in accepted:
+                raise RuntimeError(
+                    f"PX4 rejected command {command}: result={result}"
+                )
+            print(
+                f"[runner] Command {command} acknowledged "
+                f"(result={result}, progress={progress})"
+            )
+            return
+        time.sleep(0.02)
+    raise TimeoutError(f"No COMMAND_ACK received for command {command}")
+
+
+def wait_for_armed(controller, timeout):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        send_neutral(controller)
+        _, _, armed = heartbeat_snapshot(controller)
+        if armed is True:
+            return
+        time.sleep(controller.control_dt)
+    main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+    raise RuntimeError(
+        "PX4 did not arm "
+        f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed})"
+    )
+
+
+def wait_for_initial_ground_state(controller, timeout=5.0):
+    deadline = time.monotonic() + timeout
+    on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
+    while time.monotonic() < deadline:
+        landed_state, age, _ = landing_snapshot(controller)
+        if landed_state == on_ground and age <= 1.5:
+            return
+        time.sleep(0.05)
+    landed_state, age, _ = landing_snapshot(controller)
+    raise RuntimeError(
+        "PX4 did not report a fresh ON_GROUND state before arming "
+        f"(landed_state={landed_state}, age={age:.2f}s)"
+    )
+
+
+def wait_for_native_landing(controller, after_sequence, timeout):
+    deadline = time.monotonic() + timeout
+    on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
+    ground_confirmed = False
+
+    while time.monotonic() < deadline:
+        main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+        landed_state, age, sequence = landing_snapshot(controller)
+        if (
+            sequence > after_sequence
+            and age <= 1.5
+            and landed_state == on_ground
+        ):
+            ground_confirmed = True
+        if armed is False:
+            if not ground_confirmed:
+                raise RuntimeError(
+                    "Vehicle disarmed without a fresh PX4 ON_GROUND report"
+                )
+            return
+        if (
+            main_mode != PX4_MAIN_MODE_AUTO
+            or sub_mode != PX4_AUTO_SUB_MODE_LAND
+        ):
+            raise RuntimeError(
+                "PX4 left LAND before auto-disarm "
+                f"(main_mode={main_mode}, sub_mode={sub_mode})"
+            )
+        time.sleep(0.05)
+
+    main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+    landed_state, age, _ = landing_snapshot(controller)
+    raise TimeoutError(
+        f"PX4 LAND did not finish within {timeout:.0f}s "
+        f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed}, "
+        f"landed_state={landed_state}, landed_age={age:.2f}s)"
+    )
 
 
 def main():
     c = PositionController()
     worker = None
-    completed = False
     controller_stopped = False
 
     try:
         print("[runner] Connecting to PX4...")
         c.connect()
 
-        # Make this dedicated SITL workflow independent of whether QGC is open.
-        # Disable only the GCS data-link-loss action; PX4's distinct Offboard-
-        # loss failsafe remains enabled.
+        # This dedicated SITL workflow does not depend on QGC. PX4's separate
+        # Offboard-loss and navigation failsafes remain enabled.
         set_int_param_before_receiver(c.master, "NAV_DLL_ACT", 0)
         set_int_param_before_receiver(c.master, "SDLOG_MODE", 0)
 
         c.start_receiver()
-        time.sleep(1.0)
         c.wait_for_fresh_telemetry()
+        c.wait_for_preflight_ready()
+        wait_for_initial_ground_state(c)
         c.setup_logger()
 
-        main_mode, sub_mode, armed = heartbeat_snapshot(c)
         print(
-            f"[runner] Initial heartbeat main_mode={main_mode} "
-            f"sub_mode={sub_mode} armed={armed}"
+            f"[runner] Pre-streaming neutral setpoints for "
+            f"{PRESTREAM_SECONDS:.1f}s..."
         )
-
-        print(f"[runner] Pre-streaming neutral setpoints for {PRESTREAM_SECONDS:.1f}s...")
         stream_for(c, PRESTREAM_SECONDS)
 
         print("[runner] Requesting OFFBOARD...")
-        request_mode(c, "OFFBOARD")
-        offboard = wait_heartbeat_state(
-            c,
-            MODE_TIMEOUT,
-            predicate=lambda main, sub, armed: main == PX4_MAIN_MODE_OFFBOARD,
-        )
-        main_mode, sub_mode, armed = heartbeat_snapshot(c)
-        if not offboard:
-            raise RuntimeError(
-                f"PX4 did not enter OFFBOARD "
-                f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed})"
-            )
-        print(
-            f"[runner] OFFBOARD confirmed "
-            f"(main_mode={main_mode}, sub_mode={sub_mode})"
-        )
+        ensure_mode(c, "OFFBOARD", MODE_TIMEOUT, keep_streaming=True)
+        print("[runner] OFFBOARD confirmed")
 
         print("[runner] Requesting arm...")
-        request_arm(c, True)
-        armed_ok = wait_heartbeat_state(
+        ack_sequence = request_arm(c)
+        wait_for_command_ack(
             c,
+            mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM,
+            ack_sequence,
             ARM_TIMEOUT,
-            predicate=lambda main, sub, armed: armed is True,
         )
-        main_mode, sub_mode, armed = heartbeat_snapshot(c)
-        if not armed_ok:
-            raise RuntimeError(
-                f"PX4 did not arm "
-                f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed})"
-            )
+        wait_for_armed(c, ARM_TIMEOUT)
         print("[runner] Armed confirmed")
 
-        # Capture position/yaw after prestreaming, mode change, and arming so
-        # takeoff and the trajectory share one current origin.
         c.initialize_target()
-
         print("[runner] Starting position controller...")
-        worker = threading.Thread(target=c.run, daemon=True)
+        worker = threading.Thread(
+            target=c.run,
+            name="position-controller",
+            daemon=True,
+        )
         worker.start()
 
-        deadline = time.monotonic() + MISSION_TIMEOUT
-        while time.monotonic() < deadline and worker.is_alive():
-            if c.phase == "DONE":
-                completed = True
-                print("[runner] Mission reached DONE")
+        deadline = time.monotonic() + c.config.mission_timeout_s
+        while time.monotonic() < deadline:
+            if c.worker_error is not None:
+                raise RuntimeError(f"Controller failed: {c.worker_error}")
+            if c.phase == "HANDOFF":
                 break
-            time.sleep(0.1)
-
-        if not completed:
-            main_mode, sub_mode, armed = heartbeat_snapshot(c)
-            print(
-                f"[runner] Mission did not complete "
-                f"(phase={c.phase}, main_mode={main_mode}, "
-                f"sub_mode={sub_mode}, armed={armed})"
+            if not worker.is_alive():
+                raise RuntimeError(
+                    f"Controller stopped before handoff; phase={c.phase}"
+                )
+            time.sleep(0.05)
+        else:
+            raise TimeoutError(
+                f"Mission did not reach handoff within "
+                f"{c.config.mission_timeout_s:.0f}s; phase={c.phase}"
             )
-            try:
-                request_mode(c, "LAND")
-                time.sleep(1.0)
-            except Exception as exc:
-                print(f"[runner] LAND request failed: {exc}")
-            raise RuntimeError(f"Mission did not complete; final phase={c.phase}")
 
-        # baseline's controller marks DONE just above the point where PX4's own
-        # land detector may declare touchdown. Hand the final touchdown to PX4
-        # AUTO/LAND and wait for PX4 to auto-disarm natively.
-        print("[runner] Mission DONE; handing touchdown to PX4 LAND...")
-        request_mode(c, "LAND")
-        land_mode = wait_heartbeat_state(
+        print("[runner] Stable over home; handing descent to PX4 LAND...")
+        _, _, land_sequence = landing_snapshot(c)
+        c.begin_native_land_handoff()
+        worker.join(timeout=2.0)
+        if worker.is_alive():
+            raise RuntimeError("Offboard controller did not stop for LAND handoff")
+
+        ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
+        print("[runner] PX4 LAND confirmed; waiting for touchdown + auto-disarm...")
+        wait_for_native_landing(
             c,
-            MODE_TIMEOUT,
-            predicate=lambda main, sub, armed: (
-                main == PX4_MAIN_MODE_AUTO and sub == PX4_AUTO_SUB_MODE_LAND
-            ),
-            keep_streaming=False,
+            after_sequence=land_sequence,
+            timeout=c.config.land_timeout_s,
         )
-        main_mode, sub_mode, armed = heartbeat_snapshot(c)
-        if not land_mode:
-            raise RuntimeError(
-                f"PX4 did not enter LAND "
-                f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed})"
-            )
-        print("[runner] PX4 LAND confirmed; waiting for native landing + auto-disarm...")
-
-        disarmed = wait_heartbeat_state(
-            c,
-            LAND_TIMEOUT,
-            predicate=lambda main, sub, armed: armed is False,
-            keep_streaming=False,
-        )
-        main_mode, sub_mode, armed = heartbeat_snapshot(c)
-        if not disarmed:
-            raise RuntimeError(
-                f"PX4 LAND did not auto-disarm within {LAND_TIMEOUT:.0f}s "
-                f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed})"
-            )
-        print("[runner] PX4 native landing/disarm confirmed")
+        print("[runner] PX4 ON_GROUND and automatic disarm confirmed")
 
         c.stop()
         controller_stopped = True
-        if worker is not None:
-            worker.join(timeout=3.0)
-
         main_mode, sub_mode, armed = heartbeat_snapshot(c)
+        landed_state, _, _ = landing_snapshot(c)
         print(
             f"[runner] Final state main_mode={main_mode} sub_mode={sub_mode} "
-            f"armed={armed} phase={c.phase}"
+            f"armed={armed} landed_state={landed_state} phase={c.phase}"
         )
         print("[runner] SUCCESS")
 
     finally:
-        # Any armed failure is handed to PX4 LAND. Never force-disarm a
-        # vehicle that PX4 may still consider airborne.
+        # Never force-disarm a vehicle that PX4 may still consider airborne.
         try:
             main_mode, sub_mode, armed = heartbeat_snapshot(c)
             if armed:
                 print(
-                    "[runner] Failure cleanup: requesting PX4 LAND "
+                    "[runner] Failure cleanup: handing control to PX4 LAND "
                     f"(phase={c.phase}, main_mode={main_mode}, "
                     f"sub_mode={sub_mode})"
                 )
-                request_mode(c, "LAND")
-                wait_heartbeat_state(
+                _, _, land_sequence = landing_snapshot(c)
+                c.begin_native_land_handoff()
+                ensure_mode(c, "LAND", MODE_TIMEOUT, keep_streaming=False)
+                wait_for_native_landing(
                     c,
-                    LAND_TIMEOUT,
-                    predicate=lambda main, sub, armed: armed is False,
-                    keep_streaming=False,
+                    after_sequence=land_sequence,
+                    timeout=c.config.land_timeout_s,
                 )
         except Exception as exc:
             print(f"[runner] Failure LAND cleanup error: {exc!r}")

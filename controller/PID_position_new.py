@@ -7,6 +7,8 @@ import time
 
 from pymavlink import mavutil
 
+from mission_config import MissionConfig
+from minimum_jerk import MinimumJerkSegment
 from PID_Controller import PIDController
 from VehicleState import VehicleState
 from trajectory import Trajectory, TrajectoryPoint
@@ -24,6 +26,8 @@ class PositionController:
     """Measured-data fixes around the baseline outer-loop controller."""
 
     def __init__(self):
+        self.config = MissionConfig()
+        self.config.validate()
         self.connection_string = "udp:127.0.0.1:14540"
         self.control_rate = 20.0
         self.control_dt = 1.0 / self.control_rate
@@ -35,6 +39,8 @@ class PositionController:
         self.setpoint_lock = threading.Lock()
         self.setpoint_watchdog_stop = threading.Event()
         self.running = False
+        self.control_running = False
+        self.native_land_active = False
         self.receiver_thread = None
         self.setpoint_thread = None
         self.receiver_error = None
@@ -59,6 +65,7 @@ class PositionController:
         self.max_vertical_speed = 1.0
         self.max_trajectory_clock_step_s = 0.10
         self.trajectory_clock_limited = False
+        self.navigation_unhealthy_since = None
 
         # Baseline gains are intentionally unchanged.
         self.pid_x = PIDController(
@@ -80,21 +87,19 @@ class PositionController:
         self.trajectory_start_time = None
         self.mission_time = 0.0
 
-        self.takeoff_altitude = -8.0
+        self.takeoff_altitude = -self.config.cruise_height_m
         self.takeoff_start_z = None
         self.takeoff_x = None
         self.takeoff_y = None
-        self.max_climb_rate = 0.5
-        self.takeoff_tolerance = 0.1
+        self.takeoff_segment = None
+        self.takeoff_ready_since = None
 
         self.land_x = None
         self.land_y = None
         self.land_yaw_unwrapped = None
-        self.max_descent_rate = 0.5
-        self.descent_accel = 0.3
-        self.current_vz_cmd = 0.0
-        self.land_slow_altitude = -0.2
-        self.ground_z = -0.05
+        self.return_segment = None
+        self.return_yaw_start = None
+        self.align_ready_since = None
 
         self.log_file = None
         self.writer = None
@@ -105,6 +110,7 @@ class PositionController:
 
         self.trajectory = Trajectory("trajectory.csv")
         self.duration = self.trajectory.duration
+        self.trajectory_origin = self.trajectory.points[0]
 
     def connect(self, timeout=10.0):
         print(f"Connecting to {self.connection_string}...")
@@ -162,6 +168,9 @@ class PositionController:
             ("MAVLINK_MSG_ID_ATTITUDE_TARGET", 20.0),
             ("MAVLINK_MSG_ID_ACTUATOR_OUTPUT_STATUS", 20.0),
             ("MAVLINK_MSG_ID_SERVO_OUTPUT_RAW", 20.0),
+            ("MAVLINK_MSG_ID_GPS_RAW_INT", 5.0),
+            ("MAVLINK_MSG_ID_EXTENDED_SYS_STATE", 5.0),
+            ("MAVLINK_MSG_ID_ESTIMATOR_STATUS", 5.0),
         ]
         sent = []
         with self.mav_send_lock:
@@ -226,6 +235,14 @@ class PositionController:
                         self.state.update_actuator_output_status(msg)
                     elif msg_type == "SERVO_OUTPUT_RAW":
                         self.state.update_servo_output_raw(msg)
+                    elif msg_type == "GPS_RAW_INT":
+                        self.state.update_gps_raw_int(msg)
+                    elif msg_type == "EXTENDED_SYS_STATE":
+                        self.state.update_extended_sys_state(msg)
+                    elif msg_type == "ESTIMATOR_STATUS":
+                        self.state.update_estimator_status(msg)
+                    elif msg_type == "COMMAND_ACK":
+                        self.state.update_command_ack(msg)
         except Exception as exc:
             self.receiver_error = repr(exc)
             print(f"[research] MAVLink receiver failed: {exc!r}")
@@ -279,7 +296,7 @@ class PositionController:
         self.send_velocity(vx, vy, vz, yaw, source="control")
 
     def _setpoint_watchdog_loop(self):
-        while self.running:
+        while self.running and self.control_running:
             if self.setpoint_watchdog_stop.wait(
                 self.setpoint_watchdog_poll
             ):
@@ -398,6 +415,12 @@ class PositionController:
                 ),
                 "actuator_age_s": age(s.actuator_received_at),
                 "servo_age_s": age(s.servo_received_at),
+                "gps_age_s": age(s.gps_received_at),
+                "extended_state_age_s": age(
+                    s.extended_state_received_at
+                ),
+                "estimator_age_s": age(s.estimator_received_at),
+                "command_ack_age_s": age(s.command_ack_received_at),
                 "position_seq": s.message_counts.get(
                     "LOCAL_POSITION_NED", 0
                 ),
@@ -414,6 +437,35 @@ class PositionController:
                     "ACTUATOR_OUTPUT_STATUS", 0
                 ),
                 "servo_seq": s.message_counts.get("SERVO_OUTPUT_RAW", 0),
+                "gps_seq": s.message_counts.get("GPS_RAW_INT", 0),
+                "extended_state_seq": s.message_counts.get(
+                    "EXTENDED_SYS_STATE", 0
+                ),
+                "estimator_seq": s.message_counts.get(
+                    "ESTIMATOR_STATUS", 0
+                ),
+                "command_ack_seq": s.message_counts.get("COMMAND_ACK", 0),
+                "gps_fix_type": s.gps_fix_type,
+                "gps_satellites_visible": s.gps_satellites_visible,
+                "gps_hdop": s.gps_hdop,
+                "gps_vdop": s.gps_vdop,
+                "gps_horizontal_accuracy_m": s.gps_horizontal_accuracy_m,
+                "gps_vertical_accuracy_m": s.gps_vertical_accuracy_m,
+                "gps_lat_deg": s.gps_lat_deg,
+                "gps_lon_deg": s.gps_lon_deg,
+                "gps_alt_m": s.gps_alt_m,
+                "landed_state": s.landed_state,
+                "estimator_flags": s.estimator_flags,
+                "estimator_velocity_ratio": s.estimator_velocity_ratio,
+                "estimator_pos_horiz_ratio": (
+                    s.estimator_pos_horiz_ratio
+                ),
+                "estimator_pos_vert_ratio": s.estimator_pos_vert_ratio,
+                "estimator_mag_ratio": s.estimator_mag_ratio,
+                "estimator_hagl_ratio": s.estimator_hagl_ratio,
+                "command_ack_command": s.command_ack_command,
+                "command_ack_result": s.command_ack_result,
+                "command_ack_progress": s.command_ack_progress,
                 "imu_xacc": s.imu_xacc,
                 "imu_yacc": s.imu_yacc,
                 "imu_zacc": s.imu_zacc,
@@ -500,6 +552,121 @@ class PositionController:
             f"{flags}"
         )
 
+    @staticmethod
+    def _required_estimator_mask():
+        # Numeric fallbacks are the MAVLink ESTIMATOR_STATUS_FLAGS values.
+        requirements = (
+            ("ESTIMATOR_ATTITUDE", 1),
+            ("ESTIMATOR_VELOCITY_HORIZ", 2),
+            ("ESTIMATOR_VELOCITY_VERT", 4),
+            ("ESTIMATOR_POS_HORIZ_ABS", 16),
+            ("ESTIMATOR_POS_VERT_ABS", 32),
+        )
+        mask = 0
+        for name, fallback in requirements:
+            mask |= int(getattr(mavutil.mavlink, name, fallback))
+        return mask
+
+    def _navigation_health_reasons(self, snapshot):
+        reasons = []
+        if snapshot["gps_age_s"] > self.config.gps_max_age_s:
+            reasons.append("GPS telemetry stale")
+        if snapshot["gps_fix_type"] < self.config.gps_min_fix_type:
+            reasons.append(
+                f"GPS fix {snapshot['gps_fix_type']}<"
+                f"{self.config.gps_min_fix_type}"
+            )
+        if (
+            snapshot["gps_satellites_visible"]
+            < self.config.gps_min_satellites
+        ):
+            reasons.append(
+                f"satellites {snapshot['gps_satellites_visible']}<"
+                f"{self.config.gps_min_satellites}"
+            )
+        if snapshot["gps_hdop"] > self.config.gps_max_hdop:
+            reasons.append(
+                f"GPS HDOP {snapshot['gps_hdop']:.2f}>"
+                f"{self.config.gps_max_hdop:.2f}"
+            )
+        if snapshot["gps_vdop"] > self.config.gps_max_vdop:
+            reasons.append(
+                f"GPS VDOP {snapshot['gps_vdop']:.2f}>"
+                f"{self.config.gps_max_vdop:.2f}"
+            )
+        if (
+            snapshot["gps_horizontal_accuracy_m"]
+            > self.config.gps_max_horizontal_accuracy_m
+        ):
+            reasons.append(
+                "GPS horizontal accuracy "
+                f"{snapshot['gps_horizontal_accuracy_m']:.2f}m>"
+                f"{self.config.gps_max_horizontal_accuracy_m:.2f}m"
+            )
+        if (
+            snapshot["gps_vertical_accuracy_m"]
+            > self.config.gps_max_vertical_accuracy_m
+        ):
+            reasons.append(
+                "GPS vertical accuracy "
+                f"{snapshot['gps_vertical_accuracy_m']:.2f}m>"
+                f"{self.config.gps_max_vertical_accuracy_m:.2f}m"
+            )
+
+        if snapshot["estimator_age_s"] > self.config.estimator_max_age_s:
+            reasons.append("estimator telemetry stale")
+        required = self._required_estimator_mask()
+        if snapshot["estimator_flags"] & required != required:
+            reasons.append(
+                f"estimator flags 0x{snapshot['estimator_flags']:x} "
+                f"missing 0x{required:x}"
+            )
+        for label, value in (
+            ("velocity", snapshot["estimator_velocity_ratio"]),
+            ("horizontal position", snapshot["estimator_pos_horiz_ratio"]),
+            ("vertical position", snapshot["estimator_pos_vert_ratio"]),
+        ):
+            if (
+                not math.isfinite(value)
+                or value > self.config.estimator_max_test_ratio
+            ):
+                reasons.append(
+                    f"{label} innovation ratio {value:.2f}>"
+                    f"{self.config.estimator_max_test_ratio:.2f}"
+                )
+        return reasons
+
+    def wait_for_preflight_ready(self, timeout=None):
+        timeout = (
+            self.config.preflight_timeout_s if timeout is None else timeout
+        )
+        print("Waiting for GPS and estimator health gates...")
+        deadline = time.monotonic() + timeout
+        last_reasons = ["no navigation telemetry received"]
+        while time.monotonic() < deadline:
+            snapshot = self._snapshot(time.monotonic())
+            last_reasons = self._navigation_health_reasons(snapshot)
+            if not last_reasons:
+                print(
+                    "[research] Navigation ready: "
+                    f"fix={snapshot['gps_fix_type']} "
+                    f"satellites={snapshot['gps_satellites_visible']} "
+                    f"HDOP={snapshot['gps_hdop']:.2f} "
+                    f"HAcc={snapshot['gps_horizontal_accuracy_m']:.2f}m "
+                    f"VAcc={snapshot['gps_vertical_accuracy_m']:.2f}m"
+                )
+                return
+            if self.receiver_error is not None:
+                raise RuntimeError(
+                    f"MAVLink receiver failed during preflight: "
+                    f"{self.receiver_error}"
+                )
+            time.sleep(0.1)
+        raise TimeoutError(
+            "Navigation did not pass preflight gates: "
+            + "; ".join(last_reasons)
+        )
+
     def initialize_target(self, timeout=8.0, freshness_limit=2.0):
         self.wait_for_fresh_telemetry(timeout, freshness_limit)
 
@@ -513,18 +680,32 @@ class PositionController:
         self.target_y = self.y0
         self.target_z = self.z0 + self.takeoff_altitude
 
+        self.takeoff_segment = MinimumJerkSegment.from_limits(
+            (self.x0, self.y0, self.z0),
+            (self.target_x, self.target_y, self.target_z),
+            max_speed=self.config.takeoff_max_speed_m_s,
+            max_accel=self.config.max_accel_m_s2,
+            max_jerk=self.config.max_jerk_m_s3,
+            minimum_duration=self.config.minimum_segment_duration_s,
+        )
+
         self._reset_position_pids()
         self.pid_x.setpoint = self.target_x
         self.pid_y.setpoint = self.target_y
         self.pid_z.setpoint = self.target_z
 
-        self.takeoff_start_z = None
-        self.takeoff_x = None
-        self.takeoff_y = None
+        self.takeoff_start_z = self.z0
+        self.takeoff_x = self.x0
+        self.takeoff_y = self.y0
+        self.takeoff_ready_since = None
         self.land_x = None
         self.land_y = None
         self.land_yaw_unwrapped = None
-        self.current_vz_cmd = 0.0
+        self.return_segment = None
+        self.return_yaw_start = None
+        self.align_ready_since = None
+        self.navigation_unhealthy_since = None
+        self.native_land_active = False
         self.phase = "TAKEOFF"
         self.phase_enter_time = time.monotonic()
 
@@ -535,7 +716,8 @@ class PositionController:
         )
         print(
             f"Target: x={self.target_x:.3f} y={self.target_y:.3f} "
-            f"z={self.target_z:.3f}"
+            f"z={self.target_z:.3f}; minimum-jerk takeoff "
+            f"duration={self.takeoff_segment.duration:.1f}s"
         )
 
     def setup_logger(self):
@@ -570,6 +752,10 @@ class PositionController:
             "px4_attitude_target_age_s",
             "actuator_age_s",
             "servo_age_s",
+            "gps_age_s",
+            "extended_state_age_s",
+            "estimator_age_s",
+            "command_ack_age_s",
             "position_seq",
             "attitude_seq",
             "heartbeat_seq",
@@ -578,6 +764,29 @@ class PositionController:
             "attitude_target_seq",
             "actuator_seq",
             "servo_seq",
+            "gps_seq",
+            "extended_state_seq",
+            "estimator_seq",
+            "command_ack_seq",
+            "gps_fix_type",
+            "gps_satellites_visible",
+            "gps_hdop",
+            "gps_vdop",
+            "gps_horizontal_accuracy_m",
+            "gps_vertical_accuracy_m",
+            "gps_lat_deg",
+            "gps_lon_deg",
+            "gps_alt_m",
+            "landed_state",
+            "estimator_flags",
+            "estimator_velocity_ratio",
+            "estimator_pos_horiz_ratio",
+            "estimator_pos_vert_ratio",
+            "estimator_mag_ratio",
+            "estimator_hagl_ratio",
+            "command_ack_command",
+            "command_ack_result",
+            "command_ack_progress",
             "setpoint_send_age_s",
             "latest_setpoint_age_s",
             "setpoint_last_gap_s",
@@ -691,11 +900,38 @@ class PositionController:
         for pid in (self.pid_x, self.pid_y, self.pid_z):
             pid.reset()
 
-    def update_phase(self, x, y, z, now_mono):
+    def update_phase(self, x, y, z, now_mono, snapshot=None):
         self.last_phase_transition = ""
+        if snapshot is None:
+            snapshot = self._snapshot(now_mono)
+
+        vx = snapshot["vx"]
+        vy = snapshot["vy"]
+        vz = snapshot["vz"]
+        phase_elapsed = max(0.0, now_mono - self.phase_enter_time)
 
         if self.phase == "TAKEOFF":
-            if abs(self.target_z - z) < self.takeoff_tolerance:
+            position_error = math.sqrt(
+                (self.target_x - x) ** 2
+                + (self.target_y - y) ** 2
+                + (self.target_z - z) ** 2
+            )
+            speed = math.sqrt(vx**2 + vy**2 + vz**2)
+            settled = (
+                self.takeoff_segment.finished(phase_elapsed)
+                and position_error <= self.config.takeoff_position_tolerance_m
+                and speed <= self.config.takeoff_speed_tolerance_m_s
+            )
+            if settled and self.takeoff_ready_since is None:
+                self.takeoff_ready_since = now_mono
+            elif not settled:
+                self.takeoff_ready_since = None
+
+            if (
+                self.takeoff_ready_since is not None
+                and now_mono - self.takeoff_ready_since
+                >= self.config.takeoff_settle_s
+            ):
                 self._reset_position_pids()
                 self.trajectory.reset()
                 self.trajectory_start_time = now_mono
@@ -704,18 +940,61 @@ class PositionController:
 
         elif self.phase == "TRAJECTORY":
             if self.trajectory.finished:
-                final_target = self.trajectory.points[-1]
-                self.current_vz_cmd = 0.0
-                self.land_x = self.x0 + final_target.x
-                self.land_y = self.y0 + final_target.y
-                self.land_yaw_unwrapped = self.yaw0 + final_target.yaw
+                self.land_x = self.x0
+                self.land_y = self.y0
+                self.land_yaw_unwrapped = self.yaw0
+                self.return_yaw_start = snapshot["yaw"]
+                self.return_segment = MinimumJerkSegment.from_limits(
+                    (x, y, z),
+                    (self.land_x, self.land_y, self.target_z),
+                    max_speed=self.config.return_max_speed_m_s,
+                    max_accel=self.config.max_accel_m_s2,
+                    max_jerk=self.config.max_jerk_m_s3,
+                    minimum_duration=self.config.minimum_segment_duration_s,
+                )
                 self.pid_x.setpoint = self.land_x
                 self.pid_y.setpoint = self.land_y
-                self._transition("LAND", now_mono)
+                self.pid_z.setpoint = self.target_z
+                self._reset_position_pids()
+                self._transition("RETURN_HOME", now_mono)
 
-        elif self.phase == "LAND":
-            if (z - self.z0) >= self.ground_z:
-                self._transition("DONE", now_mono)
+        elif self.phase == "RETURN_HOME":
+            if self.return_segment.finished(phase_elapsed):
+                self.align_ready_since = None
+                self._reset_position_pids()
+                self._transition("ALIGN", now_mono)
+
+        elif self.phase == "ALIGN":
+            xy_error = math.hypot(self.land_x - x, self.land_y - y)
+            z_error = abs(self.target_z - z)
+            horizontal_speed = math.hypot(vx, vy)
+            tilt = max(abs(snapshot["roll"]), abs(snapshot["pitch"]))
+            angular_rate = max(
+                abs(snapshot["p"]),
+                abs(snapshot["q"]),
+                abs(snapshot["r"]),
+            )
+            ready = (
+                xy_error <= self.config.align_xy_tolerance_m
+                and z_error <= self.config.align_z_tolerance_m
+                and horizontal_speed
+                <= self.config.align_horizontal_speed_m_s
+                and abs(vz) <= self.config.align_vertical_speed_m_s
+                and tilt <= math.radians(self.config.align_tilt_deg)
+                and angular_rate
+                <= math.radians(self.config.align_angular_rate_deg_s)
+            )
+            if ready and self.align_ready_since is None:
+                self.align_ready_since = now_mono
+            elif not ready:
+                self.align_ready_since = None
+
+            if (
+                self.align_ready_since is not None
+                and now_mono - self.align_ready_since
+                >= self.config.align_hold_s
+            ):
+                self._transition("HANDOFF", now_mono)
 
     @staticmethod
     def _zero_pid_terms():
@@ -783,48 +1062,26 @@ class PositionController:
         )
 
     def takeoff_controller(self, x, y, z, yaw, dt):
-        if self.takeoff_start_z is None:
-            self.takeoff_start_z = z
-            self.takeoff_x = x
-            self.takeoff_y = y
-            print(
-                f"Takeoff start: x={x:.3f}, y={y:.3f}, z={z:.3f}"
-            )
+        elapsed = max(0.0, time.monotonic() - self.phase_enter_time)
+        target = self.takeoff_segment.sample(elapsed)
+
+        self.pid_x.setpoint = target.x
+        self.pid_y.setpoint = target.y
+        self.pid_z.setpoint = target.z
 
         correction_x = self.pid_x.update(x, dt)
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
-        climb_limited_vz = clamp(
-            correction_z,
-            -self.max_climb_rate,
-            self.max_climb_rate,
-        )
         command, limited = self._limit_velocity_command(
-            correction_x,
-            correction_y,
-            climb_limited_vz,
-        )
-        limited = (
-            limited[0],
-            limited[1],
-            limited[2] or climb_limited_vz != correction_z,
-        )
-
-        target = TrajectoryPoint(
-            time=0.0,
-            x=0.0,
-            y=0.0,
-            z=self.target_z - self.z0,
-            vx=0.0,
-            vy=0.0,
-            vz=0.0,
-            yaw=0.0,
+            target.vx + correction_x,
+            target.vy + correction_y,
+            target.vz + correction_z,
         )
 
         return self._control_result(
             target=target,
-            desired=(self.target_x, self.target_y, self.target_z),
-            planned=(0.0, 0.0, 0.0),
+            desired=(target.x, target.y, target.z),
+            planned=(target.vx, target.vy, target.vz),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
@@ -838,9 +1095,9 @@ class PositionController:
     def trajectory_controller(self, x, y, z, dt):
         target = self.trajectory.get_target(self.mission_time)
 
-        desired_x = self.x0 + target.x
-        desired_y = self.y0 + target.y
-        desired_z = self.z0 + target.z
+        desired_x = self.x0 + target.x - self.trajectory_origin.x
+        desired_y = self.y0 + target.y - self.trajectory_origin.y
+        desired_z = self.target_z + target.z - self.trajectory_origin.z
 
         self.pid_x.setpoint = desired_x
         self.pid_y.setpoint = desired_y
@@ -856,7 +1113,9 @@ class PositionController:
             target.vz + correction_z,
         )
 
-        yaw_unwrapped = self.yaw0 + target.yaw
+        yaw_unwrapped = (
+            self.yaw0 + target.yaw - self.trajectory_origin.yaw
+        )
         return self._control_result(
             target=target,
             desired=(desired_x, desired_y, desired_z),
@@ -871,54 +1130,88 @@ class PositionController:
             yaw_unwrapped=yaw_unwrapped,
         )
 
-    def landing_controller(self, x, y, z, yaw, dt):
-        target_vz = self.max_descent_rate
-        self.current_vz_cmd = min(
-            target_vz,
-            self.current_vz_cmd + self.descent_accel * dt,
-        )
+    def return_home_controller(self, x, y, z, dt):
+        elapsed = max(0.0, time.monotonic() - self.phase_enter_time)
+        target = self.return_segment.sample(elapsed)
 
-        if (z - self.z0) > self.land_slow_altitude:
-            scale = -(z - self.z0) / (-self.land_slow_altitude)
-            self.current_vz_cmd = self.max_descent_rate * clamp(
-                scale, 0.0, 1.0
-            )
+        self.pid_x.setpoint = target.x
+        self.pid_y.setpoint = target.y
+        self.pid_z.setpoint = target.z
 
         correction_x = self.pid_x.update(x, dt)
         correction_y = self.pid_y.update(y, dt)
+        correction_z = self.pid_z.update(z, dt)
+        command, limited = self._limit_velocity_command(
+            target.vx + correction_x,
+            target.vy + correction_y,
+            target.vz + correction_z,
+        )
+
+        ratio = clamp(elapsed / self.return_segment.duration, 0.0, 1.0)
+        blend = 10.0 * ratio**3 - 15.0 * ratio**4 + 6.0 * ratio**5
+        yaw_delta = wrapped_angle(
+            self.land_yaw_unwrapped - self.return_yaw_start
+        )
+        yaw_unwrapped = self.return_yaw_start + blend * yaw_delta
+        target.yaw = wrapped_angle(yaw_unwrapped - self.yaw0)
+
+        return self._control_result(
+            target=target,
+            desired=(target.x, target.y, target.z),
+            planned=(target.vx, target.vy, target.vz),
+            pid_terms=(
+                self._pid_terms(self.pid_x),
+                self._pid_terms(self.pid_y),
+                self._pid_terms(self.pid_z),
+            ),
+            command=command,
+            limited=limited,
+            yaw_unwrapped=yaw_unwrapped,
+        )
+
+    def align_controller(self, x, y, z, yaw, dt):
+        self.pid_x.setpoint = self.land_x
+        self.pid_y.setpoint = self.land_y
+        self.pid_z.setpoint = self.target_z
+
+        correction_x = self.pid_x.update(x, dt)
+        correction_y = self.pid_y.update(y, dt)
+        correction_z = self.pid_z.update(z, dt)
         command, limited = self._limit_velocity_command(
             correction_x,
             correction_y,
-            self.current_vz_cmd,
+            correction_z,
         )
-
         target = TrajectoryPoint(
             time=0.0,
             x=self.land_x - self.x0,
             y=self.land_y - self.y0,
-            z=0.0,
+            z=self.target_z - self.z0,
             vx=0.0,
             vy=0.0,
-            vz=self.current_vz_cmd,
+            vz=0.0,
             yaw=wrapped_angle(
                 self.land_yaw_unwrapped - self.yaw0
             ),
         )
-        zero_z = self._zero_pid_terms()
 
         return self._control_result(
             target=target,
-            desired=(self.land_x, self.land_y, self.z0),
-            planned=(0.0, 0.0, self.current_vz_cmd),
+            desired=(self.land_x, self.land_y, self.target_z),
+            planned=(0.0, 0.0, 0.0),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
-                zero_z,
+                self._pid_terms(self.pid_z),
             ),
             command=command,
             limited=limited,
             yaw_unwrapped=self.land_yaw_unwrapped,
         )
+
+    def landing_controller(self, x, y, z, yaw, dt):
+        """Compatibility alias: hold safely; PX4 LAND owns descent."""
+        return self.align_controller(x, y, z, yaw, dt)
 
     def done_controller(self, x, y, z, yaw):
         target = TrajectoryPoint(
@@ -1069,7 +1362,14 @@ class PositionController:
                 "Stale runtime telemetry: " + ", ".join(stale)
             )
 
-        if self.phase in ("TAKEOFF", "TRAJECTORY", "LAND"):
+        active_phases = (
+            "TAKEOFF",
+            "TRAJECTORY",
+            "RETURN_HOME",
+            "ALIGN",
+            "HANDOFF",
+        )
+        if self.phase in active_phases:
             if not snapshot["armed"]:
                 raise RuntimeError(
                     f"Unexpected disarm during active phase {self.phase}"
@@ -1081,9 +1381,29 @@ class PositionController:
                     f"{snapshot['heartbeat_main_mode']}"
                 )
 
+            navigation_reasons = (
+                self._navigation_health_reasons(snapshot)
+                if "gps_age_s" in snapshot
+                else []
+            )
+            if navigation_reasons:
+                if self.navigation_unhealthy_since is None:
+                    self.navigation_unhealthy_since = time.monotonic()
+                unhealthy_for = (
+                    time.monotonic() - self.navigation_unhealthy_since
+                )
+                if unhealthy_for >= self.config.navigation_health_grace_s:
+                    raise RuntimeError(
+                        "Navigation health gate failed: "
+                        + "; ".join(navigation_reasons)
+                    )
+            else:
+                self.navigation_unhealthy_since = None
+
     def run(self):
         print("Starting fixed research controller loop")
         self.running = True
+        self.control_running = True
         self._start_setpoint_watchdog()
 
         controller_start = time.monotonic()
@@ -1094,7 +1414,7 @@ class PositionController:
         count = 0
 
         try:
-            while self.running:
+            while self.running and self.control_running:
                 loop_start = time.monotonic()
 
                 lateness = max(0.0, loop_start - next_tick)
@@ -1114,7 +1434,7 @@ class PositionController:
                 snapshot = self._snapshot(loop_start)
                 x, y, z = snapshot["x"], snapshot["y"], snapshot["z"]
                 self._validate_runtime_health(snapshot)
-                self.update_phase(x, y, z, loop_start)
+                self.update_phase(x, y, z, loop_start, snapshot)
 
                 self.trajectory_clock_limited = False
                 if self.phase == "TAKEOFF":
@@ -1140,8 +1460,15 @@ class PositionController:
                     control = self.trajectory_controller(
                         x, y, z, effective_dt
                     )
-                elif self.phase == "LAND":
-                    control = self.landing_controller(
+                elif self.phase == "RETURN_HOME":
+                    control = self.return_home_controller(
+                        x,
+                        y,
+                        z,
+                        effective_dt,
+                    )
+                elif self.phase in ("ALIGN", "HANDOFF"):
+                    control = self.align_controller(
                         x,
                         y,
                         z,
@@ -1224,9 +1551,21 @@ class PositionController:
             if self.log_file is not None and not self.log_file.closed:
                 self.log_file.flush()
 
+    def begin_native_land_handoff(self):
+        """Stop Offboard setpoints while preserving the telemetry receiver."""
+        self.native_land_active = True
+        self.control_running = False
+        self.setpoint_watchdog_stop.set()
+        if (
+            self.setpoint_thread is not None
+            and self.setpoint_thread is not threading.current_thread()
+        ):
+            self.setpoint_thread.join(timeout=1.0)
+
     def stop(self):
         print("Stopping controller...")
         self.running = False
+        self.control_running = False
         self.setpoint_watchdog_stop.set()
 
         if (
@@ -1235,7 +1574,7 @@ class PositionController:
         ):
             self.setpoint_thread.join(timeout=1.0)
 
-        if self.master is not None:
+        if self.master is not None and not self.native_land_active:
             with self.state_lock:
                 current_yaw = self.state.yaw
             self.send_velocity(

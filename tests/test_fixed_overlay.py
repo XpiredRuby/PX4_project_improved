@@ -13,6 +13,7 @@ sys.path.insert(0, str(FIXED))
 
 from PID_Controller import PIDController
 from PID_position_new import PositionController, wrapped_angle
+from minimum_jerk import MinimumJerkSegment
 
 
 class FakeMav:
@@ -66,7 +67,17 @@ class FixedOverlayTests(unittest.TestCase):
         controller.yaw0 = 0.25
         controller.target_x = controller.x0
         controller.target_y = controller.y0
-        controller.target_z = controller.z0 - 8.0
+        controller.target_z = (
+            controller.z0 - controller.config.cruise_height_m
+        )
+        controller.takeoff_segment = MinimumJerkSegment.from_limits(
+            (controller.x0, controller.y0, controller.z0),
+            (controller.target_x, controller.target_y, controller.target_z),
+            max_speed=controller.config.takeoff_max_speed_m_s,
+            max_accel=controller.config.max_accel_m_s2,
+            max_jerk=controller.config.max_jerk_m_s3,
+        )
+        controller.phase_enter_time = time.monotonic()
         controller.pid_x.setpoint = controller.target_x
         controller.pid_y.setpoint = controller.target_y
         controller.pid_z.setpoint = controller.target_z
@@ -87,10 +98,10 @@ class FixedOverlayTests(unittest.TestCase):
         )
         self.assertLess(control["command"][0], 0.0)
         self.assertGreater(control["command"][1], 0.0)
-        self.assertEqual(control["target"].x, 0.0)
-        self.assertEqual(control["target"].y, 0.0)
+        self.assertEqual(control["target"].x, controller.x0)
+        self.assertEqual(control["target"].y, controller.y0)
 
-    def test_landing_holds_trajectory_endpoint(self):
+    def test_landing_handoff_holds_xy_and_does_not_descend(self):
         controller = self.make_controller()
         controller.land_x = 2.0
         controller.land_y = -1.0
@@ -110,6 +121,8 @@ class FixedOverlayTests(unittest.TestCase):
             control["desired"][:2],
             (controller.land_x, controller.land_y),
         )
+        self.assertEqual(control["desired"][2], controller.target_z)
+        self.assertEqual(control["planned"][2], 0.0)
         self.assertAlmostEqual(control["yaw_unwrapped"], 0.5)
 
     def test_all_phase_controllers_share_exact_result_contract(self):
@@ -234,6 +247,7 @@ class FixedOverlayTests(unittest.TestCase):
         controller = self.make_controller()
         controller.master = FakeMaster()
         controller.running = True
+        controller.control_running = True
         controller._start_setpoint_watchdog()
         time.sleep(0.24)
         controller.running = False
