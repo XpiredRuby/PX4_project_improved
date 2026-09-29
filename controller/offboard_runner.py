@@ -4,6 +4,13 @@ import time
 
 from pymavlink import mavutil
 
+from magless_bootstrap import (
+    capture_launch_reference,
+    recover_local_home,
+    run_magless_yaw_bootstrap,
+    send_attitude_target,
+    wait_for_bootstrap_ready,
+)
 from mission_state import FailureAction, MissionOutcome
 from PID_position_new import PositionController
 from px4_policy import audit_px4_configuration
@@ -68,10 +75,11 @@ def send_neutral(controller):
     controller.send_velocity(0.0, 0.0, 0.0, yaw)
 
 
-def stream_for(controller, seconds):
+def stream_for(controller, seconds, send_setpoint=None):
+    send_setpoint = send_setpoint or (lambda: send_neutral(controller))
     end = time.monotonic() + seconds
     while time.monotonic() < end:
-        send_neutral(controller)
+        send_setpoint()
         time.sleep(controller.control_dt)
 
 
@@ -98,7 +106,13 @@ def request_mode(controller, mode_name):
         )
 
 
-def ensure_mode(controller, mode_name, timeout, keep_streaming):
+def ensure_mode(
+    controller,
+    mode_name,
+    timeout,
+    keep_streaming,
+    send_setpoint=None,
+):
     mode_name = mode_name.upper()
 
     def selected(main_mode, sub_mode):
@@ -119,7 +133,10 @@ def ensure_mode(controller, mode_name, timeout, keep_streaming):
             request_mode(controller, mode_name)
             next_request = now + 1.0
         if keep_streaming:
-            send_neutral(controller)
+            if send_setpoint is None:
+                send_neutral(controller)
+            else:
+                send_setpoint()
         main_mode, sub_mode, armed = heartbeat_snapshot(controller)
         if selected(main_mode, sub_mode):
             return
@@ -174,10 +191,13 @@ def wait_for_command_ack(controller, command, after_sequence, timeout):
     raise TimeoutError(f"No COMMAND_ACK received for command {command}")
 
 
-def wait_for_armed(controller, timeout):
+def wait_for_armed(controller, timeout, send_setpoint=None):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        send_neutral(controller)
+        if send_setpoint is None:
+            send_neutral(controller)
+        else:
+            send_setpoint()
         _, _, armed = heartbeat_snapshot(controller)
         if armed is True:
             return
@@ -296,22 +316,28 @@ def main():
 
         c.start_receiver()
         c.wait_for_fresh_telemetry()
-        c.wait_for_preflight_ready()
+        wait_for_bootstrap_ready(c)
         wait_for_initial_ground_state(c)
-        home_snapshot = c.capture_home_reference()
-        c.configure_cruise_height(home_snapshot)
-        c.validate_mission_plan()
-        c.setup_logger(run_id=run_record.run_id)
+        launch_reference = capture_launch_reference(c)
+
+        def send_level_disarmed():
+            send_attitude_target(c, 0.0, 0.0)
 
         print(
-            f"[runner] Pre-streaming neutral setpoints for "
+            f"[runner] Pre-streaming level attitude setpoints for "
             f"{PRESTREAM_SECONDS:.1f}s..."
         )
-        stream_for(c, PRESTREAM_SECONDS)
+        stream_for(c, PRESTREAM_SECONDS, send_level_disarmed)
 
-        print("[runner] Requesting OFFBOARD...")
-        ensure_mode(c, "OFFBOARD", MODE_TIMEOUT, keep_streaming=True)
-        print("[runner] OFFBOARD confirmed")
+        print("[runner] Requesting attitude OFFBOARD...")
+        ensure_mode(
+            c,
+            "OFFBOARD",
+            MODE_TIMEOUT,
+            keep_streaming=True,
+            send_setpoint=send_level_disarmed,
+        )
+        print("[runner] Attitude OFFBOARD confirmed")
 
         print("[runner] Requesting arm...")
         ack_sequence = request_arm(c)
@@ -321,11 +347,21 @@ def main():
             ack_sequence,
             ARM_TIMEOUT,
         )
-        wait_for_armed(c, ARM_TIMEOUT)
+        wait_for_armed(c, ARM_TIMEOUT, send_level_disarmed)
         vehicle_was_armed = True
         print("[runner] Armed confirmed")
 
-        c.initialize_target()
+        run_magless_yaw_bootstrap(
+            c,
+            hover_thrust=float(px4_parameters["MPC_THR_HOVER"]),
+            px4_max_thrust=float(px4_parameters["MPC_THR_MAX"]),
+        )
+        c.wait_for_preflight_ready(timeout=5.0)
+        home_snapshot = recover_local_home(c, launch_reference)
+        c.configure_cruise_height(home_snapshot)
+        c.validate_mission_plan()
+        c.setup_logger(run_id=run_record.run_id)
+        c.initialize_target(start_from_current=True)
         print("[runner] Starting position controller...")
         worker = threading.Thread(
             target=c.run,

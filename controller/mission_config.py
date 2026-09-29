@@ -29,6 +29,26 @@ class MissionConfig:
     setpoint_watchdog_timeout_s: float = 0.10
     offboard_stream_max_gap_s: float = 0.50
 
+    # A single-antenna GPS cannot observe absolute yaw while stationary.
+    # PX4's GSF yaw estimator needs a short horizontal acceleration before
+    # GPS horizontal fusion can begin when the magnetometer is disabled.
+    bootstrap_altitude_m: float = 2.0
+    bootstrap_pitch_deg: float = -10.0
+    bootstrap_pitch_start_altitude_m: float = 0.75
+    bootstrap_max_altitude_m: float = 4.0
+    bootstrap_max_tilt_deg: float = 25.0
+    bootstrap_timeout_s: float = 18.0
+    bootstrap_navigation_confirm_s: float = 1.0
+    bootstrap_thrust_bias: float = 0.12
+    bootstrap_vertical_kp: float = 0.12
+    bootstrap_vertical_kd: float = 0.16
+    bootstrap_min_thrust: float = 0.45
+    bootstrap_max_thrust: float = 0.90
+    launch_reference_duration_s: float = 3.0
+    launch_reference_min_samples: int = 10
+    home_recovery_duration_s: float = 2.0
+    home_recovery_min_samples: int = 6
+
     max_operating_radius_m: float = 80.0
     max_height_above_launch_m: float = 30.0
     max_offboard_drop_below_launch_m: float = 2.0
@@ -107,8 +127,31 @@ class MissionConfig:
             self.max_vertical_speed_m_s,
             self.setpoint_watchdog_timeout_s,
             self.offboard_stream_max_gap_s,
+            self.bootstrap_altitude_m,
+            self.bootstrap_pitch_start_altitude_m,
+            self.bootstrap_max_altitude_m,
+            self.bootstrap_max_tilt_deg,
+            self.bootstrap_timeout_s,
+            self.bootstrap_navigation_confirm_s,
+            self.bootstrap_vertical_kp,
+            self.bootstrap_vertical_kd,
+            self.launch_reference_duration_s,
+            self.home_recovery_duration_s,
         ) <= 0.0:
             raise ValueError("motion limits must be positive")
+        if not (
+            self.bootstrap_altitude_m < self.bootstrap_max_altitude_m
+            and self.bootstrap_pitch_start_altitude_m
+            < self.bootstrap_altitude_m
+            and 0.0 <= self.bootstrap_min_thrust
+            < self.bootstrap_max_thrust <= 1.0
+        ):
+            raise ValueError("magless bootstrap limits are inconsistent")
+        if min(
+            self.launch_reference_min_samples,
+            self.home_recovery_min_samples,
+        ) < 3:
+            raise ValueError("GPS reference sample counts must be at least 3")
         if self.setpoint_watchdog_timeout_s >= self.offboard_stream_max_gap_s:
             raise ValueError(
                 "setpoint watchdog must resend before the Offboard gap limit"

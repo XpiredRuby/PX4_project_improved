@@ -1025,7 +1025,12 @@ class PositionController:
             + "; ".join(last_reasons)
         )
 
-    def initialize_target(self, timeout=8.0, freshness_limit=2.0):
+    def initialize_target(
+        self,
+        timeout=8.0,
+        freshness_limit=2.0,
+        start_from_current=False,
+    ):
         self.wait_for_fresh_telemetry(timeout, freshness_limit)
         if not self.home_reference_ready:
             raise RuntimeError(
@@ -1036,13 +1041,30 @@ class PositionController:
         self.target_y = self.y0
         self.target_z = self.z0 + self.takeoff_altitude
 
+        if start_from_current:
+            snapshot = self._snapshot(time.monotonic())
+            segment_start = (
+                snapshot["x"],
+                snapshot["y"],
+                snapshot["z"],
+            )
+            start_velocity = (
+                snapshot["vx"],
+                snapshot["vy"],
+                snapshot["vz"],
+            )
+        else:
+            segment_start = (self.x0, self.y0, self.z0)
+            start_velocity = (0.0, 0.0, 0.0)
+
         self.takeoff_segment = MinimumJerkSegment.from_limits(
-            (self.x0, self.y0, self.z0),
+            segment_start,
             (self.target_x, self.target_y, self.target_z),
             max_speed=self.config.takeoff_max_speed_m_s,
             max_accel=self.config.max_accel_m_s2,
             max_jerk=self.config.max_jerk_m_s3,
             minimum_duration=self.config.minimum_segment_duration_s,
+            start_velocity=start_velocity,
         )
 
         self._reset_position_pids()
@@ -1050,9 +1072,9 @@ class PositionController:
         self.pid_y.setpoint = self.target_y
         self.pid_z.setpoint = self.target_z
 
-        self.takeoff_start_z = self.z0
-        self.takeoff_x = self.x0
-        self.takeoff_y = self.y0
+        self.takeoff_start_z = segment_start[2]
+        self.takeoff_x = segment_start[0]
+        self.takeoff_y = segment_start[1]
         self.takeoff_ready_since = None
         self.land_x = None
         self.land_y = None

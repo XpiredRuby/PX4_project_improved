@@ -24,6 +24,10 @@ PX4_SAFETY_PARAMETERS = (
     "COM_OBL_RC_ACT",
     "COM_DISARM_LAND",
 )
+PX4_BOOTSTRAP_PARAMETERS = (
+    "MPC_THR_HOVER",
+    "MPC_THR_MAX",
+)
 
 
 _INTEGER_PARAM_FORMATS = {
@@ -182,7 +186,11 @@ def read_px4_parameters(controller, names, attempts=3, timeout_s=0.7):
 
 def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
     """Read and verify sensor-fusion and failure-response configuration."""
-    names = EKF2_SOURCE_PARAMETERS + PX4_SAFETY_PARAMETERS
+    names = (
+        EKF2_SOURCE_PARAMETERS
+        + PX4_SAFETY_PARAMETERS
+        + PX4_BOOTSTRAP_PARAMETERS
+    )
     parameters = read_px4_parameters(
         controller,
         names,
@@ -196,5 +204,16 @@ def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
         max_offboard_loss_s=controller.config.max_offboard_loss_timeout_s,
         landing_timeout_s=controller.config.land_timeout_s,
     )
+    hover_thrust = float(parameters["MPC_THR_HOVER"])
+    max_thrust = float(parameters["MPC_THR_MAX"])
+    if not (
+        math.isfinite(hover_thrust)
+        and math.isfinite(max_thrust)
+        and 0.0 < hover_thrust < max_thrust <= 1.0
+    ):
+        raise RuntimeError(
+            "Invalid PX4 multicopter thrust parameters: "
+            f"MPC_THR_HOVER={hover_thrust}, MPC_THR_MAX={max_thrust}"
+        )
     print("[runner] PX4 GPS/IMU and failure-response settings verified")
     return parameters
