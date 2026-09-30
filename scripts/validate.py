@@ -30,20 +30,14 @@ def main() -> None:
         if not compileall.compile_dir(directory, quiet=1):
             raise RuntimeError(f"Compilation failed in {directory}")
 
-    # Separate processes avoid collision between the two validated modules
-    # named trajectory.py.
-    for test_file in (
-        "test_fixed_overlay.py",
-        "test_safety_supervisor.py",
-        "test_fault_injection.py",
-        "test_runner_protocol.py",
-        "test_telemetry_replay.py",
-        "test_run_record.py",
-        "test_trajectory_generator.py",
-        "test_analysis_pipeline.py",
-        "test_presentation_plots.py",
-    ):
-        run([sys.executable, str(ROOT / "tests" / test_file)])
+    # Discovery prevents new safety tests from being silently omitted. The
+    # trajectory-generator import isolation is covered by its regression test.
+    run([
+        sys.executable,
+        "-m", "unittest", "discover",
+        "-s", str(ROOT / "tests"),
+        "-v",
+    ])
 
     print("VALIDATION_PASSED")
 

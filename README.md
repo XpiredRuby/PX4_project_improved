@@ -42,9 +42,12 @@ autonomous landing without a supplied ground height.
 - Maximum handoff vertical speed: 0.105 m/s
 - Session 2 tests: 19/19 randomized and 11/11 baseline
 
-The current unknown-ground revision has passed local regression checks but
-has not yet been simulation-tested. It assumes terrain stays within the
-configured height range and does not identify obstacles from GPS/IMU data.
+The current revision passed PX4 v1.17 Gazebo SITL missions in nominal and
+windy worlds, short GPS-outage recovery, long GPS-outage failsafe landing,
+and a six-core CPU-contention run. The automated suite contains 68 tests.
+It assumes terrain stays within the configured height range and does not
+identify obstacles from GPS/IMU data.
+[Validation results](docs/validation_summary.md) summarize the tested cases.
 The runner checks PX4 EKF2 source settings before arming. For PX4 v1.17,
 configure GPS position/height/velocity (`EKF2_GPS_CTRL=7`, or 15 with dual-GPS
 heading), GPS height reference (`EKF2_HGT_REF=1`), no magnetometer

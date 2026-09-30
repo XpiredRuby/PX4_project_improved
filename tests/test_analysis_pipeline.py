@@ -87,6 +87,21 @@ class AnalysisPipelineTests(unittest.TestCase):
             "position_source_regressed": [False] * 6,
             "gps_source_regressed": [False] * 6,
             "navigation_state": ["HEALTHY"] * 6,
+            "elapsed_s": [0.0, 1.0, 2.0, 3.0, 4.0, 5.0],
+            "x": [0.0] * 6,
+            "y": [0.0] * 6,
+            "desired_x": [0.0] * 6,
+            "desired_y": [0.0] * 6,
+            "vx": [0.0] * 6,
+            "vy": [0.0] * 6,
+            "vz": [0.0] * 6,
+            "roll": [0.0] * 6,
+            "pitch": [0.0] * 6,
+            "actuator_age_s": [0.01] * 6,
+            "actuator_output_0": [0.2] * 5 + [0.0],
+            "actuator_output_1": [0.2] * 5 + [0.0],
+            "actuator_output_2": [0.2] * 5 + [0.0],
+            "actuator_output_3": [0.2] * 5 + [0.0],
         })
 
     def test_safety_audit_passes_complete_bounded_run(self):
@@ -114,6 +129,33 @@ class AnalysisPipelineTests(unittest.TestCase):
                 "Automatic disarm confirmed",
                 "Command envelope respected",
                 "No telemetry time regression",
+                "Automatic disarm timing",
+                "Propulsion outputs zero after disarm",
+            },
+        )
+
+    def test_safety_audit_rejects_unsafe_touchdown_and_live_propulsion(self):
+        frame = self.successful_run_frame()
+        frame.loc[5, "x"] = 2.0
+        frame.loc[5, "vx"] = 0.8
+        frame.loc[5, "vz"] = 0.7
+        frame.loc[5, "roll"] = math.radians(20.0)
+        frame.loc[5, "actuator_output_0"] = 0.2
+
+        audit = build_safety_audit(frame)
+        failed = {
+            item["name"]
+            for item in audit["checks"]
+            if not item["passed"]
+        }
+
+        self.assertFalse(audit["overall_passed"])
+        self.assertEqual(
+            failed,
+            {
+                "Touchdown dynamics within limits",
+                "Touchdown position within limit",
+                "Propulsion outputs zero after disarm",
             },
         )
 

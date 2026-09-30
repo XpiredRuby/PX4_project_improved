@@ -23,6 +23,7 @@ PX4_SAFETY_PARAMETERS = (
     "COM_OF_LOSS_T",
     "COM_OBL_RC_ACT",
     "COM_DISARM_LAND",
+    "SYS_FAILURE_EN",
 )
 PX4_BOOTSTRAP_PARAMETERS = (
     "MPC_THR_HOVER",
@@ -112,13 +113,16 @@ def check_px4_safety_config(
     offboard_loss_s = float(parameters["COM_OF_LOSS_T"])
     auto_disarm_s = float(parameters["COM_DISARM_LAND"])
     action_raw = float(parameters["COM_OBL_RC_ACT"])
+    failure_injection_raw = float(parameters["SYS_FAILURE_EN"])
     if not all(
         math.isfinite(value)
-        for value in (offboard_loss_s, auto_disarm_s, action_raw)
+        for value in (
+            offboard_loss_s, auto_disarm_s, action_raw, failure_injection_raw
+        )
     ):
         raise RuntimeError("PX4 failsafe parameters must be finite")
-    if not action_raw.is_integer():
-        raise RuntimeError(f"Invalid PX4 parameter COM_OBL_RC_ACT={action_raw}")
+    if not action_raw.is_integer() or not failure_injection_raw.is_integer():
+        raise RuntimeError("PX4 integer safety parameters are invalid")
 
     mismatch = []
     if not 0.0 <= offboard_loss_s <= max_offboard_loss_s:
@@ -134,6 +138,10 @@ def check_px4_safety_config(
         mismatch.append(
             f"COM_DISARM_LAND={auto_disarm_s:g}s "
             f"(expected >0 and <{landing_timeout_s:g}s)"
+        )
+    if int(failure_injection_raw) != 0:
+        mismatch.append(
+            f"SYS_FAILURE_EN={int(failure_injection_raw)} (expected 0)"
         )
     if mismatch:
         raise RuntimeError(

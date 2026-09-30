@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 import threading
 import time
 
@@ -24,6 +25,10 @@ ARM_TIMEOUT = 8.0
 PX4_MAIN_MODE_AUTO = 4
 PX4_MAIN_MODE_OFFBOARD = 6
 PX4_AUTO_SUB_MODE_LAND = 6
+
+POST_DISARM_CONFIRM_SECONDS = 1.0
+ACTUATOR_MAX_AGE_SECONDS = 1.5
+PROPULSION_STOP_THRESHOLD = 0.01
 
 
 def snapshot(controller):
@@ -54,6 +59,21 @@ def landing_snapshot(controller):
             state.landed_state,
             age,
             state.message_counts.get("EXTENDED_SYS_STATE", 0),
+        )
+
+
+def propulsion_snapshot(controller):
+    with controller.state_lock:
+        state = controller.state
+        age = (
+            float("inf")
+            if state.actuator_received_at is None
+            else max(0.0, time.monotonic() - state.actuator_received_at)
+        )
+        return (
+            tuple(float(value) for value in state.actuator_outputs[:4]),
+            age,
+            state.message_counts.get("ACTUATOR_OUTPUT_STATUS", 0),
         )
 
 
@@ -224,12 +244,19 @@ def wait_for_initial_ground_state(controller, timeout=5.0):
     )
 
 
-def wait_for_native_landing(controller, after_sequence, timeout):
+def wait_for_native_landing(
+    controller,
+    after_sequence,
+    timeout,
+    post_disarm_confirm_s=POST_DISARM_CONFIRM_SECONDS,
+    phase="PX4_LAND",
+):
     deadline = time.monotonic() + timeout
     on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
+    safe_disarm_since = None
 
     while time.monotonic() < deadline:
-        controller.log_native_landing_sample()
+        controller.log_native_landing_sample(phase=phase)
         main_mode, sub_mode, armed = heartbeat_snapshot(controller)
         landed_state, age, sequence = landing_snapshot(controller)
         fresh_on_ground = (
@@ -242,7 +269,28 @@ def wait_for_native_landing(controller, after_sequence, timeout):
                 raise RuntimeError(
                     "Vehicle disarmed without a fresh PX4 ON_GROUND report"
                 )
-            return
+            outputs, actuator_age, _ = propulsion_snapshot(controller)
+            propulsion_stopped = (
+                actuator_age <= ACTUATOR_MAX_AGE_SECONDS
+                and all(math.isfinite(value) for value in outputs)
+                and all(
+                    abs(value) <= PROPULSION_STOP_THRESHOLD
+                    for value in outputs
+                )
+            )
+            if propulsion_stopped:
+                if safe_disarm_since is None:
+                    safe_disarm_since = time.monotonic()
+                if (
+                    time.monotonic() - safe_disarm_since
+                    >= post_disarm_confirm_s
+                ):
+                    return
+            else:
+                safe_disarm_since = None
+            time.sleep(0.05)
+            continue
+        safe_disarm_since = None
         if (
             main_mode != PX4_MAIN_MODE_AUTO
             or sub_mode != PX4_AUTO_SUB_MODE_LAND
@@ -256,22 +304,50 @@ def wait_for_native_landing(controller, after_sequence, timeout):
 
     main_mode, sub_mode, armed = heartbeat_snapshot(controller)
     landed_state, age, _ = landing_snapshot(controller)
+    outputs, actuator_age, _ = propulsion_snapshot(controller)
     raise TimeoutError(
-        f"PX4 LAND did not finish within {timeout:.0f}s "
+        f"PX4 LAND did not reach confirmed safe shutdown within {timeout:.0f}s "
         f"(main_mode={main_mode}, sub_mode={sub_mode}, armed={armed}, "
-        f"landed_state={landed_state}, landed_age={age:.2f}s)"
+        f"landed_state={landed_state}, landed_age={age:.2f}s, "
+        f"actuator_age={actuator_age:.2f}s, propulsion={outputs})"
     )
 
 
-def wait_for_failsafe_takeover(controller, timeout=MODE_TIMEOUT):
+def wait_for_failsafe_landing(
+    controller,
+    after_sequence,
+    landing_timeout,
+    takeover_timeout=MODE_TIMEOUT,
+    post_disarm_confirm_s=POST_DISARM_CONFIRM_SECONDS,
+):
     controller.begin_failsafe_handoff()
-    deadline = time.monotonic() + timeout
+    deadline = time.monotonic() + takeover_timeout
+    unexpected_mode = None
     while time.monotonic() < deadline:
         controller.log_native_landing_sample(phase="PX4_FAILSAFE")
-        main_mode, _, armed = heartbeat_snapshot(controller)
-        if armed is False or main_mode != PX4_MAIN_MODE_OFFBOARD:
+        main_mode, sub_mode, armed = heartbeat_snapshot(controller)
+        failsafe_land_active = (
+            main_mode == PX4_MAIN_MODE_AUTO
+            and sub_mode == PX4_AUTO_SUB_MODE_LAND
+        )
+        if armed is False or failsafe_land_active:
+            wait_for_native_landing(
+                controller,
+                after_sequence=after_sequence,
+                timeout=landing_timeout,
+                post_disarm_confirm_s=post_disarm_confirm_s,
+                phase="PX4_FAILSAFE",
+            )
             return
+        if main_mode != PX4_MAIN_MODE_OFFBOARD:
+            unexpected_mode = (main_mode, sub_mode)
         time.sleep(0.05)
+    if unexpected_mode is not None:
+        main_mode, sub_mode = unexpected_mode
+        raise RuntimeError(
+            "PX4 failsafe did not settle into LAND after leaving OFFBOARD "
+            f"(main_mode={main_mode}, sub_mode={sub_mode})"
+        )
     raise TimeoutError("PX4 did not take control after Offboard commands stopped")
 
 
@@ -455,8 +531,15 @@ def main():
                         f"(phase={phase}, main_mode={main_mode}, "
                         f"sub_mode={sub_mode})"
                     )
-                    wait_for_failsafe_takeover(c)
-                    cleanup_status = "px4_failsafe_takeover_confirmed"
+                    _, _, land_sequence = landing_snapshot(c)
+                    wait_for_failsafe_landing(
+                        c,
+                        after_sequence=land_sequence,
+                        landing_timeout=c.config.land_timeout_s,
+                    )
+                    cleanup_status = (
+                        "px4_failsafe_land_and_disarm_confirmed"
+                    )
                 else:
                     print(
                         "[runner] Failure cleanup: handing control to PX4 LAND "

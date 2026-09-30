@@ -5,8 +5,6 @@ import math
 import statistics
 import time
 
-from pymavlink import mavutil
-
 
 EARTH_RADIUS_M = 6_378_137.0
 

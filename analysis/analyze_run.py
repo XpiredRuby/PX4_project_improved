@@ -32,6 +32,17 @@ NOMINAL_PHASE_SEQUENCE = (
     "PX4_LAND",
 )
 
+# Conservative research acceptance limits. These are intentionally wider than
+# the nominal Gazebo results but narrow enough to reject a hard, tilted, or
+# horizontally uncontrolled landing before hardware use.
+MAX_TOUCHDOWN_HORIZONTAL_SPEED_M_S = 0.50
+MAX_TOUCHDOWN_VERTICAL_SPEED_M_S = 0.50
+MAX_TOUCHDOWN_TILT_DEG = 10.0
+MAX_TOUCHDOWN_XY_ERROR_M = 1.50
+MAX_AUTO_DISARM_DELAY_S = 5.0
+MAX_DISARMED_ACTUATOR_OUTPUT = 0.01
+MAX_ACTUATOR_SAMPLE_AGE_S = 1.50
+
 
 def finite(series):
     return pd.to_numeric(series, errors="coerce").replace(
@@ -222,6 +233,158 @@ def build_safety_audit(df):
         )
     else:
         add("No navigation loss", False, "navigation_state field missing")
+
+    landing_required = {
+        "phase", "elapsed_s", "armed", "landed_state",
+        "x", "y", "vx", "vy", "vz", "roll", "pitch",
+        "desired_x", "desired_y", "actuator_age_s",
+        "actuator_output_0", "actuator_output_1",
+        "actuator_output_2", "actuator_output_3",
+    }
+    landing_missing = sorted(landing_required - set(df.columns))
+    landing_check_names = (
+        "Touchdown dynamics within limits",
+        "Touchdown position within limit",
+        "No post-touchdown bounce",
+        "Automatic disarm timing",
+        "Propulsion outputs zero after disarm",
+    )
+    if landing_missing:
+        detail = "missing fields: " + ", ".join(landing_missing)
+        for name in landing_check_names:
+            add(name, False, detail)
+    else:
+        phase = df["phase"].astype(str).str.strip().str.upper()
+        landing = df.loc[phase.eq("PX4_LAND")]
+        landed_values = finite(landing["landed_state"])
+        ground_rows = landing.loc[
+            landed_values.eq(mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND)
+        ]
+        if ground_rows.empty:
+            for name in landing_check_names:
+                add(name, False, "no PX4_LAND ON_GROUND sample")
+        else:
+            touchdown_index = ground_rows.index[0]
+            touchdown = df.loc[touchdown_index]
+
+            touchdown_values = {
+                name: float(pd.to_numeric(
+                    pd.Series([touchdown[name]]), errors="coerce"
+                ).iloc[0])
+                for name in ("vx", "vy", "vz", "roll", "pitch", "x", "y")
+            }
+            horizontal_speed = float(np.hypot(
+                touchdown_values["vx"], touchdown_values["vy"]
+            ))
+            vertical_speed = abs(touchdown_values["vz"])
+            tilt_deg = float(np.degrees(np.hypot(
+                touchdown_values["roll"], touchdown_values["pitch"]
+            )))
+            dynamics_finite = all(np.isfinite(value) for value in (
+                horizontal_speed, vertical_speed, tilt_deg
+            ))
+            dynamics_passed = (
+                dynamics_finite
+                and horizontal_speed <= MAX_TOUCHDOWN_HORIZONTAL_SPEED_M_S
+                and vertical_speed <= MAX_TOUCHDOWN_VERTICAL_SPEED_M_S
+                and tilt_deg <= MAX_TOUCHDOWN_TILT_DEG
+            )
+            add(
+                "Touchdown dynamics within limits",
+                dynamics_passed,
+                (
+                    f"horizontal={horizontal_speed:.3f}m/s "
+                    f"(limit={MAX_TOUCHDOWN_HORIZONTAL_SPEED_M_S:.3f}), "
+                    f"vertical={vertical_speed:.3f}m/s "
+                    f"(limit={MAX_TOUCHDOWN_VERTICAL_SPEED_M_S:.3f}), "
+                    f"tilt={tilt_deg:.2f}deg "
+                    f"(limit={MAX_TOUCHDOWN_TILT_DEG:.2f})"
+                ),
+            )
+
+            prior = df.loc[df.index <= touchdown_index]
+            desired_x = finite(prior["desired_x"])
+            desired_y = finite(prior["desired_y"])
+            target_rows = prior.loc[desired_x.notna() & desired_y.notna()]
+            if target_rows.empty:
+                add(
+                    "Touchdown position within limit",
+                    False,
+                    "no finite pre-touchdown horizontal target",
+                )
+            else:
+                target = target_rows.iloc[-1]
+                xy_error = float(np.hypot(
+                    touchdown_values["x"] - float(target["desired_x"]),
+                    touchdown_values["y"] - float(target["desired_y"]),
+                ))
+                add(
+                    "Touchdown position within limit",
+                    np.isfinite(xy_error)
+                    and xy_error <= MAX_TOUCHDOWN_XY_ERROR_M,
+                    f"error={xy_error:.3f}m "
+                    f"(limit={MAX_TOUCHDOWN_XY_ERROR_M:.3f})",
+                )
+
+            after_touchdown = df.loc[df.index >= touchdown_index]
+            post_landed = finite(after_touchdown["landed_state"]).dropna()
+            bounced = bool((
+                post_landed.astype(int)
+                != mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
+            ).any())
+            add(
+                "No post-touchdown bounce",
+                not bounced,
+                f"post-touchdown non-ground samples={int(bounced)}",
+            )
+
+            armed_values = boolean_values(after_touchdown["armed"])
+            disarmed_rows = after_touchdown.loc[armed_values.eq(False)]
+            touchdown_time = float(touchdown["elapsed_s"])
+            if disarmed_rows.empty:
+                add(
+                    "Automatic disarm timing",
+                    False,
+                    "no post-touchdown disarmed sample",
+                )
+                add(
+                    "Propulsion outputs zero after disarm",
+                    False,
+                    "no post-touchdown disarmed sample",
+                )
+            else:
+                first_disarmed = disarmed_rows.iloc[0]
+                disarm_delay = max(
+                    0.0,
+                    float(first_disarmed["elapsed_s"]) - touchdown_time,
+                )
+                add(
+                    "Automatic disarm timing",
+                    np.isfinite(disarm_delay)
+                    and disarm_delay <= MAX_AUTO_DISARM_DELAY_S,
+                    f"delay={disarm_delay:.3f}s "
+                    f"(limit={MAX_AUTO_DISARM_DELAY_S:.3f})",
+                )
+
+                final_disarmed = disarmed_rows.iloc[-1]
+                outputs = np.asarray([
+                    float(final_disarmed[f"actuator_output_{index}"])
+                    for index in range(4)
+                ])
+                actuator_age = float(final_disarmed["actuator_age_s"])
+                outputs_ok = (
+                    np.isfinite(outputs).all()
+                    and float(np.max(np.abs(outputs)))
+                    <= MAX_DISARMED_ACTUATOR_OUTPUT
+                    and np.isfinite(actuator_age)
+                    and actuator_age <= MAX_ACTUATOR_SAMPLE_AGE_S
+                )
+                add(
+                    "Propulsion outputs zero after disarm",
+                    outputs_ok,
+                    f"max_abs_output={float(np.max(np.abs(outputs))):.4f}, "
+                    f"actuator_age={actuator_age:.3f}s",
+                )
 
     return {
         "overall_passed": all(item["passed"] for item in checks),

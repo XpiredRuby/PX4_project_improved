@@ -68,9 +68,15 @@ class FakeController:
         self.master = master or FakeMaster()
         self.mav_send_lock = threading.Lock()
         self.native_samples = 0
+        self.native_phases = []
+        self.failsafe_handoff_started = False
 
-    def log_native_landing_sample(self):
+    def log_native_landing_sample(self, phase="PX4_LAND"):
         self.native_samples += 1
+        self.native_phases.append(phase)
+
+    def begin_failsafe_handoff(self):
+        self.failsafe_handoff_started = True
 
 
 class TickClock:
@@ -252,12 +258,18 @@ class RunnerProtocolTests(unittest.TestCase):
                 "landing_snapshot",
                 side_effect=lambda _controller: next(landing_states),
             ),
+            patch.object(
+                offboard_runner,
+                "propulsion_snapshot",
+                return_value=((0.0, 0.0, 0.0, 0.0), 0.1, 5),
+            ),
             patch.object(offboard_runner.time, "sleep", return_value=None),
         ):
             offboard_runner.wait_for_native_landing(
                 controller,
                 after_sequence=10,
                 timeout=1.0,
+                post_disarm_confirm_s=0.0,
             )
 
         self.assertEqual(controller.native_samples, 2)
@@ -282,6 +294,109 @@ class RunnerProtocolTests(unittest.TestCase):
                     controller,
                     after_sequence=10,
                     timeout=1.0,
+                )
+
+    def test_native_landing_waits_for_zero_propulsion(self):
+        controller = FakeController()
+        clock = TickClock(step=0.05)
+        propulsion = iter([
+            ((0.12, 0.12, 0.12, 0.12), 0.1, 4),
+            ((0.0, 0.0, 0.0, 0.0), 0.1, 5),
+            ((0.0, 0.0, 0.0, 0.0), 0.1, 6),
+            ((0.0, 0.0, 0.0, 0.0), 0.1, 7),
+        ])
+
+        with (
+            patch.object(offboard_runner.time, "monotonic", clock),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+            patch.object(
+                offboard_runner,
+                "heartbeat_snapshot",
+                return_value=(4, 6, False),
+            ),
+            patch.object(
+                offboard_runner,
+                "landing_snapshot",
+                return_value=(1, 0.1, 12),
+            ),
+            patch.object(
+                offboard_runner,
+                "propulsion_snapshot",
+                side_effect=lambda _controller: next(propulsion),
+            ),
+        ):
+            offboard_runner.wait_for_native_landing(
+                controller,
+                after_sequence=10,
+                timeout=2.0,
+                post_disarm_confirm_s=0.1,
+            )
+
+        self.assertGreaterEqual(controller.native_samples, 3)
+
+    def test_failsafe_cleanup_waits_for_land_disarm_and_zero_propulsion(self):
+        controller = FakeController()
+        heartbeats = iter([
+            (6, 0, True),
+            (4, 6, True),
+            (4, 6, True),
+            (4, 6, False),
+        ])
+        landing_states = iter([
+            (2, 0.1, 11),
+            (1, 0.1, 12),
+        ])
+
+        with (
+            patch.object(
+                offboard_runner,
+                "heartbeat_snapshot",
+                side_effect=lambda _controller: next(heartbeats),
+            ),
+            patch.object(
+                offboard_runner,
+                "landing_snapshot",
+                side_effect=lambda _controller: next(landing_states),
+            ),
+            patch.object(
+                offboard_runner,
+                "propulsion_snapshot",
+                return_value=((0.0, 0.0, 0.0, 0.0), 0.1, 8),
+            ),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+        ):
+            offboard_runner.wait_for_failsafe_landing(
+                controller,
+                after_sequence=10,
+                landing_timeout=2.0,
+                takeover_timeout=1.0,
+                post_disarm_confirm_s=0.0,
+            )
+
+        self.assertTrue(controller.failsafe_handoff_started)
+        self.assertGreaterEqual(controller.native_samples, 3)
+        self.assertTrue(
+            all(phase == "PX4_FAILSAFE" for phase in controller.native_phases)
+        )
+
+    def test_failsafe_cleanup_rejects_unexpected_takeover_mode(self):
+        controller = FakeController()
+
+        with patch.object(
+            offboard_runner,
+            "heartbeat_snapshot",
+            return_value=(4, 3, True),
+        ), patch.object(
+            offboard_runner.time,
+            "monotonic",
+            TickClock(),
+        ), patch.object(offboard_runner.time, "sleep", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "settle into LAND"):
+                offboard_runner.wait_for_failsafe_landing(
+                    controller,
+                    after_sequence=10,
+                    landing_timeout=2.0,
+                    takeover_timeout=1.0,
                 )
 
 

@@ -94,12 +94,14 @@ class FaultInjectionTests(unittest.TestCase):
             "COM_OF_LOSS_T": 0.5,
             "COM_OBL_RC_ACT": 4,
             "COM_DISARM_LAND": 2.0,
+            "SYS_FAILURE_EN": 0,
         }
         check_px4_safety_config(safe)
         for change, expected in (
             ({"COM_OF_LOSS_T": 2.0}, "COM_OF_LOSS_T"),
             ({"COM_OBL_RC_ACT": 0}, "COM_OBL_RC_ACT"),
             ({"COM_DISARM_LAND": -1.0}, "COM_DISARM_LAND"),
+            ({"SYS_FAILURE_EN": 1}, "SYS_FAILURE_EN"),
         ):
             with self.subTest(change=change):
                 with self.assertRaisesRegex(RuntimeError, expected):
