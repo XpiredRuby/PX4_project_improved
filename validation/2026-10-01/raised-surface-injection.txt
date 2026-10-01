@@ -1,0 +1,6 @@
+SITL parameter confirmed; waiting for measured 8m climb
+[injector] Airborne gate passed (baseline_z=0.08m, z=-7.93m)
+data: true
+
+
+Created 10x10m static pad: top at world z=+2m. Controller received no surface height.

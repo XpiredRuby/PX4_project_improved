@@ -170,6 +170,13 @@ def wait_until_airborne(master, minimum_height_m, timeout_s):
         if message is None:
             continue
         message_type = message.get_type()
+        if (
+            message.get_srcSystem() != master.target_system
+            or message.get_srcComponent() != (
+                master.target_component or mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1
+            )
+        ):
+            continue
         if message_type == "HEARTBEAT":
             gate.observe_heartbeat(message.base_mode)
         elif (
@@ -186,6 +193,40 @@ def wait_until_airborne(master, minimum_height_m, timeout_s):
         "Vehicle did not arm and climb "
         f"{minimum_height_m:.1f}m within {timeout_s:.0f}s"
     )
+
+
+def wait_while_armed(master, duration_s, heartbeat_max_age_s=2.0):
+    """Delay a fault while proving the SITL vehicle remains armed."""
+    if duration_s <= 0.0:
+        return
+    deadline = time.monotonic() + duration_s
+    last_armed_at = None
+    while time.monotonic() < deadline:
+        message = master.recv_match(
+            type="HEARTBEAT",
+            blocking=True,
+            timeout=min(0.5, max(0.0, deadline - time.monotonic())),
+        )
+        if message is None:
+            continue
+        if (
+            message.get_srcSystem() != master.target_system
+            or message.get_srcComponent() != (
+                master.target_component or mavutil.mavlink.MAV_COMP_ID_AUTOPILOT1
+            )
+        ):
+            continue
+        armed = bool(
+            int(message.base_mode)
+            & mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+        )
+        if not armed:
+            raise RuntimeError("Vehicle disarmed before the scheduled fault")
+        last_armed_at = time.monotonic()
+
+    now = time.monotonic()
+    if last_armed_at is None or now - last_armed_at > heartbeat_max_age_s:
+        raise RuntimeError("No fresh armed heartbeat before the scheduled fault")
 
 
 def run_fault(master, failure_name, duration_s):
@@ -228,6 +269,7 @@ def build_parser():
     )
     parser.add_argument("--duration-s", type=float, required=True)
     parser.add_argument("--airborne-height-m", type=float, default=8.0)
+    parser.add_argument("--delay-after-airborne-s", type=float, default=0.0)
     parser.add_argument("--wait-timeout-s", type=float, default=150.0)
     parser.add_argument(
         "--confirm-sitl",
@@ -243,6 +285,8 @@ def main():
         raise SystemExit("--confirm-sitl is required")
     if args.duration_s <= 0.0 or args.duration_s > 30.0:
         raise SystemExit("--duration-s must be in (0, 30]")
+    if not 0.0 <= args.delay_after_airborne_s <= 180.0:
+        raise SystemExit("--delay-after-airborne-s must be in [0, 180]")
 
     master = mavutil.mavlink_connection(
         args.connection,
@@ -262,6 +306,7 @@ def main():
         minimum_height_m=args.airborne_height_m,
         timeout_s=args.wait_timeout_s,
     )
+    wait_while_armed(master, args.delay_after_airborne_s)
     run_fault(master, args.failure_type, args.duration_s)
 
 

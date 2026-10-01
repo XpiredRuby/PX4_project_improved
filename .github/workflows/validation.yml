@@ -26,3 +26,16 @@ jobs:
         env:
           MPLBACKEND: Agg
         run: python scripts/validate.py
+      - name: Critical logic branch coverage
+        run: |
+          python -m coverage erase
+          python -m coverage run --branch --source=controller \
+            -m unittest discover -s tests
+          python -m coverage report --fail-under=80 \
+            controller/PID_Controller.py \
+            controller/minimum_jerk.py \
+            controller/mission_config.py \
+            controller/mission_state.py \
+            controller/px4_policy.py \
+            controller/run_record.py \
+            controller/trajectory.py

@@ -6,6 +6,8 @@ import argparse
 import sys
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from pymavlink import mavutil
 
@@ -17,7 +19,35 @@ from sitl_fault_injector import (
     decode_parameter_value,
     encode_parameter_value,
     validate_local_connection,
+    wait_while_armed,
 )
+
+
+class TickClock:
+    def __init__(self, step=0.25):
+        self.value = -step
+        self.step = step
+
+    def __call__(self):
+        self.value += self.step
+        return self.value
+
+
+class FakeMaster:
+    def __init__(self, base_modes):
+        self.target_system = 1
+        # pymavlink defaults to broadcast requests even after a heartbeat.
+        self.target_component = 0
+        self.messages = [
+            SimpleNamespace(
+                base_mode=base_mode,
+                get_srcSystem=lambda: 1,
+                get_srcComponent=lambda: 1,
+            ) for base_mode in base_modes
+        ]
+
+    def recv_match(self, **_kwargs):
+        return self.messages.pop(0) if self.messages else None
 
 
 class SitlFaultInjectorTests(unittest.TestCase):
@@ -63,6 +93,35 @@ class SitlFaultInjectorTests(unittest.TestCase):
         )
         self.assertFalse(gate.observe_position(float("nan")))
         self.assertFalse(gate.observe_position(float("inf")))
+
+    def test_scheduled_fault_delay_requires_fresh_armed_heartbeat(self):
+        armed = mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+        with patch("sitl_fault_injector.time.monotonic", TickClock(0.2)):
+            wait_while_armed(FakeMaster([armed] * 8), 1.0)
+
+        with patch("sitl_fault_injector.time.monotonic", TickClock(0.2)):
+            with self.assertRaisesRegex(RuntimeError, "disarmed"):
+                wait_while_armed(FakeMaster([armed, 0]), 1.0)
+
+        with patch("sitl_fault_injector.time.monotonic", TickClock(0.6)):
+            with self.assertRaisesRegex(RuntimeError, "fresh armed heartbeat"):
+                wait_while_armed(FakeMaster([]), 1.0)
+
+    def test_fault_delay_ignores_foreign_heartbeats(self):
+        armed = mavutil.mavlink.MAV_MODE_FLAG_SAFETY_ARMED
+        for field in ("get_srcSystem", "get_srcComponent"):
+            with self.subTest(field=field):
+                master = FakeMaster([0, armed, armed, armed])
+                setattr(master.messages[0], field, lambda: 253)
+                with patch("sitl_fault_injector.time.monotonic", TickClock(0.2)):
+                    wait_while_armed(master, 1.0)
+
+                master = FakeMaster([armed] * 8)
+                for message in master.messages:
+                    setattr(message, field, lambda: 253)
+                with patch("sitl_fault_injector.time.monotonic", TickClock(0.2)):
+                    with self.assertRaisesRegex(RuntimeError, "fresh armed"):
+                        wait_while_armed(master, 1.0)
 
 
 if __name__ == "__main__":

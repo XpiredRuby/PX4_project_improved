@@ -1,0 +1,39 @@
+[injector] Airborne gate passed (baseline_z=0.07m, z=-7.93m)
+Stopped task-owned runner PID 1767 after the 8m climb
+{
+  "overall_passed": true,
+  "px4_parameters": {
+    "SIM_GPS_USED": 10.0,
+    "COM_OF_LOSS_T": 0.5,
+    "COM_OBL_RC_ACT": 4.0
+  },
+  "land_mode_delay_s": 0.9898385649999,
+  "ground_delay_s": 13.789795357000003,
+  "disarm_delay_s": 15.989805694999859,
+  "post_touchdown_bounce": false,
+  "touchdown_dynamics_bounded": true,
+  "final_state": {
+    "roll": 0.0003620128845795989,
+    "pitch": 0.0002616247220430523,
+    "landed": 1,
+    "landed_at": 1674.177052427,
+    "motors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "active": 16,
+    "actuator_at": 1674.181130591,
+    "x": 0.09770626574754715,
+    "y": -0.10617581009864807,
+    "z": 0.051349490880966187,
+    "vx": -0.0008128687622956932,
+    "vy": 0.0022923098877072334,
+    "vz": -0.011199679225683212,
+    "armed": false,
+    "heartbeat_at": 1674.225085077,
+    "main_mode": 6,
+    "sub_mode": 0
+  }
+}

@@ -13,9 +13,11 @@ sys.path.insert(0, str(ROOT / "analysis"))
 
 from analyze_fault_run import (
     fault_phase_check,
+    failsafe_manifest_checks,
     hold_evidence,
-    manifest_checks,
     navigation_fault_check,
+    navigation_recovery_check,
+    recovery_manifest_checks,
 )
 
 
@@ -82,8 +84,47 @@ class FaultRunAnalysisTests(unittest.TestCase):
             "final_state": {**safe["final_state"], "armed": True},
         }
 
-        self.assertTrue(all(item["passed"] for item in manifest_checks(safe)))
-        self.assertFalse(all(item["passed"] for item in manifest_checks(unsafe)))
+        self.assertTrue(
+            all(item["passed"] for item in failsafe_manifest_checks(safe))
+        )
+        self.assertFalse(
+            all(item["passed"] for item in failsafe_manifest_checks(unsafe))
+        )
+
+    def test_recovery_requires_hold_then_stable_health(self):
+        recovered = pd.DataFrame({
+            "navigation_state": [
+                "HEALTHY",
+                "DEGRADED",
+                "HOLD",
+                "HOLD",
+                "HEALTHY",
+            ],
+        })
+        incomplete = pd.DataFrame({
+            "navigation_state": ["HEALTHY", "DEGRADED", "HEALTHY"],
+        })
+
+        self.assertTrue(navigation_recovery_check(recovered)[0])
+        self.assertFalse(navigation_recovery_check(incomplete)[0])
+
+    def test_recovery_manifest_requires_success_ground_and_disarm(self):
+        safe = {
+            "outcome": "SUCCESS",
+            "cleanup_error": None,
+            "final_state": {"armed": False, "landed_state": 1},
+        }
+        unsafe = {
+            **safe,
+            "final_state": {"armed": True, "landed_state": 2},
+        }
+
+        self.assertTrue(
+            all(item["passed"] for item in recovery_manifest_checks(safe))
+        )
+        self.assertFalse(
+            all(item["passed"] for item in recovery_manifest_checks(unsafe))
+        )
 
 
 if __name__ == "__main__":

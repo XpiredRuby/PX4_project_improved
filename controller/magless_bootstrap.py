@@ -65,6 +65,10 @@ def bootstrap_thrust(
     config,
 ):
     """Altitude-hold thrust used only during yaw-observability bootstrap."""
+    if not all(math.isfinite(value) for value in (
+        z, vz, target_z, hover_thrust, px4_max_thrust
+    )):
+        raise RuntimeError("Non-finite input to bootstrap thrust")
     command = (
         hover_thrust
         + config.bootstrap_thrust_bias
@@ -77,17 +81,30 @@ def bootstrap_thrust(
     return max(config.bootstrap_min_thrust, min(command, maximum))
 
 
+def _exceeds_or_nonfinite(value, limit):
+    return not math.isfinite(value) or value > limit
+
+
 def _raw_navigation_reasons(controller, snapshot):
     """Checks available before GPS horizontal fusion has initialized."""
     config = controller.config
     reasons = []
-    if snapshot["position_age_s"] > controller.max_position_age_s:
+    for field in ("z", "vz", "roll", "pitch", "yaw"):
+        if not math.isfinite(snapshot[field]):
+            reasons.append(f"bootstrap state {field} is non-finite")
+    if _exceeds_or_nonfinite(
+        snapshot["position_age_s"], controller.max_position_age_s
+    ):
         reasons.append("vertical position telemetry stale")
-    if snapshot["attitude_age_s"] > controller.max_attitude_age_s:
+    if _exceeds_or_nonfinite(
+        snapshot["attitude_age_s"], controller.max_attitude_age_s
+    ):
         reasons.append("attitude telemetry stale")
-    if snapshot["gps_age_s"] > config.gps_max_age_s:
+    if _exceeds_or_nonfinite(snapshot["gps_age_s"], config.gps_max_age_s):
         reasons.append("GPS telemetry stale")
-    if snapshot["gps_source_age_s"] > config.gps_max_age_s:
+    if _exceeds_or_nonfinite(
+        snapshot["gps_source_age_s"], config.gps_max_age_s
+    ):
         reasons.append("GPS measurement timestamp stopped advancing")
     if snapshot["gps_source_regressed"]:
         reasons.append("GPS measurement timestamp moved backwards")
@@ -95,21 +112,27 @@ def _raw_navigation_reasons(controller, snapshot):
         reasons.append("GPS has no 3D fix")
     if snapshot["gps_satellites_visible"] < config.gps_min_satellites:
         reasons.append("GPS satellite count is below the configured minimum")
-    if snapshot["gps_hdop"] > config.gps_max_hdop:
+    if _exceeds_or_nonfinite(snapshot["gps_hdop"], config.gps_max_hdop):
         reasons.append("GPS HDOP exceeds the configured maximum")
-    if snapshot["gps_vdop"] > config.gps_max_vdop:
+    if _exceeds_or_nonfinite(snapshot["gps_vdop"], config.gps_max_vdop):
         reasons.append("GPS VDOP exceeds the configured maximum")
     if (
-        snapshot["gps_horizontal_accuracy_m"]
-        > config.gps_max_horizontal_accuracy_m
+        _exceeds_or_nonfinite(
+            snapshot["gps_horizontal_accuracy_m"],
+            config.gps_max_horizontal_accuracy_m,
+        )
     ):
         reasons.append("GPS horizontal accuracy is insufficient")
     if (
-        snapshot["gps_vertical_accuracy_m"]
-        > config.gps_max_vertical_accuracy_m
+        _exceeds_or_nonfinite(
+            snapshot["gps_vertical_accuracy_m"],
+            config.gps_max_vertical_accuracy_m,
+        )
     ):
         reasons.append("GPS vertical accuracy is insufficient")
-    if snapshot["estimator_age_s"] > config.estimator_max_age_s:
+    if _exceeds_or_nonfinite(
+        snapshot["estimator_age_s"], config.estimator_max_age_s
+    ):
         reasons.append("estimator telemetry stale")
 
     # Attitude, vertical velocity, and absolute vertical position are enough
@@ -122,9 +145,8 @@ def _raw_navigation_reasons(controller, snapshot):
             f"missing bootstrap mask 0x{vertical_mask:x}"
         )
     vertical_ratio = snapshot["estimator_pos_vert_ratio"]
-    if (
-        not math.isfinite(vertical_ratio)
-        or vertical_ratio > config.estimator_max_test_ratio
+    if _exceeds_or_nonfinite(
+        vertical_ratio, config.estimator_max_test_ratio
     ):
         reasons.append("vertical position innovation is unhealthy")
     return reasons

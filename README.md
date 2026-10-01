@@ -44,7 +44,9 @@ autonomous landing without a supplied ground height.
 
 The current revision passed PX4 v1.17 Gazebo SITL missions in nominal and
 windy worlds, short GPS-outage recovery, long GPS-outage failsafe landing,
-and a six-core CPU-contention run. The automated suite contains 68 tests.
+and a six-core CPU-contention run. Unknown landing-height changes of +2 m
+and -2 m also passed touchdown, disarm, and zero-propulsion checks.
+The automated suite contains 77 tests; evidence is in `validation/2026-10-01/`.
 It assumes terrain stays within the configured height range and does not
 identify obstacles from GPS/IMU data.
 [Validation results](docs/validation_summary.md) summarize the tested cases.

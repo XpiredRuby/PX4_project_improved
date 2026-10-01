@@ -1,0 +1,41 @@
+{
+  "overall_passed": false,
+  "px4_parameters": {
+    "SIM_GPS_USED": 10.0,
+    "COM_OF_LOSS_T": 0.5,
+    "COM_OBL_RC_ACT": 4.0
+  },
+  "land_mode_delay_s": 0.9378847840000617,
+  "ground_delay_s": 13.825515832000065,
+  "disarm_delay_s": 15.973450505000073,
+  "post_touchdown_bounce": false,
+  "touchdown_dynamics_bounded": true,
+  "final_state": {
+    "roll": 0.0001680216664681211,
+    "pitch": 0.0008449616725556552,
+    "landed": 1,
+    "landed_at": 1526.22555548,
+    "motors": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "active": 16,
+    "actuator_at": 1526.229253838,
+    "x": 0.09803833812475204,
+    "y": -0.1046951562166214,
+    "z": 0.054808422923088074,
+    "vx": -0.010672016069293022,
+    "vy": 0.004853926133364439,
+    "vz": -0.00029543094569817185,
+    "armed": false,
+    "heartbeat_at": 1526.225226975,
+    "main_mode": 6,
+    "sub_mode": 0
+  },
+  "reason": "Observer expected an active-channel bitmask; installed PX4 v1.17 sends act.noutputs (16). Flight reached ground, disarmed, and reported fresh zero propulsion; observer's original completion check rejected it.",
+  "px4_source_path": "src/modules/mavlink/streams/ACTUATOR_OUTPUT_STATUS.hpp",
+  "px4_source_sha256": "2630e1fd2a7888289a38db0f09d4123b2ee756d5ee9717d0680df6c35c594364",
+  "px4_source_assignment": "msg.active = act.noutputs;"
+}

@@ -1,0 +1,135 @@
+All checks passed!
++ /usr/bin/python3 main.py
+/home/xpire/PX4_project_improved/trajectory_generator/plot.py:169: UserWarning: FigureCanvasAgg is non-interactive, and thus cannot be shown
+  plt.show()
+Generated 1803 points
+Saved to trajetory.csv
+0 start: 0.0 cruise: 2 end: 1
+1 start: 1 cruise: 1 end: 1
+2 start: 1 cruise: 2 end: 0.0
+3 start: 0.0 cruise: 0.0 end: 0.0
+4 start: 0.0 cruise: 2 end: 0.0
+5 Hover: 5
++ /usr/bin/python3 -m unittest discover -s /home/xpire/PX4_project_improved/tests -v
+test_enrichment_adds_finite_attitude_and_acceleration (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_identity_quaternion_converts_to_zero_euler (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_level_stationary_specific_force_becomes_zero_ned_acceleration (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_quaternion_yaw_conversion (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_safety_audit_exposes_command_and_completion_failures (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_safety_audit_passes_complete_bounded_run (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_safety_audit_rejects_unsafe_touchdown_and_live_propulsion (test_analysis_pipeline.AnalysisPipelineTests) ... ok
+test_hold_uses_last_fully_trusted_reference (test_fault_injection.FaultInjectionTests) ... ok
+test_mission_state_machine_rejects_skipped_phase (test_fault_injection.FaultInjectionTests) ... ok
+test_px4_failsafe_configuration_contract (test_fault_injection.FaultInjectionTests) ... ok
+test_random_commands_always_obey_speed_and_slew_limits (test_fault_injection.FaultInjectionTests) ... ok
+test_random_navigation_faults_are_bounded_and_classified (test_fault_injection.FaultInjectionTests) ... ok
+test_return_request_is_an_event_and_phase_gated (test_fault_injection.FaultInjectionTests) ... ok
+test_timestamp_regression_is_latched_and_sample_rejected (test_fault_injection.FaultInjectionTests) ... ok
+test_expected_failsafe_sequence_accepts_valid_prefix (test_fault_run_analysis.FaultRunAnalysisTests) ... ok
+test_failsafe_sequence_rejects_resumed_offboard_phase (test_fault_run_analysis.FaultRunAnalysisTests) ... ok
+test_hold_evidence_requires_frozen_clock_and_bounded_drift (test_fault_run_analysis.FaultRunAnalysisTests) ... ok
+test_manifest_requires_full_landing_cleanup (test_fault_run_analysis.FaultRunAnalysisTests) ... ok
+test_recovery_manifest_requires_success_ground_and_disarm (test_fault_run_analysis.FaultRunAnalysisTests) ... ok
+test_recovery_requires_hold_then_stable_health (test_fault_run_analysis.FaultRunAnalysisTests) ... ok
+test_all_phase_controllers_share_exact_result_contract (test_fixed_overlay.FixedOverlayTests) ... ok
+test_foreign_heartbeat_cannot_override_px4_state (test_fixed_overlay.FixedOverlayTests) ... ok
+test_horizontal_velocity_limit_is_vector_norm (test_fixed_overlay.FixedOverlayTests) ... ok
+test_landing_handoff_holds_xy_and_does_not_descend (test_fixed_overlay.FixedOverlayTests) ... ok
+test_pid_conditional_antiwindup (test_fixed_overlay.FixedOverlayTests) ... ok
+test_return_segment_preserves_measured_start_velocity (test_fixed_overlay.FixedOverlayTests) ... ok
+test_runner_deadlines_use_monotonic_clock (test_fixed_overlay.FixedOverlayTests) ... ok
+test_runtime_health_rejects_stale_or_wrong_mode (test_fixed_overlay.FixedOverlayTests) ... ok
+test_takeoff_holds_common_xy_origin (test_fixed_overlay.FixedOverlayTests) ... ok
+test_trajectory_loader_exposes_exported_yaw_derivatives (test_fixed_overlay.FixedOverlayTests) ... ok
+test_velocity_mask_excludes_force_bit (test_fixed_overlay.FixedOverlayTests) ... ok
+test_watchdog_resends_when_control_publication_stalls (test_fixed_overlay.FixedOverlayTests) ... ok
+test_bootstrap_thrust_rejects_every_nonfinite_input (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_bootstrap_thrust_rejects_impossible_px4_ceiling (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_bootstrap_thrust_uses_px4_ceiling_and_configured_floor (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_quaternion_is_normalized_and_preserves_level_yaw (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_raw_navigation_accepts_complete_finite_snapshot (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_raw_navigation_rejects_nonfinite_and_invalid_inputs (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_raw_navigation_rejects_nonfinite_bootstrap_state (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_saved_launch_fix_maps_back_into_local_ned (test_magless_bootstrap.MaglessBootstrapTests) ... ok
+test_fixed_run_rejects_missing_profile (test_presentation_plots.PresentationPlotTests) ... ok
+test_fixed_run_selects_only_validated_profile (test_presentation_plots.PresentationPlotTests) ... ok
+test_phase_spans_preserves_phase_order (test_presentation_plots.PresentationPlotTests) ... ok
+test_manifest_records_context_and_final_outcome_atomically (test_run_record.RunRecordTests) ... ok
+test_command_rejection_and_ack_timeout_are_explicit (test_runner_protocol.RunnerProtocolTests) ... ok
+test_disarm_without_fresh_on_ground_report_is_rejected (test_runner_protocol.RunnerProtocolTests) ... ok
+test_ensure_mode_accepts_confirmed_offboard (test_runner_protocol.RunnerProtocolTests) ... ok
+test_ensure_mode_retries_then_times_out (test_runner_protocol.RunnerProtocolTests) ... ok
+test_failsafe_cleanup_rejects_unexpected_takeover_mode (test_runner_protocol.RunnerProtocolTests) ... ok
+test_failsafe_cleanup_waits_for_land_disarm_and_zero_propulsion (test_runner_protocol.RunnerProtocolTests) ... ok
+test_failure_outcome_distinguishes_prearm_land_and_px4_failsafe (test_runner_protocol.RunnerProtocolTests) ... ok
+test_mode_requests_encode_px4_offboard_and_land (test_runner_protocol.RunnerProtocolTests) ... ok
+test_native_landing_requires_new_on_ground_report_and_disarm (test_runner_protocol.RunnerProtocolTests) ... ok
+test_native_landing_waits_for_zero_propulsion (test_runner_protocol.RunnerProtocolTests) ... ok
+test_parameter_decoder_rejects_unsupported_64_bit_type (test_runner_protocol.RunnerProtocolTests) ... ok
+test_parameter_reader_decodes_px4_bytewise_int32 (test_runner_protocol.RunnerProtocolTests) ... ok
+test_parameter_reader_filters_other_vehicle_and_matches_bytes_id (test_runner_protocol.RunnerProtocolTests) ... ok
+test_analytic_peak_matches_dense_independent_sampling (test_safety_supervisor.SafetySupervisorTests) ... ok
+test_bad_gps_holds_path_then_requires_stable_recovery (test_safety_supervisor.SafetySupervisorTests) ... ok
+test_cruise_height_budgets_vertical_uncertainty_and_ceiling (test_safety_supervisor.SafetySupervisorTests) ... ok
+test_estimator_source_audit_rejects_unverified_or_extra_sources (test_safety_supervisor.SafetySupervisorTests) ... ok
+test_invalid_local_estimate_yields_to_px4 (test_safety_supervisor.SafetySupervisorTests) ... ok
+test_slowed_clock_scales_trajectory_feedforward (test_safety_supervisor.SafetySupervisorTests) ... ok
+test_airborne_gate_rejects_nonfinite_position (test_sitl_fault_injector.SitlFaultInjectorTests) ... ok
+test_airborne_gate_requires_arm_and_real_climb (test_sitl_fault_injector.SitlFaultInjectorTests) ... ok
+test_connection_must_be_local_udp_input (test_sitl_fault_injector.SitlFaultInjectorTests) ... ok
+test_fault_delay_ignores_foreign_heartbeats (test_sitl_fault_injector.SitlFaultInjectorTests) ... ok
+test_int32_parameter_round_trip_matches_px4_bytewise_encoding (test_sitl_fault_injector.SitlFaultInjectorTests) ... ok
+test_scheduled_fault_delay_requires_fresh_armed_heartbeat (test_sitl_fault_injector.SitlFaultInjectorTests) ... ok
+test_sequence_filters_foreign_data_and_latches_time_regression (test_telemetry_replay.TelemetryReplayTests) ... ok
+test_arc_derivatives_include_curvature_terms (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+test_compatible_straight_segments_keep_boundary_speed (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+test_export_contains_all_derivatives (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+test_hover_uses_exact_requested_duration (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+test_profiles_include_exact_endpoint (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+test_smooth_turn_preserves_compatible_boundary_speed (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+test_whole_mission_has_exact_connections_and_is_repeatable (test_trajectory_generator.FixedTrajectoryGeneratorTests) ... ok
+
+----------------------------------------------------------------------
+Ran 77 tests in 1.151s
+
+OK
+[research] Navigation state HEALTHY->HOLD
+[research] Phase transition TAKEOFF->TRAJECTORY
+[research] Phase transition TRAJECTORY->RETURN_HOME
+[research] Phase transition RETURN_HOME->ALIGN
+[research] Phase transition ALIGN->HANDOFF
+[research] Safe return requested: test timeout
+[research] Navigation state HEALTHY->HOLD
+[research] Navigation state HOLD->HEALTHY
+[research] Uncertainty-aware cruise height: 20.00m (VAcc=2.00m, uncertainty margin=4.00m)
+[research] Navigation state HEALTHY->LOST
+VALIDATION_PASSED
+.............................................................................
+----------------------------------------------------------------------
+Ran 77 tests in 2.216s
+
+OK
+[research] Navigation state HEALTHY->HOLD
+[research] Phase transition TAKEOFF->TRAJECTORY
+[research] Phase transition TRAJECTORY->RETURN_HOME
+[research] Phase transition RETURN_HOME->ALIGN
+[research] Phase transition ALIGN->HANDOFF
+[research] Safe return requested: test timeout
+[research] Navigation state HEALTHY->HOLD
+[research] Navigation state HOLD->HEALTHY
+[research] Uncertainty-aware cruise height: 20.00m (VAcc=2.00m, uncertainty margin=4.00m)
+[research] Navigation state HEALTHY->LOST
+Name                           Stmts   Miss Branch BrPart  Cover
+----------------------------------------------------------------
+controller/PID_Controller.py      80      7     24      9    83%
+controller/minimum_jerk.py       104      7     30      7    90%
+controller/mission_config.py     114     13     26     13    81%
+controller/mission_state.py       34      1      4      1    95%
+controller/px4_policy.py          88     14     44      9    81%
+controller/run_record.py          60      5      6      1    91%
+controller/trajectory.py          70     12     20      8    78%
+----------------------------------------------------------------
+TOTAL                            550     59    154     48    84%
+raised-surface {'expected_surface_height_change_m': 2.0, 'logged_launch_home_z_ned_m': 0.029, 'median_final_z_ned_m': -1.9416812658309937, 'estimated_upward_height_change_m': 1.9706812658309936, 'tolerance_m': 0.3, 'passed': True, 'controller_received_surface_height': False}
+lowered-surface {'expected_surface_height_change_m': -2.0, 'logged_launch_home_z_ned_m': -2.016, 'median_final_z_ned_m': 0.0794953852891922, 'estimated_upward_height_change_m': -2.095495385289192, 'tolerance_m': 0.3, 'passed': True, 'controller_received_surface_height': False}
+ARCHIVED_EVIDENCE_VERIFIED

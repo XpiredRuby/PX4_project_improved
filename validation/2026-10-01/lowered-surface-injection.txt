@@ -1,0 +1,6 @@
+SITL parameter confirmed; launch from +2m pad; waiting for measured 8m climb
+[injector] Airborne gate passed (baseline_z=-1.92m, z=-9.93m)
+data: true
+
+
+Removed pad; landing ground is 2m below launch surface. Controller received no surface height.

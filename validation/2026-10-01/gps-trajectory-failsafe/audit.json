@@ -1,0 +1,92 @@
+{
+  "checks": [
+    {
+      "detail": "TAKEOFF -> TRAJECTORY -> PX4_FAILSAFE",
+      "name": "Expected failsafe phase sequence",
+      "passed": true
+    },
+    {
+      "detail": "HEALTHY -> DEGRADED -> HOLD -> LOST",
+      "name": "Navigation fault exercised and contained",
+      "passed": true
+    },
+    {
+      "detail": "duration=3.90s, XY drift=0.019m, Z drift=0.008m, phase-clock change=0.000s",
+      "name": "HOLD remained bounded before PX4 takeover",
+      "passed": true
+    },
+    {
+      "detail": "final armed=False",
+      "name": "Automatic disarm confirmed",
+      "passed": true
+    },
+    {
+      "detail": "final landed_state=1",
+      "name": "PX4 touchdown confirmed",
+      "passed": true
+    },
+    {
+      "detail": "checked 966/966 commands",
+      "name": "Command envelope respected",
+      "passed": true
+    },
+    {
+      "detail": "maximum gap=0.083s, limit=0.500s",
+      "name": "Offboard stream continuity",
+      "passed": true
+    },
+    {
+      "detail": "regression flags=0, unreadable=0",
+      "name": "No telemetry time regression",
+      "passed": true
+    },
+    {
+      "detail": "horizontal=0.002m/s (limit=0.500), vertical=0.021m/s (limit=0.500), tilt=0.08deg (limit=10.00)",
+      "name": "Touchdown dynamics within limits",
+      "passed": true
+    },
+    {
+      "detail": "error=0.065m (limit=1.500)",
+      "name": "Touchdown position within limit",
+      "passed": true
+    },
+    {
+      "detail": "post-touchdown non-ground samples=0",
+      "name": "No post-touchdown bounce",
+      "passed": true
+    },
+    {
+      "detail": "delay=2.787s (limit=5.000)",
+      "name": "Automatic disarm timing",
+      "passed": true
+    },
+    {
+      "detail": "max_abs_output=0.0000, actuator_age=0.025s",
+      "name": "Propulsion outputs zero after disarm",
+      "passed": true
+    },
+    {
+      "detail": "outcome=PX4_FAILSAFE",
+      "name": "Expected PX4 failsafe outcome",
+      "passed": true
+    },
+    {
+      "detail": "status=px4_failsafe_land_and_disarm_confirmed, error=None",
+      "name": "Failsafe landing cleanup completed",
+      "passed": true
+    },
+    {
+      "detail": "armed=False, landed_state=1, failure_action=PX4_FAILSAFE",
+      "name": "Manifest confirms ground and disarm",
+      "passed": true
+    }
+  ],
+  "hold_metrics": {
+    "duration_s": 3.899972189000003,
+    "max_xy_drift_m": 0.018970268217403937,
+    "max_z_drift_m": 0.00789833068847301,
+    "phase_clock_change_s": 0.0,
+    "samples": 79
+  },
+  "overall_passed": true
+}

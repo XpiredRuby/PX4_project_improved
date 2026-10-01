@@ -18,3 +18,5 @@ research_log_*.csv
 run_manifest_*.json
 analysis/metrics.json
 analysis/diagnostics.json
+.coverage
+.coverage.*

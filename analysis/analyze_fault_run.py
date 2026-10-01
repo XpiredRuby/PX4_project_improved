@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit an expected PX4 failsafe run from one archived SITL directory."""
+"""Audit expected GPS-loss recovery or PX4 failsafe SITL runs."""
 
 import argparse
 import json
@@ -53,7 +53,19 @@ def navigation_fault_check(df):
     return valid, " -> ".join(states) or "no navigation states"
 
 
-def hold_evidence(df):
+def navigation_recovery_check(df):
+    states = compact_values(
+        df.get("navigation_state", pd.Series(dtype=str))
+    )
+    required = ["HEALTHY", "DEGRADED", "HOLD", "HEALTHY"]
+    cursor = 0
+    for state in states:
+        if cursor < len(required) and state == required[cursor]:
+            cursor += 1
+    return cursor == len(required), " -> ".join(states) or "no navigation states"
+
+
+def hold_evidence(df, stop_phase="PX4_FAILSAFE"):
     required = {
         "phase",
         "navigation_state",
@@ -67,13 +79,13 @@ def hold_evidence(df):
     if missing:
         return False, "missing fields: " + ", ".join(missing), {}
 
-    failsafe_positions = np.flatnonzero(
-        df["phase"].astype(str).eq("PX4_FAILSAFE").to_numpy()
+    stop_positions = np.flatnonzero(
+        df["phase"].astype(str).eq(stop_phase).to_numpy()
     )
-    if not len(failsafe_positions):
-        return False, "PX4_FAILSAFE phase missing", {}
+    if not len(stop_positions):
+        return False, f"{stop_phase} phase missing", {}
 
-    active = df.iloc[: int(failsafe_positions[0])]
+    active = df.iloc[: int(stop_positions[0])]
     hold = active.loc[
         active["navigation_state"].astype(str).eq("HOLD")
     ].copy()
@@ -116,7 +128,7 @@ def hold_evidence(df):
     return valid, detail, metrics
 
 
-def manifest_checks(manifest):
+def failsafe_manifest_checks(manifest):
     final_state = manifest.get("final_state") or {}
     return [
         {
@@ -148,6 +160,34 @@ def manifest_checks(manifest):
                 f"armed={final_state.get('armed')}, "
                 f"landed_state={final_state.get('landed_state')}, "
                 f"failure_action={final_state.get('failure_action')}"
+            ),
+        },
+    ]
+
+
+def recovery_manifest_checks(manifest):
+    final_state = manifest.get("final_state") or {}
+    return [
+        {
+            "name": "Expected recovered mission outcome",
+            "passed": manifest.get("outcome") == "SUCCESS",
+            "detail": f"outcome={manifest.get('outcome')}",
+        },
+        {
+            "name": "Recovered mission has no cleanup error",
+            "passed": manifest.get("cleanup_error") is None,
+            "detail": f"cleanup_error={manifest.get('cleanup_error')}",
+        },
+        {
+            "name": "Recovered mission confirms ground and disarm",
+            "passed": (
+                final_state.get("armed") is False
+                and final_state.get("landed_state")
+                == mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
+            ),
+            "detail": (
+                f"armed={final_state.get('armed')}, "
+                f"landed_state={final_state.get('landed_state')}"
             ),
         },
     ]
@@ -185,7 +225,35 @@ def build_fault_safety_audit(df, manifest):
             "detail": hold_detail,
         },
     ]
-    checks.extend(manifest_checks(manifest))
+    checks.extend(failsafe_manifest_checks(manifest))
+    return {
+        "overall_passed": all(item["passed"] for item in checks),
+        "checks": checks,
+        "hold_metrics": hold_metrics,
+    }
+
+
+def build_recovery_safety_audit(df, manifest):
+    baseline = build_safety_audit(df)
+    checks = list(baseline["checks"])
+    nav_passed, nav_detail = navigation_recovery_check(df)
+    hold_passed, hold_detail, hold_metrics = hold_evidence(
+        df,
+        stop_phase="PX4_LAND",
+    )
+    checks[:0] = [
+        {
+            "name": "Navigation recovered after bounded HOLD",
+            "passed": nav_passed,
+            "detail": nav_detail,
+        },
+        {
+            "name": "Recovery HOLD remained bounded",
+            "passed": hold_passed,
+            "detail": hold_detail,
+        },
+    ]
+    checks.extend(recovery_manifest_checks(manifest))
     return {
         "overall_passed": all(item["passed"] for item in checks),
         "checks": checks,
@@ -202,9 +270,14 @@ def newest(path, pattern):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Audit an expected PX4 GPS-loss failsafe run."
+        description="Audit an expected PX4 GPS-loss SITL run."
     )
     parser.add_argument("run_dir", type=Path)
+    parser.add_argument(
+        "--expected",
+        choices=("failsafe", "recovery"),
+        default="failsafe",
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 
@@ -213,9 +286,18 @@ def main():
     manifest_path = newest(run_dir, "run_manifest_*.json")
     with manifest_path.open(encoding="utf-8") as handle:
         manifest = json.load(handle)
-    audit = build_fault_safety_audit(pd.read_csv(csv_path), manifest)
+    dataframe = pd.read_csv(csv_path)
+    if args.expected == "failsafe":
+        audit = build_fault_safety_audit(dataframe, manifest)
+    else:
+        audit = build_recovery_safety_audit(dataframe, manifest)
 
-    output = args.output or run_dir / "fault_safety_audit.json"
+    default_name = (
+        "fault_safety_audit.json"
+        if args.expected == "failsafe"
+        else "recovery_safety_audit.json"
+    )
+    output = args.output or run_dir / default_name
     with output.open("w", encoding="utf-8") as handle:
         json.dump(audit, handle, indent=2, sort_keys=True)
         handle.write("\n")
