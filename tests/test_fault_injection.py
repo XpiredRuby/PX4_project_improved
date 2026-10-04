@@ -116,7 +116,8 @@ class FaultInjectionTests(unittest.TestCase):
     def test_px4_failsafe_configuration_contract(self):
         safe = {
             "COM_OF_LOSS_T": 0.5,
-            "EKF2_NOAID_TOUT": 5_000_000,
+            "EKF2_NOAID_TOUT": 6_000_000,
+            "EKF2_REQ_GPS_H": 10.,
             "MPC_LAND_SPEED": .4,
             "MPC_LAND_CRWL": .3,
             "COM_OBL_RC_ACT": 4,
@@ -133,6 +134,10 @@ class FaultInjectionTests(unittest.TestCase):
             ({"EKF2_NOAID_TOUT": 10_000_001}, "EKF2_NOAID_TOUT"),
             ({"EKF2_NOAID_TOUT": 499_999}, "EKF2_NOAID_TOUT"),
             ({"EKF2_NOAID_TOUT": 5_000_000.5}, "EKF2_NOAID_TOUT"),
+            ({"EKF2_NOAID_TOUT": 5_000_000}, "GPS recovery budget"),
+            ({"EKF2_REQ_GPS_H": float("nan")}, "finite"),
+            ({"EKF2_REQ_GPS_H": -1.}, "GNSS health time"),
+            ({"EKF2_REQ_GPS_H": 20.}, "GPS recovery budget"),
             ({"MPC_LAND_SPEED": .7}, "MPC_LAND_SPEED"),
             ({"MPC_LAND_CRWL": .45}, "MPC_LAND_CRWL"),
             ({"MPC_LAND_CRWL": .1}, "landing timeout"),
@@ -147,6 +152,11 @@ class FaultInjectionTests(unittest.TestCase):
                     check_px4_safety_config(dict(safe, **change))
         with self.assertRaisesRegex(RuntimeError, "landing timeout"):
             check_px4_safety_config(safe, landing_timeout_s=120.)
+        check_px4_safety_config(dict(safe, EKF2_NOAID_TOUT=5_000_000),
+                               gps_outage_recovery_budget_s=2.)
+        with self.assertRaisesRegex(RuntimeError, "supported maximum remains 10s"):
+            check_px4_safety_config(dict(safe, EKF2_NOAID_TOUT=10_000_000),
+                                   gps_outage_recovery_budget_s=12.)
 
     def test_random_commands_always_obey_speed_and_slew_limits(self):
         controller = PositionController()

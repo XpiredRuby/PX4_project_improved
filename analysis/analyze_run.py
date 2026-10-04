@@ -307,6 +307,12 @@ def build_safety_audit(df):
             desired_x = finite(prior["desired_x"])
             desired_y = finite(prior["desired_y"])
             target_rows = prior.loc[desired_x.notna() & desired_y.notna()]
+            reference_fields = ["native_landing_reference_x", "native_landing_reference_y"]
+            if all(key in prior for key in reference_fields):
+                references = prior[reference_fields].apply(finite).dropna()
+                if not references.empty:
+                    target_rows = references.rename(columns={reference_fields[0]: "desired_x",
+                                                             reference_fields[1]: "desired_y"})
             if target_rows.empty:
                 add(
                     "Touchdown position within limit",
@@ -1607,7 +1613,7 @@ def main():
     output = archive / "analysis"
     output.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(logs[0])
+    df = pd.read_csv(logs[0], low_memory=False)
     required = {
         "elapsed_s",
         "phase",

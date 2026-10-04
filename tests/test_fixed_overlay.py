@@ -261,7 +261,7 @@ class FixedOverlayTests(unittest.TestCase):
         self.assertFalse(
             controller._message_is_from_target(qgc_heartbeat)
         )
-        self.assertTrue(
+        self.assertFalse(
             controller._message_is_from_target(other_px4_message)
         )
 
@@ -278,7 +278,7 @@ class FixedOverlayTests(unittest.TestCase):
         controller.running = True
         controller.control_running = True
         controller._start_setpoint_watchdog()
-        time.sleep(0.24)
+        time.sleep(0.17)
         controller.running = False
         controller.setpoint_watchdog_stop.set()
         controller.setpoint_thread.join(timeout=1.0)

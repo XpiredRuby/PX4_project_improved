@@ -15,7 +15,7 @@ sys.path[:0] = [str(ROOT / "controller"), str(ROOT / "analysis")]
 import pandas as pd
 from pymavlink import mavutil
 from analyze_run import build_safety_audit
-from analyze_fault_run import build_fault_safety_audit, build_recovery_safety_audit, build_navigation_response_audit
+from analyze_fault_run import build_fault_safety_audit, build_recovery_safety_audit, build_navigation_response_audit, build_control_stall_audit, build_storage_stall_audit, build_nominal_run_audit
 from sitl_fault_injector import read_parameter, run_fault, set_parameter
 from trajectory_quality import trajectory_quality
 from sitl_monitor import monitor_child, trial_phase_clock, allow_next_trial, quality_rejection_confirmed
@@ -58,10 +58,23 @@ def run_case(case, output, world, master):
         raise RuntimeError("SITL GPS restoration not confirmed before next trial")
     wind_evidence = set_wind(world, (0, 0, 0))
     # Config injection is explicit and included in the mission manifest.
+    fault_code = ""
+    if "control_stall_s" in case:
+        fault_code = (f"sys.path.insert(0, {str(ROOT / 'scripts')!r}); "
+                      "from sitl_control_faults import install_control_stall; "
+                      "install_control_stall(offboard_runner.PositionController, "
+                      f"{case['control_stall_s']!r}, {case.get('stall_clock_s', 2.)!r}, "
+                      f"{str(folder / 'control_stall.json')!r}); ")
+    if "storage_stall_s" in case:
+        fault_code += (f"sys.path.insert(0, {str(ROOT / 'scripts')!r}); "
+                       "from sitl_control_faults import install_storage_stall; "
+                       "from flight_logger import FlightLogger; "
+                       f"install_storage_stall(FlightLogger, {case['storage_stall_s']!r}, "
+                       f"{case.get('storage_after_rows', 100)!r}, {str(folder / 'storage_stall.json')!r}); ")
     code = ("import sys; from dataclasses import replace; "
             f"sys.path.insert(0,{str(ROOT / 'controller')!r}); "
             "from mission_config import MissionConfig; import offboard_runner; "
-            "offboard_runner.main(replace(MissionConfig(), "
+            + fault_code + "offboard_runner.main(replace(MissionConfig(), "
             f"tracking_governor_enabled={case.get('governor', True)!r}, "
             f"position_prediction_enabled={case.get('prediction', True)!r}))")
     events = []
@@ -147,8 +160,16 @@ def run_case(case, output, world, master):
                    "initial_wind": wind_evidence})
     (folder / "events.json").write_text(json.dumps(events, indent=2) + "\n")
     (folder / "battery_status.json").write_text(json.dumps(battery_messages, indent=2) + "\n")
-    df = pd.read_csv(next(folder.glob("research_log_*.csv")))
-    if case.get("expected") == "battery_failsafe":
+    df = pd.read_csv(next(folder.glob("research_log_*.csv")), low_memory=False)
+    if case.get("expected") == "storage_stall":
+        injection_path = folder / "storage_stall.json"
+        injection = json.loads(injection_path.read_text()) if injection_path.exists() else {}
+        audit = build_storage_stall_audit(df, manifest, injection)
+    elif case.get("expected") == "control_stall":
+        injection_path = folder / "control_stall.json"
+        injection = json.loads(injection_path.read_text()) if injection_path.exists() else {}
+        audit = build_control_stall_audit(df, manifest, injection)
+    elif case.get("expected") == "battery_failsafe":
         view = df.copy()
         view["phase"] = view["phase"].replace({"PX4_FAILSAFE": "PX4_LAND"})
         audit = build_safety_audit(view)
@@ -174,7 +195,7 @@ def run_case(case, output, world, master):
     elif case.get("expected") == "recovery":
         audit = build_recovery_safety_audit(df, manifest)
     else:
-        audit = build_safety_audit(df)
+        audit = build_nominal_run_audit(df, manifest)
     if case.get("trigger_phase") and not triggered:
         audit["overall_passed"] = False
         audit["checks"].append({"name": "Scenario injected", "passed": False,

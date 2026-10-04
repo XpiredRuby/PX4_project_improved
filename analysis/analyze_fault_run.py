@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -285,6 +286,31 @@ def build_recovery_safety_audit(df, manifest):
     }
 
 
+def build_control_stall_audit(df, manifest, injection):
+    """A hung worker must relinquish commands and complete a bounded abort."""
+    audit = build_safety_audit(df)
+    checks = [item for item in audit["checks"] if item["name"] != "Nominal phase sequence"]
+    phase_passed, phase_detail = fault_phase_check(df)
+    checks.append({"name": "Control stall stopped the Offboard mission",
+                   "passed": phase_passed, "detail": phase_detail})
+    checks.extend(failsafe_manifest_checks(manifest))
+    checks.append({"name": "Control stall exercised command expiry",
+                   "passed": injection.get("started") is True
+                   and injection.get("completed") is True
+                   and "Control command expired" in str(manifest.get("reason") or ""),
+                   "detail": manifest.get("reason")})
+    native = df.loc[df["phase"].eq("PX4_FAILSAFE")]
+    sends = pd.to_numeric(native.get("setpoint_send_count", pd.Series(dtype=float)), errors="coerce")
+    brakes = pd.to_numeric(native.get("setpoint_failsafe_brakes", pd.Series(dtype=float)), errors="coerce")
+    checks.append({"name": "One fresh brake before yielding to PX4",
+                   "passed": bool(len(brakes) > 1 and brakes.notna().all() and brakes.eq(1).all()),
+                   "detail": f"distinct_brake_counts={brakes.dropna().unique().tolist()}"})
+    checks.append({"name": "No Offboard sends after failsafe handoff",
+                   "passed": bool(len(sends) > 1 and sends.notna().all() and sends.nunique() == 1),
+                   "detail": f"native_samples={len(sends)}, distinct_send_counts={sends.nunique()}"})
+    return {"overall_passed": all(item["passed"] for item in checks), "checks": checks}
+
+
 def build_navigation_response_audit(df, manifest, allow_recovery=True):
     """Accept bounded recovery or verified landing, never a quality violation."""
     outcome = manifest.get("outcome")
@@ -300,6 +326,51 @@ def build_navigation_response_audit(df, manifest, allow_recovery=True):
                                 "passed": False, "detail": f"outcome={outcome}"})
         audit["overall_passed"] = False
     audit["navigation_response"] = outcome
+    return audit
+
+
+def build_nominal_run_audit(df, manifest):
+    """A safe timeout recovery must not be reported as a completed mission."""
+    audit = build_safety_audit(df)
+    state = manifest.get("final_state") or {}
+    audit["checks"].extend([
+        {"name": "Nominal mission completed successfully", "passed": manifest.get("outcome") == "SUCCESS",
+         "detail": manifest.get("outcome")},
+        {"name": "Nominal cleanup has no error", "passed": manifest.get("cleanup_error") is None,
+         "detail": manifest.get("cleanup_error")},
+        {"name": "Nominal manifest confirms shutdown",
+         "passed": state.get("armed") is False and state.get("landed_state") == 1,
+         "detail": state},
+    ])
+    audit["overall_passed"] = all(check["passed"] for check in audit["checks"])
+    return audit
+
+
+def build_storage_stall_audit(df, manifest, injection):
+    """Require a normal mission and actual control samples while storage blocks."""
+    audit = build_nominal_run_audit(df, manifest)
+    start = injection.get("started_monotonic", float("nan"))
+    end = injection.get("ended_monotonic", float("nan"))
+    delay = injection.get("delay_s", float("nan"))
+    exercised = (injection.get("started") is True and injection.get("completed") is True
+                 and all(isinstance(value, (int, float)) and math.isfinite(value)
+                         for value in (start, end, delay))
+                 and 0 < delay <= 5 and end - start >= delay * .9)
+    samples = 0
+    if exercised and "monotonic_time" in df:
+        times = pd.to_numeric(df["monotonic_time"], errors="coerce")
+        commands = df.loc[times.between(start, end), ["cmd_vx", "cmd_vy", "cmd_vz"]]
+        samples = int(commands.notna().all(axis=1).sum())
+    audit["checks"].extend([
+        {"name": "Bounded storage stall exercised", "passed": exercised, "detail": injection},
+        {"name": "Control publication continued during blocked storage",
+         "passed": bool(exercised and samples >= max(2, int(delay * 10))),
+         "detail": f"samples={samples}, delay_s={delay}"},
+        {"name": "Storage stall preserves successful mission and cleanup",
+         "passed": manifest.get("outcome") == "SUCCESS" and manifest.get("cleanup_error") is None,
+         "detail": manifest.get("outcome")},
+    ])
+    audit["overall_passed"] = all(check["passed"] for check in audit["checks"])
     return audit
 
 
@@ -328,7 +399,7 @@ def main():
     manifest_path = newest(run_dir, "run_manifest_*.json")
     with manifest_path.open(encoding="utf-8") as handle:
         manifest = json.load(handle)
-    dataframe = pd.read_csv(csv_path)
+    dataframe = pd.read_csv(csv_path, low_memory=False)
     if args.expected == "failsafe":
         audit = build_fault_safety_audit(dataframe, manifest)
     elif args.expected == "recovery":

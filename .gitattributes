@@ -3,4 +3,5 @@
 *.zip binary
 *.ulg binary
 *.tlog binary
-
+controller/trajectory.csv -text whitespace=cr-at-eol
+trajectory_generator/trajectory.csv -text whitespace=cr-at-eol

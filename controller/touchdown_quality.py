@@ -11,8 +11,14 @@ def touchdown_violations(snapshot, reference_xy=None):
     if not all(math.isfinite(snapshot.get(key, math.nan)) for key in keys):
         return ["touchdown telemetry unavailable or non-finite"]
     violations = []
-    if snapshot["position_age_s"] > .25 or snapshot["attitude_age_s"] > .25:
+    ages = [snapshot["position_age_s"], snapshot["attitude_age_s"]]
+    ages += [snapshot[key] for key in ("position_source_age_s", "attitude_source_age_s")
+             if key in snapshot]
+    if any(not math.isfinite(age) or age < 0 or age > .25 for age in ages):
         violations.append("touchdown motion/attitude telemetry stale")
+    if any(snapshot.get(key, False) for key in
+           ("position_source_regressed", "attitude_source_regressed")):
+        violations.append("touchdown measurement timestamp moved backwards")
     if math.hypot(snapshot["vx"], snapshot["vy"]) > .5:
         violations.append("touchdown horizontal speed exceeded 0.5 m/s")
     if abs(snapshot["vz"]) > .5:

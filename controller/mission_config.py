@@ -43,6 +43,8 @@ class MissionConfig:
     max_vertical_speed_m_s: float = 1.0
     setpoint_watchdog_timeout_s: float = 0.10
     offboard_stream_max_gap_s: float = 0.50
+    # Resending transport packets must not extend a computed command forever.
+    max_control_command_age_s: float = 0.25
 
     # A single-antenna GPS cannot observe absolute yaw while stationary.
     # PX4's GSF yaw estimator needs a short horizontal acceleration before
@@ -101,6 +103,8 @@ class MissionConfig:
     # lets a moving vehicle travel well beyond the last trusted reference.
     navigation_hold_entry_s: float = 0.20
     navigation_abort_s: float = 8.0
+    # Configuration budget, not a promise of recovery or position accuracy.
+    gps_outage_recovery_budget_s: float = 4.0
     navigation_recovery_s: float = 2.0
     navigation_confidence_fall_tau_s: float = 0.30
     navigation_confidence_rise_tau_s: float = 2.0
@@ -126,10 +130,37 @@ class MissionConfig:
         import math
         from dataclasses import fields
 
+        booleans = {"tracking_governor_enabled", "position_prediction_enabled"}
+        signed = {"ground_offset_min_m", "ground_offset_max_m", "bootstrap_pitch_deg",
+                  "bootstrap_thrust_bias"}
+        nonnegative = {"bootstrap_min_thrust", "navigation_degraded_entry_s",
+                       "navigation_hold_velocity_damping"}
         for field in fields(self):
             value = getattr(self, field.name)
-            if isinstance(value, (int, float)) and not math.isfinite(value):
+            if field.name in booleans:
+                if not isinstance(value, bool):
+                    raise ValueError(f"{field.name} must be boolean")
+                continue
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"{field.name} must be numeric")
+            if not math.isfinite(value):
                 raise ValueError(f"{field.name} must be finite")
+            if field.name not in signed:
+                if value < 0 or (value == 0 and field.name not in nonnegative):
+                    raise ValueError(f"{field.name} must be positive or explicitly allow zero")
+        for name in ("launch_reference_min_samples", "home_recovery_min_samples",
+                     "home_min_samples", "gps_min_fix_type", "gps_min_satellites"):
+            if not isinstance(getattr(self, name), int):
+                raise ValueError(f"{name} must be an integer")
+        if not 3 <= self.gps_min_fix_type <= 8 or self.gps_min_satellites > 254:
+            raise ValueError("GPS fix and satellite gates are invalid")
+        if not 0 < abs(self.bootstrap_pitch_deg) < self.bootstrap_max_tilt_deg < 90:
+            raise ValueError("bootstrap pitch must stay inside the tilt guard")
+        if not -1 <= self.bootstrap_thrust_bias <= 1:
+            raise ValueError("bootstrap thrust bias must be in [-1, 1]")
+        if not (self.takeoff_max_speed_m_s <= self.max_vertical_speed_m_s
+                and self.return_max_speed_m_s <= self.max_horizontal_speed_m_s):
+            raise ValueError("phase speeds must fit the command envelope")
         if not isinstance(self.tracking_governor_enabled, bool):
             raise ValueError("tracking_governor_enabled must be boolean")
         if not isinstance(self.position_prediction_enabled, bool):
@@ -201,6 +232,9 @@ class MissionConfig:
             self.home_recovery_min_samples,
         ) < 3:
             raise ValueError("GPS reference sample counts must be at least 3")
+        if not (self.setpoint_watchdog_timeout_s < self.max_control_command_age_s
+                <= self.offboard_stream_max_gap_s):
+            raise ValueError("control command freshness must fit the Offboard gap budget")
         if self.setpoint_watchdog_timeout_s >= self.offboard_stream_max_gap_s:
             raise ValueError(
                 "setpoint watchdog must resend before the Offboard gap limit"

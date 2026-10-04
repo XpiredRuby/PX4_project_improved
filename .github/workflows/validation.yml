@@ -43,4 +43,5 @@ jobs:
             controller/trajectory.py \
             controller/tracking_governor.py \
             controller/position_prediction.py \
-            controller/touchdown_quality.py
+            controller/touchdown_quality.py \
+            controller/flight_logger.py

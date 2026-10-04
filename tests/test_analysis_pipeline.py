@@ -111,6 +111,18 @@ class AnalysisPipelineTests(unittest.TestCase):
         self.assertTrue(audit["overall_passed"])
         self.assertTrue(all(item["passed"] for item in audit["checks"]))
 
+    def test_touchdown_audit_uses_frozen_reference_when_tracking_reference_moves(self):
+        frame = self.successful_run_frame()
+        frame["native_landing_reference_x"] = [np.nan] * 4 + [0., 0.]
+        frame["native_landing_reference_y"] = [np.nan] * 4 + [0., 0.]
+        frame.loc[5, "desired_x"] = 100.
+        audit = build_safety_audit(frame)
+        check = next(item for item in audit["checks"] if item["name"] == "Touchdown position within limit")
+        self.assertTrue(check["passed"])
+        frame["native_landing_reference_x"] = [np.nan] * 4 + [2., 2.]
+        check = next(item for item in build_safety_audit(frame)["checks"] if item["name"] == "Touchdown position within limit")
+        self.assertFalse(check["passed"])
+
     def test_reference_acceleration_uses_retimed_velocity_and_irregular_real_time(self):
         times = np.array([0., .04, .10, .15, .23])
         frame = pd.DataFrame({"elapsed_s": times, "planned_vx": 2. * times,

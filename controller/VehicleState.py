@@ -49,7 +49,12 @@ class VehicleState:
         self.position_time_boot_ms = math.nan
         self.attitude_time_boot_ms = math.nan
         self.gps_time_usec = math.nan
+        self.estimator_time_usec = math.nan
+        self.estimator_source_advanced_at = None
+        self.estimator_source_regressed = False
         self.position_source_advanced_at = None
+        self.attitude_source_advanced_at = None
+        self.attitude_source_regressed = False
         self.gps_source_advanced_at = None
         self.position_source_regressed = False
         self.gps_source_regressed = False
@@ -118,6 +123,12 @@ class VehicleState:
         ):
             self.position_source_regressed = True
             return
+        if (math.isfinite(float(previous_timestamp))
+                and next_timestamp == previous_timestamp):
+            # Receipt can advance while measurement time does not. Preserve
+            # the original payload so a replay cannot move the control state.
+            self.position_received_at = self._now()
+            return
         self.x, self.y, self.z = msg.x, msg.y, msg.z
         self.vx, self.vy, self.vz = msg.vx, msg.vy, msg.vz
         self.position_time_boot_ms = next_timestamp
@@ -130,6 +141,17 @@ class VehicleState:
         self.position_received_at = self._now()
 
     def update_attitude(self, msg):
+        previous = self.attitude_time_boot_ms
+        timestamp = getattr(msg, "time_boot_ms", math.nan)
+        if (math.isfinite(float(previous)) and math.isfinite(float(timestamp))
+                and timestamp < previous):
+            self.attitude_source_regressed = True
+            return
+        if math.isfinite(float(previous)) and timestamp == previous:
+            self.attitude_received_at = self._now()
+            return
+        if math.isfinite(float(timestamp)) and timestamp != previous:
+            self.attitude_source_advanced_at = self._now()
         self.roll, self.pitch, self.yaw = msg.roll, msg.pitch, msg.yaw
         self.roll_rate = msg.rollspeed
         self.pitch_rate = msg.pitchspeed
@@ -290,6 +312,18 @@ class VehicleState:
         self.extended_state_received_at = self._now()
 
     def update_estimator_status(self, msg):
+        timestamp = float(getattr(msg, "time_usec", math.nan))
+        if not math.isfinite(timestamp) or timestamp < 0:
+            return
+        previous = self.estimator_time_usec
+        if math.isfinite(previous) and timestamp < previous:
+            self.estimator_source_regressed = True
+            return
+        if timestamp == previous:
+            self.estimator_received_at = self._now()
+            return
+        self.estimator_time_usec = timestamp
+        self.estimator_source_advanced_at = self._now()
         self.estimator_flags = int(msg.flags)
         self.estimator_velocity_ratio = float(msg.vel_ratio)
         self.estimator_pos_horiz_ratio = float(msg.pos_horiz_ratio)

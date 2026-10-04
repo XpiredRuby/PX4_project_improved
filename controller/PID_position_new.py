@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import csv
 import math
 from pathlib import Path
 import statistics
@@ -8,6 +7,7 @@ import threading
 import time
 
 from pymavlink import mavutil
+from flight_logger import FlightLogger
 
 from mission_config import MissionConfig
 from mission_state import (
@@ -79,6 +79,8 @@ class PositionController:
         self.setpoint_send_count = 0
         self.setpoint_control_sends = 0
         self.setpoint_watchdog_resends = 0
+        self.setpoint_failsafe_brakes = 0
+        self.failsafe_brake_attempted = False
         self.setpoint_watchdog_timeout = (
             self.config.setpoint_watchdog_timeout_s
         )
@@ -140,6 +142,8 @@ class PositionController:
         self.home_reference_ready = False
         self.home_sample_count = 0
         self.cruise_height_m = self.config.cruise_height_m
+        self.minimum_trajectory_height_m = (self.config.ground_offset_max_m
+                                            + self.config.terrain_clearance_m)
 
         self.phase = MissionPhase.TAKEOFF
         self.phase_enter_time = None
@@ -178,6 +182,8 @@ class PositionController:
         self.trajectory = Trajectory(str(trajectory_path))
         self.duration = self.trajectory.duration
         self.trajectory_origin = self.trajectory.points[0]
+        # Geometry and derivative limits are independent of yaw alignment.
+        self.validate_mission_plan(require_home=False)
 
     def connect(self, timeout=10.0):
         print(f"Connecting to {self.connection_string}...")
@@ -219,12 +225,9 @@ class PositionController:
     def _message_is_from_target(self, msg):
         if msg.get_srcSystem() != self.master.target_system:
             return False
-        if (
-            msg.get_type() == "HEARTBEAT"
-            and msg.get_srcComponent() != self.master.target_component
-        ):
-            return False
-        return True
+        # State and command acknowledgements must describe this autopilot,
+        # not a camera, second controller, or companion on the same vehicle.
+        return msg.get_srcComponent() == self.master.target_component
 
     def request_message_intervals(self):
         requests = [
@@ -326,30 +329,67 @@ class PositionController:
         elapsed_ms = max(0.0, time.monotonic() - received_at) * 1000.0
         return int(boot_ms + elapsed_ms) & 0xFFFFFFFF
 
-    def send_velocity(self, vx, vy, vz, yaw, source="direct"):
+    def send_velocity(self, vx, vy, vz, yaw, source="direct", computed_at=None):
         # Ignore position, acceleration, and yaw rate. Use velocity and yaw.
         # The FORCE_SET bit is intentionally clear because acceleration is
         # ignored and this command is not a force setpoint.
+        if not all(math.isfinite(value) for value in (vx, vy, vz, yaw)):
+            raise ValueError("Velocity setpoint must be finite")
         with self.mav_send_lock:
-            self.master.mav.set_position_target_local_ned_send(
-                self._estimated_px4_boot_ms(),
-                self.master.target_system,
-                self.master.target_component,
-                mavutil.mavlink.MAV_FRAME_LOCAL_NED,
-                0b0000100111000111,
-                0,
-                0,
-                0,
-                vx,
-                vy,
-                vz,
-                0,
-                0,
-                0,
-                yaw,
-                0,
-            )
+            # Recheck ownership after acquiring the send lock: a watchdog
+            # may have copied its command immediately before native handoff.
+            if self.native_land_active or self.setpoint_error is not None:
+                return False
+            if computed_at is not None:
+                age = time.monotonic() - computed_at
+                budget = min(self.config.max_control_command_age_s,
+                             self.max_position_age_s, self.max_attitude_age_s)
+                if not math.isfinite(age) or not 0 <= age < budget:
+                    self.setpoint_error = "Control command expired waiting for transport"
+                    self.set_failure_action(FailureAction.PX4_FAILSAFE)
+                    self.native_land_active = True
+                    self.control_running = False
+                    self.setpoint_watchdog_stop.set()
+                    raise RuntimeError(self.setpoint_error)
+            if source == "watchdog":
+                # A newer control command may have arrived while this thread
+                # waited for the transport. Never overwrite it with a copy.
+                with self.setpoint_lock:
+                    latest = self.latest_setpoint
+                    updated = self.latest_setpoint_updated_at
+                now = time.monotonic()
+                if (latest is None or updated is None or not math.isfinite(updated)
+                        or not 0 <= now - updated < self.config.max_control_command_age_s):
+                    return False
+                vx, vy, vz, yaw = latest
+                if not all(math.isfinite(value) for value in latest):
+                    raise ValueError("Velocity setpoint must be finite")
+            self._send_velocity_packet(vx, vy, vz, yaw)
+            self._record_velocity_send(source)
+        return True
 
+    def _send_velocity_packet(self, vx, vy, vz, yaw):
+        """Caller holds the transport lock and has checked command authority."""
+        self.master.mav.set_position_target_local_ned_send(
+            self._estimated_px4_boot_ms(),
+            self.master.target_system,
+            self.master.target_component,
+            mavutil.mavlink.MAV_FRAME_LOCAL_NED,
+            0b0000100111000111,
+            0,
+            0,
+            0,
+            vx,
+            vy,
+            vz,
+            0,
+            0,
+            0,
+            yaw,
+            0,
+        )
+
+    def _record_velocity_send(self, source):
         sent_at = time.monotonic()
         with self.setpoint_lock:
             if self.setpoint_last_sent_at is not None:
@@ -366,45 +406,104 @@ class PositionController:
                 self.setpoint_control_sends += 1
             elif source == "watchdog":
                 self.setpoint_watchdog_resends += 1
+            elif source == "failsafe_brake":
+                self.setpoint_failsafe_brakes += 1
 
-    def publish_velocity(self, vx, vy, vz, yaw):
-        updated_at = time.monotonic()
+    def _brake_before_failsafe(self):
+        """One fresh zero-velocity command, only while this Offboard owns PX4."""
+        with self.mav_send_lock:
+            if self.failsafe_brake_attempted:
+                return False
+            self.failsafe_brake_attempted = True
+            pose = self._snapshot(time.monotonic())
+            ages = (("position_age_s", self.max_position_age_s),
+                    ("position_source_age_s", self.max_position_age_s),
+                    ("attitude_age_s", self.max_attitude_age_s),
+                    ("attitude_source_age_s", self.max_attitude_age_s),
+                    ("heartbeat_age_s", self.max_heartbeat_age_s),
+                    ("estimator_age_s", self.config.estimator_max_age_s))
+            valid = (self.receiver_error is None and pose["armed"] is True
+                     and pose["heartbeat_main_mode"] == 6
+                     and self._local_estimate_valid(pose)
+                     and not pose.get("position_source_regressed", False)
+                     and not pose.get("attitude_source_regressed", False)
+                     and all(math.isfinite(pose.get(key, math.inf))
+                             and 0 <= pose[key] <= limit for key, limit in ages)
+                     and all(math.isfinite(pose[key]) for key in
+                             ("x", "y", "z", "vx", "vy", "vz", "yaw")))
+            if not valid:
+                return False
+            self._send_velocity_packet(0., 0., 0., pose["yaw"])
+            self._record_velocity_send("failsafe_brake")
+            return True
+
+    def publish_velocity(self, vx, vy, vz, yaw, computed_at=None):
+        now = time.monotonic()
+        updated_at = now if computed_at is None else computed_at
+        budget = min(self.config.max_control_command_age_s,
+                     self.max_position_age_s, self.max_attitude_age_s)
+        if (not math.isfinite(updated_at) or not 0 <= now - updated_at < budget):
+            self.setpoint_error = "Control computation exceeded telemetry freshness budget"
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
+            try:
+                self._brake_before_failsafe()
+            except Exception as exc:
+                self.setpoint_error += f"; brake unavailable: {exc!r}"
+            self.begin_failsafe_handoff()
+            raise RuntimeError(self.setpoint_error)
         with self.setpoint_lock:
+            if self.native_land_active or self.setpoint_error is not None:
+                return False
             self.latest_setpoint = (vx, vy, vz, yaw)
             self.latest_setpoint_updated_at = updated_at
-        self.send_velocity(vx, vy, vz, yaw, source="control")
+        return self.send_velocity(vx, vy, vz, yaw, source="control", computed_at=updated_at)
+
+    def _watchdog_step(self, now=None):
+        """Bound transport resends by the age of the computed command."""
+        with self.setpoint_lock:
+            # A publication may finish while the watchdog waits for this lock.
+            # Sample after acquisition so that newer evidence is not mistaken
+            # for a regressed clock. Explicit time supports deterministic tests.
+            if now is None:
+                now = time.monotonic()
+            latest = self.latest_setpoint
+            latest_updated = self.latest_setpoint_updated_at
+            last_sent = self.setpoint_last_sent_at
+            expired = latest is not None and (
+                latest_updated is None or not math.isfinite(latest_updated)
+                or now < latest_updated
+                or now - latest_updated >= self.config.max_control_command_age_s)
+            if expired:
+                # Latch while publication is excluded by the same lock.
+                self.setpoint_error = "Control command expired; yielding to PX4 failsafe"
+                self.native_land_active = True
+        if latest is None:
+            return
+        if expired:
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
+            try:
+                self._brake_before_failsafe()
+            except Exception as exc:
+                self.setpoint_error += f"; brake unavailable: {exc!r}"
+            self.begin_failsafe_handoff()
+            return
+        if last_sent is not None and now - last_sent < self.setpoint_watchdog_timeout:
+            return
+        if last_sent is None and now - latest_updated < self.setpoint_watchdog_timeout:
+            return
+        try:
+            self.send_velocity(*latest, source="watchdog")
+        except Exception as exc:
+            self.setpoint_error = repr(exc)
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
+            self.begin_failsafe_handoff()
+            print(f"[research] Setpoint watchdog failed: {exc!r}")
 
     def _setpoint_watchdog_loop(self):
         while self.running and self.control_running:
-            if self.setpoint_watchdog_stop.wait(
-                self.setpoint_watchdog_poll
-            ):
+            if self.setpoint_watchdog_stop.wait(self.setpoint_watchdog_poll):
                 return
-
-            now = time.monotonic()
-            with self.setpoint_lock:
-                latest = self.latest_setpoint
-                latest_updated = self.latest_setpoint_updated_at
-                last_sent = self.setpoint_last_sent_at
-
-            if latest is None:
-                continue
-            if last_sent is None:
-                if (
-                    latest_updated is None
-                    or now - latest_updated
-                    < self.setpoint_watchdog_timeout
-                ):
-                    continue
-            elif now - last_sent < self.setpoint_watchdog_timeout:
-                continue
-
-            try:
-                self.send_velocity(*latest, source="watchdog")
-            except Exception as exc:
-                self.setpoint_error = repr(exc)
-                print(f"[research] Setpoint watchdog failed: {exc!r}")
-                return
+            self._watchdog_step()
 
     def _start_setpoint_watchdog(self):
         with self.setpoint_lock:
@@ -416,6 +515,8 @@ class PositionController:
             self.setpoint_send_count = 0
             self.setpoint_control_sends = 0
             self.setpoint_watchdog_resends = 0
+            self.setpoint_failsafe_brakes = 0
+            self.failsafe_brake_attempted = False
 
         self.setpoint_error = None
         self.setpoint_watchdog_stop.clear()
@@ -451,6 +552,7 @@ class PositionController:
                 "setpoint_watchdog_resends": (
                     self.setpoint_watchdog_resends
                 ),
+                "setpoint_failsafe_brakes": self.setpoint_failsafe_brakes,
             }
 
     def _snapshot(self, now_mono):
@@ -489,6 +591,8 @@ class PositionController:
                 "position_time_boot_ms": s.position_time_boot_ms,
                 "position_source_regressed": s.position_source_regressed,
                 "attitude_age_s": age(s.attitude_received_at),
+                "attitude_source_age_s": age(s.attitude_source_advanced_at),
+                "attitude_source_regressed": s.attitude_source_regressed,
                 "heartbeat_age_s": age(s.heartbeat_received_at),
                 "imu_age_s": age(s.imu_received_at),
                 "px4_position_target_age_s": age(
@@ -508,6 +612,9 @@ class PositionController:
                     s.extended_state_received_at
                 ),
                 "estimator_age_s": age(s.estimator_received_at),
+                "estimator_source_age_s": age(s.estimator_source_advanced_at),
+                "estimator_time_usec": s.estimator_time_usec,
+                "estimator_source_regressed": s.estimator_source_regressed,
                 "command_ack_age_s": age(s.command_ack_received_at),
                 "position_seq": s.message_counts.get(
                     "LOCAL_POSITION_NED", 0
@@ -719,8 +826,21 @@ class PositionController:
         ):
             reasons.append("vertical uncertainty exceeds planned clearance")
 
-        if snapshot["estimator_age_s"] > self.config.estimator_max_age_s:
+        estimator_age = snapshot["estimator_age_s"]
+        estimator_receipt_stale = (
+            not math.isfinite(estimator_age)
+            or not 0 <= estimator_age <= self.config.estimator_max_age_s
+        )
+        if estimator_receipt_stale:
             reasons.append("estimator telemetry stale")
+        source_age = snapshot.get("estimator_source_age_s", estimator_age)
+        if not estimator_receipt_stale and (
+            not math.isfinite(source_age)
+            or not 0 <= source_age <= self.config.estimator_max_age_s
+        ):
+            reasons.append("estimator measurement timestamp stopped advancing")
+        if snapshot.get("estimator_source_regressed", False):
+            reasons.append("estimator measurement timestamp moved backwards")
         required = self._required_estimator_mask()
         if snapshot["estimator_flags"] & required != required:
             reasons.append(
@@ -808,8 +928,11 @@ class PositionController:
 
     def configure_cruise_height(self, snapshot):
         vertical_accuracy = snapshot["gps_vertical_accuracy_m"]
+        if not math.isfinite(vertical_accuracy) or vertical_accuracy < 0:
+            raise ValueError("Vertical accuracy must be finite and nonnegative")
         uncertainty_margin = self._vertical_uncertainty_margin(vertical_accuracy)
         required_height = self._required_cruise_height(vertical_accuracy)
+        self.minimum_trajectory_height_m = required_height
         self.cruise_height_m = max(
             self.config.cruise_height_m,
             required_height,
@@ -950,8 +1073,8 @@ class PositionController:
         )
         return reference_snapshot
 
-    def validate_mission_plan(self):
-        if not self.home_reference_ready:
+    def validate_mission_plan(self, *, require_home=True):
+        if require_home and not self.home_reference_ready:
             raise RuntimeError("Home reference must be captured before validation")
 
         origin = self.trajectory_origin
@@ -967,6 +1090,8 @@ class PositionController:
                 violations.append(f"point {index}: radius {radius:.2f}m")
             if height > self.config.max_height_above_launch_m:
                 violations.append(f"point {index}: height {height:.2f}m")
+            if height < self.minimum_trajectory_height_m - 1e-9:
+                violations.append(f"point {index}: terrain/uncertainty clearance budget")
             if desired_z - self.z0 > self.config.max_offboard_drop_below_launch_m:
                 violations.append(f"point {index}: below-launch command")
             if horizontal_speed > self.max_horizontal_speed * 1.001:
@@ -1168,6 +1293,8 @@ class PositionController:
             "position_time_boot_ms",
             "position_source_regressed",
             "attitude_age_s",
+            "attitude_source_age_s",
+            "attitude_source_regressed",
             "heartbeat_age_s",
             "imu_age_s",
             "px4_position_target_age_s",
@@ -1181,6 +1308,9 @@ class PositionController:
             "gps_source_delay_s",
             "extended_state_age_s",
             "estimator_age_s",
+            "estimator_source_age_s",
+            "estimator_time_usec",
+            "estimator_source_regressed",
             "command_ack_age_s",
             "position_seq",
             "attitude_seq",
@@ -1221,6 +1351,9 @@ class PositionController:
             "setpoint_send_count",
             "setpoint_control_sends",
             "setpoint_watchdog_resends",
+            "setpoint_failsafe_brakes",
+            "native_landing_reference_x",
+            "native_landing_reference_y",
             "desired_x",
             "x",
             "desired_y",
@@ -1306,15 +1439,16 @@ class PositionController:
             f"servo_raw_{index + 1}" for index in range(16)
         ]
 
-        self.log_file = open(self.filename, "w", newline="")
-        self.writer = csv.DictWriter(
-            self.log_file,
-            fieldnames=self.log_fields,
-            extrasaction="ignore",
-        )
-        self.writer.writeheader()
+        self.log_file = FlightLogger(self.filename, self.log_fields)
+        self.writer = self.log_file
         self.log_file.flush()
         print(f"Research logging: {self.filename}")
+
+    def _runtime_status(self, text):
+        if isinstance(self.log_file, FlightLogger):
+            self.log_file.status(text)
+        else:
+            print(text)
 
     def _transition(self, new_phase, now_mono):
         with self.mission_lock:
@@ -1331,7 +1465,7 @@ class PositionController:
             self.last_phase_transition = f"{old_phase}->{self.phase}"
             if self.phase == MissionPhase.HANDOFF:
                 self.handoff_ready_event.set()
-        print(f"[research] Phase transition {self.last_phase_transition}")
+        self._runtime_status(f"[research] Phase transition {self.last_phase_transition}")
 
     def phase_snapshot(self):
         with self.mission_lock:
@@ -1570,7 +1704,12 @@ class PositionController:
 
     def _local_estimate_valid(self, snapshot):
         required = self._required_estimator_mask()
-        return snapshot["estimator_flags"] & required == required
+        age = snapshot.get("estimator_age_s", math.inf)
+        source_age = snapshot.get("estimator_source_age_s", age)
+        return (snapshot["estimator_flags"] & required == required
+                and not snapshot.get("estimator_source_regressed", False)
+                and all(math.isfinite(value) and 0 <= value <= self.config.estimator_max_age_s
+                        for value in (age, source_age)))
 
     def _set_navigation_state(self, new_state, snapshot):
         new_state = NavigationState(new_state)
@@ -1602,7 +1741,7 @@ class PositionController:
         if new_state == NavigationState.HEALTHY:
             self.navigation_hold_reference = None
             self._reset_position_pids()
-        print(f"[research] Navigation state {old_state}->{new_state}")
+        self._runtime_status(f"[research] Navigation state {old_state}->{new_state}")
 
     def _update_navigation_supervisor(self, snapshot, now_mono):
         self.navigation_reasons = self._navigation_health_reasons(snapshot)
@@ -1615,11 +1754,7 @@ class PositionController:
                 self.navigation_unhealthy_since = now_mono
             unhealthy_for = now_mono - self.navigation_unhealthy_since
 
-            if (
-                not self._local_estimate_valid(snapshot)
-                and unhealthy_for
-                >= self.config.navigation_degraded_entry_s
-            ):
+            if not self._local_estimate_valid(snapshot):
                 self.set_failure_action(FailureAction.PX4_FAILSAFE)
                 self._set_navigation_state(NavigationState.LOST, snapshot)
                 raise NavigationEstimateLost(
@@ -2047,6 +2182,10 @@ class PositionController:
             "cruise_height_m": self.cruise_height_m,
             "home_sample_count": self.home_sample_count,
             "failure_action": self.failure_action,
+            "native_landing_reference_x": (math.nan if self.native_landing_reference_xy is None
+                                           else self.native_landing_reference_xy[0]),
+            "native_landing_reference_y": (math.nan if self.native_landing_reference_xy is None
+                                           else self.native_landing_reference_xy[1]),
             "effective_horizontal_speed_limit": (
                 self.effective_horizontal_speed_limit
             ),
@@ -2140,6 +2279,12 @@ class PositionController:
                     self.max_position_age_s,
                 )
             )
+        if "attitude_source_age_s" in snapshot:
+            limits.append(("attitude source timestamp", snapshot["attitude_source_age_s"],
+                           self.max_attitude_age_s))
+        if snapshot.get("attitude_source_regressed", False):
+            self.set_failure_action(FailureAction.PX4_FAILSAFE)
+            raise RuntimeError("Attitude timestamp moved backwards")
         if snapshot.get("position_source_regressed", False):
             self.set_failure_action(FailureAction.PX4_FAILSAFE)
             raise RuntimeError("Local position timestamp moved backwards")
@@ -2247,7 +2392,9 @@ class PositionController:
                 self._update_navigation_supervisor(snapshot, now_mono)
 
     def run(self):
-        print("Starting fixed research controller loop")
+        if self.native_land_active or self.setpoint_error is not None:
+            raise RuntimeError("Cannot restart Offboard output after handoff")
+        self._runtime_status("Starting fixed research controller loop")
         self.running = True
         self.control_running = True
         self._start_setpoint_watchdog()
@@ -2341,11 +2488,14 @@ class PositionController:
                     command,
                     control["yaw_cmd"],
                 )
+                if not self.control_running or self.native_land_active:
+                    break
                 self.publish_velocity(
                     cmd_vx,
                     cmd_vy,
                     cmd_vz,
                     control["yaw_cmd"],
+                    computed_at=loop_start,
                 )
                 snapshot.update(
                     self._setpoint_stats(time.monotonic())
@@ -2366,6 +2516,8 @@ class PositionController:
                     control=control,
                 )
                 with self.log_lock:
+                    if not self.control_running or self.native_land_active:
+                        break
                     self.writer.writerow(row)
 
                 now = time.monotonic()
@@ -2383,7 +2535,7 @@ class PositionController:
                     or bool(self.last_phase_transition)
                 )
                 if should_print:
-                    print(
+                    self._runtime_status(
                         f"{self.phase:12s} {snapshot['mode']:12s} "
                         f"Armed={snapshot['armed']} "
                         f"Pos=({x:.2f}, {y:.2f}, {z:.2f}) "
@@ -2521,6 +2673,7 @@ class PositionController:
         print("Stopping controller...")
         self.running = False
         self.control_running = False
+        self.native_land_active = True
         self.setpoint_watchdog_stop.set()
 
         if (
@@ -2529,16 +2682,8 @@ class PositionController:
         ):
             self.setpoint_thread.join(timeout=1.0)
 
-        if self.master is not None and not self.native_land_active:
-            with self.state_lock:
-                current_yaw = self.state.yaw
-            self.send_velocity(
-                0.0,
-                0.0,
-                0.0,
-                current_yaw,
-                source="direct",
-            )
+        # Stopping the client relinquishes output. Sending one last neutral
+        # command could interfere with a pilot or another Offboard owner.
 
         if (
             self.receiver_thread is not None

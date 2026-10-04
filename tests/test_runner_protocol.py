@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "controller"))
 
 import offboard_runner
 from mission_state import FailureAction, MissionOutcome
+from mission_config import MissionConfig
 from pymavlink import mavutil
 from px4_policy import decode_px4_parameter_value, read_px4_parameters
 
@@ -67,6 +68,7 @@ class FakeMaster:
 class FakeController:
     def __init__(self, master=None):
         self.master = master or FakeMaster()
+        self.config = MissionConfig()
         self.mav_send_lock = threading.Lock()
         self.native_samples = 0
         self.native_phases = []

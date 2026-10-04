@@ -37,6 +37,7 @@
       "source_system": 1,
       "source_component": 1,
       "fields": {
+        "time_usec": 1000000,
         "flags": 7,
         "vel_ratio": 0.2,
         "pos_horiz_ratio": 0.25,

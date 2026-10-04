@@ -178,6 +178,7 @@ class MaglessBootstrapTests(unittest.TestCase):
             config=config,
             max_position_age_s=0.5,
             max_attitude_age_s=0.5,
+            max_heartbeat_age_s=1.5,
         )
         snapshot = {
             "z": 0.0,
@@ -185,6 +186,9 @@ class MaglessBootstrapTests(unittest.TestCase):
             "roll": 0.0,
             "pitch": 0.0,
             "yaw": 0.0,
+            "heartbeat_age_s": 0.0,
+            "armed": False,
+            "heartbeat_main_mode": 6,
             "position_age_s": 0.0,
             "attitude_age_s": 0.0,
             "gps_age_s": 0.0,

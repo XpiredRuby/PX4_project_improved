@@ -21,6 +21,7 @@ EKF2_SOURCE_PARAMETERS = (
 )
 PX4_SAFETY_PARAMETERS = (
     "EKF2_NOAID_TOUT",
+    "EKF2_REQ_GPS_H",
     "MPC_LAND_SPEED",
     "MPC_LAND_CRWL",
     "COM_OF_LOSS_T",
@@ -111,6 +112,7 @@ def check_px4_safety_config(
     max_offboard_loss_s=1.0,
     landing_timeout_s=180.0,
     max_descent_m=40.0,
+    gps_outage_recovery_budget_s=4.0,
 ):
     """Verify that command loss lands and confirmed landing auto-disarms."""
     missing = sorted(set(PX4_SAFETY_PARAMETERS) - parameters.keys())
@@ -124,6 +126,7 @@ def check_px4_safety_config(
     failure_injection_raw = float(parameters["SYS_FAILURE_EN"])
     battery_action = float(parameters["COM_LOW_BAT_ACT"])
     no_aid_timeout_us = float(parameters["EKF2_NOAID_TOUT"])
+    gnss_initial_health_s = float(parameters["EKF2_REQ_GPS_H"])
     land_speed = float(parameters["MPC_LAND_SPEED"])
     crawl_speed = float(parameters["MPC_LAND_CRWL"])
     low, critical, emergency = (float(parameters[name]) for name in
@@ -134,6 +137,7 @@ def check_px4_safety_config(
             offboard_loss_s, auto_disarm_s, action_raw, failure_injection_raw,
             battery_action, low, critical, emergency, no_aid_timeout_us,
             land_speed, crawl_speed, max_descent_m, landing_timeout_s,
+            gnss_initial_health_s, gps_outage_recovery_budget_s,
         )
     ):
         raise RuntimeError("PX4 failsafe parameters must be finite")
@@ -143,6 +147,19 @@ def check_px4_safety_config(
     mismatch = []
     if not (no_aid_timeout_us.is_integer() and 500_000 <= no_aid_timeout_us <= 10_000_000):
         mismatch.append("EKF2_NOAID_TOUT must be an integer in 500000..10000000 us")
+    # PX4 v1.17 GnssChecks::run requires max(1 s, startup-health / 10)
+    # of good data after a bad fix. Reserve another second for sensor sampling,
+    # transport, and delayed fusion. A four-second outage cannot reliably fit
+    # inside a five-second no-aiding timeout.
+    if gnss_initial_health_s < 0 or gps_outage_recovery_budget_s <= 0:
+        mismatch.append("GNSS health time and recovery budget must be valid")
+    else:
+        required_s = gps_outage_recovery_budget_s + max(1., gnss_initial_health_s / 10.) + 1.
+        if no_aid_timeout_us / 1e6 < required_s:
+            mismatch.append(
+                f"EKF2_NOAID_TOUT needs at least {required_s:g}s for the requested "
+                f"{gps_outage_recovery_budget_s:g}s GPS recovery budget; "
+                "the supported maximum remains 10s")
     if not 0.0 < crawl_speed <= land_speed <= .5:
         mismatch.append("MPC_LAND_CRWL <= MPC_LAND_SPEED must lie in (0, 0.5] m/s")
     elif max_descent_m <= 0 or landing_timeout_s < max_descent_m / crawl_speed + auto_disarm_s + 10.:
@@ -239,6 +256,7 @@ def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
         landing_timeout_s=controller.config.land_timeout_s,
         max_descent_m=(controller.config.max_height_above_launch_m
                        - controller.config.ground_offset_min_m),
+        gps_outage_recovery_budget_s=controller.config.gps_outage_recovery_budget_s,
     )
     hover_thrust = float(parameters["MPC_THR_HOVER"])
     max_thrust = float(parameters["MPC_THR_MAX"])

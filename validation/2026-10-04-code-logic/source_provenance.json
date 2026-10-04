@@ -1,0 +1,28 @@
+{
+  "flight_case": "gust-gps-4s-latest",
+  "comparison": "GNU diff --strip-trailing-cr --brief",
+  "comparison_passed": true,
+  "difference": "line endings only: deployed CRLF, repository LF",
+  "files": {
+    "controller/PID_position_new.py": {
+      "deployed_sha256": "5b1964501b1cec74a725de27e3b54e7ae29f3a4cde19b5050152d372b286f06f",
+      "repository_sha256": "77d986cfaea3ac27c5b3ef4586c89ea7d3128866514c01cf1f3f0286e767fa9c"
+    },
+    "controller/VehicleState.py": {
+      "deployed_sha256": "5a7a6065aba23723a390cfed8ff89f3befd286aae11904fa97e74b462429e031",
+      "repository_sha256": "313ff1f601e1d321a0a8a2b2036124e721273170ae04af9e6a7180a9c493f272"
+    },
+    "controller/magless_bootstrap.py": {
+      "deployed_sha256": "ec0b3e30d764b3165f14478588db97c91324965dfaba54cae83bd9f79658ff04",
+      "repository_sha256": "b894fc419cd0a8f6e44ef6089be2cbd819c36afc93e32e06dfdd4fd29544d7cd"
+    },
+    "controller/mission_config.py": {
+      "deployed_sha256": "beb9cebfdf43bfdc4d7f45c102b073ab041b37f6c6022b5866d87d842743eded",
+      "repository_sha256": "3613b66a7bb9ccb3d86e7943ccce3e8a8f38ea9c3b54fff08b2fc7d664c66921"
+    },
+    "controller/px4_policy.py": {
+      "deployed_sha256": "dc57e34539d8c4eb5e5953f9e9b28a697b534326c65894e211d6b5cbd69d0f09",
+      "repository_sha256": "74c4d7d131b2734d823e4504bc875a2e3b08dc4c3ef195194c9503b3f6b0eed6"
+    }
+  }
+}

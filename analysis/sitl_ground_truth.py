@@ -10,6 +10,7 @@ import pandas as pd
 from trajectory_quality import distribution
 
 EARTH_RADIUS_M = 6371000.0
+MAX_ALIGNMENT_GAP_US = 250_000.
 
 
 def ordered_samples(data, keys):
@@ -39,22 +40,87 @@ def geodetic_to_ned(lat, lon, alt, ref_lat, ref_lon, ref_alt):
     return np.column_stack((north, east, down))
 
 
+def interpolation_coverage(samples, times, max_gap_us=MAX_ALIGNMENT_GAP_US):
+    """Accept exact observations or short interpolation brackets only."""
+    right = np.searchsorted(times, samples, side="left")
+    clipped = np.minimum(right, len(times) - 1)
+    exact = (right < len(times)) & (times[clipped] == samples)
+    left = np.maximum(right - 1, 0)
+    bracketed = ((right > 0) & (right < len(times))
+                 & (times[clipped] - times[left] <= max_gap_us))
+    return exact | bracketed
+
+
+def audit_physical_position(df, physical):
+    """Apply position limits to independent truth, never to EKF position."""
+    checks = []
+
+    def add(name, passed, detail):
+        checks.append({"name": name, "passed": bool(passed), "detail": str(detail)})
+
+    required = {"phase", "landed_state", "navigation_state",
+                "native_landing_reference_x", "native_landing_reference_y"}
+    missing = required - set(df.columns)
+    if missing:
+        add("Physical position evidence complete", False, "missing: " + ", ".join(sorted(missing)))
+        return {"overall_passed": False, "checks": checks}
+    physical = np.asarray(physical, dtype=float)
+    if physical.shape != (len(df), 3):
+        raise ValueError("Physical truth must have one XYZ row per telemetry sample")
+    native = df.phase.isin(["PX4_LAND", "PX4_FAILSAFE"]).to_numpy()
+    contacts = native & pd.to_numeric(df.landed_state, errors="coerce").eq(1).to_numpy()
+    indices = np.flatnonzero(contacts)
+    add("Physical contact recorded", len(indices) > 0, f"contact samples={len(indices)}")
+    if len(indices):
+        contact = indices[0]
+        references = df[["native_landing_reference_x", "native_landing_reference_y"]].apply(
+            pd.to_numeric, errors="coerce").to_numpy(dtype=float)
+        native_references = references[native & (np.arange(len(df)) <= contact)]
+        frozen = (len(native_references) > 0 and np.isfinite(native_references).all()
+                  and np.allclose(native_references, native_references[0], rtol=0, atol=1e-6))
+        add("Landing reference frozen before contact", frozen,
+            f"native reference samples={len(native_references)}")
+        covered = np.isfinite(physical[contact]).all()
+        add("Physical contact truth covered", covered, f"contact row={contact}")
+        error = (float(np.linalg.norm(physical[contact, :2] - native_references[0]))
+                 if frozen and covered else None)
+        add("Physical touchdown position within limit", error is not None and error <= 1.5,
+            f"error={error!r}m, limit=1.5m")
+    hold = df.navigation_state.eq("HOLD").to_numpy() & ~native
+    starts = np.flatnonzero(hold & ~np.r_[False, hold[:-1]])
+    for number, start in enumerate(starts, 1):
+        later = np.flatnonzero(~hold[start:])
+        end = start + later[0] if len(later) else len(df)
+        positions = physical[start:end]
+        covered = np.isfinite(positions).all()
+        xy = float(np.linalg.norm(positions[:, :2] - positions[0, :2], axis=1).max()) if covered else None
+        z = float(np.abs(positions[:, 2] - positions[0, 2]).max()) if covered else None
+        add(f"Physical HOLD {number} remains bounded", covered and xy <= 1. and z <= 1.,
+            f"rows={start}:{end}, xy={xy!r}m, z={z!r}m, limits=1m")
+    return {"overall_passed": all(item["passed"] for item in checks), "checks": checks,
+            "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."}
+
+
 def audit_ground_truth(df, truth, local):
     sample_us = df.position_time_boot_ms.to_numpy(dtype=float) * 1000.
     truth_times, truth, truth_duplicates = ordered_samples(truth, ("lat", "lon", "alt"))
     local_times, local, local_duplicates = ordered_samples(local, ("ref_lat", "ref_lon", "ref_alt"))
     if not np.all(np.isfinite(sample_us)):
         raise ValueError("Truth and estimator sample times must be ordered and finite")
-    covered = ((sample_us >= max(truth_times[0], local_times[0]))
-               & (sample_us <= min(truth_times[-1], local_times[-1])))
+    covered = (interpolation_coverage(sample_us, truth_times)
+               & interpolation_coverage(sample_us, local_times))
     # Do not extrapolate truth beyond a recorded flight.
     def values(data, times, key):
         return np.interp(sample_us, times, data[key])
 
+    # An EKF origin is a discrete coordinate frame. Interpolating a reset
+    # would invent intermediate frames that never existed in the estimator.
+    reference_index = np.clip(np.searchsorted(local_times, sample_us, side="right") - 1,
+                              0, len(local_times) - 1)
     physical = geodetic_to_ned(
         values(truth, truth_times, "lat"), values(truth, truth_times, "lon"),
-        values(truth, truth_times, "alt"), values(local, local_times, "ref_lat"),
-        values(local, local_times, "ref_lon"), values(local, local_times, "ref_alt"),
+        values(truth, truth_times, "alt"), local["ref_lat"][reference_index],
+        local["ref_lon"][reference_index], local["ref_alt"][reference_index],
     )
     physical[~covered] = np.nan
     desired = df[["desired_x", "desired_y", "desired_z"]].to_numpy(dtype=float)
@@ -64,7 +130,8 @@ def audit_ground_truth(df, truth, local):
     physical_error[~covered] = np.nan
     estimate_error[~covered] = np.nan
     output = {"coverage": {"rows": len(df), "covered_rows": int(covered.sum())},
-              "alignment": "CSV PX4 position clock; truth projected using contemporaneous EKF local origin",
+              "alignment": "CSV PX4 position clock; truth projected using last reported EKF local origin",
+              "maximum_interpolation_gap_s": MAX_ALIGNMENT_GAP_US / 1e6,
               "identical_source_duplicates_removed": {"truth": truth_duplicates, "local_reference": local_duplicates},
               "coordinate_approximation": "Local tangent plane, Earth radius 6371000 m; routes below 100 m",
               "phases": {}}
@@ -80,6 +147,8 @@ def audit_ground_truth(df, truth, local):
             "estimator_xy_error_m": distribution(np.linalg.norm(estimate_error[mask, :2], axis=1)),
             "estimator_z_error_m": distribution(estimate_error[mask, 2]),
         }
+    output["physical_position_audit"] = audit_physical_position(df, physical)
+    output["overall_passed"] = output["physical_position_audit"]["overall_passed"]
     return output, physical
 
 
@@ -96,7 +165,7 @@ def main():
     ulog = ULog(str(args.ulog), message_name_filter_list=[
         "vehicle_global_position_groundtruth", "vehicle_local_position"])
     datasets = {data.name: data.data for data in ulog.data_list}
-    df = pd.read_csv(logs[0])
+    df = pd.read_csv(logs[0], low_memory=False)
     result, physical = audit_ground_truth(df, datasets["vehicle_global_position_groundtruth"],
                                          datasets["vehicle_local_position"])
     digest = hashlib.sha256()

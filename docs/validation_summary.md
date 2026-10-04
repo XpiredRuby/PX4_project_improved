@@ -1,43 +1,58 @@
 # October 4, 2026 status
 
-**Research candidate: the requested 95+ readiness target is not established.**
+**Research candidate: the requested 95+ flight-readiness target is not established.**
 
-The staged October 3 flight source was installed with preimage SHA-256 checks,
-backups, and an installed-repository validation. The original project and unrelated
-working-tree edits were preserved. The repaired local connector passes five real
-subprocess tests on Windows and Linux; timeout handling no longer waits indefinitely
-on descendant-owned output pipes.
+The current code passes Ruff, deterministic generation/compilation, **203 discovered
+regression tests**, and five connector subprocess tests. Branch-aware coverage is
+89% for the CI-gated helper modules, 72% for the complete `controller/` package,
+64% for the large `PID_position_new.py` module, and 62% for all measured controller
+and analysis code. These are coverage measurements, not a readiness score.
 
-A fresh isolated x500 trial reproduced combined gusts and a 12-second GPS outage.
-Independent ULog truth measured **28.734 m touchdown XY error**, against the unchanged
-1.5 m limit. Physical HOLD drift was 0.641 m. The result remains
-`UNSAFE_TOUCHDOWN`; ground contact, automatic disarm, and fresh zero propulsion were
-confirmed before stopping the owned simulator. No physical aircraft was flown.
+The controller now distinguishes estimator receipt time from estimator source time.
+Duplicate status packets cannot replace flags or renew measurement freshness;
+regressed source timestamps latch a fault. An invalid local estimate causes immediate
+Offboard handoff. Independent truth alignment rejects interpolation brackets over
+0.25 seconds, treats estimator-origin changes as discrete, and emits an explicit
+pass/fail gate for touchdown and every HOLD episode.
 
-The source inspection explains the remaining limitation: PX4 invalidates local
-navigation after its 5-second no-aiding timeout. With invalid horizontal velocity,
-its native fallback commands level horizontal acceleration and descent; with invalid
-vertical velocity it uses blind descent. Drag fusion does not count as horizontal
-aiding in this PX4 version. The previous 10-second timeout experiment also failed.
-The mission controller correctly yields to the failsafe, but this does not guarantee
-bounded horizontal position in wind during prolonged loss of GNSS.
+The declared GNSS recovery budget is four seconds. For PX4 v1.17, the pre-arm policy
+requires `EKF2_NOAID_TOUT >= 6 s`, covering the outage, the configured post-outage
+GNSS health period, and one second of sampling/fusion reserve. Four independent x500
+trials with gusts and early, middle, or late four-second outages completed the full
+mission. Independent ULog truth measured **0.058–0.128 m touchdown XY error** and
+**0.510–0.656 m physical HOLD XY drift**; every onboard and physical-position audit
+passed. The runner verifies this policy but never writes persistent PX4 parameters.
 
-The analysis now measures touchdown dynamics, XY error, bounce, disarm timing, and
-propulsion after either native LAND or PX4 failsafe. It still rejects unsafe outcomes
-and nonnominal mission completion. Two regression cases verify this distinction.
-Flight-code checks pass 133 tests plus Ruff and deterministic generation/compilation;
-connector checks pass another five tests. Targeted helper-module coverage is 87%;
-this is not whole-controller coverage or a readiness score. See `validation/2026-10-04` for current
-checks and the reproduced failure, and the October 3 evidence for the prior matrix.
+The final-source live matrix also passed: a nominal mission completed successfully;
+a four-second blocked evidence writer completed without blocking control; and a
+two-second control-worker stall sent one eligible fresh brake, stopped Offboard
+publication, and landed through PX4 failsafe. Independent touchdown errors were
+0.053 m, 0.067 m, and 0.931 m respectively, all within the unchanged 1.5 m limit.
+Every case confirmed contact, automatic disarm, fresh zero propulsion, and safe
+simulator cleanup.
 
-## Input required to continue toward 95+
+The operating-envelope boundary remains explicit. Combined gusts and a twelve-second
+GPS outage produced `UNSAFE_TOUCHDOWN` with **28.204 m physical touchdown XY error**.
+Ground contact and shutdown do not turn that result into a pass. A prior 10-second
+no-aiding-timeout experiment also failed. PX4's native fallback cannot guarantee
+bounded horizontal position after horizontal aiding is lost.
 
-Supply the intended airframe and thrust/hover model, GNSS accuracy/update rate and
-IMU noise/bias specifications, plus the maximum wind/gust and GNSS outage duration
-the aircraft must tolerate. Decide whether GNSS plus a 6-DOF IMU remains mandatory,
-or whether independent position/velocity aiding such as optical flow or vision is
-allowed. These are control-design inputs; another simulator-specific gain change
-cannot establish a reusable 95+ claim.
+An offline pre-outage-bias IMU replay stayed within 0.373 m of independent truth over
+the recorded twelve-second outage, but it uses asynchronous telemetry and is not a
+closed-loop controller validation. No inertial bridge was added to flight code on
+that evidence alone.
+
+See `validation/2026-10-04-code-logic` for the current compact evidence and
+`validation/2026-10-04` for the reproduced prolonged-outage failure.
+
+## Deferred aircraft integration
+
+The RELLIS continuation prioritizes code logic; the airframe, hover model,
+GNSS update rate/accuracy, and IMU characteristics will be supplied later. Their
+absence does not block software tests, controller lifecycle fixes, or simulation.
+They limit what can be claimed about actual flight accuracy and allowable wind or
+GPS outages. Independent aiding can be evaluated when aircraft integration begins.
+See [code logic](code-logic.md) for the current software work.
 
 Unknown terrain remains bounded by the configured ±10 m height range and verified
 surface cases. GNSS/IMU cannot certify obstacle clearance or arbitrary landing slope.
