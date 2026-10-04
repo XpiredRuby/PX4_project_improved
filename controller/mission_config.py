@@ -23,7 +23,22 @@ class MissionConfig:
     max_jerk_m_s3: float = 1.5
     minimum_segment_duration_s: float = 2.0
     command_xy_accel_limit_m_s2: float = 1.5
+    # Faster bounded braking during navigation HOLD; normal motion is unchanged.
+    navigation_hold_accel_limit_m_s2: float = 3.0
+    navigation_hold_velocity_damping: float = 0.8
     command_z_accel_limit_m_s2: float = 1.0
+    tracking_governor_enabled: bool = True
+    tracking_slowdown_start_m: float = 0.50
+    tracking_slowdown_full_m: float = 2.0
+    tracking_minimum_speed_scale: float = 0.35
+    tracking_scale_fall_tau_s: float = 0.30
+    tracking_scale_rise_tau_s: float = 2.0
+    position_prediction_enabled: bool = True
+    position_prediction_max_age_s: float = 0.075
+    position_prediction_max_displacement_m: float = 0.15
+    # Retimed cruise reference leaves feedback room inside the normal cap.
+    cruise_reference_speed_m_s: float = 1.0
+    cruise_command_speed_limit_m_s: float = 1.25
     max_horizontal_speed_m_s: float = 3.0
     max_vertical_speed_m_s: float = 1.0
     setpoint_watchdog_timeout_s: float = 0.10
@@ -81,8 +96,10 @@ class MissionConfig:
     estimator_max_test_ratio: float = 1.0
     estimator_good_test_ratio: float = 0.35
     minimum_navigation_speed_scale: float = 0.25
-    navigation_degraded_entry_s: float = 0.25
-    navigation_hold_entry_s: float = 1.0
+    navigation_degraded_entry_s: float = 0.10
+    # Brake promptly after persistent hard navigation failure; a long delay
+    # lets a moving vehicle travel well beyond the last trusted reference.
+    navigation_hold_entry_s: float = 0.20
     navigation_abort_s: float = 8.0
     navigation_recovery_s: float = 2.0
     navigation_confidence_fall_tau_s: float = 0.30
@@ -100,10 +117,42 @@ class MissionConfig:
     preflight_timeout_s: float = 30.0
     mission_timeout_s: float = 240.0
     return_recovery_timeout_s: float = 120.0
-    land_timeout_s: float = 120.0
+    # Worst bounded descent is 30 m above launch to a surface 10 m below it.
+    # Native LAND must remain slow at any height, with room for settling/disarm.
+    land_timeout_s: float = 180.0
     max_offboard_loss_timeout_s: float = 1.0
 
     def validate(self):
+        import math
+        from dataclasses import fields
+
+        for field in fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, (int, float)) and not math.isfinite(value):
+                raise ValueError(f"{field.name} must be finite")
+        if not isinstance(self.tracking_governor_enabled, bool):
+            raise ValueError("tracking_governor_enabled must be boolean")
+        if not isinstance(self.position_prediction_enabled, bool):
+            raise ValueError("position_prediction_enabled must be boolean")
+        if not (0 < self.position_prediction_max_age_s <= .1
+                and 0 < self.position_prediction_max_displacement_m <= .25):
+            raise ValueError("position prediction must remain short and bounded")
+        if not (
+            0 < self.tracking_slowdown_start_m < self.tracking_slowdown_full_m
+            and 0 < self.tracking_minimum_speed_scale <= 1
+            and self.tracking_scale_fall_tau_s > 0
+            and self.tracking_scale_rise_tau_s > 0
+        ):
+            raise ValueError("tracking governor limits are inconsistent")
+        if not (self.command_xy_accel_limit_m_s2
+                <= self.navigation_hold_accel_limit_m_s2 <= 3.0):
+            raise ValueError("HOLD acceleration must be between the normal limit and 3 m/s²")
+        if not 0.0 <= self.navigation_hold_velocity_damping <= 1.5:
+            raise ValueError("HOLD velocity damping must be in [0, 1.5]")
+        if not (0.0 < self.cruise_reference_speed_m_s
+                < self.cruise_command_speed_limit_m_s
+                <= self.max_horizontal_speed_m_s):
+            raise ValueError("Cruise reference and command speed limits are inconsistent")
         required_height = self.ground_offset_max_m + self.terrain_clearance_m
         if self.cruise_height_m < required_height:
             raise ValueError(

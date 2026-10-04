@@ -20,10 +20,17 @@ EKF2_SOURCE_PARAMETERS = (
     "EKF2_AGP_CTRL",
 )
 PX4_SAFETY_PARAMETERS = (
+    "EKF2_NOAID_TOUT",
+    "MPC_LAND_SPEED",
+    "MPC_LAND_CRWL",
     "COM_OF_LOSS_T",
     "COM_OBL_RC_ACT",
     "COM_DISARM_LAND",
     "SYS_FAILURE_EN",
+    "COM_LOW_BAT_ACT",
+    "BAT_LOW_THR",
+    "BAT_CRIT_THR",
+    "BAT_EMERGEN_THR",
 )
 PX4_BOOTSTRAP_PARAMETERS = (
     "MPC_THR_HOVER",
@@ -102,7 +109,8 @@ def check_gps_imu_estimator_config(parameters):
 def check_px4_safety_config(
     parameters,
     max_offboard_loss_s=1.0,
-    landing_timeout_s=120.0,
+    landing_timeout_s=180.0,
+    max_descent_m=40.0,
 ):
     """Verify that command loss lands and confirmed landing auto-disarms."""
     missing = sorted(set(PX4_SAFETY_PARAMETERS) - parameters.keys())
@@ -114,10 +122,18 @@ def check_px4_safety_config(
     auto_disarm_s = float(parameters["COM_DISARM_LAND"])
     action_raw = float(parameters["COM_OBL_RC_ACT"])
     failure_injection_raw = float(parameters["SYS_FAILURE_EN"])
+    battery_action = float(parameters["COM_LOW_BAT_ACT"])
+    no_aid_timeout_us = float(parameters["EKF2_NOAID_TOUT"])
+    land_speed = float(parameters["MPC_LAND_SPEED"])
+    crawl_speed = float(parameters["MPC_LAND_CRWL"])
+    low, critical, emergency = (float(parameters[name]) for name in
+                                ("BAT_LOW_THR", "BAT_CRIT_THR", "BAT_EMERGEN_THR"))
     if not all(
         math.isfinite(value)
         for value in (
-            offboard_loss_s, auto_disarm_s, action_raw, failure_injection_raw
+            offboard_loss_s, auto_disarm_s, action_raw, failure_injection_raw,
+            battery_action, low, critical, emergency, no_aid_timeout_us,
+            land_speed, crawl_speed, max_descent_m, landing_timeout_s,
         )
     ):
         raise RuntimeError("PX4 failsafe parameters must be finite")
@@ -125,6 +141,16 @@ def check_px4_safety_config(
         raise RuntimeError("PX4 integer safety parameters are invalid")
 
     mismatch = []
+    if not (no_aid_timeout_us.is_integer() and 500_000 <= no_aid_timeout_us <= 10_000_000):
+        mismatch.append("EKF2_NOAID_TOUT must be an integer in 500000..10000000 us")
+    if not 0.0 < crawl_speed <= land_speed <= .5:
+        mismatch.append("MPC_LAND_CRWL <= MPC_LAND_SPEED must lie in (0, 0.5] m/s")
+    elif max_descent_m <= 0 or landing_timeout_s < max_descent_m / crawl_speed + auto_disarm_s + 10.:
+        mismatch.append("landing timeout cannot cover the bounded descent, settling, and disarm")
+    if battery_action not in (2.0, 3.0):
+        mismatch.append("COM_LOW_BAT_ACT must enable Land or Return/Land (2 or 3)")
+    if not 0.0 < emergency < critical < low < 1.0:
+        mismatch.append("BAT_EMERGEN_THR < BAT_CRIT_THR < BAT_LOW_THR must lie in (0,1)")
     if not 0.0 <= offboard_loss_s <= max_offboard_loss_s:
         mismatch.append(
             f"COM_OF_LOSS_T={offboard_loss_s:g}s "
@@ -211,6 +237,8 @@ def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
         parameters,
         max_offboard_loss_s=controller.config.max_offboard_loss_timeout_s,
         landing_timeout_s=controller.config.land_timeout_s,
+        max_descent_m=(controller.config.max_height_above_launch_m
+                       - controller.config.ground_offset_min_m),
     )
     hover_thrust = float(parameters["MPC_THR_HOVER"])
     max_thrust = float(parameters["MPC_THR_MAX"])

@@ -1,0 +1,61 @@
+[
+  {
+    "elapsed_s": "45.400105736000114",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      6,
+      -3,
+      0
+    ],
+    "confirmation": "linear_velocity {\n  x: 6\n  y: -3\n}\nenable_wind: true\n\n"
+  },
+  {
+    "elapsed_s": "63.45009499700063",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      -6,
+      3,
+      0
+    ],
+    "confirmation": "linear_velocity {\n  x: -6\n  y: 3\n}\nenable_wind: true\n\n"
+  },
+  {
+    "elapsed_s": "73.60010691800017",
+    "phase": "TRAJECTORY",
+    "gps_outage_s": 4
+  },
+  {
+    "elapsed_s": "85.95008833900101",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      3,
+      6,
+      0
+    ],
+    "confirmation": "linear_velocity {\n  x: 3\n  y: 6\n}\nenable_wind: true\n\n"
+  },
+  {
+    "elapsed_s": "96.3001040500003",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      -3,
+      -6,
+      0
+    ],
+    "confirmation": "linear_velocity {\n  x: -3\n  y: -6\n}\nenable_wind: true\n\n"
+  },
+  {
+    "elapsed_s": "107.10010536000118",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      0,
+      0,
+      0
+    ],
+    "confirmation": "linear_velocity {\n}\nenable_wind: true\n\n"
+  },
+  {
+    "reset_wind": "linear_velocity {\n}\nenable_wind: true\n\n",
+    "initial_wind": "linear_velocity {\n}\nenable_wind: true\n\n"
+  }
+]

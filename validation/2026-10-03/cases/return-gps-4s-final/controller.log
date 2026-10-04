@@ -1,0 +1,235 @@
+[runner] Connecting to PX4...
+Connecting to udp:127.0.0.1:14540...
+Connected to PX4 autopilot! (System 1, Component 1)
+[runner] PX4 GPS/IMU and failure-response settings verified
+[research] Requested telemetry: MAVLINK_MSG_ID_LOCAL_POSITION_NED=30Hz, MAVLINK_MSG_ID_ATTITUDE=30Hz, MAVLINK_MSG_ID_HIGHRES_IMU=20Hz, MAVLINK_MSG_ID_POSITION_TARGET_LOCAL_NED=20Hz, MAVLINK_MSG_ID_ATTITUDE_TARGET=20Hz, MAVLINK_MSG_ID_ACTUATOR_OUTPUT_STATUS=20Hz, MAVLINK_MSG_ID_SERVO_OUTPUT_RAW=20Hz, MAVLINK_MSG_ID_GPS_RAW_INT=5Hz, MAVLINK_MSG_ID_EXTENDED_SYS_STATE=5Hz, MAVLINK_MSG_ID_ESTIMATOR_STATUS=5Hz
+Started MAVLink receiver thread.
+Waiting for fresh position, attitude, and heartbeat telemetry...
+Waiting for GPS, attitude, and vertical-estimator gates...
+[bootstrap] Raw navigation ready: fix=3 satellites=10 flags=0x3bf
+[bootstrap] Saved launch GPS reference: lat=47.39797025 lon=8.54616270 alt=0.227m samples=16
+[runner] Pre-streaming level attitude setpoints for 2.0s...
+[runner] Requesting attitude OFFBOARD...
+[runner] Attitude OFFBOARD confirmed
+[runner] Requesting arm...
+[runner] Command 400 acknowledged (result=0, progress=0)
+[runner] Armed confirmed
+[bootstrap] Starting guarded GPS-velocity yaw initialization: target_altitude=2.0m pitch=-10.0deg
+[bootstrap] Horizontal GPS fusion acquired: flags=0x3bf
+[bootstrap] alt=0.00m vz=0.00m/s flags=0x3bf pitch_cmd=0.0deg
+[bootstrap] GPS/IMU yaw alignment confirmed
+Waiting for GPS and estimator health gates...
+[research] Navigation ready: fix=3 satellites=10 HDOP=0.70 HAcc=0.90m VAcc=1.78m
+[bootstrap] Recovered launch point in local NED: x=-0.073 y=-0.056 z=-0.005 samples=11
+[research] Uncertainty-aware cruise height: 19.56m (VAcc=1.78m, uncertainty margin=3.56m)
+[research] Mission plan validated: 1803 points inside flight envelope
+Research logging: research_log_20261003T060441986831Z.csv
+Waiting for fresh position, attitude, and heartbeat telemetry...
+Using averaged home origin: x=-0.073 y=-0.056 z=-0.005 yaw=-0.024
+Target: x=-0.073 y=-0.056 z=-19.565; minimum-jerk takeoff duration=44.7s
+[runner] Starting position controller...
+Starting fixed research controller loop
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.08, -0.09, -0.50) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.00, 0.00, -0.00) Nav=HEALTHY/1.00 dt=0.0000
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.09, -0.39) PlanVel=(0.00, 0.00, -0.01) CmdVel=(-0.01, 0.00, -0.13) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.10, -0.40) PlanVel=(0.00, 0.00, -0.02) CmdVel=(-0.01, 0.01, -0.14) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.11, -0.48) PlanVel=(0.00, 0.00, -0.05) CmdVel=(0.01, 0.02, -0.13) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.08, -0.09, -0.59) PlanVel=(0.00, 0.00, -0.09) CmdVel=(0.00, 0.01, -0.13) Nav=HEALTHY/1.00 dt=0.0502
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.11, -0.72) PlanVel=(0.00, 0.00, -0.13) CmdVel=(0.00, 0.02, -0.15) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.05, -0.10, -0.88) PlanVel=(0.00, 0.00, -0.18) CmdVel=(-0.02, 0.02, -0.20) Nav=HEALTHY/1.00 dt=0.0501
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.07, -1.09) PlanVel=(0.00, 0.00, -0.23) CmdVel=(-0.02, -0.01, -0.25) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.07, -1.37) PlanVel=(0.00, 0.00, -0.29) CmdVel=(-0.01, -0.01, -0.30) Nav=HEALTHY/1.00 dt=0.0499
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.10, -0.09, -1.71) PlanVel=(0.00, 0.00, -0.35) CmdVel=(0.01, 0.00, -0.36) Nav=HEALTHY/1.00 dt=0.0499
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.10, -0.09, -2.09) PlanVel=(0.00, 0.00, -0.40) CmdVel=(0.01, 0.00, -0.40) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.10, -2.53) PlanVel=(0.00, 0.00, -0.45) CmdVel=(-0.02, 0.01, -0.44) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.10, -2.99) PlanVel=(0.00, 0.00, -0.51) CmdVel=(-0.01, 0.01, -0.51) Nav=HEALTHY/1.00 dt=0.0502
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.11, -0.10, -3.55) PlanVel=(0.00, 0.00, -0.56) CmdVel=(0.02, 0.02, -0.57) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.08, -0.07, -4.14) PlanVel=(0.00, 0.00, -0.61) CmdVel=(0.00, -0.01, -0.61) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.08, -4.77) PlanVel=(0.00, 0.00, -0.65) CmdVel=(-0.01, 0.01, -0.65) Nav=HEALTHY/1.00 dt=0.0501
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.09, -5.47) PlanVel=(0.00, 0.00, -0.69) CmdVel=(-0.01, 0.01, -0.70) Nav=HEALTHY/1.00 dt=0.0501
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.08, -6.22) PlanVel=(0.00, 0.00, -0.72) CmdVel=(-0.02, 0.00, -0.72) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.08, -6.99) PlanVel=(0.00, 0.00, -0.75) CmdVel=(-0.01, 0.01, -0.76) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.08, -7.77) PlanVel=(0.00, 0.00, -0.77) CmdVel=(-0.01, 0.01, -0.76) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.06, -8.58) PlanVel=(0.00, 0.00, -0.79) CmdVel=(-0.00, -0.01, -0.79) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.08, -9.37) PlanVel=(0.00, 0.00, -0.80) CmdVel=(-0.01, 0.01, -0.80) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.08, -10.21) PlanVel=(0.00, 0.00, -0.80) CmdVel=(0.01, 0.01, -0.80) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.11, -0.08, -11.01) PlanVel=(0.00, 0.00, -0.80) CmdVel=(0.02, 0.01, -0.79) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.10, -0.06, -11.84) PlanVel=(0.00, 0.00, -0.78) CmdVel=(0.02, -0.00, -0.78) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.08, -12.66) PlanVel=(0.00, 0.00, -0.77) CmdVel=(0.01, 0.01, -0.76) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.06, -13.39) PlanVel=(0.00, 0.00, -0.74) CmdVel=(0.01, -0.00, -0.75) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.06, -14.16) PlanVel=(0.00, 0.00, -0.71) CmdVel=(-0.01, -0.01, -0.72) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.05, -14.90) PlanVel=(0.00, 0.00, -0.67) CmdVel=(-0.01, -0.01, -0.67) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.07, -15.55) PlanVel=(0.00, 0.00, -0.63) CmdVel=(-0.00, 0.00, -0.63) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.08, -16.19) PlanVel=(0.00, 0.00, -0.59) CmdVel=(-0.00, 0.02, -0.58) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.08, -0.07, -16.75) PlanVel=(0.00, 0.00, -0.54) CmdVel=(0.00, 0.01, -0.54) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.05, -17.27) PlanVel=(0.00, 0.00, -0.49) CmdVel=(-0.01, -0.01, -0.48) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.05, -0.06, -17.76) PlanVel=(0.00, 0.00, -0.43) CmdVel=(-0.02, -0.00, -0.42) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.08, -0.06, -18.18) PlanVel=(0.00, 0.00, -0.37) CmdVel=(0.00, 0.00, -0.37) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.10, -0.04, -18.52) PlanVel=(0.00, 0.00, -0.32) CmdVel=(0.02, -0.01, -0.32) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.06, -18.81) PlanVel=(0.00, 0.00, -0.26) CmdVel=(0.01, 0.00, -0.26) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.07, -19.05) PlanVel=(0.00, 0.00, -0.21) CmdVel=(-0.00, 0.01, -0.21) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.07, -19.24) PlanVel=(0.00, 0.00, -0.16) CmdVel=(-0.01, 0.01, -0.16) Nav=HEALTHY/1.00 dt=0.0501
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.05, -19.38) PlanVel=(0.00, 0.00, -0.11) CmdVel=(-0.01, -0.00, -0.11) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.07, -0.06, -19.48) PlanVel=(0.00, 0.00, -0.07) CmdVel=(-0.00, 0.00, -0.07) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.04, -19.53) PlanVel=(0.00, 0.00, -0.04) CmdVel=(-0.01, -0.01, -0.04) Nav=HEALTHY/1.00 dt=0.0499
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.04, -0.03, -19.56) PlanVel=(0.00, 0.00, -0.01) CmdVel=(-0.03, -0.02, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.06, -0.03, -19.57) PlanVel=(0.00, 0.00, -0.00) CmdVel=(-0.01, -0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TAKEOFF      UNKNOWN      Armed=True Pos=(-0.09, -0.05, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.01, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+[research] Phase transition TAKEOFF->TRAJECTORY
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.10, -0.05, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.02, -0.00, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, -0.08, -19.55) PlanVel=(0.55, 0.00, 0.00) CmdVel=(0.70, 0.02, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(0.66, -0.07, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.25, 0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(1.90, -0.08, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.15, 0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(3.05, -0.06, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.03, 0.00, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(4.11, -0.04, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.98, -0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(5.18, -0.03, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.97, -0.02, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(6.22, -0.04, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.97, -0.01, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(7.27, -0.04, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.97, -0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(8.35, -0.05, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.95, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(9.38, -0.07, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.96, 0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(10.39, -0.08, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, 0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(11.44, -0.09, -19.58) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.99, 0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(12.50, -0.07, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.99, 0.01, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(13.48, -0.04, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(14.50, -0.02, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.99, -0.03, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(15.47, -0.05, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.02, -0.01, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(16.53, -0.07, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.01, 0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(17.56, -0.06, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.98, 0.00, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(18.56, -0.05, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.98, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(19.58, -0.06, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, 0.00, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(20.62, -0.06, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.01, 0.00, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(21.68, -0.04, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, -0.01, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(22.70, -0.06, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(0.99, 0.00, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(23.74, -0.06, -19.58) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, 0.00, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(24.73, -0.05, -19.57) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.01, -0.00, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(25.71, -0.04, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.02, -0.01, -0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(26.78, -0.05, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, -0.00, -0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(27.79, -0.06, -19.55) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, 0.00, -0.02) Nav=HEALTHY/1.00 dt=0.0498
+TRAJECTORY   UNKNOWN      Armed=True Pos=(28.83, -0.06, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, 0.00, -0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(29.87, -0.03, -19.56) PlanVel=(1.00, 0.00, 0.00) CmdVel=(1.00, -0.02, -0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(30.91, -0.05, -19.57) PlanVel=(1.00, -0.05, 0.00) CmdVel=(1.01, -0.07, 0.00) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(31.90, -0.14, -19.56) PlanVel=(0.99, -0.15, 0.00) CmdVel=(1.00, -0.18, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(32.95, -0.31, -19.56) PlanVel=(0.97, -0.25, 0.00) CmdVel=(0.96, -0.31, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(33.93, -0.59, -19.57) PlanVel=(0.94, -0.35, 0.00) CmdVel=(0.91, -0.42, 0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(34.89, -1.02, -19.57) PlanVel=(0.90, -0.44, 0.00) CmdVel=(0.87, -0.51, 0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(35.83, -1.54, -19.55) PlanVel=(0.84, -0.54, 0.00) CmdVel=(0.80, -0.60, -0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(36.68, -2.18, -19.56) PlanVel=(0.78, -0.62, 0.00) CmdVel=(0.74, -0.66, -0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(37.45, -2.89, -19.56) PlanVel=(0.71, -0.70, 0.00) CmdVel=(0.68, -0.72, -0.00) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.15, -3.68, -19.56) PlanVel=(0.64, -0.77, 0.00) CmdVel=(0.62, -0.78, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.76, -4.46, -19.57) PlanVel=(0.56, -0.83, 0.00) CmdVel=(0.53, -0.86, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.31, -5.38, -19.56) PlanVel=(0.47, -0.88, 0.00) CmdVel=(0.42, -0.90, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.74, -6.29, -19.57) PlanVel=(0.38, -0.93, 0.00) CmdVel=(0.33, -0.94, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(40.06, -7.25, -19.56) PlanVel=(0.28, -0.96, 0.00) CmdVel=(0.24, -0.96, -0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(40.30, -8.21, -19.56) PlanVel=(0.18, -0.98, 0.00) CmdVel=(0.14, -0.99, -0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(40.43, -9.25, -19.56) PlanVel=(0.08, -1.00, 0.00) CmdVel=(0.04, -1.00, -0.00) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(40.45, -10.30, -19.57) PlanVel=(-0.03, -1.00, 0.00) CmdVel=(-0.06, -1.00, 0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(40.36, -11.40, -19.57) PlanVel=(-0.13, -0.99, 0.00) CmdVel=(-0.16, -0.96, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(40.21, -12.38, -19.56) PlanVel=(-0.23, -0.97, 0.00) CmdVel=(-0.28, -0.94, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.89, -13.37, -19.56) PlanVel=(-0.33, -0.94, 0.00) CmdVel=(-0.36, -0.92, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.53, -14.28, -19.57) PlanVel=(-0.42, -0.91, 0.00) CmdVel=(-0.46, -0.90, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(39.04, -15.20, -19.57) PlanVel=(-0.51, -0.86, 0.00) CmdVel=(-0.56, -0.85, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(38.43, -16.09, -19.56) PlanVel=(-0.60, -0.80, 0.00) CmdVel=(-0.63, -0.78, -0.00) Nav=HEALTHY/1.00 dt=0.0498
+TRAJECTORY   UNKNOWN      Armed=True Pos=(37.78, -16.87, -19.56) PlanVel=(-0.68, -0.73, 0.00) CmdVel=(-0.69, -0.71, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(37.02, -17.60, -19.56) PlanVel=(-0.75, -0.66, 0.00) CmdVel=(-0.76, -0.64, -0.01) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(36.20, -18.24, -19.57) PlanVel=(-0.82, -0.58, 0.00) CmdVel=(-0.83, -0.56, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(35.33, -18.81, -19.57) PlanVel=(-0.87, -0.49, 0.00) CmdVel=(-0.89, -0.46, 0.00) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(34.38, -19.31, -19.57) PlanVel=(-0.92, -0.39, 0.00) CmdVel=(-0.94, -0.34, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(33.36, -19.64, -19.57) PlanVel=(-0.96, -0.30, 0.00) CmdVel=(-0.95, -0.27, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(32.36, -19.90, -19.57) PlanVel=(-0.98, -0.20, 0.00) CmdVel=(-0.95, -0.16, 0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(31.34, -20.05, -19.57) PlanVel=(-1.00, -0.10, 0.00) CmdVel=(-0.98, -0.06, 0.00) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(30.30, -20.10, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.98, 0.03, -0.00) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(29.25, -20.06, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.99, 0.01, -0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(28.25, -20.04, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(27.23, -20.01, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.03, -0.03, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(26.17, -20.03, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.02, -0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(25.10, -20.04, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(24.05, -20.04, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(23.02, -20.06, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.01, 0.00, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(21.94, -20.05, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.99, -0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(20.91, -20.04, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.01, -0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(19.87, -20.03, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.02, -0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(18.81, -20.03, -19.58) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.01, -0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(17.75, -20.05, -19.58) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, -0.01, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(16.69, -20.06, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.99, 0.01, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(15.70, -20.08, -19.58) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, 0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(14.65, -20.07, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, 0.01, 0.01) Nav=HEALTHY/1.00 dt=0.0502
+TRAJECTORY   UNKNOWN      Armed=True Pos=(13.59, -20.04, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.98, -0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(12.56, -20.03, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, -0.02, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(11.59, -20.04, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.03, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(10.53, -20.05, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.02, -0.00, 0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(9.50, -20.08, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, 0.02, 0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(8.51, -20.05, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.00, -0.00, 0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(7.46, -20.02, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.01, -0.03, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(6.47, -20.07, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.01, 0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(5.42, -20.07, -19.54) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-1.01, 0.01, -0.02) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(4.40, -20.05, -19.56) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.99, -0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(3.33, -20.06, -19.58) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.98, 0.00, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(2.33, -20.04, -19.58) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.98, -0.01, 0.02) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(1.30, -20.05, -19.57) PlanVel=(-1.00, -0.00, 0.00) CmdVel=(-0.99, -0.00, 0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(0.32, -20.07, -19.56) PlanVel=(-0.85, -0.00, 0.00) CmdVel=(-0.84, 0.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.44, -20.03, -19.58) PlanVel=(-0.05, -0.00, 0.00) CmdVel=(0.25, -0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.29, -20.04, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.18, -0.02, -0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.09, -20.04, -19.57) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.01, -0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.05, -20.08, -19.57) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.02, 0.02, 0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.04, -20.07, -19.57) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.02, 0.01, 0.00) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.05, -20.04, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.02, -0.01, -0.01) Nav=HEALTHY/1.00 dt=0.0498
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.03, -20.05, -19.56) PlanVel=(-0.00, 0.01, 0.00) CmdVel=(-0.03, 0.00, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.05, -19.99, -19.56) PlanVel=(-0.00, 0.66, 0.00) CmdVel=(-0.02, 0.83, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.04, -19.25, -19.57) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.03, 1.25, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.07, -18.00, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.00, 1.13, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.07, -16.84, -19.55) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.00, 1.01, -0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.08, -15.77, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(0.01, 0.99, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.07, -14.74, -19.57) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.00, 0.96, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.05, -13.68, -19.57) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.01, 0.96, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.07, -12.68, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.00, 0.96, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.09, -11.69, -19.57) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(0.02, 0.97, 0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, -10.65, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.01, 0.98, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.04, -9.67, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.03, 0.99, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.08, -8.62, -19.57) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(0.00, 0.92, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.11, -7.65, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(0.03, 0.98, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.08, -6.63, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(0.01, 1.01, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.08, -5.64, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(0.01, 1.01, -0.01) Nav=HEALTHY/1.00 dt=0.0499
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.07, -4.56, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.00, 0.98, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, -3.54, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.01, 0.97, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.07, -2.56, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.00, 0.98, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, -1.54, -19.56) PlanVel=(-0.00, 1.00, 0.00) CmdVel=(-0.01, 1.01, -0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.05, -0.50, -19.57) PlanVel=(-0.00, 0.90, 0.00) CmdVel=(-0.01, 0.90, 0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, 0.30, -19.57) PlanVel=(-0.00, 0.06, 0.00) CmdVel=(-0.01, -0.23, 0.00) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.09, 0.20, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.01, -0.21, -0.01) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.10, -0.01, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.02, -0.04, -0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, -0.09, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.01, 0.03, -0.01) Nav=HEALTHY/1.00 dt=0.0501
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.06, -0.10, -19.56) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.01, 0.04, -0.00) Nav=HEALTHY/1.00 dt=0.0500
+TRAJECTORY   UNKNOWN      Armed=True Pos=(-0.09, -0.09, -19.57) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.02, 0.03, 0.01) Nav=HEALTHY/1.00 dt=0.0500
+[research] Phase transition TRAJECTORY->RETURN_HOME
+RETURN_HOME  UNKNOWN      Armed=True Pos=(-0.10, -0.09, -19.57) PlanVel=(0.01, 0.00, 0.01) CmdVel=(0.01, 0.00, 0.01) Nav=HEALTHY/1.00 dt=0.0499
+RETURN_HOME  UNKNOWN      Armed=True Pos=(-0.08, -0.09, -19.59) PlanVel=(0.01, 0.03, 0.00) CmdVel=(0.01, 0.04, 0.02) Nav=HEALTHY/0.72 dt=0.0500
+[research] Navigation state HEALTHY->DEGRADED
+[research] Navigation state DEGRADED->HOLD
+RETURN_HOME  UNKNOWN      Armed=True Pos=(-0.10, -0.05, -19.62) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.09, -0.05, 0.04) Nav=HOLD/0.02 dt=0.0499
+RETURN_HOME  UNKNOWN      Armed=True Pos=(-0.05, -0.08, -19.58) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.04, 0.02, -0.00) Nav=HOLD/0.00 dt=0.0500
+RETURN_HOME  UNKNOWN      Armed=True Pos=(-0.08, -0.09, -19.57) PlanVel=(0.00, 0.00, 0.00) CmdVel=(0.01, 0.01, -0.02) Nav=HOLD/0.00 dt=0.0500
+RETURN_HOME  UNKNOWN      Armed=True Pos=(-0.08, -0.10, -19.57) PlanVel=(0.00, 0.00, 0.00) CmdVel=(-0.00, 0.01, -0.01) Nav=HOLD/0.12 dt=0.0500
+[research] Navigation state HOLD->LOST
+[research] Controller loop failed: NavigationEstimateLost('Local position estimate is no longer valid: estimator flags 0x325 missing 0x37')
+Exception in thread position-controller:
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/xpire/PX4-flight-quality-check/controller/PID_position_new.py", line 2283, in run
+    self._validate_runtime_health(snapshot, loop_start)
+  File "/home/xpire/PX4-flight-quality-check/controller/PID_position_new.py", line 2247, in _validate_runtime_health
+    self._update_navigation_supervisor(snapshot, now_mono)
+  File "/home/xpire/PX4-flight-quality-check/controller/PID_position_new.py", line 1625, in _update_navigation_supervisor
+    raise NavigationEstimateLost(
+PID_position_new.NavigationEstimateLost: Local position estimate is no longer valid: estimator flags 0x325 missing 0x37
+[runner] Failure cleanup: stopping Offboard commands and yielding to PX4 failsafe (phase=RETURN_HOME, main_mode=6, sub_mode=0)
+Stopping controller...
+[research] MAVLink message counts: {'ACTUATOR_OUTPUT_STATUS': 4241, 'ALTITUDE': 2120, 'ATTITUDE': 6362, 'ATTITUDE_QUATERNION': 10602, 'ATTITUDE_TARGET': 4237, 'BATTERY_STATUS': 106, 'COMMAND_ACK': 12, 'COMMAND_LONG': 6, 'ESTIMATOR_STATUS': 1060, 'EXTENDED_SYS_STATE': 1060, 'GLOBAL_POSITION_INT': 10603, 'GPS_RAW_INT': 1061, 'HEARTBEAT': 213, 'HIGHRES_IMU': 4241, 'HOME_POSITION': 106, 'LOCAL_POSITION_NED': 6362, 'MISSION_CURRENT': 212, 'ODOMETRY': 6362, 'OPEN_DRONE_ID_LOCATION': 212, 'OPEN_DRONE_ID_SYSTEM': 209, 'PARAM_VALUE': 2, 'PING': 212, 'POSITION_TARGET_GLOBAL_INT': 224, 'POSITION_TARGET_LOCAL_NED': 4162, 'SCALED_PRESSURE': 212, 'SERVO_OUTPUT_RAW': 4241, 'SYSTEM_TIME': 212, 'SYS_STATUS': 1060, 'TIMESYNC': 2120, 'VFR_HUD': 2120, 'VIBRATION': 106}
+Controller stopped.
+[runner] Run manifest: /home/xpire/PX4-runs/flight-quality-20261003T055712Z/return-gps-4s-final/run_manifest_20261003T060441986831Z.json
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/xpire/PX4-flight-quality-check/controller/offboard_runner.py", line 495, in main
+    raise RuntimeError(f"Controller failed: {c.worker_error}")
+RuntimeError: Controller failed: NavigationEstimateLost('Local position estimate is no longer valid: estimator flags 0x325 missing 0x37')

@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/home/xpire/PX4-research-oct04/scripts/sitl_scenario_batch.py", line 268, in <module>
+    main()
+  File "/home/xpire/PX4-research-oct04/scripts/sitl_scenario_batch.py", line 263, in main
+    raise RuntimeError("Unexpected audit failure; batch stopped after landing cleanup")
+RuntimeError: Unexpected audit failure; batch stopped after landing cleanup
+Traceback (most recent call last):
+  File "/mnt/f/PX4/repro-oct04.py", line 103, in <module>
+    raise RuntimeError('Strict validation failed; simulator stopped only after safe ground confirmation: '+name)
+RuntimeError: Strict validation failed; simulator stopped only after safe ground confirmation: gust-gps-12s-repro
+Traceback (most recent call last):
+  File "/mnt/f/PX4/repro-oct04.py", line 103, in <module>
+    raise RuntimeError('Strict validation failed; simulator stopped only after safe ground confirmation: '+name)
+RuntimeError: Strict validation failed; simulator stopped only after safe ground confirmation: gust-gps-12s-repro

@@ -53,6 +53,9 @@ class VehicleState:
         self.gps_source_advanced_at = None
         self.position_source_regressed = False
         self.gps_source_regressed = False
+        self.gps_source_delay_s = 0.0
+        self.gps_source_best_offset_s = None
+        self.gps_source_delay_clock = None
 
         self.imu_xacc = self.imu_yacc = self.imu_zacc = math.nan
         self.imu_xgyro = self.imu_ygyro = self.imu_zgyro = math.nan
@@ -240,6 +243,25 @@ class VehicleState:
             self.gps_source_regressed = True
             return
         self.gps_time_usec = next_timestamp
+        received_at = self._now()
+        if math.isfinite(float(next_timestamp)):
+            # Use the freshest PX4 position clock when available. This also
+            # prevents simulator time scaling from masquerading as GPS delay.
+            reference, clock = received_at, "receipt"
+            if (math.isfinite(float(self.position_time_boot_ms))
+                    and self.position_received_at is not None
+                    and 0 <= received_at - self.position_received_at <= .25):
+                reference = (float(self.position_time_boot_ms) * .001
+                             + received_at - self.position_received_at)
+                clock = "px4_position"
+            offset = reference - float(next_timestamp) * 1e-6
+            if self.gps_source_best_offset_s is None or clock != self.gps_source_delay_clock:
+                self.gps_source_best_offset_s = offset
+                self.gps_source_delay_clock = clock
+            self.gps_source_best_offset_s = min(self.gps_source_best_offset_s, offset)
+            # Relative delay growth needs no UTC/boot-time assumption. Fixed
+            # latency already present at first reception is not observable here.
+            self.gps_source_delay_s = max(0.0, offset - self.gps_source_best_offset_s)
         if (
             math.isfinite(float(self.gps_time_usec))
             and self.gps_time_usec != previous_timestamp
@@ -260,7 +282,7 @@ class VehicleState:
         self.gps_lon_deg = float(msg.lon) / 1e7
         self.gps_alt_m = float(msg.alt) / 1000.0
         self.gps_received = True
-        self.gps_received_at = self._now()
+        self.gps_received_at = received_at
 
     def update_extended_sys_state(self, msg):
         self.landed_state = int(msg.landed_state)

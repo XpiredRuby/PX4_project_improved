@@ -21,11 +21,13 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements-dev.txt
       - name: Static checks
-        run: python -m ruff check controller analysis scripts tests
+        run: python -m ruff check controller analysis scripts tests trajectory_generator tools
       - name: Deterministic validation
         env:
           MPLBACKEND: Agg
         run: python scripts/validate.py
+      - name: Connector subprocess regression tests
+        run: python -m unittest discover -s tools/powershell_connector -p test_server.py -v
       - name: Critical logic branch coverage
         run: |
           python -m coverage erase
@@ -38,4 +40,7 @@ jobs:
             controller/mission_state.py \
             controller/px4_policy.py \
             controller/run_record.py \
-            controller/trajectory.py
+            controller/trajectory.py \
+            controller/tracking_governor.py \
+            controller/position_prediction.py \
+            controller/touchdown_quality.py

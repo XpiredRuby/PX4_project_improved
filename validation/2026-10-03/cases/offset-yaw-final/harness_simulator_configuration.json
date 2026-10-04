@@ -1,0 +1,6 @@
+{
+  "world": "afvl_validation",
+  "model_pose": "-12,8,0,0,0,1.57079632679",
+  "world_sha256": "b0213931e46af3582f7252afbb392e23dcac846cf04a5db9d7edffbcaf928dc4",
+  "controller_root": "/home/xpire/PX4-final-check"
+}

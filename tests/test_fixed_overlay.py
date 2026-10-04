@@ -168,7 +168,7 @@ class FixedOverlayTests(unittest.TestCase):
         )
         self.assertAlmostEqual(
             (command[0] ** 2 + command[1] ** 2) ** 0.5,
-            controller.max_horizontal_speed,
+            controller.config.cruise_command_speed_limit_m_s,
         )
         self.assertEqual(command[2], controller.max_vertical_speed)
         self.assertEqual(limited, (True, True, True))

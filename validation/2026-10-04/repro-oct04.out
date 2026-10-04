@@ -1,0 +1,8 @@
+START_SIMULATOR gust-gps-12s-repro
+RUN_MISSION gust-gps-12s-repro
+START gust-gps-12s-repro
+[injector] Gazebo GPS outage injected for 12.00s
+[injector] SIM_GPS_USED restored to 10
+RESULT {"name": "gust-gps-12s-repro", "exit_code": 1, "audit_passed": false, "outcome": "UNSAFE_TOUCHDOWN", "quality_rejection_confirmed": false, "final_state": {"armed": false, "failure_action": "PX4_FAILSAFE", "heartbeat_main_mode": 6, "heartbeat_sub_mode": 0, "landed_state": 1, "mission_phase": "TRAJECTORY"}, "scenario_errors": []}
+VERIFY_FINAL_GROUND gust-gps-12s-repro
+BLOCKED_BY_VALIDATION_FAILURE gust-gps-12s-repro

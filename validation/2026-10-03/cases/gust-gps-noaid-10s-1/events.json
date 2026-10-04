@@ -1,0 +1,31 @@
+[
+  {
+    "elapsed_s": "45.50011271200128",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      6,
+      -3,
+      0
+    ],
+    "confirmation": "linear_velocity {\n  x: 6\n  y: -3\n}\nenable_wind: true\n\n"
+  },
+  {
+    "elapsed_s": "63.50008160300058",
+    "phase": "TRAJECTORY",
+    "wind_enu_m_s": [
+      -6,
+      3,
+      0
+    ],
+    "confirmation": "linear_velocity {\n  x: -6\n  y: 3\n}\nenable_wind: true\n\n"
+  },
+  {
+    "elapsed_s": "73.55011965199992",
+    "phase": "TRAJECTORY",
+    "gps_outage_s": 12
+  },
+  {
+    "reset_wind": "linear_velocity {\n}\nenable_wind: true\n\n",
+    "initial_wind": "linear_velocity {\n}\nenable_wind: true\n\n"
+  }
+]

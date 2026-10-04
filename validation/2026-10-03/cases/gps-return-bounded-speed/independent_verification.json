@@ -1,0 +1,19 @@
+{
+  "case": "gps-return-bounded-speed",
+  "audit_passed": true,
+  "physical_hold_xy_drift_m": 0.06853580083507271,
+  "physical_hold_reference_max_error_m": 0.08327108347237405,
+  "physical_touchdown_xy_error_m": 0.04808323757058293,
+  "estimated_touchdown_xy_error_m": 0.0762477385265449,
+  "outcome": "SUCCESS",
+  "reason": "PX4 ON_GROUND and automatic disarm confirmed",
+  "final_state": {
+    "armed": false,
+    "failure_action": "LAND",
+    "heartbeat_main_mode": 6,
+    "heartbeat_sub_mode": 0,
+    "landed_state": 1,
+    "mission_phase": "HANDOFF"
+  },
+  "ulog_sha256": "66e8c7658c968d28bcf4d7cfa27450d5c556a06111e43b377e703fd2808ded1a"
+}

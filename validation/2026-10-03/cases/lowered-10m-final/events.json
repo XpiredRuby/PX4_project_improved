@@ -1,0 +1,11 @@
+[
+  {
+    "elapsed_s": "48.05012581100027",
+    "phase": "TRAJECTORY",
+    "terrain_response": "data: true\n\n"
+  },
+  {
+    "reset_wind": "linear_velocity {\n}\nenable_wind: true\n\n",
+    "initial_wind": "linear_velocity {\n}\nenable_wind: true\n\n"
+  }
+]

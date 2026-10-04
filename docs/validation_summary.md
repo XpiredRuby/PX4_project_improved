@@ -1,3 +1,181 @@
+# October 4, 2026 status
+
+**Research candidate: the requested 95+ readiness target is not established.**
+
+The staged October 3 flight source was installed with preimage SHA-256 checks,
+backups, and an installed-repository validation. The original project and unrelated
+working-tree edits were preserved. The repaired local connector passes five real
+subprocess tests on Windows and Linux; timeout handling no longer waits indefinitely
+on descendant-owned output pipes.
+
+A fresh isolated x500 trial reproduced combined gusts and a 12-second GPS outage.
+Independent ULog truth measured **28.734 m touchdown XY error**, against the unchanged
+1.5 m limit. Physical HOLD drift was 0.641 m. The result remains
+`UNSAFE_TOUCHDOWN`; ground contact, automatic disarm, and fresh zero propulsion were
+confirmed before stopping the owned simulator. No physical aircraft was flown.
+
+The source inspection explains the remaining limitation: PX4 invalidates local
+navigation after its 5-second no-aiding timeout. With invalid horizontal velocity,
+its native fallback commands level horizontal acceleration and descent; with invalid
+vertical velocity it uses blind descent. Drag fusion does not count as horizontal
+aiding in this PX4 version. The previous 10-second timeout experiment also failed.
+The mission controller correctly yields to the failsafe, but this does not guarantee
+bounded horizontal position in wind during prolonged loss of GNSS.
+
+The analysis now measures touchdown dynamics, XY error, bounce, disarm timing, and
+propulsion after either native LAND or PX4 failsafe. It still rejects unsafe outcomes
+and nonnominal mission completion. Two regression cases verify this distinction.
+Flight-code checks pass 133 tests plus Ruff and deterministic generation/compilation;
+connector checks pass another five tests. Targeted helper-module coverage is 87%;
+this is not whole-controller coverage or a readiness score. See `validation/2026-10-04` for current
+checks and the reproduced failure, and the October 3 evidence for the prior matrix.
+
+## Input required to continue toward 95+
+
+Supply the intended airframe and thrust/hover model, GNSS accuracy/update rate and
+IMU noise/bias specifications, plus the maximum wind/gust and GNSS outage duration
+the aircraft must tolerate. Decide whether GNSS plus a 6-DOF IMU remains mandatory,
+or whether independent position/velocity aiding such as optical flow or vision is
+allowed. These are control-design inputs; another simulator-specific gain change
+cannot establish a reusable 95+ claim.
+
+Unknown terrain remains bounded by the configured ±10 m height range and verified
+surface cases. GNSS/IMU cannot certify obstacle clearance or arbitrary landing slope.
+
+---
+
+# Historical October 3 candidate and trials
+
+# October 3, 2026 validation
+
+The GPS/GNSS + 6-DOF IMU mission uses PX4's inner loops for takeoff,
+trajectory tracking, return to the recovered launch XY, native LAND, automatic
+disarm, and propulsion-stop confirmation. No landing height is supplied to
+the controller. Surface changes, wind, and simulator truth belong to the
+test harness; truth is used only after flight.
+
+This candidate improves braking and landing supervision, but the requested
+90–95/100 readiness target has not been established. A numerical readiness
+assessment is engineering judgment, not a probability of surviving flight.
+Physical-flight readiness still needs the intended aircraft and supervised
+hardware evidence.
+
+## Changes
+
+- Retimed cruise reference: at most 1.0 m/s horizontally, with a 1.25 m/s
+  normal velocity-command cap. The phase clock and feedforward velocities
+  scale together. The existing position PID gains remain unchanged.
+- Navigation HOLD: freeze the path clock and last trusted reference; use
+  fresh local-velocity damping (0.8) and bounded 3.0 m/s² horizontal braking.
+  Normal horizontal slew stays 1.5 m/s² and vertical slew stays 1.0 m/s².
+- Freeze an XY reference before native landing and check touchdown
+  displacement at runtime, including failsafe landings. Preserve detected
+  violations through ground/disarm/zero-output confirmation and report them.
+- Use exact combined body tilt, `acos(cos(roll) * cos(pitch))`, for landing
+  readiness and touchdown checks.
+- Verify supported estimator timeout and native landing speed parameters
+  before arming. Final terrain trials use `MPC_LAND_SPEED=0.4`,
+  `MPC_LAND_CRWL=0.3`, `EKF2_NOAID_TOUT=5000000`, and
+  `COM_DISARM_LAND=2`. The mission runner reads parameters; it does not alter
+  persistent flight settings. The SITL harness sets landing speed while
+  independently confirmed disarmed/on ground.
+- Increase native landing timeout to 180 s, with a preflight descent-budget
+  check for the configured maximum 40 m descent. The 240 s mission timeout
+  governs the Offboard mission wait; it is not a whole-flight deadline.
+- Differentiate emitted retimed reference velocities against real elapsed
+  time for acceleration/jerk analysis. Do not bridge HOLD/phase transitions,
+  native landing, regressed clocks, nonfinite samples, or telemetry gaps.
+  Preserve raw path-clock derivatives as separate signals.
+- Preserve the controller worker's actual exception when the thread stops.
+  Trajectory-generator edits fix lint findings and retain CSV geometry.
+
+## Acceptance criteria
+
+HOLD XY/Z drift is at most 1 m and path-clock movement at most 0.1 s.
+Touchdown XY error is at most 1.5 m relative to the frozen landing reference;
+horizontal and vertical speed are each at most 0.5 m/s; combined tilt is at
+most 10°. No post-touchdown bounce is allowed. Automatic disarm must occur
+within 5 s and fresh propulsion outputs must be zero afterward. Thresholds
+were not relaxed to make a failing trial pass.
+
+`SUCCESS` means the full planned mission completed. `PX4_FAILSAFE` with a
+passing audit means a bounded abort landed and stopped propulsion; it does
+not mean the original trajectory completed. `UNSAFE_TOUCHDOWN` records a
+quality failure even if PX4 subsequently disarms and outputs zero propulsion.
+An expected-rejection test can verify reporting/cleanup while the landing
+itself remains unsafe.
+
+## Independent verification
+
+Compact telemetry and aligned truth traces accompany each selected trial.
+ULog filenames, original paths, and SHA-256 hashes identify the larger raw
+logs retained on the test computer. Position truth is aligned using PX4's
+logged position clock and the contemporaneous estimator origin, without
+extrapolation. Physical HOLD drift is measured from the first HOLD truth
+sample. Terrain height changes use absolute simulator truth altitude from
+the first stable ground second to contact, excluding bootstrap ascent and
+estimator-origin shifts.
+
+The original implementation and unrelated working-tree changes are preserved.
+Deployment records include guarded pre-update hashes, post-update hashes,
+an exact backup of replaced files, and a reviewable patch. No git reset,
+clean, commit, or push was used.
+
+## Remaining blockers
+
+Combined wind and prolonged GPS loss has produced excessive lateral
+touchdown displacement. Increasing the EKF no-aiding timeout from 5 s to
+the supported 10 s limit did not solve it; 5 s was restored. Ground contact,
+automatic disarm, and zero propulsion alone do not make that landing pass.
+Runtime quality reporting detects the displacement but does not prevent it.
+
+The 10° slope boundary remains sensitive to actual contact/settling dynamics.
+GPS/IMU cannot establish that an unknown surface is clear of obstacles or
+within the allowed slope. The ±10 m tests verify specific bounded surfaces,
+not arbitrary terrain or every possible initial attitude.
+
+Further flight-readiness work needs the intended airframe, motor/thrust and
+hover characteristics, GPS update/accuracy data, IMU noise/bias data, and the
+required wind and GPS-outage operating envelope. A different navigation-loss
+control design needs those inputs and separate validation; extending EKF
+validity or accepting excessive drift is not a demonstrated solution.
+
+The final code is a SITL research candidate. No physical aircraft was flown.
+
+## October 3 results
+
+GPS matrix: final control law and touchdown XY checks, before the added native landing speed policy. These trials used the previous PX4 landing speed (0.7 m/s); the final terrain/wind verdict trials use 0.4 m/s. Manifests identify exact source and configuration hashes.
+
+| Scenario | Safety audit | Mission outcome | Physical HOLD XY drift | Physical touchdown XY error |
+|---|---|---|---:|---:|
+| calm-gps-12s-final | Pass | PX4_FAILSAFE | 0.604 m | 0.688 m |
+| gust-gps-4s-final | Pass | SUCCESS | 0.630 m | 0.091 m |
+| return-gps-4s-final | Pass | PX4_FAILSAFE | 0.178 m | 0.180 m |
+| takeoff-gps-4s-final | Pass | SUCCESS | 0.097 m | 0.087 m |
+
+Final parameter-policy trials:
+
+| Scenario | Safety audit | Mission outcome | Physical touchdown XY error | Contact / max ground tilt |
+|---|---|---|---:|---:|
+| gust-gps-12s-final | FAIL | UNSAFE_TOUCHDOWN | 29.188 m | 0.38° / 0.40° |
+| lowered-10m-final | Pass | SUCCESS | 0.109 m | 0.02° / 0.02° |
+| offset-yaw-final | Pass | SUCCESS | 0.101 m | 0.01° / 0.02° |
+| raised-10m-final | Pass | SUCCESS | 0.078 m | 0.04° / 0.04° |
+| slope-10deg-verdict | Pass | SUCCESS | 0.071 m | 4.22° / 4.22° |
+| slope-8deg-final | Pass | SUCCESS | 0.070 m | 4.42° / 4.42° |
+
+The raised and lowered surfaces changed by +10 m and -10 m in independent absolute truth altitude. The final 10° slope landing passed, whereas an earlier trial failed at that boundary. The original terrain batch exited with an expectation mismatch because that trial succeeded when rejection was anticipated; no failed quality check was waived. The remaining wind/GPS trial ran separately after fresh ground/disarm/zero-output confirmation. See driver summaries and independent verification.
+
+Earlier retiming experiments: two wind + 4 s GPS outages passed, with physical HOLD drift 0.632 m and 0.624 m. Wind + 12 s GPS loss failed with 29.119 m physical touchdown displacement. A 10 s EKF no-aiding-timeout experiment also failed at 8.165 m and was restored to 5 s. These results remain failures and do not describe the final landing-speed configuration.
+
+Code checks: 131 regression tests, full Ruff checks including the trajectory generator, deterministic generation/compilation validation, and a real-run analysis/plot generation check passed in the staged candidate. The installed repository check is recorded separately. Earlier 84% targeted coverage belongs to the October 1 source and has not been re-measured for this candidate.
+
+---
+
+# Historical October 1 results
+
+The following results predate this candidate and used simpler individual failures. The twelve-second GPS result does not establish performance with simultaneous wind.
+
 # Validation Summary
 
 PX4 v1.17 / Gazebo 8.15 SITL. Results updated October 1, 2026.
