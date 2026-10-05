@@ -1,6 +1,5 @@
 # PX4 Research Controller
 
-**SITL research candidate. The requested 95+ flight-readiness target is not established.**
 The validated software envelope includes a four-second GNSS-outage recovery budget;
 combined gusts and a 12-second outage still fail touchdown position limits.
 See [validation status](docs/validation_summary.md) and
@@ -8,7 +7,7 @@ See [validation status](docs/validation_summary.md) and
 The latest bounded-recovery and lifecycle evidence is in
 [`validation/2026-10-04-code-logic`](validation/2026-10-04-code-logic).
 
-The RELLIS continuation prioritizes the reusable software layer. Computed-command
+Computed-command
 expiry, arming/control ownership, stale shutdown evidence, pre-arm plan validation,
 and bounded asynchronous evidence writing are described in
 [code logic](docs/code-logic.md). Aircraft and sensor integration are deferred.
