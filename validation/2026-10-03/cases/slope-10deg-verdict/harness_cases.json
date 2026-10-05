@@ -1,0 +1,10 @@
+[
+  {
+    "name": "slope-10deg-verdict",
+    "raise_m": 0.0,
+    "slope_deg": 10.0,
+    "trigger_phase": "TRAJECTORY",
+    "trigger_clock_s": 3.0,
+    "expected": "quality_rejection"
+  }
+]

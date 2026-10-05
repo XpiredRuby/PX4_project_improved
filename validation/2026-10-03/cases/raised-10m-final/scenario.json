@@ -1,0 +1,6 @@
+{
+  "name": "raised-10m-final",
+  "raise_m": 10.0,
+  "trigger_phase": "TRAJECTORY",
+  "trigger_clock_s": 3.0
+}

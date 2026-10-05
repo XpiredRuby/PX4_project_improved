@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import argparse
 import math
+from pathlib import Path
 import threading
 import time
 
@@ -16,6 +18,7 @@ from mission_state import FailureAction, MissionOutcome
 from PID_position_new import PositionController
 from px4_policy import audit_px4_configuration
 from run_record import RunRecord
+from touchdown_quality import UnsafeTouchdown, touchdown_violations
 
 
 PRESTREAM_SECONDS = 2.0
@@ -27,6 +30,7 @@ PX4_MAIN_MODE_OFFBOARD = 6
 PX4_AUTO_SUB_MODE_LAND = 6
 
 POST_DISARM_CONFIRM_SECONDS = 1.0
+MAX_AUTO_DISARM_DELAY_SECONDS = 5.0
 ACTUATOR_MAX_AGE_SECONDS = 1.5
 PROPULSION_STOP_THRESHOLD = 0.01
 
@@ -38,7 +42,11 @@ def snapshot(controller):
 
 def heartbeat_snapshot(controller):
     with controller.state_lock:
-        if not controller.state.heartbeat_received:
+        state = controller.state
+        received = state.heartbeat_received_at
+        age = math.inf if received is None else time.monotonic() - received
+        if (not state.heartbeat_received or not math.isfinite(age)
+                or not 0.0 <= age <= controller.max_heartbeat_age_s):
             return None, None, None
         return (
             controller.state.heartbeat_main_mode,
@@ -90,6 +98,16 @@ def command_ack_snapshot(controller, command=None):
         )
 
 
+def raise_if_controller_failed(controller):
+    """The runner must notice a failed watchdog even if the worker is hung."""
+    for name in ("worker_error", "receiver_error", "setpoint_error"):
+        error = getattr(controller, name, None)
+        if error is not None:
+            if name != "worker_error":
+                controller.set_failure_action(FailureAction.PX4_FAILSAFE)
+            raise RuntimeError(f"Controller failed ({name}): {error}")
+
+
 def send_neutral(controller):
     _, _, yaw = snapshot(controller)
     controller.send_velocity(0.0, 0.0, 0.0, yaw)
@@ -132,6 +150,7 @@ def ensure_mode(
     timeout,
     keep_streaming,
     send_setpoint=None,
+    require_disarmed=False,
 ):
     mode_name = mode_name.upper()
 
@@ -149,6 +168,10 @@ def ensure_mode(
     next_request = 0.0
     while time.monotonic() < deadline:
         now = time.monotonic()
+        if require_disarmed:
+            _, _, armed = heartbeat_snapshot(controller)
+            if armed is not False:
+                raise RuntimeError("Mode request requires fresh disarmed heartbeat evidence")
         if now >= next_request:
             request_mode(controller, mode_name)
             next_request = now + 1.0
@@ -173,6 +196,12 @@ def request_arm(controller):
     command = mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM
     before_sequence, _, _ = command_ack_snapshot(controller, command)
     with controller.mav_send_lock:
+        main_mode, _, armed = heartbeat_snapshot(controller)
+        if (armed is not False or main_mode != PX4_MAIN_MODE_OFFBOARD
+                or controller.receiver_error is not None
+                or controller.native_land_active
+                or controller.setpoint_error is not None):
+            raise RuntimeError("Arming requires fresh disarmed OFFBOARD ownership")
         controller.master.mav.command_long_send(
             controller.master.target_system,
             controller.master.target_component,
@@ -234,7 +263,10 @@ def wait_for_initial_ground_state(controller, timeout=5.0):
     on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
     while time.monotonic() < deadline:
         landed_state, age, _ = landing_snapshot(controller)
-        if landed_state == on_ground and age <= 1.5:
+        _, _, armed = heartbeat_snapshot(controller)
+        if armed is True:
+            raise RuntimeError("Vehicle is already armed before this mission")
+        if landed_state == on_ground and age <= 1.5 and armed is False:
             return
         time.sleep(0.05)
     landed_state, age, _ = landing_snapshot(controller)
@@ -254,9 +286,26 @@ def wait_for_native_landing(
     deadline = time.monotonic() + timeout
     on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
     safe_disarm_since = None
+    first_touchdown_checked = False
+    first_touchdown_sequence = None
+    first_touchdown_at = None
+    disarm_confirmed_at = None
+    quality_violations = set()
+    reference_xy = getattr(controller, "native_landing_reference_xy", None)
+
+    def inspect_contact(pose):
+        violations = touchdown_violations(pose, reference_xy)
+        valid = getattr(controller, "_local_estimate_valid", None)
+        if reference_xy is not None and callable(valid):
+            estimator_age = pose.get("estimator_age_s", math.inf)
+            limit = controller.config.estimator_max_age_s
+            if (not valid(pose) or not math.isfinite(estimator_age)
+                    or not 0 <= estimator_age <= limit):
+                violations.append("touchdown local position estimate invalid or stale")
+        return violations
 
     while time.monotonic() < deadline:
-        controller.log_native_landing_sample(phase=phase)
+        logged_snapshot = controller.log_native_landing_sample(phase=phase)
         main_mode, sub_mode, armed = heartbeat_snapshot(controller)
         landed_state, age, sequence = landing_snapshot(controller)
         fresh_on_ground = (
@@ -264,6 +313,38 @@ def wait_for_native_landing(
             and age <= 1.5
             and landed_state == on_ground
         )
+        contact_sequences = []
+        if (isinstance(logged_snapshot, dict)
+                and logged_snapshot.get("landed_state") == on_ground
+                and logged_snapshot.get("extended_state_age_s", math.inf) <= 1.5
+                and logged_snapshot.get("extended_state_seq", 0) > after_sequence):
+            # Preserve the exact contact sample written to the flight log;
+            # a newer IMU sample must not erase a brief contact violation.
+            quality_violations.update(inspect_contact(logged_snapshot))
+            contact_sequences.append(logged_snapshot["extended_state_seq"])
+        if fresh_on_ground:
+            quality_violations.update(inspect_contact(
+                controller._snapshot(time.monotonic())))
+            contact_sequences.append(sequence)
+        if contact_sequences and not first_touchdown_checked:
+            first_touchdown_checked = True
+            first_touchdown_sequence = min(contact_sequences)
+            first_touchdown_at = time.monotonic()
+        if (first_touchdown_checked and sequence > first_touchdown_sequence
+                and age <= 1.5 and landed_state != on_ground):
+            quality_violations.add("PX4 left ON_GROUND after first contact")
+        if armed is False and fresh_on_ground and disarm_confirmed_at is None:
+            disarm_confirmed_at = time.monotonic()
+        if (first_touchdown_at is not None
+                and (disarm_confirmed_at or time.monotonic()) - first_touchdown_at
+                > MAX_AUTO_DISARM_DELAY_SECONDS):
+            quality_violations.add("automatic disarm exceeded 5 seconds or was not confirmed in time")
+        if armed is None:
+            # Missing heartbeat evidence is neither armed nor disarmed.
+            # Keep PX4 ownership and allow bounded telemetry recovery.
+            safe_disarm_since = None
+            time.sleep(0.05)
+            continue
         if armed is False:
             if not fresh_on_ground:
                 raise RuntimeError(
@@ -271,7 +352,8 @@ def wait_for_native_landing(
                 )
             outputs, actuator_age, _ = propulsion_snapshot(controller)
             propulsion_stopped = (
-                actuator_age <= ACTUATOR_MAX_AGE_SECONDS
+                len(outputs) == 4
+                and 0 <= actuator_age <= ACTUATOR_MAX_AGE_SECONDS
                 and all(math.isfinite(value) for value in outputs)
                 and all(
                     abs(value) <= PROPULSION_STOP_THRESHOLD
@@ -285,6 +367,13 @@ def wait_for_native_landing(
                     time.monotonic() - safe_disarm_since
                     >= post_disarm_confirm_s
                 ):
+                    # Always finish ground/disarm/zero-output confirmation
+                    # before reporting a quality violation. Native PX4 keeps
+                    # ownership of the landing and automatic motor shutdown.
+                    quality_violations.update(inspect_contact(
+                        controller._snapshot(time.monotonic())))
+                    if quality_violations:
+                        raise UnsafeTouchdown("; ".join(sorted(quality_violations)))
                     return
             else:
                 safe_disarm_since = None
@@ -339,7 +428,7 @@ def wait_for_failsafe_landing(
                 phase="PX4_FAILSAFE",
             )
             return
-        if main_mode != PX4_MAIN_MODE_OFFBOARD:
+        if armed is not None and main_mode != PX4_MAIN_MODE_OFFBOARD:
             unexpected_mode = (main_mode, sub_mode)
         time.sleep(0.05)
     if unexpected_mode is not None:
@@ -361,6 +450,7 @@ def final_state_snapshot(controller):
         "landed_state": landed_state,
         "mission_phase": str(controller.phase_snapshot()),
         "failure_action": str(controller.failure_action_snapshot()),
+        "native_landing_reference_xy": getattr(controller, "native_landing_reference_xy", None),
     }
 
 
@@ -372,13 +462,38 @@ def classify_failure(controller, vehicle_was_armed):
     return MissionOutcome.PREARM_REJECTED
 
 
-def main():
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Run the PX4 research mission")
+    parser.add_argument(
+        "--trajectory",
+        type=Path,
+        help=(
+            "Validated trajectory CSV; defaults to controller/trajectory.csv"
+        ),
+    )
+    return parser.parse_args(argv)
+
+
+def main(config=None, trajectory_path=None):
     run_record = RunRecord()
-    c = PositionController()
-    run_record.attach_context(c, {})
+    try:
+        c = PositionController(
+            config=config,
+            trajectory_path=trajectory_path,
+        )
+        run_record.attach_context(c, {})
+    except Exception as exc:
+        run_record.finalize(
+            outcome=MissionOutcome.PREARM_REJECTED,
+            reason=f"{type(exc).__name__}: {exc}",
+            final_state={},
+        )
+        raise
     worker = None
     controller_stopped = False
     vehicle_was_armed = False
+    arm_requested = False
+    mission_timed_out = False
     outcome = MissionOutcome.PREARM_REJECTED
     outcome_reason = "Mission did not reach arming"
     cleanup_status = "not_required"
@@ -395,8 +510,12 @@ def main():
         wait_for_bootstrap_ready(c)
         wait_for_initial_ground_state(c)
         launch_reference = capture_launch_reference(c)
+        c.configure_cruise_height({"gps_vertical_accuracy_m": launch_reference.vertical_accuracy_m})
+        c.validate_mission_plan(require_home=False)
 
         def send_level_disarmed():
+            if heartbeat_snapshot(c)[2] is not False:
+                raise RuntimeError("Pre-arm stream requires fresh disarmed heartbeat evidence")
             send_attitude_target(c, 0.0, 0.0)
 
         print(
@@ -412,10 +531,14 @@ def main():
             MODE_TIMEOUT,
             keep_streaming=True,
             send_setpoint=send_level_disarmed,
+            require_disarmed=True,
         )
         print("[runner] Attitude OFFBOARD confirmed")
 
         print("[runner] Requesting arm...")
+        # An acknowledgement can be lost after PX4 accepts the request.
+        # Cleanup must account for that possibility even before confirmation.
+        arm_requested = True
         ack_sequence = request_arm(c)
         wait_for_command_ack(
             c,
@@ -423,7 +546,7 @@ def main():
             ack_sequence,
             ARM_TIMEOUT,
         )
-        wait_for_armed(c, ARM_TIMEOUT, send_level_disarmed)
+        wait_for_armed(c, ARM_TIMEOUT, lambda: send_attitude_target(c, 0.0, 0.0))
         vehicle_was_armed = True
         print("[runner] Armed confirmed")
 
@@ -448,16 +571,17 @@ def main():
 
         deadline = time.monotonic() + c.config.mission_timeout_s
         while time.monotonic() < deadline:
-            if c.worker_error is not None:
-                raise RuntimeError(f"Controller failed: {c.worker_error}")
+            raise_if_controller_failed(c)
             if c.handoff_ready_event.wait(timeout=0.05):
                 break
             if not worker.is_alive():
+                raise_if_controller_failed(c)
                 phase = c.phase_snapshot()
                 raise RuntimeError(
                     f"Controller stopped before handoff; phase={phase}"
                 )
         else:
+            mission_timed_out = True
             if not c.request_return_home("mission timeout"):
                 phase = c.phase_snapshot()
                 raise TimeoutError(
@@ -468,11 +592,11 @@ def main():
                 time.monotonic() + c.config.return_recovery_timeout_s
             )
             while time.monotonic() < recovery_deadline:
-                if c.worker_error is not None:
-                    raise RuntimeError(f"Controller failed: {c.worker_error}")
+                raise_if_controller_failed(c)
                 if c.handoff_ready_event.wait(timeout=0.05):
                     break
                 if not worker.is_alive():
+                    raise_if_controller_failed(c)
                     phase = c.phase_snapshot()
                     raise RuntimeError(
                         "Controller stopped during timeout recovery; "
@@ -499,8 +623,13 @@ def main():
             timeout=c.config.land_timeout_s,
         )
         print("[runner] PX4 ON_GROUND and automatic disarm confirmed")
-        outcome = MissionOutcome.SUCCESS
-        outcome_reason = "PX4 ON_GROUND and automatic disarm confirmed"
+        if mission_timed_out:
+            outcome = MissionOutcome.ABORTED_TO_LAND
+            outcome_reason = "Mission timeout; safe return, touchdown, and propulsion stop confirmed"
+            cleanup_status = "px4_land_and_disarm_confirmed"
+        else:
+            outcome = MissionOutcome.SUCCESS
+            outcome_reason = "PX4 ON_GROUND and automatic disarm confirmed"
 
         c.stop()
         controller_stopped = True
@@ -511,18 +640,29 @@ def main():
             f"[runner] Final state main_mode={main_mode} sub_mode={sub_mode} "
             f"armed={armed} landed_state={landed_state} phase={phase}"
         )
-        print("[runner] SUCCESS")
+        print(f"[runner] {outcome}")
 
     except BaseException as exc:
         outcome_reason = f"{type(exc).__name__}: {exc}"
-        outcome = classify_failure(c, vehicle_was_armed)
+        outcome = (MissionOutcome.UNSAFE_TOUCHDOWN if isinstance(exc, UnsafeTouchdown)
+                   else classify_failure(c, vehicle_was_armed))
+        if isinstance(exc, UnsafeTouchdown):
+            cleanup_status = "landed_with_quality_violation"
         raise
 
     finally:
         # Never force-disarm a vehicle that PX4 may still consider airborne.
         try:
             main_mode, sub_mode, armed = heartbeat_snapshot(c)
-            if armed:
+            if arm_requested and (armed is True or armed is None):
+                land_active = (main_mode == PX4_MAIN_MODE_AUTO
+                               and sub_mode == PX4_AUTO_SUB_MODE_LAND)
+                if (armed is None or (main_mode != PX4_MAIN_MODE_OFFBOARD and not land_active)
+                        or c.receiver_error is not None or c.setpoint_error is not None):
+                    # Bootstrap/pre-arm paths do not run the position worker's
+                    # mode guard. Never reclaim control from a pilot takeover.
+                    c.set_failure_action(FailureAction.PX4_FAILSAFE)
+                    outcome = MissionOutcome.PX4_FAILSAFE
                 phase = c.phase_snapshot()
                 if c.failure_action_snapshot() == FailureAction.PX4_FAILSAFE:
                     print(
@@ -559,6 +699,9 @@ def main():
         except Exception as exc:
             cleanup_status = "failed"
             cleanup_error = repr(exc)
+            if isinstance(exc, UnsafeTouchdown):
+                outcome = MissionOutcome.UNSAFE_TOUCHDOWN
+                cleanup_status = "landed_with_quality_violation"
             print(f"[runner] Failure LAND cleanup error: {exc!r}")
         finally:
             try:
@@ -583,4 +726,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    arguments = parse_args()
+    main(trajectory_path=arguments.trajectory)

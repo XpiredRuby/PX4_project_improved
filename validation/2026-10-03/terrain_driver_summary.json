@@ -1,0 +1,182 @@
+[
+  {
+    "case": "offset-yaw-final",
+    "batch_exit": 0,
+    "result": {
+      "name": "offset-yaw-final",
+      "exit_code": 0,
+      "audit_passed": true,
+      "outcome": "SUCCESS",
+      "quality_rejection_confirmed": false,
+      "final_state": {
+        "armed": false,
+        "failure_action": "LAND",
+        "heartbeat_main_mode": 6,
+        "heartbeat_sub_mode": 0,
+        "landed_state": 1,
+        "mission_phase": "HANDOFF"
+      },
+      "scenario_errors": []
+    },
+    "final_ground": {
+      "actuators": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "landed_state": 1,
+      "armed": false
+    }
+  },
+  {
+    "case": "raised-10m-final",
+    "batch_exit": 0,
+    "result": {
+      "name": "raised-10m-final",
+      "exit_code": 0,
+      "audit_passed": true,
+      "outcome": "SUCCESS",
+      "quality_rejection_confirmed": false,
+      "final_state": {
+        "armed": false,
+        "failure_action": "LAND",
+        "heartbeat_main_mode": 6,
+        "heartbeat_sub_mode": 0,
+        "landed_state": 1,
+        "mission_phase": "HANDOFF"
+      },
+      "scenario_errors": []
+    },
+    "final_ground": {
+      "actuators": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "landed_state": 1,
+      "armed": false
+    }
+  },
+  {
+    "case": "lowered-10m-final",
+    "batch_exit": 0,
+    "result": {
+      "name": "lowered-10m-final",
+      "exit_code": 0,
+      "audit_passed": true,
+      "outcome": "SUCCESS",
+      "quality_rejection_confirmed": false,
+      "final_state": {
+        "armed": false,
+        "failure_action": "LAND",
+        "heartbeat_main_mode": 6,
+        "heartbeat_sub_mode": 0,
+        "landed_state": 1,
+        "mission_phase": "HANDOFF"
+      },
+      "scenario_errors": []
+    },
+    "final_ground": {
+      "landed_state": 1,
+      "actuators": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armed": false
+    }
+  },
+  {
+    "case": "slope-8deg-final",
+    "batch_exit": 0,
+    "result": {
+      "name": "slope-8deg-final",
+      "exit_code": 0,
+      "audit_passed": true,
+      "outcome": "SUCCESS",
+      "quality_rejection_confirmed": false,
+      "final_state": {
+        "armed": false,
+        "failure_action": "LAND",
+        "heartbeat_main_mode": 6,
+        "heartbeat_sub_mode": 0,
+        "landed_state": 1,
+        "mission_phase": "HANDOFF"
+      },
+      "scenario_errors": []
+    },
+    "final_ground": {
+      "actuators": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "landed_state": 1,
+      "armed": false
+    }
+  },
+  {
+    "case": "slope-10deg-verdict",
+    "batch_exit": 1,
+    "result": {
+      "name": "slope-10deg-verdict",
+      "exit_code": 0,
+      "audit_passed": true,
+      "outcome": "SUCCESS",
+      "quality_rejection_confirmed": false,
+      "final_state": {
+        "armed": false,
+        "failure_action": "LAND",
+        "heartbeat_main_mode": 6,
+        "heartbeat_sub_mode": 0,
+        "landed_state": 1,
+        "mission_phase": "HANDOFF"
+      },
+      "scenario_errors": []
+    },
+    "final_ground": {
+      "landed_state": 1,
+      "actuators": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "armed": false
+    }
+  },
+  {
+    "case": "gust-gps-12s-final",
+    "batch_exit": 1,
+    "result": {
+      "name": "gust-gps-12s-final",
+      "exit_code": 1,
+      "audit_passed": false,
+      "outcome": "UNSAFE_TOUCHDOWN",
+      "quality_rejection_confirmed": false,
+      "final_state": {
+        "armed": false,
+        "failure_action": "PX4_FAILSAFE",
+        "heartbeat_main_mode": 6,
+        "heartbeat_sub_mode": 0,
+        "landed_state": 1,
+        "mission_phase": "TRAJECTORY"
+      },
+      "scenario_errors": []
+    },
+    "final_ground": {
+      "actuators": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "landed_state": 1,
+      "armed": false
+    }
+  }
+]

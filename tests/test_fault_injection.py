@@ -89,23 +89,74 @@ class FaultInjectionTests(unittest.TestCase):
             (good["x"], good["y"], good["z"], good["yaw"]),
         )
 
+    def test_moving_navigation_fault_freezes_reference_and_clock_promptly(self):
+        controller = PositionController()
+        controller.home_reference_ready = False
+        controller.phase = MissionPhase.TRAJECTORY
+        good = self.navigation_snapshot(controller, x=0., y=0.)
+        controller._update_navigation_supervisor(good, 10.)
+        states = []
+        for tick in range(9):
+            elapsed = tick * .05
+            bad = self.navigation_snapshot(controller, x=2. * elapsed,
+                                           y=0., gps_fix_type=2, vx=2.)
+            controller._update_navigation_supervisor(bad, 10.1 + elapsed)
+            states.append(controller.navigation_state)
+            clock = controller.phase_clock_s
+            controller._advance_phase_clock(.05)
+            if controller.navigation_state == NavigationState.HOLD:
+                self.assertEqual(controller.phase_clock_s, clock)
+                self.assertLessEqual(elapsed, .25)
+                self.assertEqual(controller.navigation_hold_reference,
+                                 (0., 0., good["z"], good["yaw"]))
+                break
+        self.assertIn(NavigationState.DEGRADED, states)
+        self.assertEqual(states[-1], NavigationState.HOLD)
+
     def test_px4_failsafe_configuration_contract(self):
         safe = {
             "COM_OF_LOSS_T": 0.5,
+            "EKF2_NOAID_TOUT": 6_000_000,
+            "EKF2_REQ_GPS_H": 10.,
+            "MPC_LAND_SPEED": .4,
+            "MPC_LAND_CRWL": .3,
             "COM_OBL_RC_ACT": 4,
             "COM_DISARM_LAND": 2.0,
             "SYS_FAILURE_EN": 0,
+            "COM_LOW_BAT_ACT": 2,
+            "BAT_LOW_THR": .15,
+            "BAT_CRIT_THR": .07,
+            "BAT_EMERGEN_THR": .05,
         }
         check_px4_safety_config(safe)
         for change, expected in (
             ({"COM_OF_LOSS_T": 2.0}, "COM_OF_LOSS_T"),
+            ({"EKF2_NOAID_TOUT": 10_000_001}, "EKF2_NOAID_TOUT"),
+            ({"EKF2_NOAID_TOUT": 499_999}, "EKF2_NOAID_TOUT"),
+            ({"EKF2_NOAID_TOUT": 5_000_000.5}, "EKF2_NOAID_TOUT"),
+            ({"EKF2_NOAID_TOUT": 5_000_000}, "GPS recovery budget"),
+            ({"EKF2_REQ_GPS_H": float("nan")}, "finite"),
+            ({"EKF2_REQ_GPS_H": -1.}, "GNSS health time"),
+            ({"EKF2_REQ_GPS_H": 20.}, "GPS recovery budget"),
+            ({"MPC_LAND_SPEED": .7}, "MPC_LAND_SPEED"),
+            ({"MPC_LAND_CRWL": .45}, "MPC_LAND_CRWL"),
+            ({"MPC_LAND_CRWL": .1}, "landing timeout"),
             ({"COM_OBL_RC_ACT": 0}, "COM_OBL_RC_ACT"),
             ({"COM_DISARM_LAND": -1.0}, "COM_DISARM_LAND"),
             ({"SYS_FAILURE_EN": 1}, "SYS_FAILURE_EN"),
+            ({"COM_LOW_BAT_ACT": 0}, "COM_LOW_BAT_ACT"),
+            ({"BAT_CRIT_THR": .20}, "BAT_EMERGEN_THR"),
         ):
             with self.subTest(change=change):
                 with self.assertRaisesRegex(RuntimeError, expected):
                     check_px4_safety_config(dict(safe, **change))
+        with self.assertRaisesRegex(RuntimeError, "landing timeout"):
+            check_px4_safety_config(safe, landing_timeout_s=120.)
+        check_px4_safety_config(dict(safe, EKF2_NOAID_TOUT=5_000_000),
+                               gps_outage_recovery_budget_s=2.)
+        with self.assertRaisesRegex(RuntimeError, "supported maximum remains 10s"):
+            check_px4_safety_config(dict(safe, EKF2_NOAID_TOUT=10_000_000),
+                                   gps_outage_recovery_budget_s=12.)
 
     def test_random_commands_always_obey_speed_and_slew_limits(self):
         controller = PositionController()

@@ -1,3 +1,4 @@
 -r requirements.txt
 coverage==7.16.1
 ruff==0.16.9
+pyulog==1.2.4

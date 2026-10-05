@@ -255,14 +255,14 @@ def build_safety_audit(df):
             add(name, False, detail)
     else:
         phase = df["phase"].astype(str).str.strip().str.upper()
-        landing = df.loc[phase.eq("PX4_LAND")]
+        landing = df.loc[phase.isin(["PX4_LAND", "PX4_FAILSAFE"])]
         landed_values = finite(landing["landed_state"])
         ground_rows = landing.loc[
             landed_values.eq(mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND)
         ]
         if ground_rows.empty:
             for name in landing_check_names:
-                add(name, False, "no PX4_LAND ON_GROUND sample")
+                add(name, False, "no native landing ON_GROUND sample")
         else:
             touchdown_index = ground_rows.index[0]
             touchdown = df.loc[touchdown_index]
@@ -277,9 +277,10 @@ def build_safety_audit(df):
                 touchdown_values["vx"], touchdown_values["vy"]
             ))
             vertical_speed = abs(touchdown_values["vz"])
-            tilt_deg = float(np.degrees(np.hypot(
-                touchdown_values["roll"], touchdown_values["pitch"]
-            )))
+            tilt_deg = float(np.degrees(np.arccos(np.clip(
+                np.cos(touchdown_values["roll"]) * np.cos(touchdown_values["pitch"]),
+                -1., 1.
+            ))))
             dynamics_finite = all(np.isfinite(value) for value in (
                 horizontal_speed, vertical_speed, tilt_deg
             ))
@@ -306,6 +307,12 @@ def build_safety_audit(df):
             desired_x = finite(prior["desired_x"])
             desired_y = finite(prior["desired_y"])
             target_rows = prior.loc[desired_x.notna() & desired_y.notna()]
+            reference_fields = ["native_landing_reference_x", "native_landing_reference_y"]
+            if all(key in prior for key in reference_fields):
+                references = prior[reference_fields].apply(finite).dropna()
+                if not references.empty:
+                    target_rows = references.rename(columns={reference_fields[0]: "desired_x",
+                                                             reference_fields[1]: "desired_y"})
             if target_rows.empty:
                 add(
                     "Touchdown position within limit",
@@ -440,8 +447,45 @@ def body_specific_force_to_ned(roll, pitch, yaw, fx, fy, fz):
     return ax, ay, az
 
 
+def sampled_reference_derivatives(df):
+    """Differentiate emitted feedforward in real time, only within segments.
+
+    Raw planned_ax/jx are derivatives of the original path clock. A varying
+    speed scale also contributes acceleration, so multiplying them by scale
+    powers would omit terms. These offline finite differences include retiming.
+    Phase/navigation changes, non-finite samples, and gaps are not bridged.
+    """
+    required = ("elapsed_s", "planned_vx", "planned_vy", "planned_vz")
+    if not all(key in df for key in required):
+        return {}
+    times = finite(df.elapsed_s).to_numpy()
+    if not np.all(np.isfinite(times)) or np.any(np.diff(times) <= 0):
+        raise ValueError("Reference sample times must be finite and strictly increasing")
+    velocity = np.column_stack([finite(df[f"planned_v{k}"]) for k in "xyz"])
+    outputs = {f"derived_reference_{kind}{axis}_ned": np.full(len(df), np.nan)
+               for kind in "aj" for axis in "xyz"}
+    if len(df) < 3:
+        return outputs
+    phase = df.phase.astype(str).to_numpy() if "phase" in df else np.repeat("", len(df))
+    nav = (df.navigation_state.astype(str).to_numpy()
+           if "navigation_state" in df else np.repeat("", len(df)))
+    valid = np.isfinite(velocity).all(axis=1) & ~np.isin(phase, ["PX4_LAND", "PX4_FAILSAFE"])
+    breaks = ((np.diff(times) > .25) | (phase[1:] != phase[:-1])
+              | (nav[1:] != nav[:-1]) | ~valid[1:] | ~valid[:-1])
+    boundaries = np.r_[0, np.flatnonzero(breaks) + 1, len(df)]
+    for start, end in zip(boundaries[:-1], boundaries[1:], strict=True):
+        if end - start < 3 or not valid[start:end].all():
+            continue
+        acceleration = np.gradient(velocity[start:end], times[start:end], axis=0, edge_order=2)
+        jerk = np.gradient(acceleration, times[start:end], axis=0, edge_order=2)
+        for axis_index, axis in enumerate("xyz"):
+            outputs[f"derived_reference_a{axis}_ned"][start:end] = acceleration[:, axis_index]
+            outputs[f"derived_reference_j{axis}_ned"][start:end] = jerk[:, axis_index]
+    return outputs
+
+
 def enrich_derived_signals(df):
-    derived = {}
+    derived = sampled_reference_derivatives(df)
     quaternion_columns = [f"attitude_target_q{index}" for index in range(4)]
     if all(has_signal(df, key) for key in quaternion_columns):
         roll, pitch, yaw = quaternion_to_euler(
@@ -1046,7 +1090,7 @@ def plot_outer_inner_chain(df, output, intervals):
 
 def plot_acceleration_tracking(df, output, intervals):
     required = [
-        *(f"planned_a{axis}" for axis in "xyz"),
+        *(f"derived_reference_a{axis}_ned" for axis in "xyz"),
         *(f"derived_actual_a{axis}_ned_filtered" for axis in "xyz"),
     ]
     if not all(has_signal(df, key) for key in required):
@@ -1055,8 +1099,8 @@ def plot_acceleration_tracking(df, output, intervals):
     fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
     for axis, name in zip(axes, "xyz", strict=True):
         axis.plot(
-            df["elapsed_s"], finite(df[f"planned_a{name}"]),
-            label="Planned NED acceleration", linewidth=1.4,
+            df["elapsed_s"], finite(df[f"derived_reference_a{name}_ned"]),
+            label="Sampled retimed reference acceleration", linewidth=1.4,
         )
         axis.plot(
             df["elapsed_s"], finite(df[f"derived_actual_a{name}_ned_raw"]),
@@ -1071,7 +1115,7 @@ def plot_acceleration_tracking(df, output, intervals):
         axis.grid(True, alpha=0.3)
         axis.legend(ncol=3)
     axes[-1].set_xlabel("Elapsed time (s)")
-    fig.suptitle("Planned vs IMU-derived NED acceleration")
+    fig.suptitle("Retimed reference vs IMU-derived NED acceleration")
     save_figure(fig, output / "12_acceleration_tracking.png")
     return True
 
@@ -1141,7 +1185,7 @@ def plot_trajectory_derivatives(df, output, intervals):
         if handles:
             axis.legend(ncol=3)
 
-    fig.suptitle("Exported trajectory derivatives")
+    fig.suptitle("Original path-clock derivatives, sampled during execution")
     save_figure(fig, output / "10_trajectory_derivatives.png")
     return True
 
@@ -1214,12 +1258,12 @@ def build_metrics(df):
                 )
             )
     for axis in "xyz":
-        target_key = f"planned_a{axis}"
+        target_key = f"derived_reference_a{axis}_ned"
         actual_key = f"derived_actual_a{axis}_ned_filtered"
         if has_signal(trajectory, target_key) and has_signal(trajectory, actual_key):
             records.append(
                 metric_record(
-                    f"planned_a{axis}_vs_derived_actual",
+                    f"retimed_reference_a{axis}_vs_derived_actual",
                     trajectory[target_key], trajectory[actual_key], "m/s^2",
                 )
             )
@@ -1533,6 +1577,10 @@ def write_report(
             "- IMU acceleration is rotated from body to local NED and gravity "
             "compensated before comparison. A centered five-sample mean is "
             "shown beside the raw derived signal.",
+            "- Reference acceleration comparisons differentiate emitted feedforward "
+            "against elapsed time. Raw planned_a/j columns are original path-clock "
+            "derivatives. Finite differences do not bridge phase/navigation changes "
+            "or gaps over 0.25 s; command smoothness is assessed separately.",
             "- Real-flight comparison must use the same metrics after time, "
             "origin, yaw, and coordinate-frame alignment.",
             "",
@@ -1565,7 +1613,7 @@ def main():
     output = archive / "analysis"
     output.mkdir(parents=True, exist_ok=True)
 
-    df = pd.read_csv(logs[0])
+    df = pd.read_csv(logs[0], low_memory=False)
     required = {
         "elapsed_s",
         "phase",

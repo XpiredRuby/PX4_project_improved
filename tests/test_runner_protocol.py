@@ -2,6 +2,7 @@
 # ruff: noqa: E402
 """MAVLink runner tests using deterministic protocol doubles."""
 
+import math
 import struct
 import sys
 import threading
@@ -14,6 +15,7 @@ sys.path.insert(0, str(ROOT / "controller"))
 
 import offboard_runner
 from mission_state import FailureAction, MissionOutcome
+from mission_config import MissionConfig
 from pymavlink import mavutil
 from px4_policy import decode_px4_parameter_value, read_px4_parameters
 
@@ -66,6 +68,7 @@ class FakeMaster:
 class FakeController:
     def __init__(self, master=None):
         self.master = master or FakeMaster()
+        self.config = MissionConfig()
         self.mav_send_lock = threading.Lock()
         self.native_samples = 0
         self.native_phases = []
@@ -77,6 +80,10 @@ class FakeController:
 
     def begin_failsafe_handoff(self):
         self.failsafe_handoff_started = True
+
+    def _snapshot(self, _now):
+        return {"vx": 0., "vy": 0., "vz": 0., "roll": 0., "pitch": 0.,
+                "position_age_s": .05, "attitude_age_s": .05}
 
 
 class TickClock:
@@ -333,6 +340,100 @@ class RunnerProtocolTests(unittest.TestCase):
             )
 
         self.assertGreaterEqual(controller.native_samples, 3)
+
+    def test_unsafe_contact_is_reported_only_after_zero_propulsion_confirmation(self):
+        controller = FakeController()
+        controller._snapshot = lambda _now: {
+            "vx": .8, "vy": 0., "vz": 0., "roll": 0., "pitch": 0.,
+            "position_age_s": .05, "attitude_age_s": .05,
+        }
+        propulsion = iter([((.12,) * 4, .1, 4), ((0.,) * 4, .1, 5),
+                           ((0.,) * 4, .1, 6), ((0.,) * 4, .1, 7)])
+        with (
+            patch.object(offboard_runner.time, "monotonic", TickClock(.05)),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+            patch.object(offboard_runner, "heartbeat_snapshot", return_value=(4, 6, False)),
+            patch.object(offboard_runner, "landing_snapshot", return_value=(1, .1, 12)),
+            patch.object(offboard_runner, "propulsion_snapshot",
+                         side_effect=lambda _controller: next(propulsion)),
+        ):
+            with self.assertRaises(offboard_runner.UnsafeTouchdown):
+                offboard_runner.wait_for_native_landing(controller, 10, 2., .1)
+        self.assertGreaterEqual(controller.native_samples, 3)
+
+    def test_contact_violation_between_first_and_final_samples_is_retained(self):
+        for source in ("logged", "current"):
+            with self.subTest(source=source):
+                controller = FakeController()
+                good = controller._snapshot(0.)
+
+                def sample(_now, good=good, source=source, controller=controller):
+                    pose = dict(good)
+                    if source == "current" and controller.native_samples == 2:
+                        pose["roll"] = math.radians(10.01)
+                    return pose
+
+                def log_sample(phase="PX4_LAND", good=good, source=source, controller=controller):
+                    controller.native_samples += 1
+                    pose = dict(good, landed_state=1, extended_state_seq=12,
+                                extended_state_age_s=.05)
+                    if source == "logged" and controller.native_samples == 2:
+                        pose["roll"] = math.radians(10.01)
+                    return pose
+
+                controller._snapshot = sample
+                controller.log_native_landing_sample = log_sample
+                with (
+                    patch.object(offboard_runner.time, "monotonic", TickClock(.01)),
+                    patch.object(offboard_runner.time, "sleep", return_value=None),
+                    patch.object(offboard_runner, "heartbeat_snapshot", return_value=(4, 6, False)),
+                    patch.object(offboard_runner, "landing_snapshot", return_value=(1, .1, 12)),
+                    patch.object(offboard_runner, "propulsion_snapshot",
+                                 side_effect=lambda _c, controller=controller: ((.12,) * 4 if controller.native_samples == 1
+                                                         else (0.,) * 4, .1, 12)),
+                ):
+                    with self.assertRaisesRegex(offboard_runner.UnsafeTouchdown, "tilt"):
+                        offboard_runner.wait_for_native_landing(controller, 10, 2., .3)
+                self.assertGreaterEqual(controller.native_samples, 3)
+
+    def test_contact_position_violation_survives_until_safe_motor_shutdown(self):
+        controller = FakeController()
+        controller.native_landing_reference_xy = (0., 0.)
+
+        def pose(_now):
+            return {"x": 2. if controller.native_samples == 1 else 0., "y": 0.,
+                    "vx": 0., "vy": 0., "vz": 0., "roll": 0., "pitch": 0.,
+                    "position_age_s": .05, "attitude_age_s": .05}
+
+        controller._snapshot = pose
+        with (
+            patch.object(offboard_runner.time, "monotonic", TickClock(.05)),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+            patch.object(offboard_runner, "heartbeat_snapshot", return_value=(4, 6, False)),
+            patch.object(offboard_runner, "landing_snapshot", return_value=(1, .1, 12)),
+            patch.object(offboard_runner, "propulsion_snapshot",
+                         side_effect=lambda _c: ((.12,) * 4 if controller.native_samples == 1
+                                                 else (0.,) * 4, .1, 12)),
+        ):
+            with self.assertRaisesRegex(offboard_runner.UnsafeTouchdown, "position exceeded"):
+                offboard_runner.wait_for_native_landing(controller, 10, 2., .2)
+        self.assertGreaterEqual(controller.native_samples, 3)
+
+    def test_invalid_contact_estimate_cannot_establish_position_quality(self):
+        controller = FakeController()
+        controller.native_landing_reference_xy = (0., 0.)
+        original = controller._snapshot
+        controller._snapshot = lambda now: dict(original(now), x=0., y=0.)
+        controller._local_estimate_valid = lambda pose: False
+        with (
+            patch.object(offboard_runner.time, "monotonic", TickClock(.05)),
+            patch.object(offboard_runner.time, "sleep", return_value=None),
+            patch.object(offboard_runner, "heartbeat_snapshot", return_value=(4, 6, False)),
+            patch.object(offboard_runner, "landing_snapshot", return_value=(1, .1, 12)),
+            patch.object(offboard_runner, "propulsion_snapshot", return_value=((0.,) * 4, .1, 12)),
+        ):
+            with self.assertRaisesRegex(offboard_runner.UnsafeTouchdown, "estimate invalid"):
+                offboard_runner.wait_for_native_landing(controller, 10, 2., .1)
 
     def test_failsafe_cleanup_waits_for_land_disarm_and_zero_propulsion(self):
         controller = FakeController()

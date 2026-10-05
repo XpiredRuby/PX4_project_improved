@@ -1,0 +1,116 @@
+{
+  "coverage": {
+    "rows": 4046,
+    "covered_rows": 4032
+  },
+  "alignment": "CSV PX4 position clock; truth projected using contemporaneous EKF local origin",
+  "identical_source_duplicates_removed": {
+    "truth": 0,
+    "local_reference": 0
+  },
+  "coordinate_approximation": "Local tangent plane, Earth radius 6371000 m; routes below 100 m",
+  "phases": {
+    "TAKEOFF": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 909,
+        "rms": 0.028743110129190914,
+        "p95": 0.044179401954922176,
+        "max_abs": 0.050596601266930316
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 909,
+        "rms": 0.07180954998345432,
+        "p95": 0.11697611402476794,
+        "max_abs": 0.14154863026793763
+      },
+      "estimator_xy_error_m": {
+        "samples": 909,
+        "rms": 0.01919295714261186,
+        "p95": 0.03076782075393006,
+        "max_abs": 0.03524090249370458
+      },
+      "estimator_z_error_m": {
+        "samples": 909,
+        "rms": 0.0558290038217096,
+        "p95": 0.10000582432024459,
+        "max_abs": 0.11796729564666819
+      }
+    },
+    "TRAJECTORY": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 2538,
+        "rms": 0.15372912873313624,
+        "p95": 0.27627017663143705,
+        "max_abs": 0.5353613622532856
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 2538,
+        "rms": 0.020028229032881612,
+        "p95": 0.0357095434448933,
+        "max_abs": 0.04469951460578159
+      },
+      "estimator_xy_error_m": {
+        "samples": 2538,
+        "rms": 0.1039101293997517,
+        "p95": 0.13377997695272903,
+        "max_abs": 0.15462752948465797
+      },
+      "estimator_z_error_m": {
+        "samples": 2538,
+        "rms": 0.017892579762074548,
+        "p95": 0.03217885923385389,
+        "max_abs": 0.041312375068660145
+      }
+    },
+    "RETURN_HOME": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 119,
+        "rms": 0.08105959514779527,
+        "p95": 0.16015958147207485,
+        "max_abs": 0.17576698224916
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 119,
+        "rms": 0.01862460109898018,
+        "p95": 0.04031350421905911,
+        "max_abs": 0.04559822877248365
+      },
+      "estimator_xy_error_m": {
+        "samples": 119,
+        "rms": 0.07383003283152959,
+        "p95": 0.14805697410914775,
+        "max_abs": 0.16395070715662116
+      },
+      "estimator_z_error_m": {
+        "samples": 119,
+        "rms": 0.004762725227553101,
+        "p95": 0.011173039436338779,
+        "max_abs": 0.015314857165019902
+      }
+    },
+    "PX4_FAILSAFE": {
+      "offboard_reference_active": false,
+      "physical_xy_tracking_error_m": null,
+      "physical_z_tracking_error_m": null,
+      "estimator_xy_error_m": {
+        "samples": 466,
+        "rms": 0.025721625184079326,
+        "p95": 0.032003855186567856,
+        "max_abs": 0.167995618437633
+      },
+      "estimator_z_error_m": {
+        "samples": 466,
+        "rms": 0.12354760475527415,
+        "p95": 0.19898192882537735,
+        "max_abs": 0.2078912019729593
+      }
+    }
+  },
+  "ulog": {
+    "name": "06_04_47.ulg",
+    "sha256": "e7e912393c47eb37151b51df31bb26acb362461e9d09b9759633d91e05814a28"
+  }
+}

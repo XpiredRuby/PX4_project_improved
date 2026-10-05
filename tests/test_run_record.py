@@ -46,6 +46,13 @@ class RunRecordTests(unittest.TestCase):
             self.assertEqual(data["px4_parameters"]["COM_OF_LOSS_T"], 0.5)
             self.assertIn("mission_timeout_s", data["controller_config"])
             self.assertEqual(len(data["source_sha256"]["trajectory.csv"]), 64)
+            self.assertEqual(
+                data["controller_runtime"]["trajectory_path"],
+                str(controller.trajectory_path),
+            )
+            self.assertEqual(
+                len(data["controller_runtime"]["trajectory_sha256"]), 64
+            )
             self.assertFalse(record.path.with_suffix(".json.tmp").exists())
 
 

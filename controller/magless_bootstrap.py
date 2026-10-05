@@ -130,10 +130,30 @@ def _raw_navigation_reasons(controller, snapshot):
         )
     ):
         reasons.append("GPS vertical accuracy is insufficient")
-    if _exceeds_or_nonfinite(
+    estimator_receipt_stale = _exceeds_or_nonfinite(
         snapshot["estimator_age_s"], config.estimator_max_age_s
-    ):
+    )
+    if estimator_receipt_stale:
         reasons.append("estimator telemetry stale")
+    elif _exceeds_or_nonfinite(
+        snapshot.get("estimator_source_age_s", snapshot["estimator_age_s"]),
+        config.estimator_max_age_s,
+    ):
+        reasons.append("estimator measurement timestamp stopped advancing")
+    if snapshot.get("estimator_source_regressed", False):
+        reasons.append("estimator measurement timestamp moved backwards")
+
+    if _exceeds_or_nonfinite(snapshot["heartbeat_age_s"], controller.max_heartbeat_age_s):
+        reasons.append("heartbeat telemetry stale")
+    if snapshot["armed"] and snapshot["heartbeat_main_mode"] != 6:
+        reasons.append("PX4 left OFFBOARD during bootstrap")
+    for field, limit in (("position_source_age_s", controller.max_position_age_s),
+                         ("attitude_source_age_s", controller.max_attitude_age_s)):
+        if field in snapshot and _exceeds_or_nonfinite(snapshot[field], limit):
+            reasons.append(f"{field} stale")
+    if any(snapshot.get(key, False) for key in
+           ("position_source_regressed", "attitude_source_regressed")):
+        reasons.append("bootstrap measurement timestamp moved backwards")
 
     # Attitude, vertical velocity, and absolute vertical position are enough
     # for the guarded attitude/thrust maneuver. Horizontal states are expected
@@ -193,6 +213,8 @@ def capture_launch_reference(controller):
                 "Navigation degraded while capturing launch GPS: "
                 + "; ".join(reasons)
             )
+        if snapshot["armed"]:
+            raise RuntimeError("Vehicle armed during launch GPS capture")
         if abs(snapshot["vz"]) > config.home_max_vertical_speed_m_s:
             raise RuntimeError("Vehicle moved during launch GPS capture")
         if snapshot["gps_time_usec"] != previous_gps_time:
@@ -233,10 +255,25 @@ def capture_launch_reference(controller):
 
 
 def send_attitude_target(controller, pitch_rad, thrust, yaw=None):
-    snapshot = controller._snapshot(time.monotonic())
+    computed_at = time.monotonic()
+    snapshot = controller._snapshot(computed_at)
     yaw = snapshot["yaw"] if yaw is None else yaw
+    if (not all(math.isfinite(value) for value in (pitch_rad, yaw, thrust))
+            or not 0.0 <= thrust <= 1.0):
+        raise ValueError("Attitude setpoint must be finite with thrust in [0, 1]")
     quaternion = quaternion_from_euler(0.0, pitch_rad, yaw)
     with controller.mav_send_lock:
+        if controller.native_land_active or controller.setpoint_error is not None:
+            return False
+        now = time.monotonic()
+        if not 0 <= now - computed_at < controller.config.max_control_command_age_s:
+            raise RuntimeError("Bootstrap attitude command expired waiting for transport")
+        current = controller._snapshot(now)
+        if (not math.isfinite(current["heartbeat_age_s"])
+                or not 0 <= current["heartbeat_age_s"] <= controller.max_heartbeat_age_s
+                or current["armed"] is None
+                or (current["armed"] and current["heartbeat_main_mode"] != 6)):
+            raise RuntimeError("Bootstrap command lost fresh heartbeat/control ownership")
         controller.master.mav.set_attitude_target_send(
             controller._estimated_px4_boot_ms(),
             controller.master.target_system,
@@ -248,6 +285,7 @@ def send_attitude_target(controller, pitch_rad, thrust, yaw=None):
             0.0,
             float(thrust),
         )
+    return True
 
 
 def run_magless_yaw_bootstrap(
@@ -282,7 +320,9 @@ def run_magless_yaw_bootstrap(
             raise RuntimeError(
                 f"Yaw bootstrap altitude guard exceeded: {altitude:.2f}m"
             )
-        if max(abs(snapshot["roll"]), abs(snapshot["pitch"])) > tilt_guard:
+        tilt = math.acos(max(-1., min(1.,
+            math.cos(snapshot["roll"]) * math.cos(snapshot["pitch"])) ))
+        if tilt > tilt_guard:
             raise RuntimeError("Yaw bootstrap tilt guard exceeded")
 
         raw_reasons = _raw_navigation_reasons(controller, snapshot)

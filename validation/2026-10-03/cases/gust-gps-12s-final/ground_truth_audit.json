@@ -1,0 +1,89 @@
+{
+  "coverage": {
+    "rows": 2093,
+    "covered_rows": 2079
+  },
+  "alignment": "CSV PX4 position clock; truth projected using contemporaneous EKF local origin",
+  "identical_source_duplicates_removed": {
+    "truth": 0,
+    "local_reference": 0
+  },
+  "coordinate_approximation": "Local tangent plane, Earth radius 6371000 m; routes below 100 m",
+  "phases": {
+    "TAKEOFF": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 882,
+        "rms": 0.046564194693904014,
+        "p95": 0.09832213337477023,
+        "max_abs": 0.11506715158934018
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 882,
+        "rms": 0.06627130072814211,
+        "p95": 0.12241022763207725,
+        "max_abs": 0.13597354178977383
+      },
+      "estimator_xy_error_m": {
+        "samples": 882,
+        "rms": 0.022273194090521982,
+        "p95": 0.03905735204517608,
+        "max_abs": 0.04703541195652348
+      },
+      "estimator_z_error_m": {
+        "samples": 882,
+        "rms": 0.061962197466584996,
+        "p95": 0.11053698098659633,
+        "max_abs": 0.11903525292873418
+      }
+    },
+    "TRAJECTORY": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 667,
+        "rms": 0.45026945103507726,
+        "p95": 0.8568783641370851,
+        "max_abs": 0.935394169488345
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 667,
+        "rms": 0.02552689580333949,
+        "p95": 0.0426806693055429,
+        "max_abs": 0.04902349514311766
+      },
+      "estimator_xy_error_m": {
+        "samples": 667,
+        "rms": 0.12116449251996318,
+        "p95": 0.2218648151204837,
+        "max_abs": 0.33742523035406374
+      },
+      "estimator_z_error_m": {
+        "samples": 667,
+        "rms": 0.02299049241877811,
+        "p95": 0.04178358848528523,
+        "max_abs": 0.05247567236423478
+      }
+    },
+    "PX4_FAILSAFE": {
+      "offboard_reference_active": false,
+      "physical_xy_tracking_error_m": null,
+      "physical_z_tracking_error_m": null,
+      "estimator_xy_error_m": {
+        "samples": 530,
+        "rms": 0.6887334848971419,
+        "p95": 1.7916508202629384,
+        "max_abs": 2.4244116393040573
+      },
+      "estimator_z_error_m": {
+        "samples": 530,
+        "rms": 2.0061466969683175,
+        "p95": 5.710046391844746,
+        "max_abs": 9.217488641142845
+      }
+    }
+  },
+  "ulog": {
+    "name": "06_46_23.ulg",
+    "sha256": "17fe5372e0ad8ad3810348604a73257c4e7b0cb1b23cde381df994b27b839f2d"
+  }
+}

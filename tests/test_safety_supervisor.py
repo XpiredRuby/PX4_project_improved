@@ -106,9 +106,8 @@ class SafetySupervisorTests(unittest.TestCase):
         controller = self.make_controller()
         bad = self.navigation_snapshot(controller)
         bad["estimator_flags"] = 0
-        controller._update_navigation_supervisor(bad, 10.0)
         with self.assertRaises(NavigationEstimateLost):
-            controller._update_navigation_supervisor(bad, 10.3)
+            controller._update_navigation_supervisor(bad, 10.0)
         self.assertEqual(controller.failure_action, "PX4_FAILSAFE")
 
     def test_slowed_clock_scales_trajectory_feedforward(self):

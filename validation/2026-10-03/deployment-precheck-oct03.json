@@ -1,0 +1,115 @@
+[
+  {
+    "path": "controller/mission_config.py",
+    "guard_passed": true,
+    "current_sha256": "a5431fe622f3e8b8acf93d9c339046d14067ad9a7e24045e995209bd4c224e3a",
+    "candidate_sha256": "5e0ce5f7c52f2fa9eab90c39cae86acf54768b89f8b162b5a8b1319c9e1993fd"
+  },
+  {
+    "path": "controller/PID_position_new.py",
+    "guard_passed": true,
+    "current_sha256": "cda4e89921e320905479c86290e1515ef3aa6acd1415ea41723716b5241641bf",
+    "candidate_sha256": "80a4851a5e07b058108e40b01a70de108ab06e6055d316b6125bfcb199510fc1"
+  },
+  {
+    "path": "controller/offboard_runner.py",
+    "guard_passed": true,
+    "current_sha256": "d34f7d4864509742edc604f6e1bf23f82386d2a98102d1e75faa86d2a5798803",
+    "candidate_sha256": "77d6da4113bb391b31328cd93c3a38e7e67dcf9946c86a4449629d263e515038"
+  },
+  {
+    "path": "controller/px4_policy.py",
+    "guard_passed": true,
+    "current_sha256": "a66b98fbd8faf8003252c18cdbe9751b6ba3ce2f4c1c401c9949d30222d3bd8d",
+    "candidate_sha256": "790d26350971331d614db32e56b9b467bdf5f1682005fd26496cfa7d8c14dd8e"
+  },
+  {
+    "path": "controller/touchdown_quality.py",
+    "guard_passed": true,
+    "current_sha256": "b32a5e71efa95b7e29209a5fd5d2a52b1c8557486906bb33ff33ac84fd6b1118",
+    "candidate_sha256": "f149c7a50291b19ac48169d65a292f9934a9c38bcdd051d6efa5c4d1f06e4d97"
+  },
+  {
+    "path": "analysis/analyze_run.py",
+    "guard_passed": true,
+    "current_sha256": "5d5c5a530f3e147d0f77497dc55c85c918aa164216aeb8f109cca38e4c30ca00",
+    "candidate_sha256": "6843e10f566e70b8c3fa8b6d7e5893de0f112ed82a0ca48526a72d302fdc7ee3"
+  },
+  {
+    "path": "scripts/sitl_monitor.py",
+    "guard_passed": true,
+    "current_sha256": "e54c3545a68ce50cf1792ee5e7568a6f19606eab7265e821ce148c694513d543",
+    "candidate_sha256": "ed8b52d09253209a6f41f912b09f70f299a472b33ac7110685139659725c88e7"
+  },
+  {
+    "path": "scripts/sitl_scenario_batch.py",
+    "guard_passed": true,
+    "current_sha256": "aef9658831fa67e5d8cf55b1ad3db3abf1bd15f04c39d09214f5be298b9d54c2",
+    "candidate_sha256": "1ac5e769c82f080ee60edb6cafc2951d15568bae7d4283ad0dd3ce31ea384c16"
+  },
+  {
+    "path": "tests/test_touchdown_quality.py",
+    "guard_passed": true,
+    "current_sha256": "39ca39a1f0eca8e7f4c543a6d35f9675f1019b4fa1463230d98640b91c9decf5",
+    "candidate_sha256": "b362b3c1cfc22366a69beba7398cde15a34658aae9063afbf5c8e7d012a91ca9"
+  },
+  {
+    "path": "tests/test_analysis_pipeline.py",
+    "guard_passed": true,
+    "current_sha256": "a898d9c3ef153652b4bd713dbee4c8f0e2710918a0b0ef03bbf97fa465e84196",
+    "candidate_sha256": "65f456d609a4757243d29dafc90beab783a70ea5a595a1dc3a7f80554372fa51"
+  },
+  {
+    "path": "tests/test_tracking_governor.py",
+    "guard_passed": true,
+    "current_sha256": "fe45b8e8ef3adc5e24eddf115d831f6d3fc2805082403f3e49e4b47e7ec4dd76",
+    "candidate_sha256": "ea0742fe30b11d4ce987905cb382dff60e0cefd2f5b37ca776195e9b797250fc"
+  },
+  {
+    "path": "tests/test_runner_protocol.py",
+    "guard_passed": true,
+    "current_sha256": "e42f4904b95b23cb1eeb0a3416b0b8035981f81959b09ac3556c93d1190548ef",
+    "candidate_sha256": "d314640bd562d2debb49b2b389214de472da1dee1c58da2baf8ab14d6054dd95"
+  },
+  {
+    "path": "tests/test_fault_injection.py",
+    "guard_passed": true,
+    "current_sha256": "2699983087166815633fd17b80f413a1df4d1e47ab775c314a11701c56737718",
+    "candidate_sha256": "550a1358802248bd5ed8b741cd13ccfd9e68f6881d91e9896a5c906583c827d9"
+  },
+  {
+    "path": "tests/test_navigation_hold_braking.py",
+    "guard_passed": true,
+    "current_sha256": null,
+    "candidate_sha256": "d5ffa80b03c6a6eef1e609f96d4e64e282a535367356367bf1e0fd873e1ba759"
+  },
+  {
+    "path": "tests/test_fixed_overlay.py",
+    "guard_passed": true,
+    "current_sha256": "2dd6c5644837f33209b4a26abba55f9442d6a1b5ec6159343b830d72e7b1ddee",
+    "candidate_sha256": "19c53357815cf0670ba33ec83b762c056e96bd6479f9f6e0877721edc4a7c418"
+  },
+  {
+    "path": "trajectory_generator/main.py",
+    "guard_passed": true,
+    "current_sha256": "4e230965296e28e106b5c9fd313997b3721c32848593d32bb476f567be2a9858",
+    "candidate_sha256": "127eeaaa5370dc5f7ac731a7381aa0fc707443296c88ca9e8c1edbde7392497e"
+  },
+  {
+    "path": "trajectory_generator/pose.py",
+    "guard_passed": true,
+    "current_sha256": "1865efeff935dbcebb508768bc46a5347571657284ad8e1795152c076890c219",
+    "candidate_sha256": "c547cd891da6a8537a97b5cef5b5ab8c84e966e4b62e1309d4bd64d5526bab73"
+  },
+  {
+    "path": "trajectory_generator/trajectory.py",
+    "guard_passed": true,
+    "current_sha256": "90768b5d4911e9bdbaada1c5e69006f55064b56ecff69d36500564de8f16eab2",
+    "candidate_sha256": "a0244d7610fabee376216e26f7980838deb469de62f10ea1e72cad917f543cd8"
+  },
+  {
+    "path": "README.md",
+    "guard_passed": true,
+    "current_sha256": "6445b09a623a881da46e0f2f468d93e32c2353b6c6661a09e7a0bd48c2e486cd"
+  }
+]

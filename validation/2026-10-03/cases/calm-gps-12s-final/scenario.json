@@ -1,0 +1,7 @@
+{
+  "name": "calm-gps-12s-final",
+  "gps_outage_s": 12,
+  "trigger_phase": "TRAJECTORY",
+  "trigger_clock_s": 15,
+  "expected": "navigation_landing"
+}

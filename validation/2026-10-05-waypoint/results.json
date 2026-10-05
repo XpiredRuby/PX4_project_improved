@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "scope": "SITL research software; no physical aircraft flown",
+  "score": {
+    "value": 95,
+    "maximum": 100,
+    "meaning": "Engineering assessment within the documented SITL research-software scope, not a reliability probability or physical-flight-readiness score",
+    "remaining_gaps": [
+      "intended-airframe hardware validation",
+      "obstacle sensing and avoidance",
+      "waypoint-specific disturbance and fault matrix"
+    ]
+  },
+  "source": {
+    "github_repository": "XpiredRuby/PX4_project_improved",
+    "candidate_commit": "5cf53a69978b43e3459dde236fb42234a81c7496",
+    "candidate_tree": "f09c72d5f0c36770155d2e3b8c216e00511453a8",
+    "deployed_changed_files_byte_matched": 18,
+    "deployed_changed_files_total": 18
+  },
+  "static_and_regression_validation": {
+    "ruff": "passed",
+    "regression_tests": 223,
+    "connector_subprocess_tests": 5,
+    "deterministic_waypoint_generation": "passed",
+    "existing_critical_coverage_percent": 89,
+    "waypoint_combined_branch_coverage_percent": 91,
+    "waypoint_module_coverage_percent": 98,
+    "waypoint_cli_coverage_percent": 94,
+    "waypoint_auditor_coverage_percent": 72,
+    "github_actions_runs": [
+      {
+        "id": 37253456916,
+        "name": "Controller validation",
+        "result": "success"
+      },
+      {
+        "id": 37253456999,
+        "name": "Validation",
+        "result": "success"
+      }
+    ]
+  },
+  "environment": {
+    "px4_version": "v1.17.0",
+    "px4_commit": "d6f12ad1c4f70ad3230afd7d86e971421e02fef4",
+    "gazebo_version": "8.15.0",
+    "model": "x500",
+    "world": "afvl_validation",
+    "platform": "WSL2 Linux 6.6.114.1-microsoft-standard-WSL2 x86_64"
+  },
+  "plan": {
+    "coordinate_frame": "LOCAL_NED",
+    "stop_count": 5,
+    "point_count": 2520,
+    "duration_s": 125.89916494628677,
+    "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+    "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6",
+    "summary_sha256": "4c92fa22f6d733c233976b38f1ab74b5b239b4b7ce0d6eed3d484b157a893a31",
+    "limits": {
+      "max_horizontal_speed_m_s": 1.0,
+      "max_vertical_speed_m_s": 0.6,
+      "max_acceleration_m_s2": 1.0,
+      "max_jerk_m_s3": 1.5,
+      "max_yaw_rate_deg_s": 30.0,
+      "max_yaw_acceleration_deg_s2": 30.0,
+      "max_yaw_jerk_deg_s3": 60.0
+    }
+  },
+  "mission": {
+    "run_id": "20261005T022245547981Z",
+    "started_at_utc": "2026-10-05T02:22:45.547981Z",
+    "completed_at_utc": "2026-10-05T02:26:27.815560Z",
+    "outcome": "SUCCESS",
+    "batch_exit_code": 0,
+    "scenario_errors": [],
+    "nominal_audit_passed": true,
+    "waypoint_audit_passed": true,
+    "ground_truth_audit_passed": true,
+    "phase_sequence": [
+      "TAKEOFF",
+      "TRAJECTORY",
+      "RETURN_HOME",
+      "ALIGN",
+      "HANDOFF",
+      "PX4_LAND"
+    ],
+    "route_clock_max_s": 125.900054076,
+    "maximum_offboard_stream_gap_s": 0.059,
+    "final_state": {
+      "armed": false,
+      "landed_state": 1,
+      "automatic_disarm_confirmed": true,
+      "maximum_absolute_actuator_output": 0.0
+    }
+  },
+  "stop_audits": {
+    "limits": {
+      "position_error_p95_m": 0.75,
+      "speed_p95_m_s": 0.4,
+      "planned_speed_max_m_s": 0.000001
+    },
+    "stops": [
+      {
+        "name": "start",
+        "arrival_s": 0.0,
+        "departure_s": 1.0,
+        "evidence_samples": 11,
+        "position_error_p95_m": 0.029151377514864525,
+        "speed_p95_m_s": 0.011739967122513777,
+        "passed": true
+      },
+      {
+        "name": "survey-west",
+        "arrival_s": 32.548573660309906,
+        "departure_s": 34.548573660309906,
+        "evidence_samples": 15,
+        "position_error_p95_m": 0.03191026809312242,
+        "speed_p95_m_s": 0.008544891567797626,
+        "passed": true
+      },
+      {
+        "name": "survey-north",
+        "arrival_s": 66.09714732061981,
+        "departure_s": 68.09714732061981,
+        "evidence_samples": 15,
+        "position_error_p95_m": 0.0439945533488755,
+        "speed_p95_m_s": 0.019249794521869777,
+        "passed": true
+      },
+      {
+        "name": "survey-east",
+        "arrival_s": 99.64572098092972,
+        "departure_s": 101.64572098092972,
+        "evidence_samples": 15,
+        "position_error_p95_m": 0.03767691351590049,
+        "speed_p95_m_s": 0.01899632826743675,
+        "passed": true
+      },
+      {
+        "name": "exit",
+        "arrival_s": 124.89916494628677,
+        "departure_s": 125.89916494628677,
+        "evidence_samples": 10,
+        "position_error_p95_m": 0.03377883505277932,
+        "speed_p95_m_s": 0.0076814350672845455,
+        "passed": true
+      }
+    ]
+  },
+  "tracking": {
+    "onboard_estimate_trajectory": {
+      "xy_error_p95_m": 0.10912001878562068,
+      "xy_error_max_m": 0.14612329710487748,
+      "z_error_p95_m": 0.015594145932947964,
+      "z_error_max_m": 0.019260097552098898,
+      "yaw_error_p95_deg": 2.85996809020398,
+      "yaw_error_max_deg": 3.7458626415559557
+    },
+    "independent_truth_trajectory": {
+      "xy_error_p95_m": 0.19404538463564774,
+      "xy_error_max_m": 0.26651508097325627,
+      "z_error_p95_m": 0.04383557627995636,
+      "z_error_max_m": 0.05134571921825781
+    },
+    "touchdown": {
+      "onboard_xy_error_m": 0.049,
+      "physical_xy_error_m": 0.06166450833423388,
+      "horizontal_speed_m_s": 0.012,
+      "vertical_speed_m_s": 0.016,
+      "tilt_deg": 0.04,
+      "automatic_disarm_delay_s": 2.42
+    }
+  },
+  "ground_truth": {
+    "covered_rows": 4189,
+    "total_rows": 4199,
+    "maximum_interpolation_gap_s": 0.25,
+    "ulog_name": "02_22_51.ulg",
+    "ulog_sha256": "657e903bd75dbf1516237afa06e360bb4af75ee6c75ec63919bca9f115543e9e"
+  },
+  "raw_evidence": {
+    "run_directory": "/home/xpire/PX4-runs/waypoint-sitl-oct05-20261005T022221Z",
+    "note": "Full CSV, aligned truth, manifests, audits, simulator log, controller log, and ULog remain on the validation computer"
+  },
+  "known_boundary": {
+    "gust_plus_12_second_gnss_outage": "failed",
+    "physical_touchdown_xy_error_m": 28.204,
+    "status": "unresolved and excluded from the validated operating envelope"
+  }
+}

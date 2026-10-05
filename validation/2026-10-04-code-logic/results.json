@@ -1,0 +1,101 @@
+{
+  "date_utc": "2026-10-04",
+  "platform": "PX4 v1.17 x500 Gazebo SITL",
+  "physical_aircraft_flown": false,
+  "limits": {
+    "declared_gps_outage_recovery_budget_s": 4.0,
+    "validated_ekf2_noaid_tout_s": 6.0,
+    "touchdown_xy_limit_m": 1.5,
+    "hold_xy_and_z_drift_limit_m": 1.0
+  },
+  "automated_checks": {
+    "ruff_passed": true,
+    "deterministic_generation_and_compilation_passed": true,
+    "regression_tests_passed": 203,
+    "connector_tests_passed": 5,
+    "coverage_percent": {
+      "ci_gated_helpers_branch_aware": 89,
+      "complete_controller_package_branch_aware": 72,
+      "pid_position_new_branch_aware": 64,
+      "vehicle_state_branch_aware": 81,
+      "sitl_ground_truth_branch_aware": 79,
+      "all_measured_controller_and_analysis_branch_aware": 62
+    }
+  },
+  "four_second_gust_recovery_trials": [
+    {
+      "case": "gust-gps-4s-timeout6",
+      "outcome": "SUCCESS",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.0854211621947125,
+      "physical_hold_xy_drift_m": 0.6558017679303121,
+      "physical_hold_reference_max_error_m": 0.7938459475993167,
+      "ulog_sha256": "57792b5fd73d7b4b8d8dba7eed757ea3d94f70f39d46c5d163c698027cbde290"
+    },
+    {
+      "case": "gust-gps-4s-early",
+      "outcome": "SUCCESS",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.06031893895677671,
+      "physical_hold_xy_drift_m": 0.6452742372215898,
+      "physical_hold_reference_max_error_m": 0.80631630158679,
+      "ulog_sha256": "69eff813bb62bd0080fc1858bb18ab59f30f27f78b315b9174a19f33ca1bc274"
+    },
+    {
+      "case": "gust-gps-4s-late",
+      "outcome": "SUCCESS",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.05837655577195019,
+      "physical_hold_xy_drift_m": 0.5099302249209802,
+      "physical_hold_reference_max_error_m": 0.6694686805288935,
+      "ulog_sha256": "7694c6c19401dc8345b2071be794043f3992b06c4b942876bcc55d899f1291ce"
+    },
+    {
+      "case": "gust-gps-4s-latest",
+      "outcome": "SUCCESS",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.1284628792741141,
+      "physical_hold_xy_drift_m": 0.5901700251732896,
+      "physical_hold_reference_max_error_m": 0.7896749500032849,
+      "ulog_sha256": "5b1b8636ae0f20efea8df6c2efa3350928795ab768f548d625da3694209e592a"
+    }
+  ],
+  "final_source_matrix": [
+    {
+      "case": "control-stall-2s-latest",
+      "outcome": "PX4_FAILSAFE",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.9311752856159827,
+      "ulog_sha256": "d33dcda2bf796e0b416689572076645dc8a0edc83aeb4430126de10ad4283f44"
+    },
+    {
+      "case": "nominal-latest",
+      "outcome": "SUCCESS",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.05279162327146362,
+      "ulog_sha256": "8160b5a698622f8a9851f6d32a55727da9c8577066f7f4cc729e479d66a57c83"
+    },
+    {
+      "case": "storage-stall-4s-latest",
+      "outcome": "SUCCESS",
+      "audit_passed": true,
+      "physical_position_audit_passed": true,
+      "physical_touchdown_xy_error_m": 0.06710366407449783,
+      "ulog_sha256": "4b44f2dffdfaf10ee01ec02370fedcc3f69e80b185e8c7a16661f6e34f77aa8f"
+    }
+  ],
+  "failed_boundary": {
+    "case": "gust-gps-12s",
+    "outcome": "UNSAFE_TOUCHDOWN",
+    "audit_passed": false,
+    "physical_touchdown_xy_error_m": 28.20426913666957,
+    "physical_hold_xy_drift_m": 0.6258336232694404,
+    "ulog_sha256": "2e2ad2ba0d3d1ff9b03af3a6633ec9228ff56a5aae2b6b55aaea9fcd099d2a33"
+  }
+}

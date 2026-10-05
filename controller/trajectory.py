@@ -34,9 +34,16 @@ class Trajectory:
 
         with open(filename, "r", newline="") as file:
             reader = csv.DictReader(file)
+            required_fields = {"time", "x", "y", "z", "vx", "vy", "vz",
+                               "yaw", "yaw_rate", "ax", "ay", "az"}
+            missing = required_fields - set(reader.fieldnames or [])
+            if missing:
+                raise ValueError("trajectory missing required columns: " + ", ".join(sorted(missing)))
             for row in reader:
                 def value(name, default=0.0, row=row):
                     raw = row.get(name)
+                    if name in required_fields and raw in (None, ""):
+                        raise ValueError(f"trajectory has empty required field: {name}")
                     return default if raw in (None, "") else float(raw)
 
                 self.points.append(
@@ -79,6 +86,8 @@ class Trajectory:
                     f"trajectory point {index} has non-finite required fields"
                 )
 
+        if self.points[0].time != 0.0:
+            raise ValueError("trajectory must start at time zero")
         self.duration = self.points[-1].time
 
     def reset(self):
@@ -96,6 +105,15 @@ class Trajectory:
         return a + ratio * (b - a)
 
     def get_target(self, t):
+        if not math.isfinite(t):
+            raise ValueError("trajectory query time must be finite")
+        if t <= 0.0:
+            self.index = 0
+            self.finished = False
+            return self.points[0]
+        if t < self.points[self.index].time:
+            self.index = 0
+        self.finished = False
         if t >= self.points[-1].time:
             self.finished = True
             self.index = len(self.points) - 1
@@ -112,9 +130,14 @@ class Trajectory:
         ratio = (t - p1.time) / (p2.time - p1.time)
 
         dyaw = p2.yaw - p1.yaw
-        while dyaw > math.pi:
+        # Repeated subtraction can never converge for very large finite
+        # angles, and subtraction itself can overflow. Reduce in bounded time.
+        if not math.isfinite(dyaw):
+            dyaw = math.fmod(p2.yaw, math.tau) - math.fmod(p1.yaw, math.tau)
+        dyaw = math.fmod(dyaw, math.tau)
+        if dyaw > math.pi:
             dyaw -= 2.0 * math.pi
-        while dyaw < -math.pi:
+        elif dyaw < -math.pi:
             dyaw += 2.0 * math.pi
 
         return TrajectoryPoint(

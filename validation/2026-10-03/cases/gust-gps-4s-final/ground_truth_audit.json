@@ -1,0 +1,170 @@
+{
+  "coverage": {
+    "rows": 4113,
+    "covered_rows": 4101
+  },
+  "alignment": "CSV PX4 position clock; truth projected using contemporaneous EKF local origin",
+  "identical_source_duplicates_removed": {
+    "truth": 0,
+    "local_reference": 0
+  },
+  "coordinate_approximation": "Local tangent plane, Earth radius 6371000 m; routes below 100 m",
+  "phases": {
+    "TAKEOFF": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 881,
+        "rms": 0.046790477200296755,
+        "p95": 0.0900605046574379,
+        "max_abs": 0.09862540894825403
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 881,
+        "rms": 0.0790614403788925,
+        "p95": 0.11908148893831694,
+        "max_abs": 0.13652960972543404
+      },
+      "estimator_xy_error_m": {
+        "samples": 881,
+        "rms": 0.027770963247635765,
+        "p95": 0.04602700490157751,
+        "max_abs": 0.05598304000427868
+      },
+      "estimator_z_error_m": {
+        "samples": 881,
+        "rms": 0.06288149273972402,
+        "p95": 0.1016369199752809,
+        "max_abs": 0.10768401622772394
+      }
+    },
+    "TRAJECTORY": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 2689,
+        "rms": 0.35601833120432935,
+        "p95": 0.7903172146527202,
+        "max_abs": 1.2166419883717328
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 2689,
+        "rms": 0.023479283854916218,
+        "p95": 0.050112789630885855,
+        "max_abs": 0.09095332622528218
+      },
+      "estimator_xy_error_m": {
+        "samples": 2689,
+        "rms": 0.11351886699943006,
+        "p95": 0.15849868266510303,
+        "max_abs": 0.3165303102428967
+      },
+      "estimator_z_error_m": {
+        "samples": 2689,
+        "rms": 0.019181406347141886,
+        "p95": 0.03895699787140003,
+        "max_abs": 0.07990214824676656
+      }
+    },
+    "RETURN_HOME": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 40,
+        "rms": 0.04008569460361273,
+        "p95": 0.05175252845936017,
+        "max_abs": 0.052053964494998835
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 40,
+        "rms": 0.013771080328356543,
+        "p95": 0.016467032889407204,
+        "max_abs": 0.01801644714666395
+      },
+      "estimator_xy_error_m": {
+        "samples": 40,
+        "rms": 0.02703820394355613,
+        "p95": 0.03263633985368788,
+        "max_abs": 0.03273585064383264
+      },
+      "estimator_z_error_m": {
+        "samples": 40,
+        "rms": 0.026108794305029652,
+        "p95": 0.033557517051696094,
+        "max_abs": 0.03366275310516187
+      }
+    },
+    "ALIGN": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 39,
+        "rms": 0.02637762147018783,
+        "p95": 0.04176471311046991,
+        "max_abs": 0.04642703868542337
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 39,
+        "rms": 0.023883032421749932,
+        "p95": 0.0314467701911898,
+        "max_abs": 0.03155136028925298
+      },
+      "estimator_xy_error_m": {
+        "samples": 39,
+        "rms": 0.02526326379497729,
+        "p95": 0.03021089036927319,
+        "max_abs": 0.030338460571661556
+      },
+      "estimator_z_error_m": {
+        "samples": 39,
+        "rms": 0.023458458589677128,
+        "p95": 0.03052878093719933,
+        "max_abs": 0.030558962821960023
+      }
+    },
+    "HANDOFF": {
+      "offboard_reference_active": true,
+      "physical_xy_tracking_error_m": {
+        "samples": 16,
+        "rms": 0.055554886161189344,
+        "p95": 0.06643263063201477,
+        "max_abs": 0.06714321017535269
+      },
+      "physical_z_tracking_error_m": {
+        "samples": 16,
+        "rms": 0.12245128044739259,
+        "p95": 0.2595461392402614,
+        "max_abs": 0.2828527188301031
+      },
+      "estimator_xy_error_m": {
+        "samples": 16,
+        "rms": 0.026086837079964918,
+        "p95": 0.02995875604937215,
+        "max_abs": 0.030114535271500684
+      },
+      "estimator_z_error_m": {
+        "samples": 16,
+        "rms": 0.007934826636344525,
+        "p95": 0.01096492290496709,
+        "max_abs": 0.01120891094207721
+      }
+    },
+    "PX4_LAND": {
+      "offboard_reference_active": false,
+      "physical_xy_tracking_error_m": null,
+      "physical_z_tracking_error_m": null,
+      "estimator_xy_error_m": {
+        "samples": 436,
+        "rms": 0.01575717935758621,
+        "p95": 0.027976893777142225,
+        "max_abs": 0.03406344568952531
+      },
+      "estimator_z_error_m": {
+        "samples": 436,
+        "rms": 0.11660787326526822,
+        "p95": 0.19756028056144714,
+        "max_abs": 0.2036220598220826
+      }
+    }
+  },
+  "ulog": {
+    "name": "05_57_23.ulg",
+    "sha256": "c032887b20a02a63145851bc37a46e5905f96c0d5da12ec17f5fb2b686174411"
+  }
+}

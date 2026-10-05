@@ -1,0 +1,10 @@
+{
+  "name": "gust-gps-damping-2",
+  "gust": true,
+  "gps_outage_s": 4,
+  "trigger_phase": "TRAJECTORY",
+  "trigger_clock_s": 15,
+  "expected": "navigation_response",
+  "governor": true,
+  "prediction": true
+}

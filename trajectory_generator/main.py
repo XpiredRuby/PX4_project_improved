@@ -63,7 +63,7 @@ commands = [
         ),
     HoverCommand(
         duration=5
-    ),    
+    ),
 ]
 
 
@@ -90,10 +90,10 @@ print(
 )
 
 print(
-    f"Saved to trajetory.csv"
+    "Saved to trajetory.csv"
 )
 
-for i, (command, p) in enumerate(zip(commands, profiles)):
+for i, (command, p) in enumerate(zip(commands, profiles, strict=True)):
 
     if p is None:
         print(i, "Hover:", command.duration)

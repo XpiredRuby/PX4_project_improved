@@ -1,0 +1,66 @@
+[
+  {
+    "name": "gust-gps-4s-final",
+    "exit_code": 0,
+    "audit_passed": true,
+    "outcome": "SUCCESS",
+    "quality_rejection_confirmed": false,
+    "final_state": {
+      "armed": false,
+      "failure_action": "LAND",
+      "heartbeat_main_mode": 6,
+      "heartbeat_sub_mode": 0,
+      "landed_state": 1,
+      "mission_phase": "HANDOFF"
+    },
+    "scenario_errors": []
+  },
+  {
+    "name": "takeoff-gps-4s-final",
+    "exit_code": 0,
+    "audit_passed": true,
+    "outcome": "SUCCESS",
+    "quality_rejection_confirmed": false,
+    "final_state": {
+      "armed": false,
+      "failure_action": "LAND",
+      "heartbeat_main_mode": 6,
+      "heartbeat_sub_mode": 0,
+      "landed_state": 1,
+      "mission_phase": "HANDOFF"
+    },
+    "scenario_errors": []
+  },
+  {
+    "name": "return-gps-4s-final",
+    "exit_code": 1,
+    "audit_passed": true,
+    "outcome": "PX4_FAILSAFE",
+    "quality_rejection_confirmed": false,
+    "final_state": {
+      "armed": false,
+      "failure_action": "PX4_FAILSAFE",
+      "heartbeat_main_mode": 6,
+      "heartbeat_sub_mode": 0,
+      "landed_state": 1,
+      "mission_phase": "RETURN_HOME"
+    },
+    "scenario_errors": []
+  },
+  {
+    "name": "calm-gps-12s-final",
+    "exit_code": 1,
+    "audit_passed": true,
+    "outcome": "PX4_FAILSAFE",
+    "quality_rejection_confirmed": false,
+    "final_state": {
+      "armed": false,
+      "failure_action": "PX4_FAILSAFE",
+      "heartbeat_main_mode": 6,
+      "heartbeat_sub_mode": 0,
+      "landed_state": 1,
+      "mission_phase": "TRAJECTORY"
+    },
+    "scenario_errors": []
+  }
+]

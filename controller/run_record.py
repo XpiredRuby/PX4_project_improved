@@ -102,6 +102,10 @@ class RunRecord:
             "setpoint_watchdog_timeout_s": (
                 controller.setpoint_watchdog_timeout
             ),
+            "trajectory_path": str(controller.trajectory_path),
+            "trajectory_sha256": hashlib.sha256(
+                controller.trajectory_path.read_bytes()
+            ).hexdigest(),
         }
         self.data["px4_parameters"] = {
             name: float(value)
