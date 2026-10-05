@@ -1,8 +1,39 @@
-# October 4, 2026 status
+# October 5, 2026 status
 
 **Research candidate: the requested 95+ flight-readiness target is not established.**
 
-The current code passes Ruff, deterministic generation/compilation, **203 discovered
+The five-stop `LOCAL_NED` example has now completed a live PX4 v1.17 / Gazebo
+8.15 x500 SITL mission. The compiler emitted 2,520 points over 125.899 s with
+exact stationary C3 stop boundaries. All five named-stop audits passed. The
+worst stop position-error p95 was 0.044 m and the worst stop-speed p95 was
+0.019 m/s. The entire route was consumed before return, PX4 LAND, contact,
+automatic disarm, and fresh zero propulsion confirmation.
+
+Independent ULog truth covered 4,189/4,199 controller rows. During the waypoint
+trajectory, physical XY tracking error was 0.194 m p95 and 0.267 m maximum;
+physical Z error was 0.044 m p95 and 0.051 m maximum. Physical touchdown error
+was 0.062 m. The onboard safety audit independently measured 0.049 m touchdown
+error, a 0.059 s maximum Offboard stream gap, and 0.0000 maximum post-disarm
+actuator output. Every mission, waypoint, shutdown, and physical-position gate
+passed without relaxing a threshold.
+
+Ruff, deterministic generation/compilation, **223 discovered regression tests**,
+and five connector subprocess tests pass. The new planner/auditor suite has 91%
+combined branch-aware coverage: 98% for `waypoint_mission.py`, 94% for the CLI,
+and 72% for the live-log auditor. Both GitHub validation workflows passed for
+source commit `5cf53a6`; the live machine byte-matched all 18 changed source and
+test files to that candidate. See
+[`validation/2026-10-05-waypoint`](../validation/2026-10-05-waypoint).
+
+This supports a 95/100 assessment only within a scoped SITL research-software
+rubric covering contracts, deterministic planning, test depth, runtime safety,
+mission execution, and evidence. It is not a probability of safe flight and is
+not a 95/100 physical-flight-readiness claim. Physical-airframe validation,
+obstacle sensing/avoidance, and a waypoint-specific disturbance matrix remain.
+
+## October 4, 2026 status
+
+The preceding candidate passed Ruff, deterministic generation/compilation, **203 discovered
 regression tests**, and five connector subprocess tests. Branch-aware coverage is
 89% for the CI-gated helper modules, 72% for the complete `controller/` package,
 64% for the large `PID_position_new.py` module, and 62% for all measured controller

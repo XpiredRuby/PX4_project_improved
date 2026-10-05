@@ -3,7 +3,8 @@
 **SITL research candidate. The requested 95+ flight-readiness target is not established.**
 The validated software envelope includes a four-second GNSS-outage recovery budget;
 combined gusts and a 12-second outage still fail touchdown position limits.
-See [validation status](docs/validation_summary.md) and [current evidence](validation/2026-10-04).
+See [validation status](docs/validation_summary.md) and
+[five-stop mission evidence](validation/2026-10-05-waypoint).
 The latest bounded-recovery and lifecycle evidence is in
 [`validation/2026-10-04-code-logic`](validation/2026-10-04-code-logic).
 
@@ -120,6 +121,13 @@ The post-run audit fails unless every named stop has stationary-reference
 evidence, bounded 95th-percentile position error and vehicle speed, the entire
 route clock was consumed, and touchdown, automatic disarm, and shutdown were
 recorded successfully.
+
+The checked-in five-stop example completed an isolated x500 SITL mission on
+October 5, 2026. All five stop audits passed; estimated trajectory XY error was
+0.109 m p95, independent simulator-truth XY error was 0.194 m p95, and physical
+touchdown error was 0.062 m. PX4 then confirmed ground contact, automatic
+disarm, and zero propulsion. These results validate the named-stop route in
+SITL, not obstacle avoidance or unattended physical flight.
 
 ## Validation commands
 
