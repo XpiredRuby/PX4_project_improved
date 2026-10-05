@@ -16,6 +16,9 @@ GPS/IMU mission control for smooth takeoff, trajectory tracking, return, and
 landing without a supplied ground height. PX4 owns the final descent and
 automatic disarm.
 
+- Strict local-NED waypoint missions with named stops and optional dwell times
+- C3 stop boundaries: zero velocity, acceleration, and jerk at every stop
+- Analytic retiming against horizontal, vertical, acceleration, jerk, and yaw limits
 - Smooth reference motion and bounded velocity-command changes
 - GPS/estimator health and source-clock checks, last-trusted-position hold, and failsafe handoff
 - Short, bounded position prediction for feedback; raw measurements govern safety
@@ -76,7 +79,49 @@ The runner retains any detected contact violation while waiting for PX4 ground,
 automatic disarm, and fresh zero propulsion outputs, then reports the failure.
 Detecting a violation is evidence of a failed landing, not proof it was avoided.
 
-## Validation
+## Waypoint missions
+
+Waypoint plans use a strict, versioned JSON contract. Coordinates are metres in
+`LOCAL_NED`: north, east, and down. At runtime the first stop is aligned to the
+recovered launch XY, selected cruise altitude, and captured heading, so the flown
+geometry and yaw are defined by offsets from that first stop. Each stop has a unique name, yaw, and
+optional hold time. The compiler rejects unknown or missing fields, non-finite
+values, coincident stops, envelope violations, and missions whose retimed
+duration exceeds the declared budget.
+
+```bash
+python trajectory_generator/plan_waypoint_mission.py \
+  --plan missions/five_stop_example.json \
+  --output five_stop.csv \
+  --summary five_stop.summary.json
+
+python controller/offboard_runner.py --trajectory five_stop.csv
+
+python analysis/waypoint_mission_audit.py \
+  --log RUN/research_log_ID.csv \
+  --summary five_stop.summary.json \
+  --manifest RUN/run_manifest_ID.json \
+  --output RUN/waypoint_audit.json
+```
+
+Every transit is a seventh-order stop-to-stop polynomial. Its position,
+velocity, acceleration, and jerk join continuously to a stationary hold, and
+the exact endpoint is included. Segment duration is chosen analytically so all
+declared translation and yaw limits are respected. The controller independently
+rechecks the compiled CSV against its own operating radius, height, speed,
+acceleration, jerk, and terrain-clearance limits before any transport connection
+or arming request.
+
+This is route planning over explicitly supplied local coordinates, not obstacle
+avoidance or terrain mapping. GPS/IMU alone does not provide an obstacle map;
+clearance between stops remains the operator's responsibility.
+
+The post-run audit fails unless every named stop has stationary-reference
+evidence, bounded 95th-percentile position error and vehicle speed, the entire
+route clock was consumed, and touchdown, automatic disarm, and shutdown were
+recorded successfully.
+
+## Validation commands
 
 ```bash
 python -m pip install -r requirements-dev.txt

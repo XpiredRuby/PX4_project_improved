@@ -41,7 +41,7 @@ class NavigationEstimateLost(RuntimeError):
 class PositionController:
     """Measured-data fixes around the baseline outer-loop controller."""
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, trajectory_path=None):
         self.config = MissionConfig() if config is None else config
         self.config.validate()
         self.tracking_governor = TrackingGovernor(self.config)
@@ -178,8 +178,11 @@ class PositionController:
         self.last_monitor_log_at = None
         self.last_monitor_phase = None
 
-        trajectory_path = Path(__file__).with_name("trajectory.csv")
-        self.trajectory = Trajectory(str(trajectory_path))
+        default_trajectory = Path(__file__).with_name("trajectory.csv")
+        self.trajectory_path = Path(
+            default_trajectory if trajectory_path is None else trajectory_path
+        ).resolve()
+        self.trajectory = Trajectory(str(self.trajectory_path))
         self.duration = self.trajectory.duration
         self.trajectory_origin = self.trajectory.points[0]
         # Geometry and derivative limits are independent of yaw alignment.
@@ -1113,6 +1116,30 @@ class PositionController:
                 jerk = math.sqrt(point.jx**2 + point.jy**2 + point.jz**2)
                 if jerk > self.config.max_jerk_m_s3 * 1.001:
                     violations.append(f"point {index}: jerk {jerk:.2f}m/s³")
+            yaw_rate_deg_s = abs(math.degrees(point.yaw_rate))
+            if yaw_rate_deg_s > self.config.max_yaw_rate_deg_s * 1.001:
+                violations.append(
+                    f"point {index}: yaw rate {yaw_rate_deg_s:.2f}deg/s"
+                )
+            if math.isfinite(point.yaw_acceleration):
+                yaw_acceleration_deg_s2 = abs(
+                    math.degrees(point.yaw_acceleration)
+                )
+                if (
+                    yaw_acceleration_deg_s2
+                    > self.config.max_yaw_acceleration_deg_s2 * 1.001
+                ):
+                    violations.append(
+                        f"point {index}: yaw acceleration "
+                        f"{yaw_acceleration_deg_s2:.2f}deg/s²"
+                    )
+            if math.isfinite(point.yaw_jerk):
+                yaw_jerk_deg_s3 = abs(math.degrees(point.yaw_jerk))
+                if yaw_jerk_deg_s3 > self.config.max_yaw_jerk_deg_s3 * 1.001:
+                    violations.append(
+                        f"point {index}: yaw jerk "
+                        f"{yaw_jerk_deg_s3:.2f}deg/s³"
+                    )
             if len(violations) >= 8:
                 break
         if violations:

@@ -41,6 +41,9 @@ class MissionConfig:
     cruise_command_speed_limit_m_s: float = 1.25
     max_horizontal_speed_m_s: float = 3.0
     max_vertical_speed_m_s: float = 1.0
+    max_yaw_rate_deg_s: float = 45.0
+    max_yaw_acceleration_deg_s2: float = 60.0
+    max_yaw_jerk_deg_s3: float = 120.0
     setpoint_watchdog_timeout_s: float = 0.10
     offboard_stream_max_gap_s: float = 0.50
     # Resending transport packets must not extend a computed command forever.
@@ -205,6 +208,9 @@ class MissionConfig:
             self.command_z_accel_limit_m_s2,
             self.max_horizontal_speed_m_s,
             self.max_vertical_speed_m_s,
+            self.max_yaw_rate_deg_s,
+            self.max_yaw_acceleration_deg_s2,
+            self.max_yaw_jerk_deg_s3,
             self.setpoint_watchdog_timeout_s,
             self.offboard_stream_max_gap_s,
             self.bootstrap_altitude_m,

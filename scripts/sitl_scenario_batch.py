@@ -5,6 +5,7 @@ import argparse
 import csv
 import json
 import math
+import shutil
 import subprocess
 import sys
 import time
@@ -20,6 +21,7 @@ from sitl_fault_injector import read_parameter, run_fault, set_parameter
 from trajectory_quality import trajectory_quality
 from sitl_monitor import monitor_child, trial_phase_clock, allow_next_trial, quality_rejection_confirmed
 from sitl_wind import gz_service, set_wind
+from waypoint_mission_audit import build_waypoint_audit
 
 
 def last_csv_row(folder):
@@ -49,10 +51,38 @@ def fixture(world, folder, height, slope_deg=0, ridge=False):
                       f'sdf_filename: "{path}" allow_renaming: false')
 
 
+def stage_case_artifacts(case, folder):
+    """Freeze the exact planned trajectory and summary inside run evidence."""
+    trajectory_value = case.get("trajectory")
+    summary_value = case.get("waypoint_summary")
+    if summary_value is not None and trajectory_value is None:
+        raise ValueError("waypoint_summary requires trajectory")
+
+    def source_path(value):
+        path = Path(value)
+        return (path if path.is_absolute() else ROOT / path).resolve()
+
+    trajectory = summary = None
+    if trajectory_value is not None:
+        source = source_path(trajectory_value)
+        if not source.is_file():
+            raise ValueError(f"trajectory does not exist: {source}")
+        trajectory = (folder / "selected_trajectory.csv").resolve()
+        shutil.copy2(source, trajectory)
+    if summary_value is not None:
+        source = source_path(summary_value)
+        if not source.is_file():
+            raise ValueError(f"waypoint summary does not exist: {source}")
+        summary = (folder / "waypoint_plan_summary.json").resolve()
+        shutil.copy2(source, summary)
+    return trajectory, summary
+
+
 def run_case(case, output, world, master):
     folder = output / case["name"]
     folder.mkdir(exist_ok=False)
     (folder / "scenario.json").write_text(json.dumps(case, indent=2) + "\n")
+    trajectory_path, waypoint_summary_path = stage_case_artifacts(case, folder)
     wait_while_armed_or_ground(master, armed=False)
     if read_parameter(master, "SIM_GPS_USED")[0] < 4:
         raise RuntimeError("SITL GPS restoration not confirmed before next trial")
@@ -76,7 +106,8 @@ def run_case(case, output, world, master):
             "from mission_config import MissionConfig; import offboard_runner; "
             + fault_code + "offboard_runner.main(replace(MissionConfig(), "
             f"tracking_governor_enabled={case.get('governor', True)!r}, "
-            f"position_prediction_enabled={case.get('prediction', True)!r}))")
+            f"position_prediction_enabled={case.get('prediction', True)!r}), "
+            f"trajectory_path={str(trajectory_path) if trajectory_path else None!r})")
     events = []
     battery_restore = {}
     heartbeat_state = {"armed": None, "received_at": -math.inf}
@@ -196,6 +227,24 @@ def run_case(case, output, world, master):
         audit = build_recovery_safety_audit(df, manifest)
     else:
         audit = build_nominal_run_audit(df, manifest)
+    waypoint_audit = None
+    if waypoint_summary_path is not None:
+        waypoint_summary = json.loads(waypoint_summary_path.read_text())
+        waypoint_audit = build_waypoint_audit(df, waypoint_summary, manifest)
+        (folder / "waypoint_audit.json").write_text(
+            json.dumps(waypoint_audit, indent=2, allow_nan=False) + "\n"
+        )
+        audit["checks"].append({
+            "name": "All named waypoint stops reached",
+            "passed": waypoint_audit["overall_passed"],
+            "detail": (
+                f"{sum(stop['passed'] for stop in waypoint_audit['stops'])}/"
+                f"{waypoint_audit['stop_count']} stop audits passed"
+            ),
+        })
+        audit["overall_passed"] = (
+            audit["overall_passed"] and waypoint_audit["overall_passed"]
+        )
     if case.get("trigger_phase") and not triggered:
         audit["overall_passed"] = False
         audit["checks"].append({"name": "Scenario injected", "passed": False,
@@ -216,6 +265,9 @@ def run_case(case, output, world, master):
     (folder / "quality.json").write_text(json.dumps(quality, indent=2, allow_nan=False) + "\n")
     return {"name": case["name"], "exit_code": exit_code,
             "audit_passed": audit["overall_passed"], "outcome": manifest["outcome"],
+            "waypoint_audit_passed": (
+                None if waypoint_audit is None else waypoint_audit["overall_passed"]
+            ),
             "quality_rejection_confirmed": quality_rejection_confirmed(manifest, df.to_dict("records")),
             "final_state": state, "scenario_errors": scenario_errors}
 

@@ -42,6 +42,27 @@ class MissionPlanContractTests(unittest.TestCase):
         c.trajectory.points[1].z = c.cruise_height_m - minimum
         c.validate_mission_plan(require_home=False)
 
+    def test_yaw_derivative_limits_are_checked_before_transport(self):
+        limits = MissionConfig()
+        cases = (
+            ("yaw_rate", math.radians(limits.max_yaw_rate_deg_s + 1.0)),
+            (
+                "yaw_acceleration",
+                math.radians(limits.max_yaw_acceleration_deg_s2 + 1.0),
+            ),
+            ("yaw_jerk", math.radians(limits.max_yaw_jerk_deg_s3 + 1.0)),
+        )
+        for field, value in cases:
+            point = TrajectoryPoint(time=1.0)
+            setattr(point, field, value)
+            with self.subTest(field=field), patch(
+                "PID_position_new.Trajectory",
+                return_value=SimpleNamespace(
+                    points=[TrajectoryPoint(), point], duration=1.0
+                ),
+            ), self.assertRaisesRegex(RuntimeError, "yaw"):
+                PositionController()
+
     def test_impossible_uncertainty_and_nonfinite_accuracy_fail(self):
         c = self.controller()
         for value in (-1., math.nan, math.inf):
@@ -130,3 +151,28 @@ class TrajectoryContractTests(unittest.TestCase):
             trajectory.points[0].yaw = 0.
             trajectory.points[1].yaw = finish
             self.assertAlmostEqual(trajectory.get_target(.5).yaw, finish / 2.)
+
+    def test_controller_can_select_an_explicit_prevalidated_trajectory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "five-stops.csv"
+            with path.open("w", newline="") as file:
+                writer = csv.DictWriter(file, fieldnames=self.fields)
+                writer.writeheader()
+                for time_s in (0.0, 1.0):
+                    writer.writerow({
+                        name: (
+                            time_s if name == "time"
+                            else 1.0 if name == "x" and time_s else 0.0
+                        )
+                        for name in self.fields
+                    })
+            controller = PositionController(trajectory_path=path)
+            self.assertEqual(controller.trajectory_path, path.resolve())
+            self.assertEqual(controller.trajectory.points[-1].x, 1.0)
+
+    def test_runner_trajectory_argument_is_explicit(self):
+        path = Path("planned.csv")
+        self.assertEqual(
+            offboard_runner.parse_args(["--trajectory", str(path)]).trajectory,
+            path,
+        )

@@ -1,13 +1,39 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from sitl_monitor import monitor_child, trial_phase_clock, allow_next_trial, quality_rejection_confirmed  # noqa: E402
+from sitl_scenario_batch import stage_case_artifacts  # noqa: E402
 
 
 class SitlMonitorTests(unittest.TestCase):
+    def test_waypoint_case_artifacts_are_frozen_inside_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            source = directory / "source"
+            output = directory / "run"
+            source.mkdir()
+            output.mkdir()
+            trajectory = source / "trajectory.csv"
+            summary = source / "summary.json"
+            trajectory.write_text("trajectory\n", encoding="utf-8")
+            summary.write_text("{}\n", encoding="utf-8")
+            staged_trajectory, staged_summary = stage_case_artifacts(
+                {
+                    "trajectory": str(trajectory),
+                    "waypoint_summary": str(summary),
+                },
+                output,
+            )
+            self.assertEqual(staged_trajectory.read_bytes(), trajectory.read_bytes())
+            self.assertEqual(staged_summary.read_bytes(), summary.read_bytes())
+            self.assertEqual(staged_trajectory.parent, output.resolve())
+            with self.assertRaisesRegex(ValueError, "requires trajectory"):
+                stage_case_artifacts({"waypoint_summary": str(summary)}, output)
+
     def test_align_trigger_uses_elapsed_phase_time(self):
         row = {"phase": "ALIGN", "phase_clock_s": 0., "phase_elapsed_s": .3}
         self.assertEqual(trial_phase_clock(row), .3)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+import argparse
 import math
+from pathlib import Path
 import threading
 import time
 
@@ -460,10 +462,25 @@ def classify_failure(controller, vehicle_was_armed):
     return MissionOutcome.PREARM_REJECTED
 
 
-def main(config=None):
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Run the PX4 research mission")
+    parser.add_argument(
+        "--trajectory",
+        type=Path,
+        help=(
+            "Validated trajectory CSV; defaults to controller/trajectory.csv"
+        ),
+    )
+    return parser.parse_args(argv)
+
+
+def main(config=None, trajectory_path=None):
     run_record = RunRecord()
     try:
-        c = PositionController(config=config)
+        c = PositionController(
+            config=config,
+            trajectory_path=trajectory_path,
+        )
         run_record.attach_context(c, {})
     except Exception as exc:
         run_record.finalize(
@@ -709,4 +726,5 @@ def main(config=None):
 
 
 if __name__ == "__main__":
-    main()
+    arguments = parse_args()
+    main(trajectory_path=arguments.trajectory)

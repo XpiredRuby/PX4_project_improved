@@ -27,6 +27,8 @@
 1. Record PX4 commit/version, simulator, model, parameters, OS/WSL version, and
    Python dependency versions.
 2. Generate `trajectory.csv` from the checked-in generator; do not hand-edit it.
+   For waypoint missions, retain the source JSON and compiler summary alongside
+   the generated CSV.
 3. Record SHA-256 hashes for the controller source and generated trajectory.
 4. Run paired trials with counterbalanced order where practical.
 5. Preserve failures and exclusions; do not silently drop unsuccessful attempts.
@@ -36,6 +38,6 @@
 Current runs write `run_manifest_<run-id>.json` beside the matching
 `research_log_<run-id>.csv`. The manifest records the outcome and reason,
 cleanup result, controller configuration, audited PX4 parameters, source and
-trajectory hashes, software versions, and final PX4 state. This mission is
+selected trajectory path and hash, software versions, and final PX4 state. This mission is
 deterministic, so the manifest records `random_seed: null` rather than
 inventing a seed.

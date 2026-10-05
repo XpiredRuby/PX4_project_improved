@@ -45,3 +45,14 @@ jobs:
             controller/position_prediction.py \
             controller/touchdown_quality.py \
             controller/flight_logger.py
+      - name: Waypoint planner branch coverage
+        run: |
+          python -m coverage erase
+          python -m coverage run --branch \
+            -m unittest \
+              tests.test_waypoint_mission \
+              tests.test_waypoint_mission_audit
+          python -m coverage report --fail-under=90 \
+            trajectory_generator/waypoint_mission.py \
+            trajectory_generator/plan_waypoint_mission.py \
+            analysis/waypoint_mission_audit.py
