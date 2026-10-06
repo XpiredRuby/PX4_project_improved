@@ -1,7 +1,0 @@
-{
-  "name": "slope-8deg-final",
-  "raise_m": 0.0,
-  "slope_deg": 8.0,
-  "trigger_phase": "TRAJECTORY",
-  "trigger_clock_s": 3.0
-}

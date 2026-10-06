@@ -1,7 +1,0 @@
-{
-  "name": "return-gps-4s-final",
-  "gps_outage_s": 4,
-  "trigger_phase": "RETURN_HOME",
-  "trigger_clock_s": 0.5,
-  "expected": "navigation_response"
-}

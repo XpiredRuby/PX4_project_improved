@@ -1,9 +1,0 @@
-{
-  "expected_surface_height_change_m": 2.0,
-  "logged_launch_home_z_ned_m": 0.029,
-  "median_final_z_ned_m": -1.9416812658309937,
-  "estimated_upward_height_change_m": 1.9706812658309936,
-  "tolerance_m": 0.3,
-  "passed": true,
-  "controller_received_surface_height": false
-}
