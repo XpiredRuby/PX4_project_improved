@@ -1,7 +1,7 @@
 # Simple PX4 Flight Controller
 
-This is a small, readable replacement for the previous 2,735-line main controller.
-It keeps the basic structure of Vishnu's code while making the mission values explicit.
+This 386-line controller replaces the previous 2,735-line main controller. It keeps
+the basic structure of Vishnu's code while making the mission values explicit.
 
 ## Mission
 
@@ -14,9 +14,9 @@ It keeps the basic structure of Vishnu's code while making the mission values ex
 7. Descend at 0.1 m/s at or below 5 m AGL.
 8. Disarm only after PX4 reports `ON_GROUND`.
 
-The control loop is scheduled at 10 Hz, or once every 0.1 seconds. Each measured
-cycle is checked against a 0.09 to 0.11 second tolerance band. Three consecutive
-timing violations end Offboard control and request PX4 `AUTO.LAND`.
+The trajectory advances by exactly 0.1 seconds per command. The real control loop is
+scheduled at 10 Hz and independently checked against a 0.09 to 0.11 second tolerance
+band. Three consecutive timing violations request PX4 `AUTO.LAND`.
 
 ## Run in SITL
 
