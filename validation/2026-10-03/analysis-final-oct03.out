@@ -1,7 +1,0 @@
-ANALYSIS_COMPLETE=/home/xpire/PX4-runs/terrain-final-20261003T062325Z/offset-yaw-final/batch/offset-yaw-final/analysis
-ROWS=4093
-INNER_LOOP_PLOT=true
-TRAJECTORY_DERIVATIVE_PLOT=true
-OUTER_INNER_CHAIN_PLOT=true
-ACCELERATION_TRACKING_PLOT=true
-SAFETY_AUDIT=pass

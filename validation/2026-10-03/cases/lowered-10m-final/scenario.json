@@ -1,6 +1,0 @@
-{
-  "name": "lowered-10m-final",
-  "remove_surface": true,
-  "trigger_phase": "TRAJECTORY",
-  "trigger_clock_s": 3.0
-}

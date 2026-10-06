@@ -1,7 +1,0 @@
-{
-  "name": "takeoff-gps-4s-final",
-  "gps_outage_s": 4,
-  "trigger_phase": "TAKEOFF",
-  "trigger_clock_s": 3,
-  "expected": "navigation_response"
-}

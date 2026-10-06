@@ -1,6 +1,0 @@
-[
-  {
-    "reset_wind": "linear_velocity {\n}\nenable_wind: true\n\n",
-    "initial_wind": "linear_velocity {\n}\nenable_wind: true\n\n"
-  }
-]

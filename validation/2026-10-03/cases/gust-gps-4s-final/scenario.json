@@ -1,8 +1,0 @@
-{
-  "name": "gust-gps-4s-final",
-  "gust": true,
-  "gps_outage_s": 4,
-  "trigger_phase": "TRAJECTORY",
-  "trigger_clock_s": 15,
-  "expected": "navigation_response"
-}
