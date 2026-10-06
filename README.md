@@ -1,6 +1,6 @@
 # Simple PX4 Flight Controller
 
-This 386-line controller replaces the previous 2,735-line main controller. It keeps
+This compact controller replaces the previous 2,735-line main controller. It keeps
 the basic structure of Vishnu's code while making the mission values explicit.
 
 ## Mission
@@ -12,7 +12,8 @@ the basic structure of Vishnu's code while making the mission values explicit.
 5. Hold the endpoint while landing.
 6. Descend at 0.5 m/s above 5 m AGL.
 7. Descend at 0.1 m/s at or below 5 m AGL.
-8. Disarm only after PX4 reports `ON_GROUND`.
+8. At 0.15 m AGL, hand touchdown control to PX4 LAND.
+9. Disarm only after PX4 reports `ON_GROUND`.
 
 The trajectory advances by exactly 0.1 seconds per command. The real control loop is
 scheduled at 10 Hz and independently checked against a 0.09 to 0.11 second tolerance

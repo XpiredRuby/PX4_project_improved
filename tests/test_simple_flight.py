@@ -1,7 +1,8 @@
 import math
 import unittest
+from types import SimpleNamespace
 
-from simple_flight import Config, Mission, State
+from simple_flight import Config, Mission, State, decode_px4_mode
 
 
 class SimpleFlightTests(unittest.TestCase):
@@ -27,9 +28,15 @@ class SimpleFlightTests(unittest.TestCase):
         mission = Mission(self.config, self.state, heading_deg=0.0)
         mission.phase = "TRAJECTORY"
         state = State(z=-8.0, landed=2)
+        previous_speed = 0.0
         for _ in range(3000):
             command = mission.step(state)
             self.assertLessEqual(mission.reference_speed, 5.0)
+            self.assertLessEqual(
+                abs(mission.reference_speed - previous_speed),
+                self.config.acceleration_m_s2 * self.config.dt + 1e-12,
+            )
+            previous_speed = mission.reference_speed
             state.x = command.target_x
             state.vx = mission.reference_speed
             if mission.progress == 200.0:
@@ -48,10 +55,23 @@ class SimpleFlightTests(unittest.TestCase):
         self.assertEqual(mission.step(State(x=200.0, z=-5.0, landed=2)).vz, 0.1)
         self.assertEqual(mission.phase, "LAND_SLOW")
 
+    def test_touchdown_hands_control_to_px4_land(self):
+        mission = Mission(self.config, self.state, heading_deg=0.0)
+        mission.phase = "LAND_SLOW"
+        command = mission.step(State(x=200.0, z=-0.15, landed=2))
+        self.assertEqual(mission.phase, "LAND_HANDOFF")
+        self.assertEqual(command.vz, 0.0)
+
     def test_landing_uses_known_initial_surface_height(self):
         initial = State(x=10.0, y=20.0, z=3.0, yaw=math.pi / 2, landed=1)
         mission = Mission(self.config, initial, heading_deg=0.0)
         self.assertEqual(mission.agl(State(z=-2.0)), 5.0)
+
+    def test_px4_mode_decoder_handles_current_heartbeat_flags(self):
+        offboard = SimpleNamespace(custom_mode=6 << 16)
+        land = SimpleNamespace(custom_mode=(6 << 24) | (4 << 16))
+        self.assertEqual(decode_px4_mode(offboard), "OFFBOARD")
+        self.assertEqual(decode_px4_mode(land), "LAND")
 
 
 if __name__ == "__main__":

@@ -17,6 +17,17 @@ except ImportError:  # Unit tests only exercise the mission logic.
     mavutil = None
 
 
+def decode_px4_mode(message) -> str:
+    """Decode the PX4 custom mode without relying on changing base-mode flags."""
+    main_mode = (message.custom_mode >> 16) & 0xFF
+    sub_mode = (message.custom_mode >> 24) & 0xFF
+    if main_mode == 6:
+        return "OFFBOARD"
+    if main_mode == 4 and sub_mode == 6:
+        return "LAND"
+    return mavutil.mode_string_v10(message)
+
+
 def clamp(value: float, low: float, high: float) -> float:
     return max(low, min(value, high))
 
@@ -37,6 +48,7 @@ class Config:
     takeoff_m: float = 8.0
     slow_below_m: float = 5.0
     slow_descent_m_s: float = 0.1
+    land_handoff_m: float = 0.15
     fast_descent_m_s: float = 0.5
     acceleration_m_s2: float = 1.0
     position_kp: float = 0.8
@@ -59,6 +71,8 @@ class Config:
             raise ValueError("timing_tolerance must be between 0 and 1")
         if not self.slow_descent_m_s < self.fast_descent_m_s:
             raise ValueError("slow descent must be slower than fast descent")
+        if not 0 < self.land_handoff_m < self.slow_below_m:
+            raise ValueError("land handoff must be inside the slow-descent zone")
         if self.takeoff_m <= self.slow_below_m:
             raise ValueError("takeoff height must exceed the slow-descent height")
 
@@ -142,16 +156,21 @@ class Mission:
 
         if self.phase == "TRAJECTORY":
             remaining = max(0.0, self.c.distance_m - self.progress)
-            stopping_speed = math.sqrt(2 * self.c.acceleration_m_s2 * remaining)
+            lookahead = self.reference_speed * self.c.dt
+            braking_distance = max(0.0, remaining - lookahead)
+            stopping_speed = math.sqrt(2 * self.c.acceleration_m_s2 * braking_distance)
             goal_speed = min(self.c.cruise_m_s, stopping_speed)
             change = self.c.acceleration_m_s2 * self.c.dt
-            self.reference_speed += clamp(goal_speed - self.reference_speed, -change, change)
-            self.progress = min(
-                self.c.distance_m,
-                self.progress + self.reference_speed * self.c.dt,
+            next_speed = self.reference_speed + clamp(
+                goal_speed - self.reference_speed, -change, change
             )
-            if self.progress >= self.c.distance_m:
-                self.reference_speed = 0.0
+            step_distance = 0.5 * (self.reference_speed + next_speed) * self.c.dt
+            if step_distance >= remaining:
+                self.progress = self.c.distance_m
+                next_speed = 0.0
+            else:
+                self.progress += step_distance
+            self.reference_speed = next_speed
             target_x = self.start_x + self.north * self.progress
             target_y = self.start_y + self.east * self.progress
             vx = self.north * self.reference_speed + self.c.position_kp * (target_x - state.x)
@@ -173,11 +192,13 @@ class Mission:
             return Command(vx, vy, vz, self.yaw, target_x, target_y, target_z)
 
         vx, vy = self.hold_xy(state, self.end_x, self.end_y, 1.0)
-        if self.agl(state) <= self.c.slow_below_m:
+        if self.phase == "LAND_FAST" and self.agl(state) <= self.c.slow_below_m:
             self.phase = "LAND_SLOW"
+        if self.phase == "LAND_SLOW" and self.agl(state) <= self.c.land_handoff_m:
+            self.phase = "LAND_HANDOFF"
         if state.landed == 1:
             self.phase = "DONE"
-        vz = 0.0 if self.phase == "DONE" else (
+        vz = 0.0 if self.phase in ("LAND_HANDOFF", "DONE") else (
             self.c.slow_descent_m_s if self.phase == "LAND_SLOW" else self.c.fast_descent_m_s
         )
         return Command(vx, vy, vz, self.yaw, self.end_x, self.end_y, self.ground_z)
@@ -221,7 +242,7 @@ class PX4:
                 elif kind == "ATTITUDE":
                     self.state.yaw, self.state.attitude_at = message.yaw, now
                 elif kind == "HEARTBEAT":
-                    self.state.mode = mavutil.mode_string_v10(message)
+                    self.state.mode = decode_px4_mode(message)
                     self.state.armed = bool(message.base_mode & 128)
                     self.state.heartbeat_at = now
                 elif kind == "EXTENDED_SYS_STATE":
@@ -246,13 +267,14 @@ class PX4:
             command.yaw, 0,
         )
 
-    def set_mode(self, name: str, custom_mode: int) -> None:
+    def set_mode(self, name: str, keepalive: Command) -> None:
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
-            self.master.mav.set_mode_send(self.master.target_system, 1, custom_mode)
+            self.send(keepalive)
+            self.master.set_mode(name)
+            time.sleep(self.c.dt)
             if name in self.snapshot().mode.upper():
                 return
-            time.sleep(self.c.dt)
         raise TimeoutError(f"PX4 did not enter {name}")
 
     def wait_ready(self) -> State:
@@ -266,13 +288,14 @@ class PX4:
             time.sleep(0.05)
         raise TimeoutError("Fresh initialization data not received")
 
-    def arm(self) -> None:
+    def arm(self, keepalive: Command) -> None:
         state = self.snapshot()
         if state.armed or state.landed != 1:
             raise RuntimeError("Refusing unsafe arm request")
         self.command_long(400, 1)
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
+            self.send(keepalive)
             if self.snapshot().armed:
                 return
             time.sleep(0.05)
@@ -293,10 +316,9 @@ class PX4:
         for _ in range(round(2 / self.c.dt)):
             self.send(zero)
             time.sleep(self.c.dt)
-        self.set_mode("OFFBOARD", 6 << 16)
-        self.arm()
+        self.set_mode("OFFBOARD", zero)
+        self.arm(zero)
 
-        start = previous = next_tick = time.monotonic()
         samples = violations = late_streak = 0
         low = self.c.dt * (1 - self.c.timing_tolerance)
         high = self.c.dt * (1 + self.c.timing_tolerance)
@@ -304,16 +326,22 @@ class PX4:
         with self.log_path.open("w", newline="") as stream:
             writer = csv.writer(stream)
             writer.writerow(
-                ("time", "actual_dt", "phase", "x", "y", "z", "target_x", "target_y",
-                 "target_z", "cmd_vx", "cmd_vy", "cmd_vz")
+                ("time", "actual_dt", "phase", "x", "y", "z", "vx", "vy", "vz",
+                 "landed", "target_x", "target_y", "target_z", "cmd_vx", "cmd_vy",
+                 "cmd_vz")
             )
+            start = previous = next_tick = time.monotonic()
             while mission.phase != "DONE":
                 now, state = time.monotonic(), self.snapshot()
                 actual_dt = self.c.dt if samples == 0 else now - previous
                 previous = now
                 if not state.fresh(now, self.c.telemetry_timeout_s):
                     raise RuntimeError("Telemetry became stale")
-                if "OFFBOARD" not in state.mode.upper():
+                mode_ok = "OFFBOARD" in state.mode.upper()
+                land_handoff_ok = mission.phase == "LAND_HANDOFF" and (
+                    "LAND" in state.mode.upper() or state.landed == 1
+                )
+                if not (mode_ok or land_handoff_ok):
                     raise RuntimeError("PX4 left OFFBOARD")
                 if not state.armed and state.landed != 1:
                     raise RuntimeError("Vehicle disarmed in flight")
@@ -327,8 +355,11 @@ class PX4:
 
                 command = mission.step(state)  # Always advances by exactly 0.1 s.
                 self.send(command)
+                if mission.phase == "LAND_HANDOFF" and "LAND" not in state.mode.upper():
+                    self.master.set_mode("LAND")
                 writer.writerow(
                     (now - start, actual_dt, mission.phase, state.x, state.y, state.z,
+                     state.vx, state.vy, state.vz, state.landed,
                      command.target_x, command.target_y, command.target_z,
                      command.vx, command.vy, command.vz)
                 )
@@ -353,9 +384,7 @@ class PX4:
         if self.master and self.snapshot().armed:
             print("Failure detected. Handing control to PX4 AUTO.LAND.")
             for _ in range(20):
-                self.master.mav.set_mode_send(
-                    self.master.target_system, 1, (6 << 24) | (4 << 16)
-                )
+                self.master.set_mode("LAND")
                 if "LAND" in self.snapshot().mode.upper():
                     break
                 time.sleep(0.1)
