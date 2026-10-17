@@ -38,6 +38,7 @@ def compile_into(directory: Path, prefix: str):
         sample_period_s=0.1,
         limit_scale=0.9,
         controller_cruise_height_m=17.0,
+        deviation_utilization=0.75,
     )
 
 
@@ -119,6 +120,7 @@ class DrawnPathCompilerTests(unittest.TestCase):
                     sample_period_s=0.1,
                     limit_scale=0.9,
                     controller_cruise_height_m=17.0,
+                    deviation_utilization=0.75,
                 )
             self.assertFalse(trajectory.exists())
             self.assertFalse(report.exists())
@@ -144,6 +146,7 @@ class DrawnPathCompilerTests(unittest.TestCase):
                     sample_period_s=0.1,
                     limit_scale=0.9,
                     controller_cruise_height_m=17.0,
+                    deviation_utilization=0.75,
                 )
             self.assertFalse((directory / "trajectory.csv").exists())
 
@@ -163,6 +166,7 @@ class DrawnPathCompilerTests(unittest.TestCase):
                     sample_period_s=0.1,
                     limit_scale=0.9,
                     controller_cruise_height_m=17.0,
+                    deviation_utilization=0.75,
                 )
 
     def test_cli_writes_requested_outputs(self):
@@ -230,6 +234,7 @@ class DrawnPathCompilerTests(unittest.TestCase):
                     sample_period_s=0.1,
                     limit_scale=0.9,
                     controller_cruise_height_m=17.0,
+                    deviation_utilization=0.75,
                 )
             for path, content in previous.items():
                 self.assertEqual(path.read_bytes(), content)

@@ -6,7 +6,11 @@ import unittest
 import numpy as np
 
 from mission_planner.contracts import PathIntent
-from mission_planner.geometry import build_smooth_path
+from mission_planner.geometry import (
+    BSplinePath,
+    build_smooth_path,
+    tangent_heading_slope_bound,
+)
 
 
 def polyline(
@@ -193,6 +197,152 @@ class PlannerGeometryTests(unittest.TestCase):
         for value in (0.0, -1.0, math.nan, math.inf):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 build_smooth_path(internal_hard, control_spacing_m=value)
+
+    def test_deviation_budget_is_spent_to_widen_corners(self):
+        path = polyline(
+            [
+                (0.0, 0.0, -8.0),
+                (6.0, 4.0, -8.0),
+                (12.0, -3.0, -9.0),
+                (18.0, 0.0, -8.0),
+            ],
+            maximum_deviation_m=0.5,
+        )
+        faithful = build_smooth_path(
+            path,
+            control_spacing_m=0.25,
+            verification_resolution_m=0.01,
+            deviation_utilization=0.05,
+        )
+        relaxed = build_smooth_path(
+            path,
+            control_spacing_m=0.25,
+            verification_resolution_m=0.01,
+            deviation_utilization=0.75,
+        )
+        self.assertGreater(
+            relaxed.smoothing.selected_control_spacing_m,
+            faithful.smoothing.selected_control_spacing_m,
+        )
+        self.assertGreater(
+            relaxed.fidelity.symmetric_upper_bound_m,
+            faithful.fidelity.symmetric_upper_bound_m,
+        )
+        for plan in (faithful, relaxed):
+            self.assertTrue(plan.fidelity.accepted)
+            self.assertLessEqual(
+                plan.fidelity.symmetric_upper_bound_m,
+                path.maximum_deviation_m,
+            )
+            self.assertEqual(plan.smoothing.requested_control_spacing_m, 0.25)
+            self.assertEqual(
+                plan.smoothing.control_point_count,
+                len(plan.curve.control_points),
+            )
+            self.assertAlmostEqual(plan.smoothing.path_length_m, 23.267, places=2)
+        # A wider corner is a lower-curvature corner, which is what makes the
+        # retimed mission cheaper rather than merely shorter in control points.
+        self.assertLess(
+            relaxed.curve.derivative_norm_bound(2)
+            / relaxed.curve.derivative_norm_bound(1) ** 2,
+            faithful.curve.derivative_norm_bound(2)
+            / faithful.curve.derivative_norm_bound(1) ** 2,
+        )
+        self.assertLess(
+            relaxed.smoothing.heading_slope_bound_rad,
+            faithful.smoothing.heading_slope_bound_rad,
+        )
+
+    def test_deviation_utilization_is_validated(self):
+        path = polyline(
+            [(0.0, 0.0, -8.0), (5.0, 1.0, -8.0), (10.0, 0.0, -8.0)],
+            maximum_deviation_m=0.5,
+        )
+        for value in (0.0, -0.5, 1.5, math.nan, math.inf):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                build_smooth_path(
+                    path,
+                    control_spacing_m=0.25,
+                    verification_resolution_m=0.01,
+                    deviation_utilization=value,
+                )
+
+    def test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents(self):
+        plan = build_smooth_path(
+            polyline(
+                [
+                    (0.0, 0.0, -8.0),
+                    (4.0, 3.0, -8.0),
+                    (8.0, -2.0, -8.0),
+                ],
+                maximum_deviation_m=0.4,
+            ),
+            control_spacing_m=0.25,
+            verification_resolution_m=0.01,
+        )
+        bound = tangent_heading_slope_bound(plan.curve)
+        parameters = np.linspace(0.0, 1.0, 4001)
+        tangents = np.asarray([
+            plan.curve.evaluate(float(value), 1) for value in parameters
+        ])
+        headings = np.unwrap(np.arctan2(tangents[:, 1], tangents[:, 0]))
+        measured = float(np.max(np.abs(np.gradient(headings, parameters))))
+        self.assertGreaterEqual(bound, measured)
+        self.assertEqual(bound, plan.smoothing.heading_slope_bound_rad)
+
+        vertical = build_smooth_path(
+            polyline(
+                [(0.0, 0.0, -4.0), (0.0, 0.0, -12.0)],
+                maximum_deviation_m=0.2,
+            ),
+            control_spacing_m=0.5,
+            verification_resolution_m=0.01,
+        )
+        with self.assertRaisesRegex(ValueError, "horizontal speed"):
+            tangent_heading_slope_bound(vertical.curve)
+        self.assertIsNone(vertical.smoothing.heading_slope_bound_rad)
+
+    def test_scalar_spline_reuses_curve_evaluation_and_bounds(self):
+        # A one-dimensional schedule must share the validated de Boor and
+        # convex-hull code so later yaw planning needs no second implementation.
+        degree = 5
+        count = 10
+        knots = (
+            [0.0] * (degree + 1)
+            + [index / (count - degree) for index in range(1, count - degree)]
+            + [1.0] * (degree + 1)
+        )
+        ramp = BSplinePath(
+            control_points=tuple(
+                (index / (count - 1),) for index in range(count)
+            ),
+            knots=tuple(knots),
+            degree=degree,
+            periodic=False,
+        )
+        self.assertEqual(ramp.dimension, 1)
+        self.assertEqual(ramp.evaluate(0.0), (0.0,))
+        self.assertEqual(ramp.evaluate(1.0), (1.0,))
+        step = 1e-6
+        numerical = (
+            ramp.evaluate(0.4 + step)[0] - ramp.evaluate(0.4 - step)[0]
+        ) / (2.0 * step)
+        self.assertAlmostEqual(numerical, ramp.evaluate(0.4, 1)[0], places=5)
+        self.assertGreater(ramp.derivative_norm_bound(1), 0.0)
+        linear = BSplinePath(
+            control_points=((0.0,), (1.0,)),
+            knots=(0.0, 0.0, 1.0, 1.0),
+            degree=1,
+            periodic=False,
+        )
+        self.assertEqual(linear.evaluate(0.5, 2), (0.0,))
+        with self.assertRaisesRegex(ValueError, "D >= 1"):
+            BSplinePath(
+                control_points=((), ()),
+                knots=(0.0, 0.0, 1.0, 1.0),
+                degree=1,
+                periodic=False,
+            )
 
     def test_invalid_curve_queries_fail_closed(self):
         curve = build_smooth_path(

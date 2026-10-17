@@ -12,6 +12,7 @@ from .contracts import PathIntent
 
 MAX_CONTROL_POINTS = 20_000
 MAX_VERIFICATION_SAMPLES = 250_000
+SMOOTHING_LADDER_STEPS = 6
 
 
 def _finite_positive(value: float, field: str) -> float:
@@ -23,7 +24,7 @@ def _finite_positive(value: float, field: str) -> float:
     return result
 
 
-def _as_tuple(point: np.ndarray) -> tuple[float, float, float]:
+def _as_tuple(point: np.ndarray) -> tuple[float, ...]:
     return tuple(float(value) for value in point)
 
 
@@ -33,7 +34,7 @@ def _derivative_curve(
     degree: int,
 ) -> tuple[np.ndarray, np.ndarray, int]:
     if degree <= 0:
-        return np.zeros((1, 3), dtype=float), knots, 0
+        return np.zeros((1, control_points.shape[1]), dtype=float), knots, 0
     denominator = knots[degree + 1 : degree + len(control_points)]
     denominator = denominator - knots[1 : len(control_points)]
     if np.any(denominator <= 0.0):
@@ -43,6 +44,64 @@ def _derivative_curve(
     return derivative, knots[1:-1], degree - 1
 
 
+def _span_index(
+    knots: np.ndarray,
+    degree: int,
+    count: int,
+    parameter: float,
+) -> tuple[int, float]:
+    """Return the knot span owning a parameter, clamped to the curve domain."""
+    lower = knots[degree]
+    upper = knots[count]
+    if parameter <= lower:
+        return degree, float(lower)
+    if parameter >= upper:
+        return count - 1, float(upper)
+    span = int(np.searchsorted(knots, parameter, side="right") - 1)
+    return min(max(span, degree), count - 1), parameter
+
+
+def _span_breakpoints(
+    knots: np.ndarray,
+    degree: int,
+    count: int,
+) -> np.ndarray:
+    """Return the distinct parameter breakpoints spanning the curve domain."""
+    return np.unique(knots[degree : count + 1])
+
+
+def _local_controls(
+    control_points: np.ndarray,
+    knots: np.ndarray,
+    degree: int,
+    parameter: float,
+) -> np.ndarray:
+    """Return the control points whose hull contains the owning span."""
+    span, _ = _span_index(knots, degree, len(control_points), parameter)
+    return control_points[span - degree : span + 1]
+
+
+def _hull_norm_upper(points: np.ndarray) -> float:
+    """Return a valid upper bound for the norm over a convex hull."""
+    return float(np.max(np.linalg.norm(points, axis=1)))
+
+
+def _hull_norm_lower(points: np.ndarray) -> float:
+    """Return a valid lower bound for the norm over a convex hull.
+
+    Any unit direction that separates the hull from the origin certifies a
+    lower bound, because every hull member projects at least as far along it.
+    The hull centroid supplies that direction when one exists; a nonpositive
+    result simply means this certificate found none.
+    """
+    centroid = points.mean(axis=0)
+    magnitude = float(np.linalg.norm(centroid))
+    if magnitude <= 0.0:
+        return 0.0
+    direction = centroid / magnitude
+    return max(0.0, float(np.min(points @ direction)))
+
+
 def _de_boor(
     control_points: np.ndarray,
     knots: np.ndarray,
@@ -50,17 +109,7 @@ def _de_boor(
     parameter: float,
 ) -> np.ndarray:
     count = len(control_points)
-    lower = knots[degree]
-    upper = knots[count]
-    if parameter <= lower:
-        span = degree
-        parameter = lower
-    elif parameter >= upper:
-        span = count - 1
-        parameter = upper
-    else:
-        span = int(np.searchsorted(knots, parameter, side="right") - 1)
-        span = min(max(span, degree), count - 1)
+    span, parameter = _span_index(knots, degree, count, parameter)
     work = np.array(
         control_points[span - degree : span + 1],
         dtype=float,
@@ -83,9 +132,14 @@ def _de_boor(
 
 @dataclass(frozen=True)
 class BSplinePath:
-    """A clamped or periodic B-spline over normalized parameter s in [0, 1]."""
+    """A clamped or periodic B-spline over normalized parameter s in [0, 1].
 
-    control_points: tuple[tuple[float, float, float], ...]
+    The control points may have any positive dimension so that a scalar
+    schedule, such as a yaw profile, reuses the same validated evaluation and
+    convex-hull bounding code as a three-dimensional path.
+    """
+
+    control_points: tuple[tuple[float, ...], ...]
     knots: tuple[float, ...]
     degree: int
     periodic: bool
@@ -93,8 +147,8 @@ class BSplinePath:
     def __post_init__(self) -> None:
         controls = np.asarray(self.control_points, dtype=float)
         knots = np.asarray(self.knots, dtype=float)
-        if controls.ndim != 2 or controls.shape[1] != 3:
-            raise ValueError("control_points must be an N by 3 array")
+        if controls.ndim != 2 or controls.shape[1] < 1:
+            raise ValueError("control_points must be an N by D array with D >= 1")
         if not np.all(np.isfinite(controls)) or not np.all(np.isfinite(knots)):
             raise ValueError("B-spline data must be finite")
         if not 1 <= self.degree < len(controls):
@@ -108,11 +162,15 @@ class BSplinePath:
         if not math.isclose(knots[len(controls)], 1.0, abs_tol=1e-12):
             raise ValueError("B-spline parameter domain must end at one")
 
+    @property
+    def dimension(self) -> int:
+        return len(self.control_points[0])
+
     def evaluate(
         self,
         parameter: float,
         derivative: int = 0,
-    ) -> tuple[float, float, float]:
+    ) -> tuple[float, ...]:
         if isinstance(parameter, bool) or not isinstance(parameter, (int, float)):
             raise ValueError("parameter must be numeric")
         parameter = float(parameter)
@@ -123,7 +181,7 @@ class BSplinePath:
         if not 0 <= derivative <= 3:
             raise ValueError("derivative must be in [0, 3]")
         if derivative > self.degree:
-            return (0.0, 0.0, 0.0)
+            return (0.0,) * self.dimension
 
         controls = np.asarray(self.control_points, dtype=float)
         knots = np.asarray(self.knots, dtype=float)
@@ -161,6 +219,18 @@ class GeometryPlan:
     curve: BSplinePath
     source_points: tuple[tuple[float, float, float], ...]
     fidelity: PathFidelityReport
+    smoothing: SmoothingReport
+
+
+@dataclass(frozen=True)
+class SmoothingReport:
+    requested_control_spacing_m: float
+    selected_control_spacing_m: float
+    deviation_utilization: float
+    deviation_budget_m: float
+    control_point_count: int
+    path_length_m: float
+    heading_slope_bound_rad: float | None
 
 
 def _deduplicate_consecutive(
@@ -205,11 +275,18 @@ def _densify(
     return result
 
 
-def _build_spline(control_points: np.ndarray, *, periodic: bool) -> BSplinePath:
+def _build_spline(
+    control_points: np.ndarray,
+    *,
+    periodic: bool,
+    parameters: np.ndarray | None = None,
+) -> BSplinePath:
     degree = 5
     if len(control_points) <= degree:
         raise ValueError("quintic geometry requires at least six control points")
     if periodic:
+        if parameters is not None:
+            raise ValueError("periodic splines use intrinsic uniform parameters")
         original_count = len(control_points)
         extended = np.vstack((control_points, control_points[:degree]))
         knots = (
@@ -218,11 +295,14 @@ def _build_spline(control_points: np.ndarray, *, periodic: bool) -> BSplinePath:
         controls = extended
     else:
         controls = control_points
-        chord_lengths = np.linalg.norm(np.diff(controls, axis=0), axis=1)
-        parameters = np.concatenate((
-            np.zeros(1),
-            np.cumsum(chord_lengths) / np.sum(chord_lengths),
-        ))
+        if parameters is None:
+            chord_lengths = np.linalg.norm(np.diff(controls, axis=0), axis=1)
+            parameters = np.concatenate((
+                np.zeros(1),
+                np.cumsum(chord_lengths) / np.sum(chord_lengths),
+            ))
+        elif len(parameters) != len(controls):
+            raise ValueError("parameter count must match the control count")
         internal = np.asarray([
             np.mean(parameters[index : index + degree])
             for index in range(1, len(controls) - degree)
@@ -325,14 +405,71 @@ def measure_path_fidelity(
     )
 
 
+def tangent_heading_slope_bound(curve: BSplinePath) -> float:
+    """Bound |d(heading)/ds| for the horizontal tangent of a 3-D curve.
+
+    The heading of the horizontal tangent obeys
+    ``psi' = (n' e'' - e' n'') / (n'^2 + e'^2)``, so a per-span upper bound on
+    the horizontal tangent and curvature terms combined with a per-span lower
+    bound on horizontal speed bounds the whole quotient. Both bounds come from
+    the convex hull of the local control points of the derivative curves, which
+    contains the derivative over that span. A span whose horizontal speed
+    cannot be separated from zero is rejected, because the heading itself is
+    undefined wherever the horizontal tangent vanishes.
+    """
+    if curve.dimension != 3:
+        raise ValueError("tangent heading requires a three-dimensional curve")
+    if curve.degree < 2:
+        raise ValueError("tangent heading slope requires a second derivative")
+    controls = np.asarray(curve.control_points, dtype=float)
+    knots = np.asarray(curve.knots, dtype=float)
+    breakpoints = _span_breakpoints(knots, curve.degree, len(controls))
+    first = _derivative_curve(controls, knots, curve.degree)
+    second = _derivative_curve(*first)
+    worst = 0.0
+    for lower, upper in zip(breakpoints[:-1], breakpoints[1:], strict=True):
+        middle = 0.5 * (float(lower) + float(upper))
+        tangent = _local_controls(*first, middle)[:, :2]
+        curvature = _local_controls(*second, middle)[:, :2]
+        speed_lower = _hull_norm_lower(tangent)
+        if speed_lower <= 0.0:
+            raise ValueError(
+                "horizontal speed cannot be bounded away from zero near "
+                f"parameter {middle:.6f}; tangent yaw is undefined there"
+            )
+        worst = max(
+            worst,
+            _hull_norm_upper(tangent) * _hull_norm_upper(curvature)
+            / speed_lower**2,
+        )
+    return worst
+
+
+def _heading_slope_or_none(curve: BSplinePath) -> float | None:
+    try:
+        return tangent_heading_slope_bound(curve)
+    except ValueError:
+        return None
+
+
 def build_smooth_path(
     path: PathIntent,
     *,
     control_spacing_m: float,
     verification_resolution_m: float | None = None,
     duplicate_tolerance_m: float = 1e-6,
+    deviation_utilization: float = 0.75,
 ) -> GeometryPlan:
-    """Normalize a drawn polyline and fail if smoothing violates its tolerance."""
+    """Normalize a drawn polyline and fail if smoothing violates its tolerance.
+
+    Control spacing sets how closely the quintic hull follows the stroke, so
+    the coarsest spacing that still fits the intent tolerance also produces the
+    widest, lowest-curvature corners and therefore the cheapest motion. The
+    search walks a fixed geometric ladder from coarse to fine and keeps the
+    first spacing inside the utilized share of the declared deviation, which
+    leaves the remainder as headroom for independent verification and for
+    controller discretization.
+    """
     if path.kind != "polyline":
         raise ValueError("smooth-path baseline currently accepts polyline intent only")
     if path.closure == "open_depart":
@@ -341,6 +478,9 @@ def build_smooth_path(
     duplicate_tolerance = _finite_positive(
         duplicate_tolerance_m, "duplicate_tolerance_m"
     )
+    utilization = _finite_positive(deviation_utilization, "deviation_utilization")
+    if utilization > 1.0:
+        raise ValueError("deviation_utilization must not exceed one")
     internal_hard = [point.point_id for point in path.points[1:-1] if point.hard]
     if internal_hard:
         raise ValueError(
@@ -368,9 +508,6 @@ def build_smooth_path(
     if np.any(segment_lengths <= duplicate_tolerance):
         raise ValueError("path contains unresolved zero-length segments")
     total_length = float(np.sum(segment_lengths))
-    effective_spacing = min(spacing, total_length / 5.0)
-    dense = _densify(points, effective_spacing, periodic=periodic)
-    curve = _build_spline(dense, periodic=periodic)
     resolution = verification_resolution_m
     if resolution is None:
         if path.maximum_deviation_m <= 0.0:
@@ -378,17 +515,44 @@ def build_smooth_path(
                 "zero path deviation requires an exact geometry planner"
             )
         resolution = min(spacing / 20.0, path.maximum_deviation_m / 20.0)
+    budget = path.maximum_deviation_m * utilization
     source = tuple(_as_tuple(point) for point in original_points)
-    fidelity = measure_path_fidelity(
-        curve,
-        source,
-        maximum_deviation_m=path.maximum_deviation_m,
-        verification_resolution_m=resolution,
-    )
+    attempt = None
+    for step in range(SMOOTHING_LADDER_STEPS, -1, -1):
+        candidate_spacing = min(
+            spacing * 2.0 ** (step / 2.0), total_length / 5.0
+        )
+        if attempt is not None and candidate_spacing >= attempt[0]:
+            continue
+        dense = _densify(points, candidate_spacing, periodic=periodic)
+        curve = _build_spline(dense, periodic=periodic)
+        fidelity = measure_path_fidelity(
+            curve,
+            source,
+            maximum_deviation_m=path.maximum_deviation_m,
+            verification_resolution_m=resolution,
+        )
+        attempt = (candidate_spacing, curve, fidelity)
+        if fidelity.accepted and fidelity.symmetric_upper_bound_m <= budget:
+            break
+    candidate_spacing, curve, fidelity = attempt
     if not fidelity.accepted:
         raise ValueError(
             "smoothed path exceeds maximum deviation: "
             f"{fidelity.symmetric_upper_bound_m:.6f} m > "
             f"{path.maximum_deviation_m:.6f} m"
         )
-    return GeometryPlan(curve=curve, source_points=source, fidelity=fidelity)
+    return GeometryPlan(
+        curve=curve,
+        source_points=source,
+        fidelity=fidelity,
+        smoothing=SmoothingReport(
+            requested_control_spacing_m=spacing,
+            selected_control_spacing_m=candidate_spacing,
+            deviation_utilization=utilization,
+            deviation_budget_m=budget,
+            control_point_count=len(curve.control_points),
+            path_length_m=total_length,
+            heading_slope_bound_rad=_heading_slope_or_none(curve),
+        ),
+    )

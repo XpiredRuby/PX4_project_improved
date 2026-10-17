@@ -453,13 +453,37 @@ Hard constraints include:
 Use a lexicographic solve rather than a single opaque weighted sum:
 
 1. find a feasible solution with prescribed margins;
-2. minimize maximum and integrated deviation from the user's path;
+2. keep deviation from the user's path inside the declared tube;
 3. maximize minimum dynamic/clearance margin or minimize control effort;
 4. minimize duration.
 
 A weighted objective may be used within a tier, but all weights and normalized
 units must be recorded. Hard constraints must never be represented only by a
 finite soft penalty in the acceptance decision.
+
+### 7.1 Spending the deviation tube
+
+Tiers 2 and 3 genuinely conflict, and the conflict is not an implementation
+detail. A path that hugs the stroke exactly reproduces every corner the user
+drew, including corners whose radius is far below what the aircraft can fly at
+any useful speed; a path that cuts those corners is less faithful but carries a
+much larger dynamic margin at the same speed. Minimizing deviation therefore
+maximizes cost, and the user's `maximum_deviation_m` is the only statement of
+how much fidelity they are willing to trade.
+
+The planner resolves this with one explicit, serialized number:
+`deviation_utilization`, the share of the declared tube that smoothing is
+allowed to consume. The baseline walks a fixed geometric ladder of control
+spacings from coarse to fine and keeps the first spacing whose independently
+measured symmetric deviation bound fits that share. Coarser spacing widens
+corners, which lowers curvature, which lowers the acceleration and jerk
+demanded at a given speed. The unused remainder of the tube is headroom for the
+independent verifier's own measurement and for controller discretization, so
+the verifier can still reject a plan that the geometry stage accepted.
+
+Because this is a policy choice and not a derived quantity, it is recorded in
+the plan summary alongside the requested and selected spacing, the resulting
+deviation bound, and the budget it was checked against.
 
 The vehicle verifier should recover attitude, thrust, and body-rate demands from
 the flat outputs `(x, y, z, yaw)` and derivatives. Rotor allocation then checks

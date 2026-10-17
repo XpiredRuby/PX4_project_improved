@@ -52,6 +52,7 @@ def compile_drawn_path(
     sample_period_s: float,
     limit_scale: float,
     controller_cruise_height_m: float,
+    deviation_utilization: float,
 ) -> dict:
     intent = load_contract(intent_path, MissionIntent.from_dict)
     vehicle = load_contract(vehicle_path, VehicleModel.from_dict)
@@ -76,6 +77,7 @@ def compile_drawn_path(
         intent.path,
         control_spacing_m=control_spacing_m,
         verification_resolution_m=verification_resolution_m,
+        deviation_utilization=deviation_utilization,
     )
     candidate = retime_stop_path(
         geometry,
@@ -141,6 +143,7 @@ def compile_drawn_path(
             "verification_report_sha256": canonical_sha256(report),
             "point_count": len(candidate.points),
             "geometry": asdict(geometry.fidelity),
+            "smoothing": asdict(geometry.smoothing),
             "retiming": asdict(candidate.summary),
             "controller_cruise_height_m": controller_cruise_height_m,
             "limitations": [
@@ -200,6 +203,7 @@ def parse_args(argv=None):
     parser.add_argument("--sample-period-s", type=float, default=0.05)
     parser.add_argument("--limit-scale", type=float, default=0.9)
     parser.add_argument("--controller-cruise-height-m", type=float, default=17.0)
+    parser.add_argument("--deviation-utilization", type=float, default=0.75)
     return parser.parse_args(argv)
 
 
@@ -217,6 +221,7 @@ def main(argv=None) -> None:
         sample_period_s=args.sample_period_s,
         limit_scale=args.limit_scale,
         controller_cruise_height_m=args.controller_cruise_height_m,
+        deviation_utilization=args.deviation_utilization,
     )
     print(json.dumps(summary, indent=2, sort_keys=True, allow_nan=False))
 

@@ -13,7 +13,7 @@ physical-flight readiness.
 | INT-004 | Strict required fields and rejected unknown fields | Implemented at contract boundary |
 | INT-005 | Strict parsers and `test_unknown_missing_nonfinite_and_wrong_types_fail_closed` | Implemented |
 | INT-006 | Contract requires explicit 3-D points and launch datum | Implemented; UI enforcement planned |
-| INT-007 | `PathIntent.maximum_deviation_m` and symmetric fidelity bounds in `mission_planner/geometry.py` | Implemented for polyline smoothing |
+| INT-007 | `PathIntent.maximum_deviation_m`, symmetric fidelity bounds, and the serialized `SmoothingReport` deviation budget in `mission_planner/geometry.py` | Implemented for polyline smoothing |
 | VEH-001 | `VehicleModel` contains first-release mass and motion/input envelope | Partial; inertia, rotor allocation, drag, battery, and uncertainty planned |
 | VEH-002 | `validate_contract_set` rejects mission speed above model limit | Partial; all controller/PX4 limits planned |
 | ENV-001 | `environment_id`, geofence envelope, optional map digest | Implemented at contract boundary |
@@ -27,7 +27,7 @@ physical-flight readiness.
 | PLN-005 | Unsupported modes, invalid numerics, failed fidelity, infeasible timing, and failed verification stop output | Implemented for baseline |
 | PLN-006 | Baseline is deterministic and uses no stochastic search | Implemented |
 | PLN-007 | Exact and maximum duration requests reject below the reported minimum feasible duration | Implemented for baseline |
-| PLN-008 | Fixed safety-first `objective_priority` | Implemented |
+| PLN-008 | Fixed safety-first `objective_priority`; the fidelity/margin trade inside the deviation tube is an explicit serialized `deviation_utilization` | Implemented |
 | VER-001 | `mission_planner/verification.py` recomputes acceptance without trusting retimer status | Implemented for baseline |
 | VER-002 | B-spline hull/derivative bounds and Lipschitz-bounded fidelity checks | Partial; full dynamic interval verifier planned |
 | VER-003 | Independent checks bind emitted points to geometry and check environment, dynamics, timing, and endpoints | Implemented for baseline |
@@ -65,7 +65,12 @@ physical-flight readiness.
 - deterministic geometry;
 - unsupported hard points, waypoint mode, degenerate paths, zero-tolerance
   requests, and invalid curve queries;
-- symmetric stroke/curve deviation bounds with explicit verification resolution.
+- symmetric stroke/curve deviation bounds with explicit verification resolution;
+- spending the declared deviation budget to widen corners, and the validation
+  of the utilization share itself;
+- certified bounds on the rate of tangent-heading change, including rejection of
+  paths whose horizontal tangent cannot be separated from zero;
+- reuse of the curve evaluator and convex-hull bounds by a scalar schedule.
 
 `tests/test_planner_retiming.py`, `tests/test_planner_verification.py`, and
 `tests/test_drawn_path_cli.py` cover:
