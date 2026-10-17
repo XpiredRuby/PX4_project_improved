@@ -120,7 +120,12 @@ class TimeLaw:
         normalized_time: float,
     ) -> tuple[float, float, float, float]:
         """Return the path parameter and its first three tau derivatives."""
-        parameter = min(max(self.schedule.evaluate(normalized_time)[0], 0.0), 1.0)
+        parameter = self.schedule.evaluate(normalized_time)[0]
+        # The last control value is the schedule's exact end state. Clamping
+        # there absorbs a rounding overshoot without moving a loop schedule
+        # that is intentionally allowed to describe a full normalized lap.
+        end = self.schedule.control_points[-1][0]
+        parameter = min(max(parameter, 0.0), end)
         return (
             parameter,
             self.schedule.evaluate(normalized_time, 1)[0],
@@ -427,6 +432,61 @@ def certified_dynamics(
     )
 
 
+def repeated_bounds(bounds: PathBounds, repetitions: int) -> PathBounds:
+    """Lay one lap's derivative bounds end to end for a repeated loop.
+
+    The schedule still runs over normalized time in [0, 1]. Flying the lap
+    ``repetitions`` times means the path parameter moves ``repetitions`` times
+    faster than that normalized coordinate, which multiplies the first, second,
+    and third derivative bounds by that factor to the same power.
+    """
+    if isinstance(repetitions, bool) or not isinstance(repetitions, int):
+        raise ValueError("repetitions must be an integer")
+    if repetitions < 1:
+        raise ValueError("repetitions must be at least one")
+    if repetitions == 1:
+        return bounds
+    breakpoints = np.asarray(bounds.breakpoints, dtype=float)
+    pieces = [breakpoints]
+    first = [np.asarray(bounds.first, dtype=float) * repetitions]
+    second = [np.asarray(bounds.second, dtype=float) * repetitions**2]
+    third = [np.asarray(bounds.third, dtype=float) * repetitions**3]
+    for lap in range(1, repetitions):
+        shifted = (breakpoints + lap) / repetitions
+        pieces.append(shifted[1:])
+        first.append(np.asarray(bounds.first, dtype=float) * repetitions)
+        second.append(np.asarray(bounds.second, dtype=float) * repetitions**2)
+        third.append(np.asarray(bounds.third, dtype=float) * repetitions**3)
+    pieces[0] = breakpoints / repetitions
+    return PathBounds(
+        breakpoints=tuple(float(value) for value in np.concatenate(pieces)),
+        first=tuple(float(value) for value in np.concatenate(first)),
+        second=tuple(float(value) for value in np.concatenate(second)),
+        third=tuple(float(value) for value in np.concatenate(third)),
+    )
+
+
+def _stricter(
+    first: tuple[float, ...],
+    first_names: tuple[str, ...],
+    second: tuple[float, ...],
+    second_names: tuple[str, ...],
+) -> tuple[tuple[float, ...], tuple[str, ...]]:
+    """Keep the larger requirement of each span and the constraint that set it."""
+    requirements = []
+    names = []
+    for left, left_name, right, right_name in zip(
+        first, first_names, second, second_names, strict=True
+    ):
+        if right > left:
+            requirements.append(right)
+            names.append(right_name)
+        else:
+            requirements.append(left)
+            names.append(left_name)
+    return tuple(requirements), tuple(names)
+
+
 def duration_requirements(
     bounds: PathBounds,
     schedule: BSplinePath,
@@ -434,6 +494,7 @@ def duration_requirements(
     speed_limit_m_s: float,
     acceleration_limit_m_s2: float,
     jerk_limit_m_s3: float,
+    constraint_names: tuple[str, str, str] = CONSTRAINT_NAMES,
 ) -> tuple[tuple[float, ...], tuple[str, ...]]:
     """Return the shortest duration each schedule span can be flown in.
 
@@ -456,7 +517,7 @@ def duration_requirements(
         raise ValueError("schedule admits no positive duration requirement")
     return (
         tuple(float(value) for value in requirements),
-        tuple(CONSTRAINT_NAMES[index] for index in selected),
+        tuple(constraint_names[index] for index in selected),
     )
 
 
@@ -526,6 +587,11 @@ def plan_time_law(
     pace_window_spans: tuple[float, ...] | None = None,
     cruise_acceleration_shares: tuple[float, ...] | None = None,
     equalization_passes: int = EQUALIZATION_PASSES,
+    loop_count: int = 1,
+    yaw_bounds: PathBounds | None = None,
+    yaw_rate_limit_rad_s: float | None = None,
+    yaw_acceleration_limit_rad_s2: float | None = None,
+    yaw_jerk_limit_rad_s3: float | None = None,
 ) -> TimeLaw:
     """Search a fixed grid of schedule shapes and keep the fastest feasible one.
 
@@ -538,9 +604,34 @@ def plan_time_law(
         acceleration_limit_m_s2, "acceleration_limit_m_s2"
     )
     jerk_limit = _positive(jerk_limit_m_s3, "jerk_limit_m_s3")
-    if geometry.curve.periodic:
-        raise ValueError(
-            "periodic execution requires a separately planned entry and exit"
+    if isinstance(loop_count, bool) or not isinstance(loop_count, int):
+        raise ValueError("loop_count must be an integer")
+    if not 1 <= loop_count <= 20:
+        raise ValueError("loop_count must be in [1, 20]")
+    if loop_count != 1 and not geometry.curve.periodic:
+        raise ValueError("only a periodic path can be repeated")
+    yaw_limits = (
+        yaw_rate_limit_rad_s,
+        yaw_acceleration_limit_rad_s2,
+        yaw_jerk_limit_rad_s3,
+    )
+    if yaw_bounds is None:
+        if any(value is not None for value in yaw_limits):
+            raise ValueError("yaw limits require yaw bounds")
+    elif any(value is None for value in yaw_limits):
+        raise ValueError("yaw bounds require yaw rate, acceleration, and jerk limits")
+    else:
+        yaw_limits = tuple(
+            _positive(value, name)
+            for value, name in zip(
+                yaw_limits,
+                (
+                    "yaw_rate_limit_rad_s",
+                    "yaw_acceleration_limit_rad_s2",
+                    "yaw_jerk_limit_rad_s3",
+                ),
+                strict=True,
+            )
         )
     if isinstance(equalization_passes, bool) or not isinstance(
         equalization_passes, int
@@ -588,8 +679,8 @@ def plan_time_law(
         ):
             raise ValueError("cruise_acceleration_shares must be in (0, 1)")
 
-    bounds = PathBounds.of(geometry.curve)
-    length = geometry.smoothing.curve_length_m
+    bounds = repeated_bounds(PathBounds.of(geometry.curve), loop_count)
+    length = geometry.smoothing.curve_length_m * loop_count
     limits = {
         "speed_limit_m_s": speed_limit,
         "acceleration_limit_m_s2": acceleration_limit,
@@ -626,6 +717,25 @@ def plan_time_law(
                     requirements, limiting_names = duration_requirements(
                         bounds, schedule, **limits
                     )
+                    if yaw_bounds is not None:
+                        yaw_requirements, yaw_names = duration_requirements(
+                            yaw_bounds,
+                            schedule,
+                            speed_limit_m_s=yaw_limits[0],
+                            acceleration_limit_m_s2=yaw_limits[1],
+                            jerk_limit_m_s3=yaw_limits[2],
+                            constraint_names=(
+                                "yaw_rate",
+                                "yaw_acceleration",
+                                "yaw_jerk",
+                            ),
+                        )
+                        requirements, limiting_names = _stricter(
+                            requirements,
+                            limiting_names,
+                            yaw_requirements,
+                            yaw_names,
+                        )
                     worst, limiting, normalized_time = _worst_span(
                         requirements, limiting_names, schedule
                     )

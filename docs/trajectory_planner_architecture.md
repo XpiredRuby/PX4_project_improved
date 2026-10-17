@@ -179,6 +179,12 @@ bounded by `sqrt(a_margin * r)`. `a_margin` must reserve control authority for
 wind rejection and tracking; using the aircraft's absolute acceleration maximum
 for nominal centripetal acceleration is not acceptable.
 
+The baseline implements the stopped lap, including repeats of that lap. The
+time law is stationary through jerk at the seam, so velocity, acceleration, and
+jerk match there because they are all zero. A cruising seam, where those
+derivatives stay nonzero and an entry or departure leg joins the loop, is not
+implemented.
+
 ## 4. Requirements baseline
 
 Each implementation and verification artifact must reference requirement IDs.
@@ -561,6 +567,45 @@ must fit the lower of:
 - duration/distance envelope demonstrated for the configuration; and
 - energy prediction minus return/land and degradation reserve.
 
+### 7.4 What the baseline executes
+
+The executable baseline now covers the following, all still marked `SITL_ONLY`:
+
+- **Tangent yaw.** The commanded heading is a clamped quintic of the normalized
+  path parameter. It is accepted only when a Lipschitz remainder keeps it within
+  two degrees of the unwrapped horizontal tangent, sampled densely enough that
+  the heading cannot jump by half a turn between samples. Yaw rate, acceleration,
+  and jerk are certified from that profile's own derivative bounds and the
+  schedule, then scaled by the same limit reserve as translation. The chain rule
+  for yaw uses derivatives with respect to the normalized parameter. Position
+  derivatives of a repeated lap are scaled by the lap count; yaw is not scaled
+  again, because the profile already covers every lap.
+- **Repeated laps.** `loop_count` from 1 to 20 is legal only on a periodic
+  curve. The schedule still outputs a normalized parameter in `[0, 1]`. The
+  flown parameter is that value times the lap count, and the path derivative
+  bounds used for timing are unrolled by `loops`, `loops²`, and `loops³`.
+- **Interior hard points.** Each interior hard point splits the stroke into
+  rest-to-rest open pieces. Endpoints are already stops. A periodic path cannot
+  contain an interior hard point. An exact or maximum duration is probed per
+  piece at minimum time and then shared in proportion to those minima. Each
+  piece is verified on its own curve; the published report keeps the worst
+  margin of each requirement.
+- **Tilt, thrust, and body rate.** For an acceleration no larger than `A < g`,
+  the tilt is at most `asin(A / g)`, thrust lies in `m(g - A)` to `m(g + A)`,
+  and the body rate is at most `J / (g - A)` plus the yaw-rate bound. If
+  translation would finish sooner than these bounds allow, duration is
+  lengthened until they fit and the limiting constraint becomes tilt, thrust,
+  or body rate. Rotor allocation is not checked.
+- **Interview.** Waypoints, a circle through the launch point, and a survey
+  lawnmower become an ordinary `MissionIntent`. Roll and pitch are not inputs.
+- **Review.** A self-contained page shows the route, speed, duration, binding
+  constraint, and the limitation list. It contains the phrase "not a clearance
+  to fly" and has no control that dismisses a hard failure.
+
+The controller adds the planned yaw change to the heading measured at launch.
+Tangent mode therefore matches the path only when the aircraft starts pointed
+along the initial tangent. Open-departure and unconstrained yaw are refused.
+
 ## 8. Simulation, verification, and release gates
 
 ### Gate A — pure software
@@ -680,8 +725,12 @@ Deliver:
 - conversion to existing controller trajectory points;
 - unit/property tests and nominal Gazebo scenarios.
 
-Physical launch remains prohibited. This milestone assumes a known-clear test
-volume and does not claim collision avoidance.
+The repository now has the pure-software part of this milestone: smoothing,
+deviation bounds, certified timing, tangent yaw, stopped laps, hard-point
+stops, flatness bounds, and the controller CSV. Nominal Gazebo scenarios driven
+by these artifacts are not in the repository. Physical launch remains
+prohibited. This milestone assumes a known-clear test volume and does not claim
+collision avoidance.
 
 ### Milestone 2 — interview/API and operator review
 
@@ -693,6 +742,10 @@ Deliver:
   result review;
 - artifact approval hash and expiry;
 - pre-arm artifact/live-state binding.
+
+The interview compiler, structured infeasibility report, and static review page
+are in the repository. Artifact approval hash, expiry, and a live operator UI
+are not.
 
 ### Milestone 3 — mapped environment
 

@@ -13,9 +13,19 @@ from .contracts import (
     VehicleModel,
     VerificationReport,
 )
+from .flatness import (
+    body_rate_bound_rad_s,
+    maximum_tilt_rad,
+    thrust_interval_n,
+)
 from .geometry import GeometryPlan, measure_path_fidelity
 from .retiming import CandidateTrajectory
-from .timing import PathBounds, certified_dynamics, schedule_defects
+from .timing import PathBounds, certified_dynamics, repeated_bounds, schedule_defects
+from .yaw import (
+    MAXIMUM_HEADING_ERROR_RAD,
+    curve_parameter,
+    heading_error_bound,
+)
 
 
 def _check(
@@ -62,7 +72,7 @@ def _trajectory_structure(
         and points[0].time_s == 0.0
         and points[0].path_parameter == 0.0
         and points[-1].time_s == candidate.summary.selected_duration_s
-        and points[-1].path_parameter == 1.0
+        and points[-1].path_parameter == candidate.summary.loop_count
         and intervals >= 1
         and all(
             right.time_s > left.time_s
@@ -94,46 +104,90 @@ def _trajectory_binds_to_curve(
     duration = candidate.summary.selected_duration_s
     if not math.isfinite(duration) or duration <= 0.0:
         return False
-    if motion.yaw_mode != "fixed" or motion.fixed_yaw_deg is None:
-        return False
-    expected_yaw = math.radians(motion.fixed_yaw_deg)
+    loops = candidate.summary.loop_count
     schedule = candidate.schedule
+    profile = candidate.yaw_profile
+    if motion.yaw_mode == "tangent":
+        if profile is None:
+            return False
+        try:
+            error = heading_error_bound(
+                geometry.curve, profile, loops=loops, count=8_000
+            )
+        except ValueError:
+            return False
+        if error > MAXIMUM_HEADING_ERROR_RAD + 1e-9:
+            return False
+    elif motion.yaw_mode != "fixed" or profile is not None or motion.fixed_yaw_deg is None:
+        return False
+    fixed_yaw = (
+        0.0 if motion.fixed_yaw_deg is None else math.radians(motion.fixed_yaw_deg)
+    )
     for point in candidate.points:
         u = point.time_s / duration
         if not 0.0 <= u <= 1.0:
             return False
-        parameter = min(max(schedule.evaluate(u)[0], 0.0), 1.0)
+        normalized = schedule.evaluate(u)[0]
+        end = schedule.control_points[-1][0]
+        normalized = min(max(normalized, 0.0), end)
+        unwrapped = normalized * loops
+        parameter = curve_parameter(geometry.curve, unwrapped, loops)
         q1 = schedule.evaluate(u, 1)[0]
         q2 = schedule.evaluate(u, 2)[0]
         q3 = schedule.evaluate(u, 3)[0]
+        rate = q1 * loops
+        acceleration_rate = q2 * loops
+        jerk_rate = q3 * loops
+        if motion.yaw_mode == "tangent":
+            yaw_first = profile.evaluate(normalized, 1)[0]
+            yaw_second = profile.evaluate(normalized, 2)[0]
+            yaw_third = profile.evaluate(normalized, 3)[0]
+            expected_yaw = profile.evaluate(normalized)[0]
+            expected_yaw_rate = yaw_first * q1 / duration
+            expected_yaw_acceleration = (
+                yaw_second * q1**2 + yaw_first * q2
+            ) / duration**2
+            expected_yaw_jerk = (
+                yaw_third * q1**3
+                + 3.0 * yaw_second * q1 * q2
+                + yaw_first * q3
+            ) / duration**3
+        else:
+            expected_yaw = fixed_yaw
+            expected_yaw_rate = 0.0
+            expected_yaw_acceleration = 0.0
+            expected_yaw_jerk = 0.0
         position = geometry.curve.evaluate(parameter)
         first = geometry.curve.evaluate(parameter, 1)
         second = geometry.curve.evaluate(parameter, 2)
         third = geometry.curve.evaluate(parameter, 3)
-        velocity = tuple(value * q1 / duration for value in first)
+        velocity = tuple(value * rate / duration for value in first)
         acceleration = tuple(
-            (second[axis] * q1**2 + first[axis] * q2) / duration**2
+            (
+                second[axis] * rate**2 + first[axis] * acceleration_rate
+            )
+            / duration**2
             for axis in range(3)
         )
         jerk = tuple(
             (
-                third[axis] * q1**3
-                + 3.0 * second[axis] * q1 * q2
-                + first[axis] * q3
+                third[axis] * rate**3
+                + 3.0 * second[axis] * rate * acceleration_rate
+                + first[axis] * jerk_rate
             )
             / duration**3
             for axis in range(3)
         )
         expected = (
-            parameter,
+            unwrapped,
             *position,
             expected_yaw,
             *velocity,
-            0.0,
+            expected_yaw_rate,
             *acceleration,
-            0.0,
+            expected_yaw_acceleration,
             *jerk,
-            0.0,
+            expected_yaw_jerk,
         )
         actual = (
             point.path_parameter,
@@ -225,21 +279,57 @@ def _dynamic_margins(
         if motion.target_speed_m_s is not None
         else motion.maximum_speed_m_s
     )
-    limits = (
+    scale = summary.limit_scale
+    limits = [
         min(preferred_speed, motion.maximum_speed_m_s, vehicle.maximum_speed_m_s)
-        * summary.limit_scale,
-        vehicle.maximum_acceleration_m_s2 * summary.limit_scale,
-        vehicle.maximum_jerk_m_s3 * summary.limit_scale,
-    )
+        * scale,
+        vehicle.maximum_acceleration_m_s2 * scale,
+        vehicle.maximum_jerk_m_s3 * scale,
+    ]
     try:
-        bounds = certified_dynamics(
-            PathBounds.of(geometry.curve), candidate.schedule, duration
-        )
+        bounds = list(certified_dynamics(
+            repeated_bounds(PathBounds.of(geometry.curve), summary.loop_count),
+            candidate.schedule,
+            duration,
+        ))
+        if motion.yaw_mode == "tangent":
+            if candidate.yaw_profile is None:
+                return False, -math.inf
+            yaw_bounds = certified_dynamics(
+                PathBounds.of(candidate.yaw_profile),
+                candidate.schedule,
+                duration,
+            )
+            limits.extend((
+                math.radians(vehicle.maximum_yaw_rate_deg_s) * scale,
+                math.radians(vehicle.maximum_yaw_acceleration_deg_s2) * scale,
+                math.radians(vehicle.maximum_yaw_jerk_deg_s3) * scale,
+            ))
+            bounds.extend(yaw_bounds)
+        elif candidate.yaw_profile is not None:
+            return False, -math.inf
+        acceleration = bounds[1]
+        jerk = bounds[2]
+        yaw_rate = bounds[3] if motion.yaw_mode == "tangent" else 0.0
+        tilt = maximum_tilt_rad(acceleration)
+        thrust_low, thrust_high = thrust_interval_n(acceleration, vehicle.mass_kg)
+        body_rate = body_rate_bound_rad_s(acceleration, jerk, yaw_rate)
     except ValueError:
         return False, -math.inf
     normalized_margins = [
         (limit - bound) / limit for limit, bound in zip(limits, bounds, strict=True)
     ]
+    normalized_margins.append(
+        (math.radians(vehicle.maximum_tilt_deg) - tilt)
+        / math.radians(vehicle.maximum_tilt_deg)
+    )
+    thrust_span = vehicle.maximum_thrust_n - vehicle.minimum_thrust_n
+    normalized_margins.append((vehicle.maximum_thrust_n - thrust_high) / thrust_span)
+    normalized_margins.append((thrust_low - vehicle.minimum_thrust_n) / thrust_span)
+    body_limit = math.radians(vehicle.maximum_body_rate_deg_s) * scale
+    if not math.isfinite(body_rate):
+        return False, -math.inf
+    normalized_margins.append((body_limit - body_rate) / body_limit)
     margin = min(normalized_margins)
     return margin >= -1e-12, margin
 
@@ -264,6 +354,51 @@ def _duration_valid(
         passed = requested is not None and selected <= requested + 1e-12
         return passed, None if requested is None else requested - selected, "s"
     return True, selected - minimum, "s"
+
+
+def merge_verification_reports(
+    reports: tuple[VerificationReport, ...],
+    candidate_sha256: str,
+) -> VerificationReport:
+    """Combine per-segment reports, keeping the worst margin of each requirement."""
+    if not reports:
+        raise ValueError("merging verification requires at least one report")
+    identifiers = [check.requirement_id for check in reports[0].checks]
+    merged = []
+    for requirement in identifiers:
+        checks = []
+        for report in reports:
+            match = [
+                check for check in report.checks
+                if check.requirement_id == requirement
+            ]
+            if len(match) != 1:
+                raise ValueError(
+                    f"segment reports disagree on requirement {requirement}"
+                )
+            checks.append(match[0])
+        failed = [check for check in checks if check.status != "PASS"]
+        margins = [check.margin for check in checks if check.margin is not None]
+        chosen = failed[0] if failed else checks[0]
+        detail = chosen.detail
+        if failed:
+            detail = f"segment {checks.index(failed[0]) + 1}: {failed[0].detail}"
+        merged.append({
+            "requirement_id": requirement,
+            "status": "FAIL" if failed else "PASS",
+            "hard": True,
+            "margin": None if not margins else min(margins),
+            "units": chosen.units,
+            "detail": detail[:1024],
+        })
+    accepted = all(check["status"] == "PASS" for check in merged)
+    return VerificationReport.from_dict({
+        "schema_version": 1,
+        "verifier_version": reports[0].verifier_version,
+        "candidate_trajectory_sha256": candidate_sha256,
+        "accepted": accepted,
+        "checks": merged,
+    })
 
 
 def verify_candidate_trajectory(

@@ -20,10 +20,10 @@ physical-flight readiness.
 | ENV-002 | `minimum_clearance_m` | Partial; decomposed uncertainty budget planned |
 | ENV-003 | Map identity/verification consistency check | Partial; physical-launch gate planned |
 | ENV-004 | Wind limit serialized | Partial; full GNSS/weather ODD planned |
-| PLN-001 | Quintic B-spline geometry is C4 internally; the quintic path-parameter schedule is monotone and stationary through jerk by construction, and acceptance rechecks both | Implemented for open stop-to-stop baseline |
-| PLN-002 | Geometry is independent of yaw; fixed-yaw timing is implemented | Partial; tangent/look-at/profile yaw planned |
-| PLN-003 | Periodic spline position and derivatives through jerk match at the seam | Implemented for geometry |
-| PLN-004 | Analytic conservative speed, acceleration, and jerk bounds per knot span of both the path and the schedule, with reserved limit scale | Partial; tilt/thrust/body-rate/rotor checks planned |
+| PLN-001 | Quintic B-spline geometry is C4 internally; the quintic path-parameter schedule is monotone and stationary through jerk by construction, and acceptance rechecks both | Implemented for open paths, stopped laps, and hard-point stops |
+| PLN-002 | Fixed yaw holds one heading; tangent yaw is a certified quintic of the normalized path parameter, checked against yaw rate, acceleration, and jerk | Partial; look-at and explicit profile yaw planned |
+| PLN-003 | Periodic spline position and derivatives through jerk match at the seam; a flown lap is stationary there, so the consumed derivatives match because they are zero | Partial; a nonzero-velocity cruising seam and a departure leg are planned |
+| PLN-004 | Per-span speed, acceleration, and jerk bounds, plus tilt, thrust, and body rate from the acceleration ball, with reserved limit scale | Partial; rotor allocation planned |
 | PLN-005 | Unsupported modes, invalid numerics, failed fidelity, infeasible timing, and failed verification stop output | Implemented for baseline |
 | PLN-006 | Baseline is deterministic; the time law searches a fixed declared grid with no stochastic component | Implemented |
 | PLN-007 | Exact and maximum duration requests reject below the reported minimum feasible duration | Implemented for baseline |
@@ -37,7 +37,9 @@ physical-flight readiness.
 | SIM-002..SIM-004 | Existing fault harness is not yet driven by general planner artifacts | Planned |
 | EXE-001 | Artifact changes invalidate its digest; flight approval is prohibited | Implemented for `SITL_ONLY` |
 | EXE-002..EXE-004 | Existing controller behavior and validation evidence | Existing controller; artifact binding planned |
-| HMI-001..HMI-003 | Review UI does not exist | Planned for Milestone 2 |
+| HMI-001 | Static review page shows route, speed, duration, heading error, and the binding constraint | Partial; live UI and abort actions planned |
+| HMI-002 | Review text says "not a clearance to fly" and does not say "safe to fly" | Implemented for the static page |
+| HMI-003 | The review page has no control that dismisses a hard failure | Implemented for the static page |
 | LOG-001 | Artifact binds component and simulation-evidence digests | Partial; full run collation planned |
 
 ## Executable evidence
@@ -85,14 +87,14 @@ physical-flight readiness.
   whose straights surround one tight corner;
 - detection of tampered stationarity, monotonicity, and schedule degree;
 - rejection of invalid limits, search grids, and equalization counts;
-- deterministic planning and explicit deferral of periodic paths.
+- deterministic planning, and a closed path whose schedule still starts at 0 and ends at 1.
 
 `tests/test_planner_retiming.py`, `tests/test_planner_verification.py`, and
 `tests/test_drawn_path_cli.py` cover:
 
 - conservative derivative retiming, endpoint inclusion, stationary boundaries,
   limit margins, exact/maximum duration semantics, and tighter vehicle limits;
-- explicit rejection of periodic execution and unsupported yaw policies;
+- one stopped lap of a periodic curve, rejection of repeating an open path, and rejection of unconstrained yaw;
 - independent rejection of modified trajectory points, falsified timing/limit
   scale, and environment-bound violations;
 - deterministic candidate/report/CSV output and digest sensitivity;
@@ -102,6 +104,18 @@ physical-flight readiness.
 - rejection of sparse endpoint-only CSVs, altered derivatives/time laws,
   controller-origin mismatch, trajectory digest mismatch, and live cruise-height
   mismatch.
+
+`tests/test_planner_mission.py` covers:
+
+- a tangent-yaw certificate inside two degrees, with yaw rate inside the scaled
+  vehicle limit and independent acceptance of the emitted samples;
+- two laps that return to the seam after two full turns of heading;
+- a one-degree tilt limit that lengthens the mission and becomes the binding
+  constraint;
+- an interior hard point that is a stop on the published controller CSV, with a
+  review page that refuses a flight clearance;
+- an interview circle that starts at launch and closes;
+- the tilt and thrust identities of an acceleration ball.
 
 The machine-readable schemas are under `schemas/planner/`. They intentionally
 cover structural validation; Python contracts enforce cross-field and

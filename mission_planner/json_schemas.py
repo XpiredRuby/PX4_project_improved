@@ -124,6 +124,15 @@ def vehicle_model_schema():
             "Verified translational acceleration ceiling."
         ),
         "maximum_jerk_m_s3": _positive("Verified translational jerk ceiling."),
+        "maximum_yaw_rate_deg_s": _positive(
+            "Verified yaw-rate ceiling, at or below the controller limit."
+        ),
+        "maximum_yaw_acceleration_deg_s2": _positive(
+            "Verified yaw-acceleration ceiling, at or below the controller limit."
+        ),
+        "maximum_yaw_jerk_deg_s3": _positive(
+            "Verified yaw-jerk ceiling, at or below the controller limit."
+        ),
         "maximum_tilt_deg": _positive("Verified body tilt ceiling."),
         "maximum_body_rate_deg_s": _positive("Verified body-rate ceiling."),
         "minimum_thrust_n": _nonnegative("Minimum modeled collective thrust."),

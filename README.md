@@ -106,12 +106,20 @@ python controller/offboard_runner.py \
   --planner-summary drawn-path.summary.json
 ```
 
-The baseline deliberately supports only open, rest-to-rest paths with fixed yaw.
-Periodic geometry is implemented and checked through jerk at its seam, but
-periodic execution remains rejected until entry and exit states are planned.
-Tangent/look-at yaw, internal hard points, obstacle clearance, energy
-qualification, and physical-flight release are not yet supported. The x500
-model is a conservative SITL configuration, not an identified aircraft model.
+The compiler flies open paths and closed laps rest-to-rest. A periodic curve
+starts and stops at its seam; extra laps repeat that loop. Interior hard points
+are full stops. Yaw is either a fixed heading or a tangent profile whose error
+against the true horizontal heading is certified. Tilt, thrust, and body rate
+are bounded from the acceleration the timing already certified, and the duration
+is stretched until those bounds fit. An interview for waypoints, a circle, or a
+survey lawnmower compiles through the same path. The review page shows the
+route and the binding constraint and states that the artifact is not a clearance
+to fly.
+
+Look-at yaw, a separate departure leg, pass-through points, obstacle clearance,
+rotor allocation, energy qualification, Gazebo campaign evidence, and
+physical-flight release are not yet supported. The x500 model is a conservative
+SITL configuration, not an identified aircraft model.
 The compiler binds the expected controller cruise height into its summary.
 The runner checks both that summary's trajectory hash and the live
 uncertainty-adjusted cruise height before execution; a mismatch is rejected.

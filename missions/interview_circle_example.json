@@ -1,0 +1,19 @@
+{
+  "altitude_m": 17.0,
+  "circle": {
+    "center_east_m": 0.0,
+    "center_north_m": 8.0
+  },
+  "environment_id": "empty-world-v1",
+  "fixed_yaw_deg": null,
+  "loop_count": 1,
+  "maximum_deviation_m": 0.5,
+  "maximum_speed_m_s": 1.25,
+  "mission_id": "interview-circle-example-v1",
+  "pattern": "circle",
+  "schema_version": 1,
+  "target_speed_m_s": 1.0,
+  "time_mode": "minimize",
+  "vehicle_model_id": "px4-x500-sitl-v1",
+  "yaw_mode": "tangent"
+}

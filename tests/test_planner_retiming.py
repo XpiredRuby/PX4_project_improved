@@ -57,6 +57,9 @@ def vehicle():
         "maximum_speed_m_s": 3.0,
         "maximum_acceleration_m_s2": 1.0,
         "maximum_jerk_m_s3": 1.5,
+        "maximum_yaw_rate_deg_s": 45.0,
+        "maximum_yaw_acceleration_deg_s2": 60.0,
+        "maximum_yaw_jerk_deg_s3": 120.0,
         "maximum_tilt_deg": 25.0,
         "maximum_body_rate_deg_s": 90.0,
         "minimum_thrust_n": 0.0,
@@ -194,15 +197,26 @@ class PlannerRetimingTests(unittest.TestCase):
             baseline.summary.selected_duration_s,
         )
 
-    def test_periodic_and_nonfixed_yaw_are_explicitly_deferred(self):
-        with self.assertRaisesRegex(ValueError, "entry and exit"):
-            retime_stop_path(geometry(closure="periodic"), motion(), vehicle())
-        with self.assertRaisesRegex(ValueError, "fixed yaw"):
+    def test_periodic_lap_stops_at_the_seam_and_unconstrained_yaw_is_refused(self):
+        plan = retime_stop_path(
+            geometry(closure="periodic"),
+            motion(),
+            vehicle(),
+            loop_count=1,
+        )
+        self.assertEqual(plan.summary.loop_count, 1)
+        self.assertEqual(plan.points[0].path_parameter, 0.0)
+        self.assertEqual(plan.points[-1].path_parameter, 1.0)
+        self.assertAlmostEqual(plan.points[0].north_m, plan.points[-1].north_m, places=6)
+        self.assertAlmostEqual(plan.points[0].east_m, plan.points[-1].east_m, places=6)
+        with self.assertRaisesRegex(ValueError, "unconstrained yaw"):
             retime_stop_path(
                 geometry(),
-                motion(yaw_mode="tangent"),
+                motion(yaw_mode="unconstrained"),
                 vehicle(),
             )
+        with self.assertRaisesRegex(ValueError, "only a periodic path"):
+            retime_stop_path(geometry(), motion(), vehicle(), loop_count=2)
 
     def test_output_is_deterministic_and_digest_sensitive(self):
         first = retime_stop_path(geometry(), motion(), vehicle())

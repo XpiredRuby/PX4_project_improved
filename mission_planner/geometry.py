@@ -517,8 +517,10 @@ def curve_length(curve: BSplinePath, nodes: int = ARC_LENGTH_NODES) -> float:
     return float(np.sum(0.5 * widths * weights[None, :] * speeds))
 
 
-def tangent_heading_slope_bound(curve: BSplinePath) -> float:
-    """Bound |d(heading)/ds| for the horizontal tangent of a 3-D curve.
+def tangent_heading_slope_bounds(
+    curve: BSplinePath,
+) -> tuple[tuple[float, ...], tuple[float, ...]]:
+    """Bound |d(heading)/ds| on each knot span of a 3-D curve.
 
     The heading of the horizontal tangent obeys
     ``psi' = (n' e'' - e' n'') / (n'^2 + e'^2)``, so a per-span upper bound on
@@ -538,7 +540,7 @@ def tangent_heading_slope_bound(curve: BSplinePath) -> float:
     breakpoints = _span_breakpoints(knots, curve.degree, len(controls))
     first = _derivative_curve(controls, knots, curve.degree)
     second = _derivative_curve(*first)
-    worst = 0.0
+    bounds = []
     for lower, upper in zip(breakpoints[:-1], breakpoints[1:], strict=True):
         middle = 0.5 * (float(lower) + float(upper))
         tangent = _local_controls(*first, middle)[:, :2]
@@ -549,12 +551,20 @@ def tangent_heading_slope_bound(curve: BSplinePath) -> float:
                 "horizontal speed cannot be bounded away from zero near "
                 f"parameter {middle:.6f}; tangent yaw is undefined there"
             )
-        worst = max(
-            worst,
+        bounds.append(
             _hull_norm_upper(tangent) * _hull_norm_upper(curvature)
-            / speed_lower**2,
+            / speed_lower**2
         )
-    return worst
+    return (
+        tuple(float(value) for value in breakpoints),
+        tuple(bounds),
+    )
+
+
+def tangent_heading_slope_bound(curve: BSplinePath) -> float:
+    """Return the largest per-span bound on |d(heading)/ds|."""
+    _, bounds = tangent_heading_slope_bounds(curve)
+    return max(bounds)
 
 
 def _heading_slope_or_none(curve: BSplinePath) -> float | None:

@@ -46,6 +46,21 @@
       "exclusiveMinimum": 0,
       "type": "number"
     },
+    "maximum_yaw_acceleration_deg_s2": {
+      "description": "Verified yaw-acceleration ceiling, at or below the controller limit.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_yaw_jerk_deg_s3": {
+      "description": "Verified yaw-jerk ceiling, at or below the controller limit.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_yaw_rate_deg_s": {
+      "description": "Verified yaw-rate ceiling, at or below the controller limit.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
     "minimum_thrust_n": {
       "description": "Minimum modeled collective thrust.",
       "minimum": 0,
@@ -67,6 +82,9 @@
     "maximum_speed_m_s",
     "maximum_acceleration_m_s2",
     "maximum_jerk_m_s3",
+    "maximum_yaw_rate_deg_s",
+    "maximum_yaw_acceleration_deg_s2",
+    "maximum_yaw_jerk_deg_s3",
     "maximum_tilt_deg",
     "maximum_body_rate_deg_s",
     "minimum_thrust_n",

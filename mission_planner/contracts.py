@@ -394,6 +394,9 @@ class VehicleModel:
     maximum_speed_m_s: float
     maximum_acceleration_m_s2: float
     maximum_jerk_m_s3: float
+    maximum_yaw_rate_deg_s: float
+    maximum_yaw_acceleration_deg_s2: float
+    maximum_yaw_jerk_deg_s3: float
     maximum_tilt_deg: float
     maximum_body_rate_deg_s: float
     minimum_thrust_n: float
@@ -433,6 +436,21 @@ class VehicleModel:
             maximum_jerk_m_s3=_number(
                 value["maximum_jerk_m_s3"],
                 "maximum_jerk_m_s3",
+                exclusive_minimum=0.0,
+            ),
+            maximum_yaw_rate_deg_s=_number(
+                value["maximum_yaw_rate_deg_s"],
+                "maximum_yaw_rate_deg_s",
+                exclusive_minimum=0.0,
+            ),
+            maximum_yaw_acceleration_deg_s2=_number(
+                value["maximum_yaw_acceleration_deg_s2"],
+                "maximum_yaw_acceleration_deg_s2",
+                exclusive_minimum=0.0,
+            ),
+            maximum_yaw_jerk_deg_s3=_number(
+                value["maximum_yaw_jerk_deg_s3"],
+                "maximum_yaw_jerk_deg_s3",
                 exclusive_minimum=0.0,
             ),
             maximum_tilt_deg=_number(

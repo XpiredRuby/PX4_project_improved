@@ -282,13 +282,18 @@ class PlannerTimingTests(unittest.TestCase):
             with self.subTest(passes=passes), self.assertRaises(ValueError):
                 plan_time_law(plan, **LIMITS, equalization_passes=passes)
 
-    def test_planning_is_deterministic_and_periodic_paths_are_deferred(self):
+    def test_planning_is_deterministic_and_a_closed_path_stops_at_its_seam(self):
         plan = geometry()
         first = plan_time_law(plan, **LIMITS, **COARSE_GRID)
         second = plan_time_law(plan, **LIMITS, **COARSE_GRID)
         self.assertEqual(first, second)
-        with self.assertRaisesRegex(ValueError, "entry and exit"):
-            plan_time_law(geometry(closure="periodic"), **LIMITS, **COARSE_GRID)
+        periodic = plan_time_law(
+            geometry(closure="periodic"), **LIMITS, **COARSE_GRID
+        )
+        self.assertEqual(periodic.schedule.evaluate(0.0)[0], 0.0)
+        self.assertAlmostEqual(periodic.schedule.evaluate(1.0)[0], 1.0, places=9)
+        with self.assertRaisesRegex(ValueError, "only a periodic path"):
+            plan_time_law(plan, **LIMITS, **COARSE_GRID, loop_count=2)
 
 
 if __name__ == "__main__":
