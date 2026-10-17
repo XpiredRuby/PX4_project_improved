@@ -13,6 +13,7 @@ from .contracts import PathIntent
 MAX_CONTROL_POINTS = 20_000
 MAX_VERIFICATION_SAMPLES = 250_000
 SMOOTHING_LADDER_STEPS = 6
+ARC_LENGTH_NODES = 8
 
 
 def _finite_positive(value: float, field: str) -> float:
@@ -79,6 +80,23 @@ def _local_controls(
     """Return the control points whose hull contains the owning span."""
     span, _ = _span_index(knots, degree, len(control_points), parameter)
     return control_points[span - degree : span + 1]
+
+
+def _local_control_stack(
+    control_points: np.ndarray,
+    knots: np.ndarray,
+    degree: int,
+    breakpoints: np.ndarray,
+) -> np.ndarray:
+    """Return the local control points of every span as one stacked array."""
+    middles = 0.5 * (breakpoints[:-1] + breakpoints[1:])
+    spans = np.clip(
+        np.searchsorted(knots, middles, side="right") - 1,
+        degree,
+        len(control_points) - 1,
+    )
+    offsets = np.arange(degree + 1)
+    return control_points[spans[:, None] - degree + offsets[None, :]]
 
 
 def _hull_norm_upper(points: np.ndarray) -> float:
@@ -192,14 +210,35 @@ class BSplinePath:
 
     def derivative_norm_bound(self, derivative: int = 1) -> float:
         """Return a convex-hull upper bound for a derivative norm."""
+        _, bounds = self.span_norm_bounds(derivative)
+        return max(bounds)
+
+    def span_norm_bounds(
+        self,
+        derivative: int = 1,
+    ) -> tuple[tuple[float, ...], tuple[float, ...]]:
+        """Return breakpoints and a per-span bound for a derivative norm.
+
+        A derivative curve restricted to one knot span lies in the convex hull
+        of that span's local control points, so the largest local control norm
+        bounds the derivative over that span alone. Localizing the bound this
+        way is what lets timing be fast where the path is straight instead of
+        everywhere as slow as its worst corner.
+        """
         if not 1 <= derivative <= self.degree:
             raise ValueError("derivative must be within the spline degree")
         controls = np.asarray(self.control_points, dtype=float)
         knots = np.asarray(self.knots, dtype=float)
+        breakpoints = _span_breakpoints(knots, self.degree, len(controls))
         degree = self.degree
         for _ in range(derivative):
             controls, knots, degree = _derivative_curve(controls, knots, degree)
-        return float(np.max(np.linalg.norm(controls, axis=1)))
+        local = _local_control_stack(controls, knots, degree, breakpoints)
+        bounds = np.max(np.linalg.norm(local, axis=2), axis=1)
+        return (
+            tuple(float(value) for value in breakpoints),
+            tuple(float(value) for value in bounds),
+        )
 
 
 @dataclass(frozen=True)
@@ -229,7 +268,8 @@ class SmoothingReport:
     deviation_utilization: float
     deviation_budget_m: float
     control_point_count: int
-    path_length_m: float
+    source_length_m: float
+    curve_length_m: float
     heading_slope_bound_rad: float | None
 
 
@@ -405,6 +445,78 @@ def measure_path_fidelity(
     )
 
 
+def span_scalar_bounds(
+    curve: BSplinePath,
+) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
+    """Return breakpoints and per-span value ranges of a scalar spline.
+
+    On one knot span the value is a convex combination of that span's local
+    control values, because the basis functions are nonnegative and sum to one
+    there, so the local minimum and maximum bracket the value.
+    """
+    if curve.dimension != 1:
+        raise ValueError("scalar bounds require a one-dimensional spline")
+    controls = np.asarray(curve.control_points, dtype=float)
+    knots = np.asarray(curve.knots, dtype=float)
+    breakpoints = _span_breakpoints(knots, curve.degree, len(controls))
+    local = _local_control_stack(controls, knots, curve.degree, breakpoints)[
+        :, :, 0
+    ]
+    return (
+        tuple(float(value) for value in breakpoints),
+        tuple(float(value) for value in np.min(local, axis=1)),
+        tuple(float(value) for value in np.max(local, axis=1)),
+    )
+
+
+def interval_norm_bound(
+    breakpoints: tuple[float, ...],
+    bounds: tuple[float, ...],
+    lower: float,
+    upper: float,
+) -> float:
+    """Return the per-span bound covering every span meeting [lower, upper]."""
+    if lower > upper:
+        raise ValueError("interval bounds must be ordered")
+    selected = [
+        bound
+        for bound, left, right in zip(
+            bounds, breakpoints[:-1], breakpoints[1:], strict=True
+        )
+        if right >= lower and left <= upper
+    ]
+    if not selected:
+        raise ValueError("interval lies outside the curve domain")
+    return max(selected)
+
+
+def curve_length(curve: BSplinePath, nodes: int = ARC_LENGTH_NODES) -> float:
+    """Return the arc length of a curve by per-span Gauss-Legendre quadrature.
+
+    The smoothed curve is shorter than the polyline it replaces, because
+    rounding a corner cuts across it, so the flown distance has to be measured
+    on the curve rather than inherited from the stroke. Integrating span by
+    span keeps the speed norm smooth over each panel even though it is not a
+    polynomial, which is what makes so few nodes sufficient.
+    """
+    if not isinstance(nodes, int) or isinstance(nodes, bool) or nodes < 2:
+        raise ValueError("nodes must be an integer of at least two")
+    breakpoints = _span_breakpoints(
+        np.asarray(curve.knots, dtype=float),
+        curve.degree,
+        len(curve.control_points),
+    )
+    abscissae, weights = np.polynomial.legendre.leggauss(nodes)
+    left = breakpoints[:-1, None]
+    widths = np.diff(breakpoints)[:, None]
+    samples = left + 0.5 * widths * (abscissae[None, :] + 1.0)
+    speeds = np.asarray([
+        np.linalg.norm(curve.evaluate(float(value), 1))
+        for value in samples.ravel()
+    ]).reshape(samples.shape)
+    return float(np.sum(0.5 * widths * weights[None, :] * speeds))
+
+
 def tangent_heading_slope_bound(curve: BSplinePath) -> float:
     """Bound |d(heading)/ds| for the horizontal tangent of a 3-D curve.
 
@@ -552,7 +664,8 @@ def build_smooth_path(
             deviation_utilization=utilization,
             deviation_budget_m=budget,
             control_point_count=len(curve.control_points),
-            path_length_m=total_length,
+            source_length_m=total_length,
+            curve_length_m=curve_length(curve),
             heading_slope_bound_rad=_heading_slope_or_none(curve),
         ),
     )

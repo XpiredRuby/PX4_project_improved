@@ -239,7 +239,17 @@ class PlannerGeometryTests(unittest.TestCase):
                 plan.smoothing.control_point_count,
                 len(plan.curve.control_points),
             )
-            self.assertAlmostEqual(plan.smoothing.path_length_m, 23.267, places=2)
+            self.assertAlmostEqual(plan.smoothing.source_length_m, 23.267, places=2)
+            # Rounding a corner cuts across it, so the flown curve is shorter
+            # than the stroke it replaces and spending more budget cuts more.
+            self.assertLess(
+                plan.smoothing.curve_length_m,
+                plan.smoothing.source_length_m,
+            )
+        self.assertLess(
+            relaxed.smoothing.curve_length_m,
+            faithful.smoothing.curve_length_m,
+        )
         # A wider corner is a lower-curvature corner, which is what makes the
         # retimed mission cheaper rather than merely shorter in control points.
         self.assertLess(
