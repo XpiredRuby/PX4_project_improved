@@ -1,0 +1,14 @@
+{
+  "configuration": "PX4 v1.17 Gazebo x500 research model; not physically identified",
+  "identified_for_physical_flight": false,
+  "mass_kg": 2.0,
+  "maximum_acceleration_m_s2": 1.0,
+  "maximum_body_rate_deg_s": 90.0,
+  "maximum_jerk_m_s3": 1.5,
+  "maximum_speed_m_s": 3.0,
+  "maximum_thrust_n": 40.0,
+  "maximum_tilt_deg": 25.0,
+  "minimum_thrust_n": 0.0,
+  "schema_version": 1,
+  "vehicle_model_id": "px4-x500-sitl-v1"
+}

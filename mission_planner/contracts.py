@@ -706,6 +706,31 @@ class PlanArtifact:
         return asdict(self)
 
 
+def validate_planning_inputs(
+    intent: MissionIntent,
+    vehicle: VehicleModel,
+    environment: EnvironmentSnapshot,
+) -> None:
+    """Validate references and conservative limits before planning."""
+    if intent.vehicle_model_id != vehicle.vehicle_model_id:
+        raise ValueError("mission and vehicle model identifiers do not match")
+    if intent.environment_id != environment.environment_id:
+        raise ValueError("mission and environment identifiers do not match")
+    if intent.frame != environment.frame:
+        raise ValueError("mission and environment coordinate frames do not match")
+    if intent.motion.maximum_speed_m_s > vehicle.maximum_speed_m_s:
+        raise ValueError("mission speed exceeds the vehicle model envelope")
+    for index, point in enumerate(intent.path.points):
+        radius = math.hypot(point.north_m, point.east_m)
+        height = -point.down_m
+        if radius > environment.max_radius_m:
+            raise ValueError(f"path.points[{index}] exceeds environment radius")
+        if height > environment.max_height_above_launch_m:
+            raise ValueError(f"path.points[{index}] exceeds environment height")
+        if point.down_m > environment.max_drop_below_launch_m:
+            raise ValueError(f"path.points[{index}] exceeds environment drop")
+
+
 def validate_contract_set(
     intent: MissionIntent,
     vehicle: VehicleModel,
@@ -718,25 +743,8 @@ def validate_contract_set(
     trajectory_digest = _digest(
         candidate_trajectory_sha256, "candidate_trajectory_sha256"
     )
-    if intent.vehicle_model_id != vehicle.vehicle_model_id:
-        raise ValueError("mission and vehicle model identifiers do not match")
-    if intent.environment_id != environment.environment_id:
-        raise ValueError("mission and environment identifiers do not match")
-    if intent.frame != environment.frame:
-        raise ValueError("mission and environment coordinate frames do not match")
-    if intent.motion.maximum_speed_m_s > vehicle.maximum_speed_m_s:
-        raise ValueError("mission speed exceeds the vehicle model envelope")
+    validate_planning_inputs(intent, vehicle, environment)
     if report.candidate_trajectory_sha256 != trajectory_digest:
         raise ValueError("verification report references another trajectory")
     if not report.accepted:
         raise ValueError("verification report did not accept the trajectory")
-
-    for index, point in enumerate(intent.path.points):
-        radius = math.hypot(point.north_m, point.east_m)
-        height = -point.down_m
-        if radius > environment.max_radius_m:
-            raise ValueError(f"path.points[{index}] exceeds environment radius")
-        if height > environment.max_height_above_launch_m:
-            raise ValueError(f"path.points[{index}] exceeds environment height")
-        if point.down_m > environment.max_drop_below_launch_m:
-            raise ValueError(f"path.points[{index}] exceeds environment drop")

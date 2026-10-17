@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+import csv
+import hashlib
+import json
 import math
 from pathlib import Path
 import threading
@@ -33,6 +36,78 @@ POST_DISARM_CONFIRM_SECONDS = 1.0
 MAX_AUTO_DISARM_DELAY_SECONDS = 5.0
 ACTUATOR_MAX_AGE_SECONDS = 1.5
 PROPULSION_STOP_THRESHOLD = 0.01
+
+
+def load_planner_summary(path, trajectory_path, *, required=False):
+    """Bind an optional planner summary to the exact CSV before transport."""
+    if path is None:
+        try:
+            with Path(trajectory_path).open(encoding="utf-8", newline="") as stream:
+                fields = csv.DictReader(stream).fieldnames or []
+        except OSError as exc:
+            raise ValueError(
+                f"cannot inspect selected trajectory {trajectory_path}: {exc}"
+            ) from exc
+        if required or "planner_contract_version" in fields:
+            raise ValueError(
+                "explicit or drawn-path trajectories require --planner-summary"
+            )
+        return None
+    source = Path(path)
+
+    def reject_constant(value):
+        raise ValueError(f"planner summary contains non-finite value: {value}")
+
+    try:
+        summary = json.loads(
+            source.read_text(encoding="utf-8"),
+            parse_constant=reject_constant,
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"cannot load planner summary {source}: {exc}") from exc
+    if not isinstance(summary, dict):
+        raise ValueError("planner summary must be an object")
+    if summary.get("schema_version") != 1:
+        raise ValueError("planner summary schema_version must be 1")
+    drawn_path = summary.get("release_class") == "SITL_ONLY"
+    expected_digest = summary.get(
+        "controller_trajectory_sha256" if drawn_path else "trajectory_sha256"
+    )
+    if (
+        not isinstance(expected_digest, str)
+        or len(expected_digest) != 64
+        or any(character not in "0123456789abcdef" for character in expected_digest)
+    ):
+        raise ValueError("planner summary trajectory SHA-256 is invalid")
+    actual_digest = hashlib.sha256(Path(trajectory_path).read_bytes()).hexdigest()
+    if actual_digest != expected_digest:
+        raise ValueError("planner summary does not match the selected trajectory")
+    if not drawn_path:
+        return None
+    cruise_height = summary.get("controller_cruise_height_m")
+    if (
+        isinstance(cruise_height, bool)
+        or not isinstance(cruise_height, (int, float))
+        or not math.isfinite(cruise_height)
+        or cruise_height <= 0.0
+    ):
+        raise ValueError("planner summary cruise height must be finite and positive")
+    return float(cruise_height)
+
+
+def validate_planner_cruise_height(controller, expected_height):
+    if expected_height is None:
+        return
+    if not math.isclose(
+        controller.cruise_height_m,
+        expected_height,
+        rel_tol=0.0,
+        abs_tol=1e-6,
+    ):
+        raise RuntimeError(
+            "Live cruise height does not match the verified planner artifact: "
+            f"{controller.cruise_height_m:.6f}m != {expected_height:.6f}m"
+        )
 
 
 def snapshot(controller):
@@ -471,15 +546,26 @@ def parse_args(argv=None):
             "Validated trajectory CSV; defaults to controller/trajectory.csv"
         ),
     )
+    parser.add_argument(
+        "--planner-summary",
+        type=Path,
+        help="Verified drawn-path summary bound to the selected trajectory",
+    )
     return parser.parse_args(argv)
 
 
-def main(config=None, trajectory_path=None):
+def main(config=None, trajectory_path=None, planner_summary_path=None):
     run_record = RunRecord()
+    summary_required = trajectory_path is not None
     try:
         c = PositionController(
             config=config,
             trajectory_path=trajectory_path,
+        )
+        planner_cruise_height = load_planner_summary(
+            planner_summary_path,
+            c.trajectory_path,
+            required=summary_required,
         )
         run_record.attach_context(c, {})
     except Exception as exc:
@@ -511,6 +597,7 @@ def main(config=None, trajectory_path=None):
         wait_for_initial_ground_state(c)
         launch_reference = capture_launch_reference(c)
         c.configure_cruise_height({"gps_vertical_accuracy_m": launch_reference.vertical_accuracy_m})
+        validate_planner_cruise_height(c, planner_cruise_height)
         c.validate_mission_plan(require_home=False)
 
         def send_level_disarmed():
@@ -558,6 +645,7 @@ def main(config=None, trajectory_path=None):
         c.wait_for_preflight_ready(timeout=5.0)
         home_snapshot = recover_local_home(c, launch_reference)
         c.configure_cruise_height(home_snapshot)
+        validate_planner_cruise_height(c, planner_cruise_height)
         c.validate_mission_plan()
         c.setup_logger(run_id=run_record.run_id)
         c.initialize_target(start_from_current=True)
@@ -727,4 +815,7 @@ def main(config=None, trajectory_path=None):
 
 if __name__ == "__main__":
     arguments = parse_args()
-    main(trajectory_path=arguments.trajectory)
+    main(
+        trajectory_path=arguments.trajectory,
+        planner_summary_path=arguments.planner_summary,
+    )

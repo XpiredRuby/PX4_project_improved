@@ -1,0 +1,63 @@
+{
+  "environment_id": "empty-world-v1",
+  "frame": {
+    "altitude_datum": "launch",
+    "name": "LOCAL_NED",
+    "origin_id": "launch-001",
+    "units": "m"
+  },
+  "mission_id": "drawn-path-example-v1",
+  "motion": {
+    "fixed_yaw_deg": 0.0,
+    "maximum_speed_m_s": 1.25,
+    "requested_duration_s": null,
+    "target_speed_m_s": 1.0,
+    "time_mode": "minimize",
+    "yaw_mode": "fixed"
+  },
+  "objective_priority": [
+    "legal_and_safety",
+    "vehicle_and_environment",
+    "intent_fidelity",
+    "tracking_margin_and_energy",
+    "duration"
+  ],
+  "path": {
+    "closure": "open_stop",
+    "kind": "polyline",
+    "maximum_deviation_m": 0.5,
+    "points": [
+      {
+        "down_m": -17.0,
+        "east_m": 0.0,
+        "hard": true,
+        "north_m": 0.0,
+        "point_id": "start"
+      },
+      {
+        "down_m": -17.0,
+        "east_m": 4.0,
+        "hard": false,
+        "north_m": 6.0,
+        "point_id": "stroke-1"
+      },
+      {
+        "down_m": -18.0,
+        "east_m": -3.0,
+        "hard": false,
+        "north_m": 12.0,
+        "point_id": "stroke-2"
+      },
+      {
+        "down_m": -17.0,
+        "east_m": 0.0,
+        "hard": true,
+        "north_m": 18.0,
+        "point_id": "finish"
+      }
+    ]
+  },
+  "release_class": "SITL_ONLY",
+  "schema_version": 1,
+  "vehicle_model_id": "px4-x500-sitl-v1"
+}

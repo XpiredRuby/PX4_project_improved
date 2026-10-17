@@ -1,0 +1,17 @@
+{
+  "environment_id": "empty-world-v1",
+  "frame": {
+    "altitude_datum": "launch",
+    "name": "LOCAL_NED",
+    "origin_id": "launch-001",
+    "units": "m"
+  },
+  "max_drop_below_launch_m": 2.0,
+  "max_height_above_launch_m": 30.0,
+  "max_radius_m": 40.0,
+  "max_wind_m_s": 5.0,
+  "minimum_clearance_m": 5.0,
+  "obstacle_map_sha256": null,
+  "obstacle_map_verified": false,
+  "schema_version": 1
+}

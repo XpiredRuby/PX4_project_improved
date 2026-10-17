@@ -375,6 +375,7 @@ class ControlLifecycleTests(unittest.TestCase):
     def test_lost_arm_ack_and_unknown_heartbeat_use_failsafe_cleanup(self):
         c = Mock()
         c.master = object()
+        c.trajectory_path = ROOT / "controller" / "trajectory.csv"
         c.failure_action = FailureAction.LAND
         c.set_failure_action.side_effect = lambda action: setattr(c, "failure_action", action)
         c.failure_action_snapshot.side_effect = lambda: c.failure_action
@@ -403,6 +404,7 @@ class ControlLifecycleTests(unittest.TestCase):
     def test_prearm_failure_does_not_command_landing_for_another_owner(self):
         c = Mock()
         c.master = object()
+        c.trajectory_path = ROOT / "controller" / "trajectory.csv"
         c.failure_action_snapshot.return_value = FailureAction.LAND
         with (patch.object(offboard_runner, "PositionController", return_value=c),
               patch.object(offboard_runner, "RunRecord"),
@@ -504,6 +506,7 @@ class ControlLifecycleTests(unittest.TestCase):
         c.config = replace(MissionConfig(), mission_timeout_s=.01)
         c.worker_error = c.receiver_error = c.setpoint_error = None
         c.master = object()
+        c.trajectory_path = ROOT / "controller" / "trajectory.csv"
         c.failure_action_snapshot.return_value = FailureAction.LAND
         worker = Mock()
         worker.is_alive.return_value = False

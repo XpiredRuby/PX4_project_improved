@@ -2,6 +2,8 @@
 # ruff: noqa: E402
 import csv
 from dataclasses import replace
+import hashlib
+import json
 import math
 from pathlib import Path
 import sys
@@ -75,6 +77,7 @@ class MissionPlanContractTests(unittest.TestCase):
     def test_prearm_plan_failure_never_requests_arm(self):
         c = Mock()
         c.master = object()
+        c.trajectory_path = ROOT / "controller" / "trajectory.csv"
         c.validate_mission_plan.side_effect = RuntimeError("invalid plan")
         with (patch.object(offboard_runner, "PositionController", return_value=c),
               patch.object(offboard_runner, "RunRecord"),
@@ -97,6 +100,92 @@ class MissionPlanContractTests(unittest.TestCase):
                 offboard_runner.main()
         self.assertEqual(record.finalize.call_args.kwargs["outcome"], "PREARM_REJECTED")
         self.assertEqual(record.finalize.call_args.kwargs["final_state"], {})
+
+    def test_planner_summary_binds_trajectory_and_live_cruise_height(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            trajectory = directory / "trajectory.csv"
+            trajectory.write_bytes(b"verified trajectory")
+            summary = directory / "summary.json"
+            summary.write_text(json.dumps({
+                "schema_version": 1,
+                "release_class": "SITL_ONLY",
+                "controller_trajectory_sha256": hashlib.sha256(
+                    trajectory.read_bytes()
+                ).hexdigest(),
+                "controller_cruise_height_m": 17.0,
+            }), encoding="utf-8")
+            expected = offboard_runner.load_planner_summary(summary, trajectory)
+            self.assertEqual(expected, 17.0)
+            offboard_runner.validate_planner_cruise_height(
+                SimpleNamespace(cruise_height_m=17.0),
+                expected,
+            )
+            with self.assertRaisesRegex(RuntimeError, "does not match"):
+                offboard_runner.validate_planner_cruise_height(
+                    SimpleNamespace(cruise_height_m=18.0),
+                    expected,
+                )
+            trajectory.write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "does not match"):
+                offboard_runner.load_planner_summary(summary, trajectory)
+
+    def test_invalid_planner_summary_fails_closed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            trajectory = directory / "trajectory.csv"
+            trajectory.write_bytes(b"trajectory")
+            summary = directory / "summary.json"
+            for value in (
+                [],
+                {"schema_version": 2},
+                {
+                    "schema_version": 1,
+                    "release_class": "FLIGHT_CANDIDATE",
+                },
+            ):
+                summary.write_text(json.dumps(value), encoding="utf-8")
+                with self.subTest(value=value), self.assertRaises(ValueError):
+                    offboard_runner.load_planner_summary(summary, trajectory)
+            summary.write_text('{"controller_cruise_height_m": NaN}')
+            with self.assertRaisesRegex(ValueError, "non-finite"):
+                offboard_runner.load_planner_summary(summary, trajectory)
+
+    def test_drawn_path_csv_requires_planner_summary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            trajectory = Path(directory) / "drawn.csv"
+            trajectory.write_text(
+                "time,x,planner_contract_version\n0,0,1\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "require --planner-summary"):
+                offboard_runner.load_planner_summary(None, trajectory)
+
+    def test_explicit_legacy_trajectory_requires_hash_summary(self):
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            trajectory = directory / "waypoint.csv"
+            trajectory.write_text("time,x\n0,0\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "require --planner-summary"):
+                offboard_runner.load_planner_summary(
+                    None,
+                    trajectory,
+                    required=True,
+                )
+            summary = directory / "summary.json"
+            summary.write_text(json.dumps({
+                "schema_version": 1,
+                "trajectory_sha256": hashlib.sha256(
+                    trajectory.read_bytes()
+                ).hexdigest(),
+            }), encoding="utf-8")
+            self.assertIsNone(
+                offboard_runner.load_planner_summary(
+                    summary,
+                    trajectory,
+                    required=True,
+                )
+            )
 
 
 class TrajectoryContractTests(unittest.TestCase):
@@ -172,7 +261,12 @@ class TrajectoryContractTests(unittest.TestCase):
 
     def test_runner_trajectory_argument_is_explicit(self):
         path = Path("planned.csv")
-        self.assertEqual(
-            offboard_runner.parse_args(["--trajectory", str(path)]).trajectory,
-            path,
-        )
+        summary = Path("planned.summary.json")
+        arguments = offboard_runner.parse_args([
+            "--trajectory",
+            str(path),
+            "--planner-summary",
+            str(summary),
+        ])
+        self.assertEqual(arguments.trajectory, path)
+        self.assertEqual(arguments.planner_summary, summary)

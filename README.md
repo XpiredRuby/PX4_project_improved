@@ -84,6 +84,38 @@ The runner retains any detected contact violation while waiting for PX4 ground,
 automatic disarm, and fresh zero propulsion outputs, then reports the failure.
 Detecting a violation is evidence of a failed landing, not proof it was avoided.
 
+## Drawn-path research baseline
+
+The first `SITL_ONLY` general-planner slice accepts a strict `LOCAL_NED`
+polyline, constructs clamped quintic B-spline geometry, proves a conservative
+symmetric deviation bound against the source stroke, applies analytic
+speed/acceleration/jerk retiming, independently verifies the candidate, and
+exports the existing controller CSV format.
+
+```bash
+python -m mission_planner.plan_drawn_path \
+  --intent missions/drawn_path_example.json \
+  --vehicle config/planner/x500_sitl_vehicle_model.json \
+  --environment config/planner/empty_world_environment.json \
+  --trajectory drawn-path.csv \
+  --report drawn-path.verification.json \
+  --summary drawn-path.summary.json
+
+python controller/offboard_runner.py \
+  --trajectory drawn-path.csv \
+  --planner-summary drawn-path.summary.json
+```
+
+The baseline deliberately supports only open, rest-to-rest paths with fixed yaw.
+Periodic geometry is implemented and checked through jerk at its seam, but
+periodic execution remains rejected until entry and exit states are planned.
+Tangent/look-at yaw, internal hard points, obstacle clearance, energy
+qualification, and physical-flight release are not yet supported. The x500
+model is a conservative SITL configuration, not an identified aircraft model.
+The compiler binds the expected controller cruise height into its summary.
+The runner checks both that summary's trajectory hash and the live
+uncertainty-adjusted cruise height before execution; a mismatch is rejected.
+
 ## Waypoint missions
 
 Waypoint plans use a strict, versioned JSON contract. Coordinates are metres in
@@ -100,7 +132,9 @@ python trajectory_generator/plan_waypoint_mission.py \
   --output five_stop.csv \
   --summary five_stop.summary.json
 
-python controller/offboard_runner.py --trajectory five_stop.csv
+python controller/offboard_runner.py \
+  --trajectory five_stop.csv \
+  --planner-summary five_stop.summary.json
 
 python analysis/waypoint_mission_audit.py \
   --log RUN/research_log_ID.csv \
