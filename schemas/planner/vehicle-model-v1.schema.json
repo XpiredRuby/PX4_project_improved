@@ -1,0 +1,78 @@
+{
+  "$id": "https://example.invalid/px4-planner/vehicle-model-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "configuration": {
+      "maxLength": 256,
+      "minLength": 1,
+      "type": "string"
+    },
+    "identified_for_physical_flight": {
+      "type": "boolean"
+    },
+    "mass_kg": {
+      "description": "All-up modeled mass.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_acceleration_m_s2": {
+      "description": "Verified translational acceleration ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_body_rate_deg_s": {
+      "description": "Verified body-rate ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_jerk_m_s3": {
+      "description": "Verified translational jerk ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_speed_m_s": {
+      "description": "Verified model speed ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_thrust_n": {
+      "description": "Maximum modeled collective thrust.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_tilt_deg": {
+      "description": "Verified body tilt ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "minimum_thrust_n": {
+      "description": "Minimum modeled collective thrust.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "vehicle_model_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "vehicle_model_id",
+    "configuration",
+    "mass_kg",
+    "maximum_speed_m_s",
+    "maximum_acceleration_m_s2",
+    "maximum_jerk_m_s3",
+    "maximum_tilt_deg",
+    "maximum_body_rate_deg_s",
+    "minimum_thrust_n",
+    "maximum_thrust_n",
+    "identified_for_physical_flight"
+  ],
+  "title": "VehicleModel v1",
+  "type": "object"
+}

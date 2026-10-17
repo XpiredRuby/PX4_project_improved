@@ -1,0 +1,220 @@
+{
+  "$id": "https://example.invalid/px4-planner/mission-intent-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "environment_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    },
+    "frame": {
+      "additionalProperties": false,
+      "properties": {
+        "altitude_datum": {
+          "const": "launch"
+        },
+        "name": {
+          "const": "LOCAL_NED"
+        },
+        "origin_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "units": {
+          "const": "m"
+        }
+      },
+      "required": [
+        "name",
+        "units",
+        "origin_id",
+        "altitude_datum"
+      ],
+      "type": "object"
+    },
+    "mission_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    },
+    "motion": {
+      "additionalProperties": false,
+      "properties": {
+        "fixed_yaw_deg": {
+          "anyOf": [
+            {
+              "maximum": 180,
+              "minimum": -180,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "maximum_speed_m_s": {
+          "description": "Hard mission speed ceiling.",
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "requested_duration_s": {
+          "anyOf": [
+            {
+              "description": "Requested mission duration.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "target_speed_m_s": {
+          "anyOf": [
+            {
+              "description": "Preferred speed.",
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "time_mode": {
+          "enum": [
+            "minimize",
+            "exact",
+            "maximum",
+            "none"
+          ]
+        },
+        "yaw_mode": {
+          "enum": [
+            "fixed",
+            "tangent",
+            "unconstrained"
+          ]
+        }
+      },
+      "required": [
+        "target_speed_m_s",
+        "maximum_speed_m_s",
+        "yaw_mode",
+        "fixed_yaw_deg",
+        "time_mode",
+        "requested_duration_s"
+      ],
+      "type": "object"
+    },
+    "objective_priority": {
+      "items": false,
+      "maxItems": 5,
+      "minItems": 5,
+      "prefixItems": [
+        {
+          "const": "legal_and_safety"
+        },
+        {
+          "const": "vehicle_and_environment"
+        },
+        {
+          "const": "intent_fidelity"
+        },
+        {
+          "const": "tracking_margin_and_energy"
+        },
+        {
+          "const": "duration"
+        }
+      ],
+      "type": "array"
+    },
+    "path": {
+      "additionalProperties": false,
+      "properties": {
+        "closure": {
+          "enum": [
+            "open_stop",
+            "open_depart",
+            "periodic"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "waypoints",
+            "polyline"
+          ]
+        },
+        "maximum_deviation_m": {
+          "description": "Maximum accepted path error.",
+          "minimum": 0,
+          "type": "number"
+        },
+        "points": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "down_m": {
+                "type": "number"
+              },
+              "east_m": {
+                "type": "number"
+              },
+              "hard": {
+                "type": "boolean"
+              },
+              "north_m": {
+                "type": "number"
+              },
+              "point_id": {
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "point_id",
+              "north_m",
+              "east_m",
+              "down_m",
+              "hard"
+            ],
+            "type": "object"
+          },
+          "maxItems": 10000,
+          "minItems": 2,
+          "type": "array"
+        }
+      },
+      "required": [
+        "kind",
+        "closure",
+        "maximum_deviation_m",
+        "points"
+      ],
+      "type": "object"
+    },
+    "release_class": {
+      "const": "SITL_ONLY"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "vehicle_model_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "mission_id",
+    "release_class",
+    "frame",
+    "path",
+    "motion",
+    "vehicle_model_id",
+    "environment_id",
+    "objective_priority"
+  ],
+  "title": "MissionIntent v1",
+  "type": "object"
+}

@@ -40,7 +40,13 @@ def main() -> None:
         if outputs[0].read_bytes() != outputs[1].read_bytes():
             raise RuntimeError("Waypoint mission compilation is not deterministic")
 
-    for directory in (CONTROLLER, GENERATOR, ROOT / "analysis", ROOT / "tests"):
+    for directory in (
+        CONTROLLER,
+        GENERATOR,
+        ROOT / "analysis",
+        ROOT / "mission_planner",
+        ROOT / "tests",
+    ):
         if not compileall.compile_dir(directory, quiet=1):
             raise RuntimeError(f"Compilation failed in {directory}")
 

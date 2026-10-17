@@ -1,0 +1,92 @@
+{
+  "$id": "https://example.invalid/px4-planner/environment-snapshot-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "environment_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    },
+    "frame": {
+      "additionalProperties": false,
+      "properties": {
+        "altitude_datum": {
+          "const": "launch"
+        },
+        "name": {
+          "const": "LOCAL_NED"
+        },
+        "origin_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "units": {
+          "const": "m"
+        }
+      },
+      "required": [
+        "name",
+        "units",
+        "origin_id",
+        "altitude_datum"
+      ],
+      "type": "object"
+    },
+    "max_drop_below_launch_m": {
+      "description": "Maximum drop below launch.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "max_height_above_launch_m": {
+      "description": "Maximum height above launch.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "max_radius_m": {
+      "description": "Maximum horizontal radius from launch.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "max_wind_m_s": {
+      "description": "Maximum supported wind.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "minimum_clearance_m": {
+      "description": "Required inflated clearance.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "obstacle_map_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "obstacle_map_verified": {
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "environment_id",
+    "frame",
+    "max_radius_m",
+    "max_height_above_launch_m",
+    "max_drop_below_launch_m",
+    "max_wind_m_s",
+    "minimum_clearance_m",
+    "obstacle_map_sha256",
+    "obstacle_map_verified"
+  ],
+  "title": "EnvironmentSnapshot v1",
+  "type": "object"
+}

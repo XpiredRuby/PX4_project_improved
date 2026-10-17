@@ -1,0 +1,9 @@
+{
+  "compiler": "trajectory_generator.plan_waypoint_mission",
+  "contract_version": 1,
+  "duration_s": 125.89916494628677,
+  "point_count": 2520,
+  "source": "missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}

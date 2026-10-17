@@ -9,6 +9,8 @@ The latest bounded-recovery and lifecycle evidence is in
 The researched architecture, requirements, trade study, and staged delivery plan
 for drawn and parameter-driven missions are in the
 [physics-constrained trajectory planner plan](docs/trajectory_planner_architecture.md).
+Milestone 0 contract coverage is tracked in the
+[planner requirements traceability matrix](docs/trajectory_planner_traceability.md).
 
 Computed-command
 expiry, arming/control ownership, stale shutdown evidence, pre-arm plan validation,

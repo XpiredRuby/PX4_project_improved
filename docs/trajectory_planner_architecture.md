@@ -379,7 +379,7 @@ Intent normalizer -> geometric path -> corridor/topology (when mapped)
 Suggested repository layout:
 
 ```text
-planner/
+mission_planner/
   contracts.py              # versioned intent/model/environment/artifact schemas
   normalize.py              # frames, units, stroke cleanup, hard/soft constraints
   geometry.py               # arc length, splines, seam and curvature handling

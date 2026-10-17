@@ -1,0 +1,62 @@
+{
+  "$id": "https://example.invalid/px4-planner/plan-artifact-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "approval_id": {
+      "type": "null"
+    },
+    "approved": {
+      "const": false
+    },
+    "artifact_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "candidate_trajectory_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "environment_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "mission_intent_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "release_class": {
+      "const": "SITL_ONLY"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "simulation_evidence_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "vehicle_model_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "verification_report_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "release_class",
+    "mission_intent_sha256",
+    "vehicle_model_sha256",
+    "environment_sha256",
+    "candidate_trajectory_sha256",
+    "verification_report_sha256",
+    "simulation_evidence_sha256",
+    "approved",
+    "approval_id",
+    "artifact_sha256"
+  ],
+  "title": "PlanArtifact v1",
+  "type": "object"
+}
