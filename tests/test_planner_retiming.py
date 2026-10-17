@@ -1,12 +1,14 @@
 """Analytic stop-to-stop retiming tests for smooth drawn paths."""
 
 from dataclasses import replace
+from functools import lru_cache
 import math
 import unittest
 
 from mission_planner.contracts import MotionIntent, PathIntent, VehicleModel
 from mission_planner.geometry import build_smooth_path
 from mission_planner.retiming import retime_stop_path
+from mission_planner.timing import schedule_defects
 
 
 def path(*, closure="open_stop"):
@@ -63,7 +65,9 @@ def vehicle():
     })
 
 
+@lru_cache(maxsize=None)
 def geometry(*, closure="open_stop"):
+    """Return the shared fixture; plans are immutable, so sharing is safe."""
     return build_smooth_path(
         path(closure=closure),
         control_spacing_m=0.3,
@@ -127,6 +131,29 @@ class PlannerRetimingTests(unittest.TestCase):
             summary.conservative_jerk_bound_m_s3,
             summary.jerk_limit_m_s3 * (1.0 + 1e-12),
         )
+
+    def test_candidate_carries_a_valid_time_law_that_sets_the_duration(self):
+        plan = retime_stop_path(geometry(), motion(), vehicle())
+        self.assertEqual(schedule_defects(plan.schedule), ())
+        report = plan.summary.time_law
+        self.assertEqual(
+            report.minimum_requirement_s,
+            plan.summary.minimum_feasible_duration_s,
+        )
+        self.assertEqual(
+            report.limiting_constraint,
+            plan.summary.limiting_constraint,
+        )
+        self.assertEqual(report.speed_limit_m_s, plan.summary.speed_limit_m_s)
+        # Every emitted parameter must come from the carried schedule, since
+        # that schedule is what the verifier recomputes the trajectory from.
+        duration = plan.summary.selected_duration_s
+        for point in plan.points:
+            self.assertAlmostEqual(
+                point.path_parameter,
+                plan.schedule.evaluate(point.time_s / duration)[0],
+                places=12,
+            )
 
     def test_exact_and_maximum_duration_semantics_fail_closed(self):
         baseline = retime_stop_path(geometry(), motion(), vehicle())

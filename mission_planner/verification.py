@@ -15,11 +15,7 @@ from .contracts import (
 )
 from .geometry import GeometryPlan, measure_path_fidelity
 from .retiming import CandidateTrajectory
-
-
-Q1_MAX = 2.1875
-Q2_MAX = 7.513188404399301
-Q3_MAX = 52.5
+from .timing import PathBounds, certified_dynamics, schedule_defects
 
 
 def _check(
@@ -101,19 +97,15 @@ def _trajectory_binds_to_curve(
     if motion.yaw_mode != "fixed" or motion.fixed_yaw_deg is None:
         return False
     expected_yaw = math.radians(motion.fixed_yaw_deg)
+    schedule = candidate.schedule
     for point in candidate.points:
         u = point.time_s / duration
         if not 0.0 <= u <= 1.0:
             return False
-        if u <= 0.0:
-            parameter, q1, q2, q3 = 0.0, 0.0, 0.0, 0.0
-        elif u >= 1.0:
-            parameter, q1, q2, q3 = 1.0, 0.0, 0.0, 0.0
-        else:
-            parameter = 35 * u**4 - 84 * u**5 + 70 * u**6 - 20 * u**7
-            q1 = 140 * u**3 - 420 * u**4 + 420 * u**5 - 140 * u**6
-            q2 = 420 * u**2 - 1680 * u**3 + 2100 * u**4 - 840 * u**5
-            q3 = 840 * u - 5040 * u**2 + 8400 * u**3 - 4200 * u**4
+        parameter = min(max(schedule.evaluate(u)[0], 0.0), 1.0)
+        q1 = schedule.evaluate(u, 1)[0]
+        q2 = schedule.evaluate(u, 2)[0]
+        q3 = schedule.evaluate(u, 3)[0]
         position = geometry.curve.evaluate(parameter)
         first = geometry.curve.evaluate(parameter, 1)
         second = geometry.curve.evaluate(parameter, 2)
@@ -239,19 +231,12 @@ def _dynamic_margins(
         vehicle.maximum_acceleration_m_s2 * summary.limit_scale,
         vehicle.maximum_jerk_m_s3 * summary.limit_scale,
     )
-    first = geometry.curve.derivative_norm_bound(1)
-    second = geometry.curve.derivative_norm_bound(2)
-    third = geometry.curve.derivative_norm_bound(3)
-    bounds = (
-        first * Q1_MAX / duration,
-        (second * Q1_MAX**2 + first * Q2_MAX) / duration**2,
-        (
-            third * Q1_MAX**3
-            + 3.0 * second * Q1_MAX * Q2_MAX
-            + first * Q3_MAX
+    try:
+        bounds = certified_dynamics(
+            PathBounds.of(geometry.curve), candidate.schedule, duration
         )
-        / duration**3,
-    )
+    except ValueError:
+        return False, -math.inf
     normalized_margins = [
         (limit - bound) / limit for limit, bound in zip(limits, bounds, strict=True)
     ]
@@ -347,10 +332,13 @@ def verify_candidate_trajectory(
         units="m",
     ))
     structure = _trajectory_structure(candidate, maximum_sample_period_s)
+    defects = schedule_defects(candidate.schedule)
     checks.append(_check(
         "PLN-001",
-        structure and _stationary_endpoints(candidate),
-        "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk.",
+        structure and _stationary_endpoints(candidate) and not defects,
+        "Trajectory is finite, ordered, endpoint-inclusive, and stationary "
+        "through jerk, and its time law is a monotone clamped quintic"
+        + ("." if not defects else f"; defects: {'; '.join(defects)}."),
     ))
     bound = _trajectory_binds_to_curve(geometry, candidate, motion)
     checks.append(_check(

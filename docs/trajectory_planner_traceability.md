@@ -20,12 +20,12 @@ physical-flight readiness.
 | ENV-002 | `minimum_clearance_m` | Partial; decomposed uncertainty budget planned |
 | ENV-003 | Map identity/verification consistency check | Partial; physical-launch gate planned |
 | ENV-004 | Wind limit serialized | Partial; full GNSS/weather ODD planned |
-| PLN-001 | Quintic B-spline geometry is C4 internally; seventh-order time law is stationary through jerk | Implemented for open stop-to-stop baseline |
+| PLN-001 | Quintic B-spline geometry is C4 internally; the quintic path-parameter schedule is monotone and stationary through jerk by construction, and acceptance rechecks both | Implemented for open stop-to-stop baseline |
 | PLN-002 | Geometry is independent of yaw; fixed-yaw timing is implemented | Partial; tangent/look-at/profile yaw planned |
 | PLN-003 | Periodic spline position and derivatives through jerk match at the seam | Implemented for geometry |
-| PLN-004 | Analytic conservative speed, acceleration, and jerk bounds with reserved limit scale | Partial; tilt/thrust/body-rate/rotor checks planned |
+| PLN-004 | Analytic conservative speed, acceleration, and jerk bounds per knot span of both the path and the schedule, with reserved limit scale | Partial; tilt/thrust/body-rate/rotor checks planned |
 | PLN-005 | Unsupported modes, invalid numerics, failed fidelity, infeasible timing, and failed verification stop output | Implemented for baseline |
-| PLN-006 | Baseline is deterministic and uses no stochastic search | Implemented |
+| PLN-006 | Baseline is deterministic; the time law searches a fixed declared grid with no stochastic component | Implemented |
 | PLN-007 | Exact and maximum duration requests reject below the reported minimum feasible duration | Implemented for baseline |
 | PLN-008 | Fixed safety-first `objective_priority`; the fidelity/margin trade inside the deviation tube is an explicit serialized `deviation_utilization` | Implemented |
 | VER-001 | `mission_planner/verification.py` recomputes acceptance without trusting retimer status | Implemented for baseline |
@@ -70,7 +70,22 @@ physical-flight readiness.
   of the utilization share itself;
 - certified bounds on the rate of tangent-heading change, including rejection of
   paths whose horizontal tangent cannot be separated from zero;
-- reuse of the curve evaluator and convex-hull bounds by a scalar schedule.
+- reuse of the curve evaluator and convex-hull bounds by a scalar schedule;
+- arc length measured on the smoothed curve rather than inherited from the
+  stroke it replaces.
+
+`tests/test_planner_timing.py` covers:
+
+- a monotone schedule that is stationary through jerk and spans the whole path;
+- a duration under half of what a single global time law requires on the same
+  path, and above the floor of flying the curve at the speed limit;
+- certified bounds that hold against densely sampled dynamics, fit the limits,
+  leave the binding constraint nearly tight, and scale correctly with duration;
+- per-span requirements that differ by more than a factor of two along a path
+  whose straights surround one tight corner;
+- detection of tampered stationarity, monotonicity, and schedule degree;
+- rejection of invalid limits, search grids, and equalization counts;
+- deterministic planning and explicit deferral of periodic paths.
 
 `tests/test_planner_retiming.py`, `tests/test_planner_verification.py`, and
 `tests/test_drawn_path_cli.py` cover:

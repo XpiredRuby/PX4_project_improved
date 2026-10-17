@@ -6,14 +6,15 @@ from dataclasses import asdict, dataclass
 import math
 
 from .contracts import MotionIntent, VehicleModel, canonical_sha256
-from .geometry import GeometryPlan
+from .geometry import BSplinePath, GeometryPlan
+from .timing import (
+    PathBounds,
+    TimeLawReport,
+    certified_dynamics,
+    plan_time_law,
+)
 
 
-# Exact normalized derivative maxima for
-# q(u) = 35u^4 - 84u^5 + 70u^6 - 20u^7, u in [0, 1].
-PEAK_Q1 = 2.1875
-PEAK_Q2 = 7.513188404399301
-PEAK_Q3 = 52.5
 MAX_TRAJECTORY_POINTS = 200_000
 
 
@@ -24,21 +25,6 @@ def _positive(value: float, field: str) -> float:
     if not math.isfinite(result) or result <= 0.0:
         raise ValueError(f"{field} must be finite and positive")
     return result
-
-
-def _smootherstep7(value: float) -> tuple[float, float, float, float]:
-    if value <= 0.0:
-        return 0.0, 0.0, 0.0, 0.0
-    if value >= 1.0:
-        return 1.0, 0.0, 0.0, 0.0
-    u = value
-    position = 35.0 * u**4 - 84.0 * u**5 + 70.0 * u**6 - 20.0 * u**7
-    velocity = 140.0 * u**3 - 420.0 * u**4 + 420.0 * u**5 - 140.0 * u**6
-    acceleration = (
-        420.0 * u**2 - 1680.0 * u**3 + 2100.0 * u**4 - 840.0 * u**5
-    )
-    jerk = 840.0 * u - 5040.0 * u**2 + 8400.0 * u**3 - 4200.0 * u**4
-    return position, velocity, acceleration, jerk
 
 
 @dataclass(frozen=True)
@@ -75,6 +61,7 @@ class RetimeSummary:
     conservative_speed_bound_m_s: float
     conservative_acceleration_bound_m_s2: float
     conservative_jerk_bound_m_s3: float
+    time_law: TimeLawReport
 
 
 @dataclass(frozen=True)
@@ -82,6 +69,7 @@ class CandidateTrajectory:
     schema_version: int
     release_class: str
     points: tuple[TimedTrajectoryPoint, ...]
+    schedule: BSplinePath
     summary: RetimeSummary
 
     def to_dict(self):
@@ -90,32 +78,6 @@ class CandidateTrajectory:
     @property
     def sha256(self) -> str:
         return canonical_sha256(self)
-
-
-def _duration_requirements(
-    geometry: GeometryPlan,
-    *,
-    speed_limit_m_s: float,
-    acceleration_limit_m_s2: float,
-    jerk_limit_m_s3: float,
-) -> dict[str, float]:
-    first = geometry.curve.derivative_norm_bound(1)
-    second = geometry.curve.derivative_norm_bound(2)
-    third = geometry.curve.derivative_norm_bound(3)
-    normalized_speed = first * PEAK_Q1
-    normalized_acceleration = second * PEAK_Q1**2 + first * PEAK_Q2
-    normalized_jerk = (
-        third * PEAK_Q1**3
-        + 3.0 * second * PEAK_Q1 * PEAK_Q2
-        + first * PEAK_Q3
-    )
-    return {
-        "speed": normalized_speed / speed_limit_m_s,
-        "acceleration": math.sqrt(
-            normalized_acceleration / acceleration_limit_m_s2
-        ),
-        "jerk": (normalized_jerk / jerk_limit_m_s3) ** (1.0 / 3.0),
-    }
 
 
 def _select_duration(
@@ -175,15 +137,14 @@ def retime_stop_path(
     )
     acceleration_limit = vehicle.maximum_acceleration_m_s2 * limit_scale
     jerk_limit = vehicle.maximum_jerk_m_s3 * limit_scale
-    requirements = _duration_requirements(
+    law = plan_time_law(
         geometry,
         speed_limit_m_s=speed_limit,
         acceleration_limit_m_s2=acceleration_limit,
         jerk_limit_m_s3=jerk_limit,
     )
-    limiting_constraint, constrained_duration = max(
-        requirements.items(), key=lambda item: (item[1], item[0])
-    )
+    constrained_duration = law.report.minimum_requirement_s
+    limiting_constraint = law.report.limiting_constraint
     minimum_feasible = max(minimum_duration, constrained_duration)
     if minimum_duration >= constrained_duration:
         limiting_constraint = "minimum_duration"
@@ -201,8 +162,7 @@ def retime_stop_path(
     max_jerk = 0.0
     for index in range(intervals + 1):
         time_s = duration if index == intervals else duration * index / intervals
-        u = index / intervals
-        parameter, q1, q2, q3 = _smootherstep7(u)
+        parameter, q1, q2, q3 = law.sample(index / intervals)
         position = geometry.curve.evaluate(parameter)
         first = geometry.curve.evaluate(parameter, 1)
         second = geometry.curve.evaluate(parameter, 2)
@@ -248,21 +208,13 @@ def retime_stop_path(
             yaw_jerk_rad_s3=0.0,
         ))
 
-    conservative_speed = (
-        geometry.curve.derivative_norm_bound(1) * PEAK_Q1 / duration
+    (
+        conservative_speed,
+        conservative_acceleration,
+        conservative_jerk,
+    ) = certified_dynamics(
+        PathBounds.of(geometry.curve), law.schedule, duration
     )
-    conservative_acceleration = (
-        geometry.curve.derivative_norm_bound(2) * PEAK_Q1**2
-        + geometry.curve.derivative_norm_bound(1) * PEAK_Q2
-    ) / duration**2
-    conservative_jerk = (
-        geometry.curve.derivative_norm_bound(3) * PEAK_Q1**3
-        + 3.0
-        * geometry.curve.derivative_norm_bound(2)
-        * PEAK_Q1
-        * PEAK_Q2
-        + geometry.curve.derivative_norm_bound(1) * PEAK_Q3
-    ) / duration**3
     tolerance = 1.0 + 1e-9
     if (
         max_speed > speed_limit * tolerance
@@ -274,6 +226,7 @@ def retime_stop_path(
         schema_version=1,
         release_class="SITL_ONLY",
         points=tuple(points),
+        schedule=law.schedule,
         summary=RetimeSummary(
             minimum_feasible_duration_s=minimum_feasible,
             selected_duration_s=duration,
@@ -285,5 +238,6 @@ def retime_stop_path(
             conservative_speed_bound_m_s=conservative_speed,
             conservative_acceleration_bound_m_s2=conservative_acceleration,
             conservative_jerk_bound_m_s3=conservative_jerk,
+            time_law=law.report,
         ),
     )

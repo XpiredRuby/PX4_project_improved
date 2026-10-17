@@ -114,6 +114,49 @@ class PlannerVerificationTests(unittest.TestCase):
                     "FAIL",
                 )
 
+    def test_modified_schedule_is_rejected(self):
+        smooth = geometry()
+        requested_motion = motion()
+        model = vehicle()
+        candidate = retime_stop_path(smooth, requested_motion, model)
+        values = [list(value) for value in candidate.schedule.control_points]
+        middle = len(values) // 2
+        cases = {
+            # Moving an interior control value leaves a valid schedule that no
+            # longer explains the emitted points.
+            "VER-003": (middle, [min(values[middle][0] + 0.05, 1.0)]),
+            # Moving an endpoint control value destroys the stationarity the
+            # schedule claims, which acceptance must notice on its own.
+            "PLN-001": (0, [0.01]),
+        }
+        for requirement, (index, value) in cases.items():
+            tampered = list(values)
+            tampered[index] = value
+            modified = replace(
+                candidate,
+                schedule=replace(
+                    candidate.schedule,
+                    control_points=tuple(
+                        tuple(entry) for entry in tampered
+                    ),
+                ),
+            )
+            with self.subTest(requirement=requirement):
+                report = verify_candidate_trajectory(
+                    smooth,
+                    modified,
+                    requested_motion,
+                    model,
+                    environment(),
+                    maximum_deviation_m=0.75,
+                )
+                self.assertFalse(report.accepted)
+                self.assertEqual(
+                    by_requirement(report)[requirement].status,
+                    "FAIL",
+                )
+                self.assertNotEqual(candidate.sha256, modified.sha256)
+
     def test_sparse_endpoint_only_controller_path_is_rejected(self):
         smooth = geometry()
         requested_motion = motion()

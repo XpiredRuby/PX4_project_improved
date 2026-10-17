@@ -485,6 +485,69 @@ Because this is a policy choice and not a derived quantity, it is recorded in
 the plan summary alongside the requested and selected spacing, the resulting
 deviation bound, and the budget it was checked against.
 
+### 7.2 Timing: the path-parameter schedule
+
+A single global time law such as a seventh-order smootherstep is slow enough
+everywhere for the worst point on the path. A mission that is mostly straight
+still pays twice over: once for the peak-to-mean ratio of the ramp itself, and
+again for the one tightest corner, which raises the curvature bound used for
+the entire path. On the example drawn mission those two factors together cost
+roughly 3.6x the duration of flying the same curve at the speed limit.
+
+Timing is therefore represented as its own curve: `s(tau)` for
+`tau = t / T in [0, 1]`, a monotone clamped quintic B-spline. The alternative
+considered was the TOPP formulation, which works in the `(s, s_dot^2)` plane.
+That representation was rejected for this baseline because a polynomial profile
+in `W = s_dot^2` can only vanish to integer order at the endpoints, which
+forces a choice between an acceleration step at `t = 0` and an infinite
+duration. Keeping the schedule in normalized time instead gives exact endpoint
+stationarity through jerk, needs no quadrature or profile inversion at sample
+time, makes uniform-period sampling trivial, and leaves the schedule as plain
+spline data that the independent verifier can recompute from exactly.
+
+Monotonicity and endpoint stationarity are both structural rather than
+numerical. Control values that never decrease force `s(tau)` to never decrease,
+because on each span the value is a convex combination of that span's local
+control values; repeating the first and last control value four times forces
+the schedule and its first three derivatives to vanish at the ends, because a
+clamped-end derivative depends only on that many controls. Acceptance checks
+these properties directly instead of trusting that the planner produced them.
+
+Timing is split into two stages with different standing:
+
+- The **proposal** stage chooses the schedule's shape. It builds a pointwise
+  pace ceiling `g(s) = min(v_max/R1, sqrt(a_lat/R2), cbrt(j_lat/R3))` from the
+  per-span path derivative bounds `R1, R2, R3`, tapers it at both ends so the
+  path parameter leaves and reaches its endpoints like `t^4`, and integrates
+  `ds/g(s)` to get elapsed time. The ceiling is piecewise constant, so fitting
+  a schedule straight through its steps leaves third-derivative noise that
+  acceptance charges heavily for; the ceiling is smoothed first by a running
+  minimum over a window at least as wide as the whole blur support, followed by
+  mean blurring, which guarantees the smoothed ceiling never exceeds the raw
+  ceiling at the same parameter.
+- The **acceptance** stage derives the duration from certified per-span
+  convex-hull bounds on both the path and the schedule. Each schedule span is
+  paired only with the path bounds over the parameter range that span can
+  reach, so a straight stretch is not charged for a corner it never visits.
+  Inverting each bound for the duration that makes it meet its limit turns the
+  span bounds into durations, and the span needing the longest sets `T`.
+
+The split is what makes the heuristics safe. A poor proposal yields a slow
+mission, never an unsafe one, because nothing the proposal stage does enters
+the duration except through bounds the acceptance stage recomputes itself.
+
+Because the duration is the single worst span requirement, it falls only when
+the binding spans are slowed and the slack spans take up the difference.
+Successive passes therefore scale the ceiling down wherever acceptance charges
+more than it does elsewhere, which drives the span requirements towards each
+other. The planner searches a fixed, declared grid of schedule resolutions,
+smoothing widths, and splits of acceleration between changing speed and
+turning, scoring every candidate by the same certified requirement acceptance
+uses, so widening the grid can only find a faster mission and never a less
+conservative one. Planning cost is explicitly not a factor in this trade.
+
+### 7.3 Vehicle and energy validation
+
 The vehicle verifier should recover attitude, thrust, and body-rate demands from
 the flat outputs `(x, y, z, yaw)` and derivatives. Rotor allocation then checks
 whether demanded wrench remains inside a conservatively identified actuator
