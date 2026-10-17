@@ -6,6 +6,9 @@ See [validation status](docs/validation_summary.md) and
 [five-stop mission evidence](validation/2026-10-05-waypoint).
 The latest bounded-recovery and lifecycle evidence is in
 [`validation/2026-10-04-code-logic`](validation/2026-10-04-code-logic).
+The researched architecture, requirements, trade study, and staged delivery plan
+for drawn and parameter-driven missions are in the
+[physics-constrained trajectory planner plan](docs/trajectory_planner_architecture.md).
 
 Computed-command
 expiry, arming/control ownership, stale shutdown evidence, pre-arm plan validation,
