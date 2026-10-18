@@ -294,6 +294,7 @@ def compile_drawn_path(
                 "yaw commands are added to the heading measured at launch; "
                 "tangent mode requires the aircraft to start pointed along the initial path tangent",
                 "a periodic path starts and stops at its seam; extra laps repeat that loop",
+                "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
                 "interior hard points are full stops; exact points are flown through",
                 "look-at yaw tracks one fixed point and is refused if the path can reach it",
                 "open_depart is refused because the runner lands from a final stop",

@@ -22,7 +22,7 @@ physical-flight readiness.
 | ENV-004 | Wind limit serialized | Partial; full GNSS/weather ODD planned |
 | PLN-001 | Quintic B-spline geometry is C4 internally; the quintic path-parameter schedule is monotone and stationary through jerk by construction, and acceptance rechecks both | Implemented for open paths, stopped laps, and hard-point stops |
 | PLN-002 | Fixed yaw holds one heading; tangent and look-at yaw are certified quintics checked against yaw rate, acceleration, and jerk | Partial; an explicit yaw profile is planned |
-| PLN-003 | Periodic spline position and derivatives through jerk match at the seam; a flown lap is stationary there, so the consumed derivatives match because they are zero | Partial; a nonzero-velocity cruising seam and a departure leg are planned |
+| PLN-003 | Periodic spline position and derivatives through jerk match at the seam; a flown lap is stationary there, so the consumed derivatives match because they are zero. A circle exit is an open path: each seam is an exact fly-through and the schedule stops only at launch and at the exit | Partial; a nonzero-velocity periodic seam is not implemented |
 | PLN-004 | Per-span speed, acceleration, and jerk bounds, tilt, thrust, body rate, and paired-rotor yaw torque, with reserved limit scale | Partial; the check is the Gazebo x500 model, not an identified allocator |
 | PLN-005 | Unsupported modes, invalid numerics, failed fidelity, infeasible timing, and failed verification stop output | Implemented for baseline |
 | PLN-006 | Baseline is deterministic; the time law searches a fixed declared grid with no stochastic component | Implemented |

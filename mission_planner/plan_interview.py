@@ -2,6 +2,8 @@
 
 Roll and pitch are not questions. They are whatever attitude the acceleration
 requires, and the verifier checks them against tilt, thrust, and body rate.
+A circle may name an exit. Those laps become one open path that flies each
+launch seam through and stops at the end of the exit.
 """
 
 from __future__ import annotations
@@ -62,6 +64,91 @@ def _circle_points(center_north: float, center_east: float, altitude: float, dev
     points[-1]["north_m"] = 0.0
     points[-1]["east_m"] = 0.0
     return points
+
+
+def _exit_points(raw_exit, altitude: float):
+    if not isinstance(raw_exit, list) or len(raw_exit) < 1:
+        raise ValueError("interview.exit must contain at least one point")
+    points = []
+    for index, raw in enumerate(raw_exit):
+        value = _object(raw, f"interview.exit[{index}]")
+        unknown = set(value) - {"north_m", "east_m", "hard", "exact"}
+        if unknown:
+            raise ValueError(
+                f"interview.exit[{index}] has unknown fields: "
+                + ", ".join(sorted(unknown))
+            )
+        if "north_m" not in value or "east_m" not in value:
+            raise ValueError(
+                f"interview.exit[{index}] requires north_m and east_m"
+            )
+        hard = value.get("hard", False)
+        exact = value.get("exact", False)
+        if not isinstance(hard, bool) or not isinstance(exact, bool):
+            raise ValueError(
+                f"interview.exit[{index}] hard and exact must be boolean"
+            )
+        if hard and exact:
+            raise ValueError(
+                f"interview.exit[{index}] cannot both stop and be flown through"
+            )
+        points.append({
+            "point_id": f"exit-{index}",
+            "north_m": _number(value["north_m"], f"interview.exit[{index}].north_m"),
+            "east_m": _number(value["east_m"], f"interview.exit[{index}].east_m"),
+            "down_m": -altitude,
+            "hard": hard,
+            "exact": exact,
+        })
+    return points
+
+
+def _circle_with_exit(closed, laps: int, exit_points):
+    """Repeat the ring, fly each launch seam through, then leave and stop.
+
+    The ring begins at the launch. Lap 0 emits the whole ring and then the
+    seam. Each later lap emits the ring after that launch point and then the
+    seam again, so two laps of A B C become A B C A B C A. The exit is appended
+    and must not sit on the seam. The returned path is open, so the time law
+    is stationary only at the launch and at the end of the exit.
+    """
+    ring = closed[:-1]
+    chain = []
+    for lap in range(laps):
+        for point in (ring if lap == 0 else ring[1:]):
+            chain.append({
+                **point,
+                "point_id": f"{point['point_id']}-lap-{lap}",
+                "hard": False,
+                "exact": False,
+            })
+        chain.append({
+            "point_id": f"circle-seam-{lap}",
+            "north_m": 0.0,
+            "east_m": 0.0,
+            "down_m": ring[0]["down_m"],
+            "hard": False,
+            "exact": True,
+        })
+    first = exit_points[0]
+    if math.hypot(first["north_m"], first["east_m"]) <= 1e-6:
+        raise PlanningError(
+            "the exit must leave the circle seam",
+            limiting_constraint="geometry",
+        )
+    previous = chain[-1]
+    for point in exit_points:
+        if math.hypot(
+            point["north_m"] - previous["north_m"],
+            point["east_m"] - previous["east_m"],
+        ) <= 1e-6:
+            raise PlanningError(
+                "the exit repeats the previous point",
+                limiting_constraint="geometry",
+            )
+        chain.append(point)
+        previous = point
+    return chain
 
 
 def _survey_points(length: float, width: float, spacing: float, altitude: float):
@@ -178,6 +265,7 @@ def intent_from_interview(
         "survey",
         "waypoints",
         "corridor",
+        "exit",
         "look_at_north_m",
         "look_at_east_m",
         "look_at_down_m",
@@ -206,6 +294,11 @@ def intent_from_interview(
         raise ValueError(
             "interview.pattern must be waypoints, circle, survey, or corridor"
         )
+    if "exit" in value and pattern != "circle":
+        raise PlanningError(
+            "an exit leg is only valid on a circle",
+            limiting_constraint="geometry",
+        )
     altitude = _number(value["altitude_m"], "interview.altitude_m", minimum=0.1)
     deviation = _number(
         value["maximum_deviation_m"], "interview.maximum_deviation_m", minimum=0.0
@@ -221,7 +314,14 @@ def intent_from_interview(
             altitude,
             deviation,
         )
-        closure = "periodic"
+        if "exit" in value:
+            points = _circle_with_exit(
+                points, loop_count, _exit_points(value["exit"], altitude)
+            )
+            closure = "open_stop"
+            loop_count = 1
+        else:
+            closure = "periodic"
     elif pattern == "survey":
         survey = _object(value["survey"], "interview.survey")
         points = _survey_points(

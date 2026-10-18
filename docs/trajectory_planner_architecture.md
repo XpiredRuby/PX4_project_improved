@@ -181,9 +181,18 @@ for nominal centripetal acceleration is not acceptable.
 
 The baseline implements the stopped lap, including repeats of that lap. The
 time law is stationary through jerk at the seam, so velocity, acceleration, and
-jerk match there because they are all zero. A cruising seam, where those
-derivatives stay nonzero and an entry or departure leg joins the loop, is not
-implemented.
+jerk match there because they are all zero.
+
+A circle interview can also name an exit. The ring is written once per
+requested lap as a single open polyline. Each return to the launch point is an
+exact fly-through, and the exit is appended. The time law is stationary only at
+the launch and at the end of the exit, which is where the runner lands. Speed
+on the seam is the speed of that certified schedule. It is not a separate
+cruise command, and the path does not end in motion.
+
+A periodic seam whose velocity stays nonzero, and an `open_depart` ending, are
+not implemented. The current schedule can represent a rest-to-rest parameter
+law only.
 
 ## 4. Requirements baseline
 
@@ -596,16 +605,22 @@ The executable baseline now covers the following, all still marked `SITL_ONLY`:
   translation would finish sooner than these bounds allow, duration is
   lengthened until they fit and the limiting constraint becomes tilt, thrust,
   or body rate. Rotor allocation is not checked.
-- **Interview.** Waypoints, a circle through the launch point, and a survey
-  lawnmower become an ordinary `MissionIntent`. Roll and pitch are not inputs.
+- **Interview.** Waypoints, a circle through the launch point, a survey
+  lawnmower, and a corridor on a bound map become an ordinary `MissionIntent`.
+  Roll and pitch are not inputs. A circle may name an exit: the requested laps
+  are one open polyline, each return to the launch seam is an exact
+  fly-through, and the path stops at the end of the exit. Seam speed is the
+  certified schedule. Without an exit the circle stays periodic and stops at
+  the seam.
 - **Review.** A self-contained page shows the route, speed, duration, binding
   constraint, and the limitation list. It contains the phrase "not a clearance
   to fly" and has no control that dismisses a hard failure.
 
 The controller adds the planned yaw change to the heading measured at launch.
 Tangent mode therefore matches the path only when the aircraft starts pointed
-along the initial tangent. Open-departure is refused because the existing
-runner lands from a final stop. Unconstrained yaw is refused.
+along the initial tangent. A circle exit still ends at rest, so the runner can
+land from the final sample. Open-departure, which would end in motion, is
+refused. Unconstrained yaw is refused.
 
 - **Look-at yaw.** The heading is the horizontal bearing to one fixed point.
   The same two-degree certificate applies. The path is refused when it can

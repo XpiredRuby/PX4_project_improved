@@ -118,10 +118,12 @@ to fly.
 
 Look-at yaw, exact fly-through points, a hashed occupancy map, and a paired-rotor
 yaw-torque check are included. A drawn-path execution requires an unexpired
-SITL acknowledgement, which is not a flight clearance. A separate departure
-leg, energy qualification, a live Gazebo campaign, and physical-flight release
-are not in this repository. The x500 model is a conservative SITL configuration,
-not an identified aircraft model.
+SITL acknowledgement, which is not a flight clearance. A circle interview can
+add an exit: the laps are one open path that flies each launch seam through and
+stops at the exit, and the speed there is the certified schedule. A path that
+ends while still moving, energy qualification, a live Gazebo campaign, and
+physical-flight release are not in this repository. The x500 model is a
+conservative SITL configuration, not an identified aircraft model.
 The compiler binds the expected controller cruise height into its summary.
 The runner checks both that summary's trajectory hash and the live
 uncertainty-adjusted cruise height before execution; a mismatch is rejected.

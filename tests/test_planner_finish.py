@@ -21,6 +21,7 @@ from mission_planner.mapping import (
     clearance_margin_m,
     corridor_polyline,
 )
+from mission_planner.explain import PlanningError
 from mission_planner.plan_interview import intent_from_interview
 from mission_planner.retiming import retime_stop_path
 from mission_planner.rotors import rotor_duration_s, yaw_torque_available_nm
@@ -265,6 +266,116 @@ class PlannerFinishTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "expired"):
                 load_sitl_acknowledgement(acknowledgement, summary_path, trajectory)
 
+    def test_circle_exit_flies_the_seam_and_stops_at_the_exit(self):
+        raw = _circle_interview(loop_count=2, exit=[{"north_m": 0.0, "east_m": -6.0}])
+        intent, loops = intent_from_interview(raw)
+        self.assertEqual(loops, 1)
+        parsed = MissionIntent.from_dict(intent)
+        self.assertEqual(parsed.path.closure, "open_stop")
+        points = parsed.path.points
+        self.assertEqual((points[-1].north_m, points[-1].east_m), (0.0, -6.0))
+        origin = [
+            index
+            for index, point in enumerate(points)
+            if math.hypot(point.north_m, point.east_m) < 1e-6
+        ]
+        self.assertEqual(len(origin), 3)
+        self.assertEqual(origin[0], 0)
+        self.assertFalse(points[0].exact)
+        for index in origin[1:]:
+            self.assertTrue(points[index].exact)
+            self.assertFalse(points[index].hard)
+            self.assertGreater(
+                max(point.north_m for point in points[origin[origin.index(index) - 1]:index]),
+                7.0,
+            )
+        self.assertEqual(points[origin[-1] + 1].point_id, "exit-0")
+        self.assertEqual(parsed.motion.yaw_mode, "fixed")
+
+        one_lap, one_loops = intent_from_interview(
+            _circle_interview(exit=[{"north_m": 0.0, "east_m": -6.0}])
+        )
+        flown = MissionIntent.from_dict(one_lap)
+        self.assertEqual(one_loops, 1)
+        self.assertEqual(
+            sum(point.exact for point in flown.path.points[1:-1]),
+            1,
+        )
+        plan = build_smooth_path(
+            flown.path,
+            control_spacing_m=1.0,
+            verification_resolution_m=0.1,
+        )
+        gate = np.asarray([0.0, 0.0, -8.0])
+        grid = np.linspace(0.2, 0.98, 200)
+        distance = math.inf
+        for _ in range(12):
+            distances = [
+                float(np.linalg.norm(np.asarray(plan.curve.evaluate(float(value))) - gate))
+                for value in grid
+            ]
+            index = int(np.argmin(distances))
+            distance = distances[index]
+            center = float(grid[index])
+            half = float(grid[1] - grid[0])
+            grid = np.linspace(
+                max(0.2, center - half),
+                min(0.98, center + half),
+                40,
+            )
+        self.assertLess(distance, 1e-8)
+        timed = retime_stop_path(
+            plan,
+            flown.motion,
+            vehicle(),
+            sample_period_s=0.1,
+        )
+        self.assertEqual(timed.summary.segment_count, 1)
+        self.assertEqual(timed.summary.loop_count, 1)
+        start, finish = timed.points[0], timed.points[-1]
+        self.assertLess(abs(start.north_m) + abs(start.east_m), 1e-6)
+        self.assertLess(_horizontal_speed(start), 1e-6)
+        self.assertAlmostEqual(finish.north_m, 0.0, places=6)
+        self.assertAlmostEqual(finish.east_m, -6.0, places=6)
+        self.assertLess(_horizontal_speed(finish), 1e-6)
+        self.assertGreater(finish.time_s, 1.0)
+        far = [point for point in timed.points if point.north_m > 6.0]
+        self.assertGreater(
+            max(_horizontal_speed(point) for point in far),
+            0.2,
+        )
+        interior = [
+            point
+            for point in timed.points
+            if 1.0 < point.time_s < finish.time_s - 1.0
+        ]
+        seam = min(interior, key=lambda point: math.hypot(point.north_m, point.east_m))
+        self.assertLess(math.hypot(seam.north_m, seam.east_m), 1.0)
+        self.assertGreater(_horizontal_speed(seam), 1e-3)
+
+    def test_circle_exit_rejects_a_stop_on_the_seam_and_other_patterns(self):
+        with self.assertRaisesRegex(PlanningError, "must leave the circle seam"):
+            intent_from_interview(
+                _circle_interview(exit=[{"north_m": 0.0, "east_m": 0.0}])
+            )
+        with self.assertRaisesRegex(ValueError, "at least one point"):
+            intent_from_interview(_circle_interview(exit=[]))
+        with self.assertRaisesRegex(PlanningError, "only valid on a circle"):
+            intent_from_interview({
+                "schema_version": 1,
+                "mission_id": "waypoints-v1",
+                "pattern": "waypoints",
+                "altitude_m": 8.0,
+                "maximum_deviation_m": 0.5,
+                "maximum_speed_m_s": 1.0,
+                "yaw_mode": "fixed",
+                "fixed_yaw_deg": 0.0,
+                "time_mode": "minimize",
+                "vehicle_model_id": "px4-x500-sitl-v1",
+                "environment_id": "empty-world-v1",
+                "exit": [{"north_m": 4.0, "east_m": 0.0}],
+            })
+
     def test_track_comparison_does_not_claim_a_simulator_campaign(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -293,6 +404,31 @@ class PlannerFinishTests(unittest.TestCase):
         status = simulator_status()
         self.assertFalse(status["campaign_ran"])
         self.assertIn("not a clearance to fly", status["clearance"])
+
+
+def _circle_interview(**overrides):
+    raw = {
+        "schema_version": 1,
+        "mission_id": "circle-exit-v1",
+        "pattern": "circle",
+        "altitude_m": 8.0,
+        "maximum_deviation_m": 0.5,
+        "maximum_speed_m_s": 1.25,
+        "target_speed_m_s": 1.0,
+        "yaw_mode": "fixed",
+        "fixed_yaw_deg": 0.0,
+        "time_mode": "minimize",
+        "vehicle_model_id": "px4-x500-sitl-v1",
+        "environment_id": "empty-world-v1",
+        "loop_count": 1,
+        "circle": {"center_north_m": 4.0, "center_east_m": 0.0},
+    }
+    raw.update(overrides)
+    return raw
+
+
+def _horizontal_speed(point) -> float:
+    return math.hypot(point.north_velocity_m_s, point.east_velocity_m_s)
 
 
 if __name__ == "__main__":
