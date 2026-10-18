@@ -128,6 +128,9 @@ class PlannerMissionTests(unittest.TestCase):
                     "maximum_speed_m_s": 1.25,
                     "yaw_mode": "fixed",
                     "fixed_yaw_deg": 0.0,
+                    "look_at_north_m": None,
+                    "look_at_east_m": None,
+                    "look_at_down_m": None,
                     "time_mode": "minimize",
                     "requested_duration_s": None,
                 },
@@ -229,6 +232,7 @@ def path_from(coordinates, *, closure="open_stop"):
                 "east_m": coordinate[1],
                 "down_m": coordinate[2],
                 "hard": False,
+                "exact": False,
             }
             for index, coordinate in enumerate(coordinates)
         ],
@@ -242,6 +246,7 @@ def point(identifier, north, east, *, hard):
         "east_m": east,
         "down_m": -8.0,
         "hard": hard,
+        "exact": False,
     }
 
 

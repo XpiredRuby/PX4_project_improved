@@ -56,6 +56,7 @@ def mission():
                     "east_m": 0.0,
                     "down_m": -8.0,
                     "hard": True,
+                    "exact": False,
                 },
                 {
                     "point_id": "finish",
@@ -63,6 +64,7 @@ def mission():
                     "east_m": 0.0,
                     "down_m": -8.0,
                     "hard": True,
+                    "exact": False,
                 },
             ],
         },
@@ -71,6 +73,9 @@ def mission():
             "maximum_speed_m_s": 1.0,
             "yaw_mode": "tangent",
             "fixed_yaw_deg": None,
+            "look_at_north_m": None,
+            "look_at_east_m": None,
+            "look_at_down_m": None,
             "time_mode": "minimize",
             "requested_duration_s": None,
         },
@@ -102,6 +107,10 @@ def vehicle():
         "maximum_body_rate_deg_s": 90.0,
         "minimum_thrust_n": 0.0,
         "maximum_thrust_n": 40.0,
+        "rotor_thrust_minimum_n": 0.0,
+        "rotor_thrust_maximum_n": 10.0,
+        "yaw_inertia_kg_m2": 0.04,
+        "yaw_torque_per_thrust_m": 0.05,
         "identified_for_physical_flight": False,
     }
 

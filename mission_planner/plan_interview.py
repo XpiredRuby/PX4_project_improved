@@ -11,8 +11,9 @@ import json
 import math
 from pathlib import Path
 
-from .contracts import OBJECTIVE_PRIORITY
+from .contracts import OBJECTIVE_PRIORITY, EnvironmentSnapshot, load_contract
 from .explain import PlanningError
+from .mapping import OccupancyMap, corridor_polyline
 from .plan_drawn_path import compile_drawn_path
 
 
@@ -53,6 +54,7 @@ def _circle_points(center_north: float, center_east: float, altitude: float, dev
             "east_m": center_east + radius * math.sin(theta),
             "down_m": -altitude,
             "hard": False,
+            "exact": False,
         })
     points.append(dict(points[0], point_id="circle-close"))
     points[0]["north_m"] = 0.0
@@ -81,6 +83,7 @@ def _survey_points(length: float, width: float, spacing: float, altitude: float)
                 "east_m": east,
                 "down_m": -altitude,
                 "hard": False,
+                "exact": False,
             })
         points.append({
             "point_id": f"survey-{lane}-end",
@@ -88,6 +91,7 @@ def _survey_points(length: float, width: float, spacing: float, altitude: float)
             "east_m": east,
             "down_m": -altitude,
             "hard": False,
+            "exact": False,
         })
     if not points or points[0]["north_m"] != 0.0 or points[0]["east_m"] != 0.0:
         points.insert(0, {
@@ -96,6 +100,7 @@ def _survey_points(length: float, width: float, spacing: float, altitude: float)
             "east_m": 0.0,
             "down_m": -altitude,
             "hard": True,
+            "exact": False,
         })
     return points
 
@@ -106,7 +111,7 @@ def _waypoint_points(raw_points, altitude: float):
     points = []
     for index, raw in enumerate(raw_points):
         value = _object(raw, f"waypoints[{index}]")
-        allowed = {"north_m", "east_m", "hard"}
+        allowed = {"north_m", "east_m", "hard", "exact"}
         if set(value) - allowed:
             raise ValueError(f"waypoints[{index}] has unknown fields")
         points.append({
@@ -115,6 +120,7 @@ def _waypoint_points(raw_points, altitude: float):
             "east_m": _number(value["east_m"], f"waypoints[{index}].east_m"),
             "down_m": -altitude,
             "hard": bool(value.get("hard", False)),
+            "exact": bool(value.get("exact", False)),
         })
     if abs(points[0]["north_m"]) > 1e-9 or abs(points[0]["east_m"]) > 1e-9:
         raise PlanningError(
@@ -124,7 +130,33 @@ def _waypoint_points(raw_points, altitude: float):
     return points
 
 
-def intent_from_interview(raw) -> tuple[dict, int]:
+def _corridor_points(occupancy, goal_north, goal_east, altitude, deviation, clearance):
+    polyline = corridor_polyline(
+        occupancy,
+        start=(0.0, 0.0),
+        goal=(goal_north, goal_east),
+        clearance_m=clearance,
+        deviation_m=deviation,
+    )
+    return [
+        {
+            "point_id": f"corridor-{index}",
+            "north_m": north,
+            "east_m": east,
+            "down_m": -altitude,
+            "hard": False,
+            "exact": False,
+        }
+        for index, (north, east) in enumerate(polyline)
+    ]
+
+
+def intent_from_interview(
+    raw,
+    *,
+    occupancy: OccupancyMap | None = None,
+    clearance_m: float = 0.0,
+) -> tuple[dict, int]:
     """Return a MissionIntent document and the number of laps to fly."""
     value = _object(raw, "interview")
     allowed = {
@@ -145,6 +177,10 @@ def intent_from_interview(raw) -> tuple[dict, int]:
         "circle",
         "survey",
         "waypoints",
+        "corridor",
+        "look_at_north_m",
+        "look_at_east_m",
+        "look_at_down_m",
     }
     unknown = set(value) - allowed
     if unknown:
@@ -166,8 +202,10 @@ def intent_from_interview(raw) -> tuple[dict, int]:
     if value["schema_version"] != 1:
         raise ValueError("interview.schema_version must be 1")
     pattern = value["pattern"]
-    if pattern not in {"waypoints", "circle", "survey"}:
-        raise ValueError("interview.pattern must be waypoints, circle, or survey")
+    if pattern not in {"waypoints", "circle", "survey", "corridor"}:
+        raise ValueError(
+            "interview.pattern must be waypoints, circle, survey, or corridor"
+        )
     altitude = _number(value["altitude_m"], "interview.altitude_m", minimum=0.1)
     deviation = _number(
         value["maximum_deviation_m"], "interview.maximum_deviation_m", minimum=0.0
@@ -194,16 +232,38 @@ def intent_from_interview(raw) -> tuple[dict, int]:
         )
         closure = "open_stop"
         loop_count = 1
-    else:
+    elif pattern == "waypoints":
         points = _waypoint_points(value["waypoints"], altitude)
         closure = "open_stop"
         loop_count = 1
+    else:
+        if occupancy is None:
+            raise PlanningError(
+                "a corridor interview requires an occupancy map",
+                limiting_constraint="map",
+            )
+        corridor = _object(value["corridor"], "interview.corridor")
+        points = _corridor_points(
+            occupancy,
+            _number(corridor["goal_north_m"], "interview.corridor.goal_north_m"),
+            _number(corridor["goal_east_m"], "interview.corridor.goal_east_m"),
+            altitude,
+            deviation,
+            clearance_m,
+        )
+        closure = "open_stop"
+        loop_count = 1
     yaw_mode = value["yaw_mode"]
-    if yaw_mode not in {"fixed", "tangent"}:
+    if yaw_mode not in {"fixed", "tangent", "look_at"}:
         raise PlanningError(
-            "choose fixed or tangent yaw; roll and pitch are not mission inputs",
+            "choose fixed, tangent, or look-at yaw; roll and pitch are not mission inputs",
             limiting_constraint="yaw",
         )
+    look_at = (
+        value.get("look_at_north_m"),
+        value.get("look_at_east_m"),
+        value.get("look_at_down_m"),
+    )
     intent = {
         "schema_version": 1,
         "mission_id": value["mission_id"],
@@ -229,6 +289,9 @@ def intent_from_interview(raw) -> tuple[dict, int]:
             ),
             "yaw_mode": yaw_mode,
             "fixed_yaw_deg": value.get("fixed_yaw_deg"),
+            "look_at_north_m": None if yaw_mode != "look_at" else look_at[0],
+            "look_at_east_m": None if yaw_mode != "look_at" else look_at[1],
+            "look_at_down_m": None if yaw_mode != "look_at" else look_at[2],
             "time_mode": value["time_mode"],
             "requested_duration_s": value.get("requested_duration_s"),
         },
@@ -255,9 +318,18 @@ def compile_interview(
     limit_scale: float = 0.9,
     controller_cruise_height_m: float = 17.0,
     deviation_utilization: float = 0.75,
+    obstacle_map_path: Path | None = None,
 ) -> dict:
     raw = json.loads(interview_path.read_text(encoding="utf-8"))
-    intent, loop_count = intent_from_interview(raw)
+    environment = load_contract(environment_path, EnvironmentSnapshot.from_dict)
+    occupancy = None
+    if obstacle_map_path is not None:
+        occupancy = load_contract(obstacle_map_path, OccupancyMap.from_dict)
+    intent, loop_count = intent_from_interview(
+        raw,
+        occupancy=occupancy,
+        clearance_m=environment.minimum_clearance_m,
+    )
     intent_path.parent.mkdir(parents=True, exist_ok=True)
     intent_path.write_text(
         json.dumps(intent, indent=2, sort_keys=True, allow_nan=False) + "\n",
@@ -278,6 +350,7 @@ def compile_interview(
         deviation_utilization=deviation_utilization,
         loop_count=loop_count,
         review_path=review_path,
+        obstacle_map_path=obstacle_map_path,
     )
     summary["interview_pattern"] = raw["pattern"]
     summary["interview_loop_count"] = loop_count
@@ -304,6 +377,7 @@ def parse_args(argv=None):
     parser.add_argument("--limit-scale", type=float, default=0.9)
     parser.add_argument("--controller-cruise-height-m", type=float, default=17.0)
     parser.add_argument("--deviation-utilization", type=float, default=0.75)
+    parser.add_argument("--obstacle-map", type=Path)
     return parser.parse_args(argv)
 
 
@@ -325,6 +399,7 @@ def main(argv=None) -> None:
             limit_scale=args.limit_scale,
             controller_cruise_height_m=args.controller_cruise_height_m,
             deviation_utilization=args.deviation_utilization,
+            obstacle_map_path=args.obstacle_map,
         )
     except PlanningError as error:
         print(json.dumps(error.to_dict(), indent=2, sort_keys=True))

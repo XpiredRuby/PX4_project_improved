@@ -31,18 +31,24 @@ def path(*, closure="open_stop"):
                 "east_m": point[1],
                 "down_m": point[2],
                 "hard": index in (0, len(coordinates) - 1),
+                "exact": False,
             }
             for index, point in enumerate(coordinates)
         ],
     })
 
 
-def motion(*, time_mode="minimize", duration=None, yaw_mode="fixed"):
+def motion(*, time_mode="minimize", duration=None, yaw_mode="fixed", look_at=None):
+    if yaw_mode == "look_at" and look_at is None:
+        look_at = (0.0, 40.0, -8.0)
     return MotionIntent.from_dict({
         "target_speed_m_s": 1.0,
         "maximum_speed_m_s": 1.25,
         "yaw_mode": yaw_mode,
         "fixed_yaw_deg": 30.0 if yaw_mode == "fixed" else None,
+        "look_at_north_m": None if look_at is None else look_at[0],
+        "look_at_east_m": None if look_at is None else look_at[1],
+        "look_at_down_m": None if look_at is None else look_at[2],
         "time_mode": time_mode,
         "requested_duration_s": duration,
     })
@@ -64,6 +70,10 @@ def vehicle():
         "maximum_body_rate_deg_s": 90.0,
         "minimum_thrust_n": 0.0,
         "maximum_thrust_n": 40.0,
+        "rotor_thrust_minimum_n": 0.0,
+        "rotor_thrust_maximum_n": 10.0,
+        "yaw_inertia_kg_m2": 0.04,
+        "yaw_torque_per_thrust_m": 0.05,
         "identified_for_physical_flight": False,
     })
 

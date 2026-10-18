@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import sys
 import threading
 import time
 
@@ -551,10 +552,21 @@ def parse_args(argv=None):
         type=Path,
         help="Verified drawn-path summary bound to the selected trajectory",
     )
+    parser.add_argument(
+        "--sitl-acknowledgement",
+        type=Path,
+        help="Unexpired SITL review record bound to the planner summary",
+    )
     return parser.parse_args(argv)
 
 
-def main(config=None, trajectory_path=None, planner_summary_path=None):
+def main(
+    config=None,
+    trajectory_path=None,
+    planner_summary_path=None,
+    acknowledgement_path=None,
+    acknowledgement_time=None,
+):
     run_record = RunRecord()
     summary_required = trajectory_path is not None
     try:
@@ -567,6 +579,22 @@ def main(config=None, trajectory_path=None, planner_summary_path=None):
             c.trajectory_path,
             required=summary_required,
         )
+        if planner_cruise_height is not None:
+            if acknowledgement_path is None or planner_summary_path is None:
+                raise ValueError(
+                    "SITL drawn-path execution requires --sitl-acknowledgement"
+                )
+            repository = Path(__file__).resolve().parents[1]
+            if str(repository) not in sys.path:
+                sys.path.append(str(repository))
+            from mission_planner.acknowledgement import load_sitl_acknowledgement
+
+            load_sitl_acknowledgement(
+                acknowledgement_path,
+                planner_summary_path,
+                c.trajectory_path,
+                now=acknowledgement_time,
+            )
         run_record.attach_context(c, {})
     except Exception as exc:
         run_record.finalize(
@@ -818,4 +846,5 @@ if __name__ == "__main__":
     main(
         trajectory_path=arguments.trajectory,
         planner_summary_path=arguments.planner_summary,
+        acknowledgement_path=arguments.sitl_acknowledgement,
     )

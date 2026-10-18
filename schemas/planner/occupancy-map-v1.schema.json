@@ -1,0 +1,83 @@
+{
+  "$id": "https://example.invalid/px4-planner/occupancy-map-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "columns": {
+      "maximum": 128,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "frame": {
+      "additionalProperties": false,
+      "properties": {
+        "altitude_datum": {
+          "const": "launch"
+        },
+        "name": {
+          "const": "LOCAL_NED"
+        },
+        "origin_id": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+          "type": "string"
+        },
+        "units": {
+          "const": "m"
+        }
+      },
+      "required": [
+        "name",
+        "units",
+        "origin_id",
+        "altitude_datum"
+      ],
+      "type": "object"
+    },
+    "localization_radius_m": {
+      "description": "Extra inflation for localization error.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "map_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    },
+    "occupied": {
+      "pattern": "^[01]+$",
+      "type": "string"
+    },
+    "origin_east_m": {
+      "type": "number"
+    },
+    "origin_north_m": {
+      "type": "number"
+    },
+    "resolution_m": {
+      "description": "Cell size.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "rows": {
+      "maximum": 128,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "map_id",
+    "frame",
+    "origin_north_m",
+    "origin_east_m",
+    "resolution_m",
+    "rows",
+    "columns",
+    "occupied",
+    "localization_radius_m"
+  ],
+  "title": "OccupancyMap v1",
+  "type": "object"
+}

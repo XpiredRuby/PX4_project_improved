@@ -13,6 +13,7 @@ from .flatness import (
     maximum_tilt_rad,
     thrust_interval_n,
 )
+from .rotors import rotor_duration_s
 from .geometry import BSplinePath, GeometryPlan
 from .timing import (
     PathBounds,
@@ -21,7 +22,7 @@ from .timing import (
     plan_time_law,
     repeated_bounds,
 )
-from .yaw import YawTrack, curve_parameter, plan_tangent_yaw
+from .yaw import YawTrack, curve_parameter, plan_look_at_yaw, plan_tangent_yaw
 
 
 MAX_TRAJECTORY_POINTS = 200_000
@@ -161,7 +162,7 @@ def retime_stop_path(
             "fixed yaw is missing its heading",
             limiting_constraint="yaw",
         )
-    if motion.yaw_mode not in {"fixed", "tangent"}:
+    if motion.yaw_mode not in {"fixed", "tangent", "look_at"}:
         raise PlanningError(
             f"yaw mode {motion.yaw_mode} is not supported",
             limiting_constraint="yaw",
@@ -186,6 +187,16 @@ def retime_stop_path(
     yaw_track: YawTrack | None = None
     if motion.yaw_mode == "tangent":
         yaw_track = plan_tangent_yaw(geometry.curve, loops=loop_count)
+    elif motion.yaw_mode == "look_at":
+        yaw_track = plan_look_at_yaw(
+            geometry.curve,
+            (
+                motion.look_at_north_m,
+                motion.look_at_east_m,
+                motion.look_at_down_m,
+            ),
+            loops=loop_count,
+        )
     law = plan_time_law(
         geometry,
         speed_limit_m_s=speed_limit,
@@ -205,8 +216,9 @@ def retime_stop_path(
     )
     if yaw_track is None:
         yaw_rate_numerator = 0.0
+        yaw_acceleration_numerator = 0.0
     else:
-        yaw_rate_numerator, _, _ = certified_dynamics(
+        yaw_rate_numerator, yaw_acceleration_numerator, _ = certified_dynamics(
             yaw_track.bounds, law.schedule, 1.0
         )
     attitude_duration, attitude_constraint = attitude_duration_s(
@@ -220,12 +232,26 @@ def retime_stop_path(
         maximum_body_rate_rad_s=math.radians(vehicle.maximum_body_rate_deg_s)
         * limit_scale,
     )
+    rotor_duration, rotor_constraint = rotor_duration_s(
+        acceleration_numerator=acceleration_numerator,
+        yaw_acceleration_numerator=yaw_acceleration_numerator,
+        mass_kg=vehicle.mass_kg,
+        yaw_inertia_kg_m2=vehicle.yaw_inertia_kg_m2,
+        rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
+        rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
+        yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
+    )
     constrained_duration = max(
-        law.report.minimum_requirement_s, attitude_duration
+        law.report.minimum_requirement_s, attitude_duration, rotor_duration
     )
     limiting_constraint = law.report.limiting_constraint
-    if attitude_duration > law.report.minimum_requirement_s + 1e-9:
+    if (
+        attitude_duration > law.report.minimum_requirement_s + 1e-9
+        and attitude_duration >= rotor_duration - 1e-9
+    ):
         limiting_constraint = attitude_constraint
+    elif rotor_duration > law.report.minimum_requirement_s + 1e-9:
+        limiting_constraint = rotor_constraint
     minimum_feasible = max(minimum_duration, constrained_duration)
     if minimum_duration >= constrained_duration:
         limiting_constraint = "minimum_duration"

@@ -17,13 +17,13 @@ physical-flight readiness.
 | VEH-001 | `VehicleModel` contains first-release mass and motion/input envelope | Partial; inertia, rotor allocation, drag, battery, and uncertainty planned |
 | VEH-002 | `validate_contract_set` rejects mission speed above model limit | Partial; all controller/PX4 limits planned |
 | ENV-001 | `environment_id`, geofence envelope, optional map digest | Implemented at contract boundary |
-| ENV-002 | `minimum_clearance_m` | Partial; decomposed uncertainty budget planned |
+| ENV-002 | Hashed occupancy grid, localization inflation, and a Lipschitz clearance margin; a corridor interview searches the inflated grid | Partial; no sensor builds the map |
 | ENV-003 | Map identity/verification consistency check | Partial; physical-launch gate planned |
 | ENV-004 | Wind limit serialized | Partial; full GNSS/weather ODD planned |
 | PLN-001 | Quintic B-spline geometry is C4 internally; the quintic path-parameter schedule is monotone and stationary through jerk by construction, and acceptance rechecks both | Implemented for open paths, stopped laps, and hard-point stops |
-| PLN-002 | Fixed yaw holds one heading; tangent yaw is a certified quintic of the normalized path parameter, checked against yaw rate, acceleration, and jerk | Partial; look-at and explicit profile yaw planned |
+| PLN-002 | Fixed yaw holds one heading; tangent and look-at yaw are certified quintics checked against yaw rate, acceleration, and jerk | Partial; an explicit yaw profile is planned |
 | PLN-003 | Periodic spline position and derivatives through jerk match at the seam; a flown lap is stationary there, so the consumed derivatives match because they are zero | Partial; a nonzero-velocity cruising seam and a departure leg are planned |
-| PLN-004 | Per-span speed, acceleration, and jerk bounds, plus tilt, thrust, and body rate from the acceleration ball, with reserved limit scale | Partial; rotor allocation planned |
+| PLN-004 | Per-span speed, acceleration, and jerk bounds, tilt, thrust, body rate, and paired-rotor yaw torque, with reserved limit scale | Partial; the check is the Gazebo x500 model, not an identified allocator |
 | PLN-005 | Unsupported modes, invalid numerics, failed fidelity, infeasible timing, and failed verification stop output | Implemented for baseline |
 | PLN-006 | Baseline is deterministic; the time law searches a fixed declared grid with no stochastic component | Implemented |
 | PLN-007 | Exact and maximum duration requests reject below the reported minimum feasible duration | Implemented for baseline |

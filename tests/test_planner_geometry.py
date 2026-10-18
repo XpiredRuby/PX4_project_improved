@@ -31,6 +31,7 @@ def polyline(
                 "east_m": coordinate[1],
                 "down_m": coordinate[2],
                 "hard": index in hard_indices,
+                "exact": False,
             }
             for index, coordinate in enumerate(coordinates)
         ],

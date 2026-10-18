@@ -9,6 +9,9 @@
   "mission_id": "drawn-path-example-v1",
   "motion": {
     "fixed_yaw_deg": 0.0,
+    "look_at_down_m": null,
+    "look_at_east_m": null,
+    "look_at_north_m": null,
     "maximum_speed_m_s": 1.25,
     "requested_duration_s": null,
     "target_speed_m_s": 1.0,
@@ -30,6 +33,7 @@
       {
         "down_m": -17.0,
         "east_m": 0.0,
+        "exact": false,
         "hard": true,
         "north_m": 0.0,
         "point_id": "start"
@@ -37,6 +41,7 @@
       {
         "down_m": -17.0,
         "east_m": 4.0,
+        "exact": false,
         "hard": false,
         "north_m": 6.0,
         "point_id": "stroke-1"
@@ -44,6 +49,7 @@
       {
         "down_m": -18.0,
         "east_m": -3.0,
+        "exact": false,
         "hard": false,
         "north_m": 12.0,
         "point_id": "stroke-2"
@@ -51,6 +57,7 @@
       {
         "down_m": -17.0,
         "east_m": 0.0,
+        "exact": false,
         "hard": true,
         "north_m": 18.0,
         "point_id": "finish"

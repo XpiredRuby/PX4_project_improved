@@ -574,6 +574,93 @@ def _heading_slope_or_none(curve: BSplinePath) -> float | None:
         return None
 
 
+def _basis_row(
+    knots: np.ndarray,
+    degree: int,
+    count: int,
+    parameter: float,
+) -> np.ndarray:
+    row = np.zeros(count)
+    controls = np.zeros((count, 1))
+    for index in range(count):
+        controls[index, 0] = 1.0
+        row[index] = _de_boor(controls, knots, degree, parameter)[0]
+        controls[index, 0] = 0.0
+    return row
+
+
+def _greville(knots: np.ndarray, degree: int, index: int) -> float:
+    return float(np.mean(knots[index + 1 : index + 1 + degree]))
+
+
+def _enforce_exact(
+    curve: BSplinePath,
+    parameters: tuple[float, ...],
+    values: np.ndarray,
+) -> BSplinePath:
+    """Move the controls so the curve passes through each requested point.
+
+    The fit stays as close as possible to the original controls. Endpoint
+    parameters are included by the caller so a clamped curve cannot leave its
+    start or finish while an interior point is being pulled onto the stroke.
+    """
+    controls = np.asarray(curve.control_points, dtype=float)
+    knots = np.asarray(curve.knots, dtype=float)
+    count, dimension = controls.shape
+    basis = np.vstack([
+        _basis_row(knots, curve.degree, count, parameter)
+        for parameter in parameters
+    ])
+    constraints = len(parameters)
+    system = np.block([
+        [np.eye(count), basis.T],
+        [basis, np.zeros((constraints, constraints))],
+    ])
+    updated = np.array(controls, copy=True)
+    for axis in range(dimension):
+        right_hand = np.concatenate((controls[:, axis], values[:, axis]))
+        try:
+            solution = np.linalg.solve(system, right_hand)
+        except np.linalg.LinAlgError as exc:
+            raise ValueError("exact fly-through constraints are singular") from exc
+        updated[:, axis] = solution[:count]
+        if np.max(np.abs(basis @ solution[:count] - values[:, axis])) > 1e-8:
+            raise ValueError("exact fly-through constraints were not met")
+    return BSplinePath(
+        control_points=tuple(_as_tuple(point) for point in updated),
+        knots=curve.knots,
+        degree=curve.degree,
+        periodic=curve.periodic,
+    )
+
+
+def _densify_marked(
+    points: np.ndarray,
+    spacing: float,
+    *,
+    periodic: bool,
+    exact: np.ndarray,
+) -> tuple[np.ndarray, tuple[int, ...]]:
+    dense: list[np.ndarray] = []
+    marks: list[int] = []
+    pairs = list(zip(points[:-1], points[1:], strict=True))
+    if periodic:
+        pairs.append((points[-1], points[0]))
+    for index, (start, finish) in enumerate(pairs):
+        if exact[index]:
+            marks.append(len(dense))
+        dense.extend(_densify_segment(start, finish, spacing))
+    if not periodic:
+        if exact[-1]:
+            marks.append(len(dense))
+        dense.append(points[-1])
+    if len(dense) > MAX_CONTROL_POINTS:
+        raise ValueError(
+            f"normalized path exceeds {MAX_CONTROL_POINTS} control points"
+        )
+    return np.asarray(dense, dtype=float), tuple(marks)
+
+
 def build_smooth_path(
     path: PathIntent,
     *,
@@ -609,12 +696,26 @@ def build_smooth_path(
             "internal hard points are not supported by the smoothing baseline: "
             + ", ".join(internal_hard)
         )
+    interior_exact = [point.point_id for point in path.points[1:-1] if point.exact]
+    if interior_exact and path.closure == "periodic":
+        raise ValueError(
+            "exact fly-through points are not supported on a periodic path: "
+            + ", ".join(interior_exact)
+        )
     points = np.asarray(
         [(point.north_m, point.east_m, point.down_m) for point in path.points],
         dtype=float,
     )
+    exact_flags = np.asarray([point.exact for point in path.points], dtype=bool)
     original_points = np.array(points, copy=True)
-    points = _deduplicate_consecutive(points, duplicate_tolerance)
+    kept = [0]
+    for index in range(1, len(points)):
+        if np.linalg.norm(points[index] - points[kept[-1]]) > duplicate_tolerance:
+            kept.append(index)
+        elif exact_flags[index]:
+            raise ValueError("an exact fly-through point duplicates its neighbor")
+    points = points[kept]
+    exact_flags = exact_flags[kept]
     periodic = path.closure == "periodic"
     if periodic and len(points) > 1:
         if np.linalg.norm(points[-1] - points[0]) <= duplicate_tolerance:
@@ -646,8 +747,33 @@ def build_smooth_path(
         )
         if attempt is not None and candidate_spacing >= attempt[0]:
             continue
-        dense = _densify(points, candidate_spacing, periodic=periodic)
+        dense, marks = _densify_marked(
+            points,
+            candidate_spacing,
+            periodic=periodic,
+            exact=exact_flags,
+        )
         curve = _build_spline(dense, periodic=periodic)
+        interior = [
+            mark for mark in marks if mark not in (0, len(dense) - 1)
+        ]
+        if interior:
+            knots = np.asarray(curve.knots, dtype=float)
+            parameters = [0.0]
+            values = [dense[0]]
+            for mark in interior:
+                parameters.append(_greville(knots, curve.degree, mark))
+                values.append(dense[mark])
+            parameters.append(1.0)
+            values.append(dense[-1])
+            try:
+                curve = _enforce_exact(
+                    curve,
+                    tuple(parameters),
+                    np.asarray(values, dtype=float),
+                )
+            except ValueError:
+                continue
         fidelity = measure_path_fidelity(
             curve,
             source,
@@ -657,6 +783,8 @@ def build_smooth_path(
         attempt = (candidate_spacing, curve, fidelity)
         if fidelity.accepted and fidelity.symmetric_upper_bound_m <= budget:
             break
+    if attempt is None:
+        raise ValueError("exact fly-through could not be satisfied")
     candidate_spacing, curve, fidelity = attempt
     if not fidelity.accepted:
         raise ValueError(

@@ -56,10 +56,47 @@ def curve_parameter(curve: BSplinePath, unwrapped: float, loops: int) -> float:
     return wrapped
 
 
+def look_at_heading(
+    curve: BSplinePath,
+    parameter: float,
+    target: tuple[float, float, float],
+) -> float:
+    """Return the horizontal bearing from the curve to a fixed point."""
+    north, east, _ = curve.evaluate(parameter)
+    offset_north = target[0] - north
+    offset_east = target[1] - east
+    if math.hypot(offset_north, offset_east) <= 0.0:
+        raise ValueError("look-at heading is undefined at the target")
+    return math.atan2(offset_east, offset_north)
+
+
+def look_at_slope_bound(
+    curve: BSplinePath,
+    target: tuple[float, float, float],
+    *,
+    count: int = 2_000,
+) -> float:
+    """Bound |d(bearing)/ds| by path speed over a certified target distance."""
+    if isinstance(count, bool) or not isinstance(count, int) or count < 2:
+        raise ValueError("look-at sample count must be an integer of at least 2")
+    speed = curve.derivative_norm_bound(1)
+    distances = []
+    for coordinate in np.linspace(0.0, 1.0, count):
+        north, east, _ = curve.evaluate(float(coordinate))
+        distances.append(math.hypot(target[0] - north, target[1] - east))
+    lower = min(distances) - 0.5 * speed / (count - 1)
+    if lower <= 1e-4:
+        raise ValueError("look-at target is not separated from the path")
+    return speed / lower
+
+
 def walked_heading(
     curve: BSplinePath,
     loops: int,
     count: int,
+    *,
+    heading_at=None,
+    slope: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Return normalized time and a continuous heading along one or more laps.
 
@@ -70,7 +107,10 @@ def walked_heading(
     """
     if isinstance(count, bool) or not isinstance(count, int) or count < 2:
         raise ValueError("heading sample count must be an integer of at least 2")
-    slope = tangent_heading_slope_bound(curve)
+    if heading_at is None:
+        heading_at = horizontal_heading
+    if slope is None:
+        slope = tangent_heading_slope_bound(curve)
     step = loops / (count - 1)
     if slope * step >= math.pi:
         raise ValueError(
@@ -81,7 +121,7 @@ def walked_heading(
     previous_raw = None
     unwrapped = 0.0
     for index, coordinate in enumerate(normalized):
-        raw = horizontal_heading(
+        raw = heading_at(
             curve, curve_parameter(curve, float(coordinate) * loops, loops)
         )
         if previous_raw is None:
@@ -131,21 +171,33 @@ def heading_error_bound(
     *,
     loops: int,
     count: int,
+    target: tuple[float, float, float] | None = None,
 ) -> float:
     """Bound |profile - true heading| over the whole flown parameter.
 
     On each sample interval the error at the endpoints is known and the error
     derivative is at most the true heading slope plus the profile's own
     derivative bound, so the interval cannot hide more error than half its
-    width times that Lipschitz constant.
+    width times that Lipschitz constant. ``target`` selects look-at bearing
+    instead of the path tangent.
     """
-    normalized, truth = walked_heading(curve, loops, count)
+    if target is None:
+        slope = tangent_heading_slope_bound(curve)
+        heading_at = None
+    else:
+        slope = look_at_slope_bound(curve, target)
+
+        def heading_at(path, parameter, point=target):
+            return look_at_heading(path, parameter, point)
+
+    normalized, truth = walked_heading(
+        curve, loops, count, heading_at=heading_at, slope=slope
+    )
     predicted = np.asarray([
         profile.evaluate(float(value))[0] for value in normalized
     ])
     point_error = float(np.max(np.abs(predicted - truth)))
-    slope = tangent_heading_slope_bound(curve) * loops
-    slope += profile.derivative_norm_bound(1)
+    slope = slope * loops + profile.derivative_norm_bound(1)
     return point_error + 0.5 * slope / (count - 1)
 
 
@@ -159,8 +211,14 @@ class YawTrack:
     loops: int
 
 
-def plan_tangent_yaw(curve: BSplinePath, *, loops: int = 1) -> YawTrack:
-    """Fit the coarsest heading profile whose certified error is inside 2 degrees."""
+def _plan_heading(
+    curve: BSplinePath,
+    *,
+    loops: int,
+    heading_at,
+    slope: float,
+    failure: str,
+) -> YawTrack:
     if isinstance(loops, bool) or not isinstance(loops, int) or not 1 <= loops <= 20:
         raise ValueError("loops must be an integer in [1, 20]")
     if loops != 1 and not curve.periodic:
@@ -168,9 +226,17 @@ def plan_tangent_yaw(curve: BSplinePath, *, loops: int = 1) -> YawTrack:
     count = HEADING_SAMPLE_LADDER[-1]
     best_error = math.inf
     for intervals in HEADING_INTERVAL_LADDER:
-        normalized, heading = walked_heading(curve, loops, count)
+        normalized, heading = walked_heading(
+            curve, loops, count, heading_at=heading_at, slope=slope
+        )
         profile = _fit_heading(normalized, heading, intervals)
-        error = heading_error_bound(curve, profile, loops=loops, count=count)
+        error = heading_error_bound(
+            curve,
+            profile,
+            loops=loops,
+            count=count,
+            target=getattr(heading_at, "target", None),
+        )
         best_error = min(best_error, error)
         if error <= MAXIMUM_HEADING_ERROR_RAD:
             return YawTrack(
@@ -180,8 +246,41 @@ def plan_tangent_yaw(curve: BSplinePath, *, loops: int = 1) -> YawTrack:
                 loops=loops,
             )
     raise PlanningError(
-        "tangent heading cannot be followed within "
+        f"{failure} cannot be followed within "
         f"{math.degrees(MAXIMUM_HEADING_ERROR_RAD):.1f} degrees; best certified "
         f"error is {math.degrees(best_error):.2f} degrees",
         limiting_constraint="yaw_tracking",
+    )
+
+
+def plan_tangent_yaw(curve: BSplinePath, *, loops: int = 1) -> YawTrack:
+    """Fit the coarsest heading profile whose certified error is inside 2 degrees."""
+    return _plan_heading(
+        curve,
+        loops=loops,
+        heading_at=None,
+        slope=tangent_heading_slope_bound(curve),
+        failure="tangent heading",
+    )
+
+
+def plan_look_at_yaw(
+    curve: BSplinePath,
+    target: tuple[float, float, float],
+    *,
+    loops: int = 1,
+) -> YawTrack:
+    """Fit a heading that looks at one fixed point, within the same 2 degree tube."""
+    slope = look_at_slope_bound(curve, target)
+
+    def heading_at(path: BSplinePath, parameter: float) -> float:
+        return look_at_heading(path, parameter, target)
+
+    heading_at.target = target  # type: ignore[attr-defined]
+    return _plan_heading(
+        curve,
+        loops=loops,
+        heading_at=heading_at,
+        slope=slope,
+        failure="look-at heading",
     )

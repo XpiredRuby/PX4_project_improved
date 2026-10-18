@@ -23,6 +23,7 @@ from .contracts import (
 from .explain import PlanningError
 from .export import save_controller_csv
 from .geometry import build_smooth_path
+from .mapping import OccupancyMap
 from .retiming import concatenate_candidates, retime_stop_path
 from .review import write_review
 from .verification import merge_verification_reports, verify_candidate_trajectory
@@ -149,11 +150,31 @@ def compile_drawn_path(
     deviation_utilization: float,
     loop_count: int = 1,
     review_path: Path | None = None,
+    obstacle_map_path: Path | None = None,
 ) -> dict:
     intent = load_contract(intent_path, MissionIntent.from_dict)
     vehicle = load_contract(vehicle_path, VehicleModel.from_dict)
     environment = load_contract(environment_path, EnvironmentSnapshot.from_dict)
     validate_planning_inputs(intent, vehicle, environment)
+    if environment.obstacle_map_verified:
+        if obstacle_map_path is None:
+            raise PlanningError(
+                "a verified environment requires its occupancy map",
+                limiting_constraint="map",
+            )
+        occupancy = load_contract(obstacle_map_path, OccupancyMap.from_dict)
+        if occupancy.sha256 != environment.obstacle_map_sha256:
+            raise PlanningError(
+                "occupancy map does not match the environment digest",
+                limiting_constraint="map",
+            )
+    elif obstacle_map_path is not None:
+        raise PlanningError(
+            "an occupancy map was supplied for an environment with no verified map",
+            limiting_constraint="map",
+        )
+    else:
+        occupancy = None
     if (
         not math.isfinite(controller_cruise_height_m)
         or controller_cruise_height_m <= 0.0
@@ -204,6 +225,7 @@ def compile_drawn_path(
             fidelity_resolution_m=verification_resolution_m,
             controller_cruise_height_m=controller_cruise_height_m,
             maximum_sample_period_s=sample_period_s,
+            occupancy=occupancy,
         ))
         planned.append(candidate)
     candidate = concatenate_candidates(tuple(planned))
@@ -272,10 +294,14 @@ def compile_drawn_path(
                 "yaw commands are added to the heading measured at launch; "
                 "tangent mode requires the aircraft to start pointed along the initial path tangent",
                 "a periodic path starts and stops at its seam; extra laps repeat that loop",
-                "interior hard points are full stops",
-                "open_depart and unconstrained yaw are refused",
+                "interior hard points are full stops; exact points are flown through",
+                "look-at yaw tracks one fixed point and is refused if the path can reach it",
+                "open_depart is refused because the runner lands from a final stop",
+                "unconstrained yaw is refused",
+                "obstacle clearance is claimed only for a hashed map bound to the environment",
+                "rotor yaw torque uses the Gazebo x500 inertia and paired-rotor model, not an identified aircraft",
                 "controller cruise height must match the compiled value",
-                "no obstacle-clearance claim without a verified map pipeline",
+                "a SITL acknowledgement is not a clearance to fly",
                 "not a clearance to fly",
                 "SITL_ONLY",
             ],
@@ -334,6 +360,7 @@ def parse_args(argv=None):
     parser.add_argument("--deviation-utilization", type=float, default=0.75)
     parser.add_argument("--loop-count", type=int, default=1)
     parser.add_argument("--review", type=Path)
+    parser.add_argument("--obstacle-map", type=Path)
     return parser.parse_args(argv)
 
 
@@ -354,6 +381,7 @@ def main(argv=None) -> None:
         deviation_utilization=args.deviation_utilization,
         loop_count=args.loop_count,
         review_path=args.review,
+        obstacle_map_path=args.obstacle_map,
     )
     print(json.dumps(summary, indent=2, sort_keys=True, allow_nan=False))
 

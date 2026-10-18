@@ -200,19 +200,25 @@ class PathPoint:
     east_m: float
     down_m: float
     hard: bool
+    exact: bool
 
     @classmethod
     def from_dict(cls, raw: Any, index: int) -> "PathPoint":
         field = f"path.points[{index}]"
         value = _object(raw, field)
-        fields = {"point_id", "north_m", "east_m", "down_m", "hard"}
+        fields = {"point_id", "north_m", "east_m", "down_m", "hard", "exact"}
         _strict(value, required=fields, field=field)
+        hard = _boolean(value["hard"], f"{field}.hard")
+        exact = _boolean(value["exact"], f"{field}.exact")
+        if hard and exact:
+            raise ValueError(f"{field} cannot both stop and be flown through")
         return cls(
             point_id=_identifier(value["point_id"], f"{field}.point_id"),
             north_m=_number(value["north_m"], f"{field}.north_m"),
             east_m=_number(value["east_m"], f"{field}.east_m"),
             down_m=_number(value["down_m"], f"{field}.down_m"),
-            hard=_boolean(value["hard"], f"{field}.hard"),
+            hard=hard,
+            exact=exact,
         )
 
 
@@ -272,6 +278,9 @@ class MotionIntent:
     maximum_speed_m_s: float
     yaw_mode: str
     fixed_yaw_deg: float | None
+    look_at_north_m: float | None
+    look_at_east_m: float | None
+    look_at_down_m: float | None
     time_mode: str
     requested_duration_s: float | None
 
@@ -283,6 +292,9 @@ class MotionIntent:
             "maximum_speed_m_s",
             "yaw_mode",
             "fixed_yaw_deg",
+            "look_at_north_m",
+            "look_at_east_m",
+            "look_at_down_m",
             "time_mode",
             "requested_duration_s",
         }
@@ -313,7 +325,7 @@ class MotionIntent:
             raise ValueError("requested duration is inconsistent with time mode")
         yaw_mode = _choice(
             value["yaw_mode"],
-            {"fixed", "tangent", "unconstrained"},
+            {"fixed", "tangent", "look_at", "unconstrained"},
             "motion.yaw_mode",
         )
         fixed_yaw = _optional_number(
@@ -324,11 +336,24 @@ class MotionIntent:
             raise ValueError("fixed yaw value is inconsistent with yaw mode")
         if fixed_yaw is not None and not -180.0 <= fixed_yaw <= 180.0:
             raise ValueError("motion.fixed_yaw_deg must be in [-180, 180]")
+        look_at = tuple(
+            _optional_number(value[name], f"motion.{name}")
+            for name in (
+                "look_at_north_m",
+                "look_at_east_m",
+                "look_at_down_m",
+            )
+        )
+        if (yaw_mode == "look_at") != all(item is not None for item in look_at):
+            raise ValueError("look-at point is inconsistent with yaw mode")
         return cls(
             target_speed_m_s=target,
             maximum_speed_m_s=maximum,
             yaw_mode=yaw_mode,
             fixed_yaw_deg=fixed_yaw,
+            look_at_north_m=look_at[0],
+            look_at_east_m=look_at[1],
+            look_at_down_m=look_at[2],
             time_mode=time_mode,
             requested_duration_s=duration,
         )
@@ -401,6 +426,10 @@ class VehicleModel:
     maximum_body_rate_deg_s: float
     minimum_thrust_n: float
     maximum_thrust_n: float
+    rotor_thrust_minimum_n: float
+    rotor_thrust_maximum_n: float
+    yaw_inertia_kg_m2: float
+    yaw_torque_per_thrust_m: float
     identified_for_physical_flight: bool
 
     @classmethod
@@ -416,6 +445,22 @@ class VehicleModel:
         )
         if minimum_thrust >= maximum_thrust:
             raise ValueError("minimum thrust must be below maximum thrust")
+        rotor_minimum = _number(
+            value["rotor_thrust_minimum_n"],
+            "rotor_thrust_minimum_n",
+            minimum=0.0,
+        )
+        rotor_maximum = _number(
+            value["rotor_thrust_maximum_n"],
+            "rotor_thrust_maximum_n",
+            exclusive_minimum=0.0,
+        )
+        if rotor_minimum >= rotor_maximum:
+            raise ValueError("rotor minimum thrust must be below rotor maximum thrust")
+        if 4.0 * rotor_maximum + 1e-9 < maximum_thrust:
+            raise ValueError("collective thrust exceeds the four rotor limits")
+        if 4.0 * rotor_minimum > minimum_thrust + 1e-9:
+            raise ValueError("collective minimum thrust is below the four rotor floors")
         return cls(
             schema_version=_version(value["schema_version"], "schema_version"),
             vehicle_model_id=_identifier(
@@ -465,6 +510,18 @@ class VehicleModel:
             ),
             minimum_thrust_n=minimum_thrust,
             maximum_thrust_n=maximum_thrust,
+            rotor_thrust_minimum_n=rotor_minimum,
+            rotor_thrust_maximum_n=rotor_maximum,
+            yaw_inertia_kg_m2=_number(
+                value["yaw_inertia_kg_m2"],
+                "yaw_inertia_kg_m2",
+                exclusive_minimum=0.0,
+            ),
+            yaw_torque_per_thrust_m=_number(
+                value["yaw_torque_per_thrust_m"],
+                "yaw_torque_per_thrust_m",
+                exclusive_minimum=0.0,
+            ),
             identified_for_physical_flight=_boolean(
                 value["identified_for_physical_flight"],
                 "identified_for_physical_flight",

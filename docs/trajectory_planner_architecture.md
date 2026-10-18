@@ -604,7 +604,28 @@ The executable baseline now covers the following, all still marked `SITL_ONLY`:
 
 The controller adds the planned yaw change to the heading measured at launch.
 Tangent mode therefore matches the path only when the aircraft starts pointed
-along the initial tangent. Open-departure and unconstrained yaw are refused.
+along the initial tangent. Open-departure is refused because the existing
+runner lands from a final stop. Unconstrained yaw is refused.
+
+- **Look-at yaw.** The heading is the horizontal bearing to one fixed point.
+  The same two-degree certificate applies. The path is refused when it can
+  reach that point, because the bearing is then undefined.
+- **Exact fly-through points.** A point marked exact is interpolated by the
+  curve and is not a stop. A point marked hard is still a full stop. A point
+  cannot be both.
+- **Occupancy map.** A hashed grid can be bound to the environment. Clearance
+  is a sampled distance to occupied cells minus a Lipschitz remainder, after
+  localization inflation. A corridor interview builds a deterministic
+  4-connected path on that inflated grid. No map is inferred from GPS or IMU.
+- **Rotor yaw torque.** The x500 SITL model uses the Gazebo base-link yaw
+  inertia of 0.04 kg m^2 and the v1.17 airframe torque coefficient of 0.05 m,
+  with two rotors of each sign. Duration stretches when that torque cannot
+  support the certified yaw acceleration at the thrust bounds. This is not an
+  identified aircraft and it does not reproduce PX4's control allocator.
+- **SITL acknowledgement.** Execution of a drawn-path summary requires an
+  unexpired review record bound to the trajectory and report digests. The
+  record says it is not a clearance to fly. A recorded track can be compared
+  with the plan offline. The repository does not start Gazebo.
 
 ## 8. Simulation, verification, and release gates
 

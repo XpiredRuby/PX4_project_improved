@@ -51,6 +51,36 @@
             }
           ]
         },
+        "look_at_down_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "look_at_east_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "look_at_north_m": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "maximum_speed_m_s": {
           "description": "Hard mission speed ceiling.",
           "exclusiveMinimum": 0,
@@ -92,6 +122,7 @@
           "enum": [
             "fixed",
             "tangent",
+            "look_at",
             "unconstrained"
           ]
         }
@@ -101,6 +132,9 @@
         "maximum_speed_m_s",
         "yaw_mode",
         "fixed_yaw_deg",
+        "look_at_north_m",
+        "look_at_east_m",
+        "look_at_down_m",
         "time_mode",
         "requested_duration_s"
       ],
@@ -160,6 +194,9 @@
               "east_m": {
                 "type": "number"
               },
+              "exact": {
+                "type": "boolean"
+              },
               "hard": {
                 "type": "boolean"
               },
@@ -176,7 +213,8 @@
               "north_m",
               "east_m",
               "down_m",
-              "hard"
+              "hard",
+              "exact"
             ],
             "type": "object"
           },

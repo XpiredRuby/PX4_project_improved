@@ -66,12 +66,32 @@
       "minimum": 0,
       "type": "number"
     },
+    "rotor_thrust_maximum_n": {
+      "description": "Maximum thrust of one rotor.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "rotor_thrust_minimum_n": {
+      "description": "Minimum thrust of one rotor.",
+      "minimum": 0,
+      "type": "number"
+    },
     "schema_version": {
       "const": 1
     },
     "vehicle_model_id": {
       "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
       "type": "string"
+    },
+    "yaw_inertia_kg_m2": {
+      "description": "Yaw inertia used for the paired-rotor torque check.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "yaw_torque_per_thrust_m": {
+      "description": "Yaw torque produced per unit rotor thrust.",
+      "exclusiveMinimum": 0,
+      "type": "number"
     }
   },
   "required": [
@@ -89,6 +109,10 @@
     "maximum_body_rate_deg_s",
     "minimum_thrust_n",
     "maximum_thrust_n",
+    "rotor_thrust_minimum_n",
+    "rotor_thrust_maximum_n",
+    "yaw_inertia_kg_m2",
+    "yaw_torque_per_thrust_m",
     "identified_for_physical_flight"
   ],
   "title": "VehicleModel v1",

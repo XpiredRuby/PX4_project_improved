@@ -12,6 +12,10 @@
   "maximum_thrust_n": 40.0,
   "maximum_tilt_deg": 25.0,
   "minimum_thrust_n": 0.0,
+  "rotor_thrust_maximum_n": 10.0,
+  "rotor_thrust_minimum_n": 0.0,
   "schema_version": 1,
-  "vehicle_model_id": "px4-x500-sitl-v1"
+  "vehicle_model_id": "px4-x500-sitl-v1",
+  "yaw_inertia_kg_m2": 0.04,
+  "yaw_torque_per_thrust_m": 0.05
 }

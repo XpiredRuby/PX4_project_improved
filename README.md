@@ -116,10 +116,12 @@ survey lawnmower compiles through the same path. The review page shows the
 route and the binding constraint and states that the artifact is not a clearance
 to fly.
 
-Look-at yaw, a separate departure leg, pass-through points, obstacle clearance,
-rotor allocation, energy qualification, Gazebo campaign evidence, and
-physical-flight release are not yet supported. The x500 model is a conservative
-SITL configuration, not an identified aircraft model.
+Look-at yaw, exact fly-through points, a hashed occupancy map, and a paired-rotor
+yaw-torque check are included. A drawn-path execution requires an unexpired
+SITL acknowledgement, which is not a flight clearance. A separate departure
+leg, energy qualification, a live Gazebo campaign, and physical-flight release
+are not in this repository. The x500 model is a conservative SITL configuration,
+not an identified aircraft model.
 The compiler binds the expected controller cruise height into its summary.
 The runner checks both that summary's trajectory hash and the live
 uncertainty-adjusted cruise height before execution; a mismatch is rejected.

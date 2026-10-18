@@ -50,6 +50,7 @@ def polyline(coordinates, *, maximum_deviation_m=0.5, closure="open_stop"):
                 "east_m": coordinate[1],
                 "down_m": coordinate[2],
                 "hard": False,
+                "exact": False,
             }
             for index, coordinate in enumerate(coordinates)
         ],

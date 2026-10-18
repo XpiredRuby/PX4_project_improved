@@ -57,6 +57,7 @@ def mission_intent_schema():
         "east_m": {"type": "number"},
         "down_m": {"type": "number"},
         "hard": {"type": "boolean"},
+        "exact": {"type": "boolean"},
     })
     path = _strict_object({
         "kind": {"enum": ["waypoints", "polyline"]},
@@ -75,7 +76,7 @@ def mission_intent_schema():
         },
         "maximum_speed_m_s": _positive("Hard mission speed ceiling."),
         "yaw_mode": {
-            "enum": ["fixed", "tangent", "unconstrained"]
+            "enum": ["fixed", "tangent", "look_at", "unconstrained"]
         },
         "fixed_yaw_deg": {
             "anyOf": [
@@ -83,6 +84,9 @@ def mission_intent_schema():
                 {"type": "null"},
             ]
         },
+        "look_at_north_m": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "look_at_east_m": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "look_at_down_m": {"anyOf": [{"type": "number"}, {"type": "null"}]},
         "time_mode": {"enum": ["minimize", "exact", "maximum", "none"]},
         "requested_duration_s": {
             "anyOf": [_positive("Requested mission duration."), {"type": "null"}]
@@ -137,6 +141,14 @@ def vehicle_model_schema():
         "maximum_body_rate_deg_s": _positive("Verified body-rate ceiling."),
         "minimum_thrust_n": _nonnegative("Minimum modeled collective thrust."),
         "maximum_thrust_n": _positive("Maximum modeled collective thrust."),
+        "rotor_thrust_minimum_n": _nonnegative("Minimum thrust of one rotor."),
+        "rotor_thrust_maximum_n": _positive("Maximum thrust of one rotor."),
+        "yaw_inertia_kg_m2": _positive(
+            "Yaw inertia used for the paired-rotor torque check."
+        ),
+        "yaw_torque_per_thrust_m": _positive(
+            "Yaw torque produced per unit rotor thrust."
+        ),
         "identified_for_physical_flight": {"type": "boolean"},
     })
     schema.update({
@@ -225,12 +237,34 @@ def plan_artifact_schema():
     return schema
 
 
+def occupancy_map_schema():
+    schema = _strict_object({
+        "schema_version": {"const": 1},
+        "map_id": _identifier(),
+        "frame": _frame(),
+        "origin_north_m": {"type": "number"},
+        "origin_east_m": {"type": "number"},
+        "resolution_m": _positive("Cell size."),
+        "rows": {"type": "integer", "minimum": 1, "maximum": 128},
+        "columns": {"type": "integer", "minimum": 1, "maximum": 128},
+        "occupied": {"type": "string", "pattern": "^[01]+$"},
+        "localization_radius_m": _nonnegative("Extra inflation for localization error."),
+    })
+    schema.update({
+        "$schema": DRAFT,
+        "$id": f"{SCHEMA_BASE}/occupancy-map-v1.schema.json",
+        "title": "OccupancyMap v1",
+    })
+    return schema
+
+
 SCHEMAS = {
     "mission-intent-v1.schema.json": mission_intent_schema,
     "vehicle-model-v1.schema.json": vehicle_model_schema,
     "environment-snapshot-v1.schema.json": environment_schema,
     "verification-report-v1.schema.json": verification_report_schema,
     "plan-artifact-v1.schema.json": plan_artifact_schema,
+    "occupancy-map-v1.schema.json": occupancy_map_schema,
 }
 
 

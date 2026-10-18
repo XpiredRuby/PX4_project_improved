@@ -19,7 +19,9 @@ from .flatness import (
     thrust_interval_n,
 )
 from .geometry import GeometryPlan, measure_path_fidelity
+from .mapping import OccupancyMap, clearance_margin_m
 from .retiming import CandidateTrajectory
+from .rotors import yaw_torque_available_nm
 from .timing import PathBounds, certified_dynamics, repeated_bounds, schedule_defects
 from .yaw import (
     MAXIMUM_HEADING_ERROR_RAD,
@@ -107,12 +109,29 @@ def _trajectory_binds_to_curve(
     loops = candidate.summary.loop_count
     schedule = candidate.schedule
     profile = candidate.yaw_profile
-    if motion.yaw_mode == "tangent":
+    look_at = None
+    if motion.yaw_mode in {"tangent", "look_at"}:
         if profile is None:
             return False
+        if motion.yaw_mode == "look_at":
+            if None in (
+                motion.look_at_north_m,
+                motion.look_at_east_m,
+                motion.look_at_down_m,
+            ):
+                return False
+            look_at = (
+                motion.look_at_north_m,
+                motion.look_at_east_m,
+                motion.look_at_down_m,
+            )
         try:
             error = heading_error_bound(
-                geometry.curve, profile, loops=loops, count=8_000
+                geometry.curve,
+                profile,
+                loops=loops,
+                count=8_000,
+                target=look_at,
             )
         except ValueError:
             return False
@@ -138,7 +157,7 @@ def _trajectory_binds_to_curve(
         rate = q1 * loops
         acceleration_rate = q2 * loops
         jerk_rate = q3 * loops
-        if motion.yaw_mode == "tangent":
+        if motion.yaw_mode in {"tangent", "look_at"}:
             yaw_first = profile.evaluate(normalized, 1)[0]
             yaw_second = profile.evaluate(normalized, 2)[0]
             yaw_third = profile.evaluate(normalized, 3)[0]
@@ -292,7 +311,8 @@ def _dynamic_margins(
             candidate.schedule,
             duration,
         ))
-        if motion.yaw_mode == "tangent":
+        tracked_yaw = motion.yaw_mode in {"tangent", "look_at"}
+        if tracked_yaw:
             if candidate.yaw_profile is None:
                 return False, -math.inf
             yaw_bounds = certified_dynamics(
@@ -310,7 +330,8 @@ def _dynamic_margins(
             return False, -math.inf
         acceleration = bounds[1]
         jerk = bounds[2]
-        yaw_rate = bounds[3] if motion.yaw_mode == "tangent" else 0.0
+        yaw_rate = bounds[3] if tracked_yaw else 0.0
+        yaw_acceleration = bounds[4] if tracked_yaw else 0.0
         tilt = maximum_tilt_rad(acceleration)
         thrust_low, thrust_high = thrust_interval_n(acceleration, vehicle.mass_kg)
         body_rate = body_rate_bound_rad_s(acceleration, jerk, yaw_rate)
@@ -330,6 +351,25 @@ def _dynamic_margins(
     if not math.isfinite(body_rate):
         return False, -math.inf
     normalized_margins.append((body_limit - body_rate) / body_limit)
+    torque = vehicle.yaw_inertia_kg_m2 * yaw_acceleration
+    available = min(
+        yaw_torque_available_nm(
+            thrust_low,
+            rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
+            rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
+            yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
+        ),
+        yaw_torque_available_nm(
+            thrust_high,
+            rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
+            rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
+            yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
+        ),
+    )
+    if available <= 1e-9:
+        normalized_margins.append(-1.0 if torque > 1e-9 else 0.0)
+    else:
+        normalized_margins.append((available - torque) / available)
     margin = min(normalized_margins)
     return margin >= -1e-12, margin
 
@@ -414,6 +454,7 @@ def verify_candidate_trajectory(
     fidelity_resolution_m: float = 0.01,
     controller_cruise_height_m: float = 15.0,
     maximum_sample_period_s: float = 0.05,
+    occupancy: OccupancyMap | None = None,
 ) -> VerificationReport:
     """Build a report without trusting the retimer's pass/fail conclusions."""
     if not 0.0 < maximum_limit_scale <= 1.0:
@@ -491,6 +532,26 @@ def verify_candidate_trajectory(
         margin=environment_margin,
         units="m",
     ))
+    if environment.obstacle_map_verified or occupancy is not None:
+        map_ok = False
+        map_margin = None
+        if (
+            occupancy is not None
+            and occupancy.sha256 == environment.obstacle_map_sha256
+        ):
+            map_margin = clearance_margin_m(
+                geometry.curve,
+                occupancy,
+                clearance_m=environment.minimum_clearance_m,
+            )
+            map_ok = map_margin >= -1e-9
+        checks.append(_check(
+            "ENV-002",
+            map_ok,
+            "Smoothed curve stays clear of the hashed occupancy map.",
+            margin=map_margin,
+            units="m",
+        ))
     dynamics_ok, dynamics_margin = _dynamic_margins(
         geometry,
         candidate,
