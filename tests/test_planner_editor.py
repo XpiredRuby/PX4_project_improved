@@ -100,6 +100,15 @@ class HTTPBoundaryTests(unittest.TestCase):
                 self.assertEqual(status, 403)
                 worker.assert_not_called()
 
+    def test_simulation_is_unavailable_until_backend_is_explicitly_configured(self):
+        status, body = self.request("GET", "/api/capabilities")
+        self.assertEqual(status, 200)
+        self.assertEqual(json.loads(body), {"sitl_enabled": False, "hardware_enabled": False})
+        status, _ = self.request("POST", "/api/rehearsal", "{}", {"Content-Type": "application/json"})
+        self.assertEqual(status, 409)
+        status, _ = self.request("POST", "/api/launch", "{}", {"Content-Type": "application/json"})
+        self.assertEqual(status, 404)
+
     def test_invalid_content_and_oversize_requests_fail_before_worker(self):
         for body, headers in (
             ("{}", {"Content-Type": "text/plain"}),

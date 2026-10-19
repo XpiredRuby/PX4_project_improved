@@ -1,8 +1,8 @@
-# Offline trajectory studio
+# Local trajectory studio
 
 The studio adds drawing and interview inputs to the existing verified planner.
-It is a local, simulation-only planning preview. It does not start Gazebo,
-connect to an aircraft, issue a SITL acknowledgement, or approve a flight.
+By default it provides an offline preview. An explicit Linux/WSL backend adds
+confirmed local PX4/Gazebo rehearsals. Physical flight has no browser endpoint.
 
 From the repository root, using its Python environment:
 
@@ -34,6 +34,50 @@ Python command. Open <http://127.0.0.1:8765>. A different port is available with
    includes intent, summary, certificate and decimated display samples. The
    full CSV is the execution data; do not reconstruct it from plotted samples.
 
+## Connected PX4/Gazebo mode
+
+Use a Linux or WSL environment with the built PX4 executable, Gazebo and the
+repository dependencies, including `pyulog`. On the configured machine:
+
+```bash
+cd /home/xpire/PX4-trajectory-studio-oct19
+python3 -m mission_planner.editor --port 8766 \
+  --sitl-autopilot /home/xpire/PX4-Autopilot \
+  --runs /home/xpire/PX4-runs/trajectory-studio
+```
+
+Open <http://127.0.0.1:8766>. This mode uses the existing `afvl_validation`
+world and x500 model, a separate PX4 working directory per job, loopback
+MAVLink endpoints and a requested simulation speed factor of 1. The GUI is
+on by default; `--headless` is available for supplementary batch checks.
+An existing PX4 instance is preserved and prevents a new rehearsal.
+
+After planning, review the proposed interpretation and certificate, check the
+confirmation box, then select **Confirm and rehearse in Gazebo**. Confirmation
+binds the exact retained CSV digest. The server does not recompile or silently
+change its altitude. The default editor height is 20 m; the live controller
+still checks its uncertainty-aware minimum and can refuse a lower height or
+worse navigation state. Connected rehearsals currently require fixed heading;
+tangent launch alignment remains an explicit qualification gap.
+
+The page polls the job, shows failed checks as failures, provides the assessment
+for download, and overlays decimated simulator truth for the same plan. It
+resumes monitoring the active job after a page refresh. Editing a draft does
+not cancel an already confirmed rehearsal; results remain associated with
+the earlier artifact. Use a newly verified plan for a new rehearsal.
+
+Each retained plan contains its intent, model, environment, CSV, summary,
+verification report and review record. Its `rehearsal/` directory contains
+configuration and parameter readback, controller telemetry, ULog, lifecycle
+audits, ground/disarm evidence, and `assessment.json`. Inspect failed targets
+and the assessment's remaining qualification; a successful sampled rehearsal
+is not a physical-flight clearance. The assessment explicitly distinguishes
+an adaptive mission clock from actual wall-time dynamics.
+
+There is no hardware launch button. A real aircraft model, operating domain,
+qualified failure response, hardware tests and a separate operator approval
+are required before a physical execution adapter can be enabled.
+
 ## Explicit preview assumptions
 
 - `LOCAL_NED`, metres, launch origin `launch-001`; horizontal drawing plane.
@@ -53,8 +97,8 @@ Python command. Open <http://127.0.0.1:8765>. A different port is available with
   Heading is not silently transformed into an independently verified absolute
   earth-frame yaw by this editor.
 - At most 256 input points and a 120 s compilation budget. Large/complex
-  requests may require the CLI. Preview files are temporary; use downloads
-  for anything to retain.
+  requests may require the CLI. Offline preview files are temporary; use downloads
+  to retain them. Connected mode also retains server-side evidence under `--runs`.
 
 Use the CLI for map-bound corridor missions, full 3-D inputs, look-at/profile
 yaw, entry/exit legs and other options already supported outside the basic
@@ -100,7 +144,8 @@ parser adversarial cases, truncated tracks, gaps and lost yaw rotations.
 JavaScript syntax was also checked with Node. The subsequent connected-machine
 Chrome checks passed for drawing, interviews, refusal, invalidation, downloads
 and mobile overflow; see [the connected validation checkpoint](trajectory_studio_connected_validation.md).
-Live nominal mission completion and fault qualification remain outstanding.
+Live results and any remaining failed targets are recorded in that checkpoint;
+unit tests alone do not establish simulator or hardware qualification.
 
 For the researched architecture, traceable gaps, benchmark plan and human gates,
 see [the research review](trajectory_planner_research_review.md).

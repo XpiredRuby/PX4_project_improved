@@ -302,7 +302,7 @@ apply to their original requirements.
 | SIM-006 | Require process/configuration/log provenance and scenario completeness | Kill process, remove log, swap digest | Planned |
 | SIM-007 | Compare estimator and simulator truth separately | Inject bias while estimates track the plan | Planned |
 | SIM-008 | Measure wall time, simulation time and achieved real-time factor | Pause/slow/load cases | Planned |
-| HMI-004 | Confirm interpretation before simulation; approve exact results separately for hardware | State-machine and stale-result tests | Offline editor implemented; browser QA and release workflow planned |
+| HMI-004 | Confirm interpretation before simulation; approve exact results separately for hardware | State-machine and stale-result tests | Drawing/interview browser QA passed; exact-artifact connected SITL workflow implemented; physical release blocked |
 | EXE-005 | Authenticate approval and deny stale/replayed/changed artifacts | Identity, expiry, replay and live-bind mutation tests | Physical release blocked |
 | LOG-002 | Retain immutable manifests, logs, checksums, seeds and result rubric | Reproduce report on a clean environment | Planned campaign integration |
 
@@ -453,9 +453,11 @@ release solely because a test count increased.
 
 Software research, parser fixes, offline planning and a SITL editor can proceed
 without aircraft choices. Live simulation needs access to the machine with
-PX4/Gazebo. During this review the Windows connector returned an unavailable
-429 response; this environment has no Gazebo/PX4 binaries. No live campaign is
-claimed. Restore that connection to proceed with increment C.
+PX4/Gazebo. The connected Windows/WSL machine is now available. Live baseline, drawing
+and circle missions have completed their original lifecycle audits. The stricter
+independent truth assessment found a startup heading transient; the command
+handoff has been corrected and the same thresholds are being rerun. See
+`trajectory_studio_connected_validation.md` for exact commits and outcomes.
 
 Before physical qualification, the owner must supply the ten decision groups
 already listed in architecture section 11: aircraft/configuration; operating
@@ -464,8 +466,7 @@ fidelity/stops; yaw/expert scope; failures/manual override; confidence targets;
 and evidence/operator/approver roles. Ask these at the gate that needs them.
 Do not stall offline work on physical choices or invent aircraft capabilities.
 
-The immediate technical choices to resolve with the owner are: which local
-checkout/environment to use for the next Gazebo campaign; the intended physical
+The immediate technical choices to resolve with the owner are: the intended physical
 aircraft/sensors; and whether the previous 200 m / 5 m/s objective remains the
 target after initial conservative x500 validation. A 200 m *path length* need
 not imply a 200 m operating radius; these must be distinguished explicitly.

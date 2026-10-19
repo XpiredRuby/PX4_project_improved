@@ -1,4 +1,4 @@
-"""Loopback-only drawing/interview preview. No simulator or flight commands.
+"""Loopback drawing/interview studio with an optional explicit local SITL backend.
 
 Run ``python -m mission_planner.editor`` and open http://127.0.0.1:8765.
 Each preview is compiled by a time-bounded worker using the existing verifier.
@@ -17,7 +17,7 @@ import subprocess
 import sys
 import tempfile
 
-from .contracts import MissionIntent, load_contract
+from .contracts import EnvironmentSnapshot, MissionIntent, VehicleModel, load_contract
 from .plan_drawn_path import compile_drawn_path
 from .plan_interview import intent_from_interview
 
@@ -82,6 +82,8 @@ def preview(payload: dict) -> dict:
             "simulation_status": "NOT_RUN",
             "flight_approval": False,
             "intent": intent,
+            "vehicle_model": load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", VehicleModel.from_dict).to_dict(),
+            "environment": load_contract(ROOT / "config/planner/empty_world_environment.json", EnvironmentSnapshot.from_dict).to_dict(),
             "summary": summary,
             "verification": json.loads(report.read_text(encoding="utf-8")),
             "samples": [
@@ -132,6 +134,14 @@ class PreviewHandler(BaseHTTPRequestHandler):
         elif self.path == "/":
             self._reply(200, (ROOT / "mission_planner/editor.html").read_bytes(),
                         "text/html; charset=utf-8")
+        elif self.path == "/api/capabilities":
+            self._json(200, {"sitl_enabled": getattr(self.server, "jobs", None) is not None,
+                             "hardware_enabled": False})
+        elif self.path.startswith("/api/rehearsal/") and getattr(self.server, "jobs", None) is not None:
+            try:
+                self._json(200, self.server.jobs.status(self.path.removeprefix("/api/rehearsal/")))
+            except (ValueError, OSError) as exc:
+                self._json(404, {"error": str(exc)})
         else:
             self._json(404, {"error": "not found"})
 
@@ -139,7 +149,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if not self._local_request():
             self._json(403, {"error": "local origin required"})
             return
-        if self.path != "/api/preview":
+        if self.path not in ("/api/preview", "/api/rehearsal"):
             self._json(404, {"error": "not found"})
             return
         try:
@@ -152,6 +162,17 @@ class PreviewHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(length)
             if len(body) != length:
                 raise ValueError("incomplete request")
+            if self.path == "/api/rehearsal":
+                if getattr(self.server, "jobs", None) is None:
+                    self._json(409, {"error": "local SITL backend is not configured"})
+                    return
+                # Apply the same strict JSON loader to authority-bearing input.
+                with tempfile.TemporaryDirectory() as directory:
+                    request = Path(directory) / "request.json"
+                    request.write_bytes(body)
+                    payload = load_contract(request, dict)
+                self._json(202, self.server.jobs.start(payload))
+                return
             with tempfile.TemporaryDirectory(prefix="px4-preview-request-") as directory:
                 request = Path(directory) / "request.json"
                 request.write_bytes(body)
@@ -166,6 +187,8 @@ class PreviewHandler(BaseHTTPRequestHandler):
             if len(result.stdout) > MAX_RESPONSE_BYTES:
                 raise ValueError("preview exceeds response budget; use the CLI")
             value = json.loads(result.stdout)
+            if value.get("accepted") and getattr(self.server, "jobs", None) is not None:
+                value["plan_id"] = self.server.jobs.retain(value)
             self._json(200 if value.get("accepted") else 422, value)
         except subprocess.TimeoutExpired:
             self._json(422, {"accepted": False, "error": "preview exceeded 120 s; use fewer points or the CLI"})
@@ -176,6 +199,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--sitl-autopilot", type=Path, help="enable isolated local PX4/Gazebo rehearsals")
+    parser.add_argument("--runs", type=Path, help="retained studio plans and simulation evidence")
+    parser.add_argument("--headless", action="store_true", help="disable the optional Gazebo GUI")
     parser.add_argument("--compile-request", type=Path, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if args.compile_request is not None:
@@ -187,8 +213,13 @@ def main(argv=None):
         print(json.dumps(result, allow_nan=False))
         return
     with HTTPServer(("127.0.0.1", args.port), PreviewHandler) as server:
+        if args.sitl_autopilot:
+            if args.runs is None:
+                parser.error("--sitl-autopilot requires --runs")
+            from .studio_jobs import StudioJobs
+            server.jobs = StudioJobs(args.runs, args.sitl_autopilot, gui=not args.headless)
         print(f"Offline planner: http://127.0.0.1:{server.server_port}", flush=True)
-        print("SITL_ONLY preview. Simulation has not run. No flight commands.", flush=True)
+        print("SITL_ONLY. Local rehearsals require confirmation. Hardware API is disabled.", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

@@ -10,25 +10,23 @@ The research plan and the requirement matrix live in
 This file says what that plan is, what the repository actually does today, and
 what is still left.
 
-Rough completion, as of this date:
+Current evidence is recorded in the [research review](trajectory_planner_research_review.md)
+and [connected validation record](trajectory_studio_connected_validation.md).
+The [local studio](trajectory_studio_quickstart.md) supports both inputs,
+independent verification, exact-artifact confirmation and optional local
+PX4/Gazebo rehearsals. It has no physical-flight endpoint.
 
-Follow-up increment: see the [research review](trajectory_planner_research_review.md)
-for corrected duration/optimality claims, stage-specific trade studies and
-additional requirements. An [offline drawing/interview editor](trajectory_studio_quickstart.md)
-now compiles through the existing verifier and displays route and dynamics.
-Strict interview/JSON input checks and complete-track/gap checks were added.
-These additions do not establish that a live Gazebo campaign ran, and the
-editor does not start simulation or issue hardware commands. Subsequent
-[connected-machine browser QA passed](trajectory_studio_connected_validation.md).
-Simulator startup exposed integration/configuration refusals before arming;
-nominal mission and fault qualification remain outstanding.
-The completion estimates below describe the preceding baseline and have not
-been recalculated from test counts or this UI increment.
+- Offline geometry/timing checks and adversarial contract tests pass.
+- Chrome drawing/interview, refusal, download and mobile checks pass.
+- Gazebo baseline, drawn path and fixed-heading circle completed lifecycle
+  audits. A stricter truth check exposed a startup heading transient; the
+  handoff was fixed and the repeated baseline and drawing passed unchanged
+  sampled targets. The repeated circle and fault scenarios are still being
+  evaluated at this checkpoint.
+- Physical release is blocked on an identified aircraft, operating decisions,
+  hardware qualification and a separate authenticated operator decision.
 
-- about **40 / 100** of the whole product (plan, Gazebo, real flight);
-- about **80 / 100** of the offline planner that can run without Gazebo or a
-  real aircraft;
-- **0 / 100** for a live Gazebo campaign and for physical-flight release.
+Completion is tracked by these evidence gates, not an uncalibrated percentage.
 
 ## 1. The whole plan
 
@@ -51,7 +49,8 @@ Time is the last priority. The order is:
 5. then make the flight as short as those limits allow.
 
 A short deadline that breaks a limit is rejected. The planner reports the
-shortest duration that still fits and which limit is binding. It does not
+feasible duration found for its current candidate family and its binding limit;
+this is not a proof of a global minimum. It does not
 silently fly faster than the model allows. It also does not give the aircraft
 a long idle flight when a shorter feasible trajectory exists.
 

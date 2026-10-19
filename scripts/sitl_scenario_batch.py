@@ -222,7 +222,13 @@ def run_case(case, output, world, master):
                    "initial_wind": wind_evidence})
     (folder / "events.json").write_text(json.dumps(events, indent=2) + "\n")
     (folder / "battery_status.json").write_text(json.dumps(battery_messages, indent=2) + "\n")
-    df = pd.read_csv(next(folder.glob("research_log_*.csv")), low_memory=False)
+    telemetry = list(folder.glob("research_log_*.csv"))
+    if len(telemetry) != 1:
+        raise RuntimeError(
+            f"Expected one controller telemetry file, found {len(telemetry)}; "
+            f"{manifest.get('outcome')}: {manifest.get('reason')}"
+        )
+    df = pd.read_csv(telemetry[0], low_memory=False)
     if case.get("expected") == "storage_stall":
         injection_path = folder / "storage_stall.json"
         injection = json.loads(injection_path.read_text()) if injection_path.exists() else {}

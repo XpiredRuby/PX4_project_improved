@@ -13,6 +13,22 @@ EARTH_RADIUS_M = 6371000.0
 MAX_ALIGNMENT_GAP_US = 250_000.
 
 
+def source_window(data, samples):
+    """Select the flight interval plus one allowed interpolation gap.
+
+    PX4 may log an undefined local origin before it initializes navigation.
+    Such preflight rows are outside this flight audit. Invalid values inside
+    the selected interval remain errors; missing brackets remain uncovered.
+    """
+    times = np.asarray(data["timestamp"], dtype=float)
+    if (times.ndim != 1 or not len(times) or not np.isfinite(times).all()
+            or np.any(np.diff(times) < 0)):
+        raise ValueError("Truth and estimator sample times must be ordered and finite")
+    mask = ((times >= np.min(samples) - MAX_ALIGNMENT_GAP_US)
+            & (times <= np.max(samples) + MAX_ALIGNMENT_GAP_US))
+    return {key: np.asarray(values)[mask] for key, values in data.items()}
+
+
 def ordered_samples(data, keys):
     """Collapse identical duplicate samples; reject regressed/ambiguous clocks."""
     times = np.asarray(data["timestamp"], dtype=float)
@@ -103,10 +119,10 @@ def audit_physical_position(df, physical):
 
 def audit_ground_truth(df, truth, local):
     sample_us = df.position_time_boot_ms.to_numpy(dtype=float) * 1000.
-    truth_times, truth, truth_duplicates = ordered_samples(truth, ("lat", "lon", "alt"))
-    local_times, local, local_duplicates = ordered_samples(local, ("ref_lat", "ref_lon", "ref_alt"))
-    if not np.all(np.isfinite(sample_us)):
+    if not len(sample_us) or not np.all(np.isfinite(sample_us)):
         raise ValueError("Truth and estimator sample times must be ordered and finite")
+    truth_times, truth, truth_duplicates = ordered_samples(source_window(truth, sample_us), ("lat", "lon", "alt"))
+    local_times, local, local_duplicates = ordered_samples(source_window(local, sample_us), ("ref_lat", "ref_lon", "ref_alt"))
     covered = (interpolation_coverage(sample_us, truth_times)
                & interpolation_coverage(sample_us, local_times))
     # Do not extrapolate truth beyond a recorded flight.

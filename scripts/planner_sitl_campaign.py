@@ -11,6 +11,7 @@ import argparse
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -23,7 +24,8 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT), str(ROOT / "scripts")]
 from pymavlink import mavutil
-from mission_planner.acknowledgement import issue_sitl_acknowledgement
+from mission_planner.acknowledgement import issue_sitl_acknowledgement, load_sitl_acknowledgement
+from mission_planner.contracts import canonical_sha256, load_contract
 from mission_planner.plan_drawn_path import compile_drawn_path
 from mission_planner.plan_interview import compile_interview
 from sitl_scenario_batch import run_case
@@ -42,7 +44,10 @@ PARAMETERS = {
 
 
 def write_json(path, value):
-    Path(path).write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
+    path = Path(path)
+    temporary = path.with_name(path.name + ".pending")
+    temporary.write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
+    temporary.replace(path)
 
 
 def digest(path):
@@ -78,7 +83,7 @@ def ground_evidence(master, timeout_s=8.):
         fresh = len(timestamps) == 3 and all(now - t <= 1.5 for t in timestamps.values())
         safe = (fresh and seen.get("armed") is False and seen.get("landed_state") == 1
                 and len(seen.get("actuators", [])) == 4
-                and max(abs(v) for v in seen["actuators"]) <= .01)
+                and all(math.isfinite(v) and abs(v) <= .01 for v in seen["actuators"]))
         if safe:
             safe_since = safe_since if safe_since is not None else now
             if now - safe_since >= 2.:
@@ -98,11 +103,32 @@ def connect():
     return master
 
 
-def prepare_case(name, output):
+def prepare_case(name, output, reviewed_plan=None):
     artifacts = output / "plan"
     artifacts.mkdir()
     trajectory, summary = artifacts / "trajectory.csv", artifacts / "summary.json"
     case = {"name": name, "expected": "nominal", "trajectory": str(trajectory)}
+    if name == "reviewed-plan":
+        if reviewed_plan is None:
+            raise ValueError("reviewed-plan requires a retained studio artifact")
+        for filename in ("trajectory.csv", "summary.json", "intent.json", "verification.json", "vehicle_model.json", "environment.json", "sitl_acknowledgement.json"):
+            shutil.copy2(reviewed_plan / filename, artifacts / filename)
+        declared = load_contract(summary, dict)
+        verification = load_contract(artifacts / "verification.json", dict)
+        intent = load_contract(artifacts / "intent.json", dict)
+        acknowledgement = artifacts / "sitl_acknowledgement.json"
+        load_sitl_acknowledgement(acknowledgement, summary, trajectory)
+        if (verification.get("accepted") is not True
+                or canonical_sha256(verification) != declared["verification_report_sha256"]
+                or canonical_sha256(intent) != declared["mission_intent_sha256"]
+                or canonical_sha256(load_contract(artifacts / "vehicle_model.json", dict)) != declared["vehicle_model_sha256"]
+                or canonical_sha256(load_contract(artifacts / "environment.json", dict)) != declared["environment_sha256"]):
+            raise ValueError("retained verification or intent does not match the reviewed plan")
+        if intent["motion"]["yaw_mode"] != "fixed":
+            raise ValueError("connected studio rehearsal requires fixed heading")
+        case.update(planner_summary=str(summary), sitl_acknowledgement=str(acknowledgement),
+                    cruise_height_m=declared["controller_cruise_height_m"])
+        return case
     if name == "five-stop-baseline":
         subprocess.run([sys.executable, str(ROOT / "trajectory_generator/plan_waypoint_mission.py"),
                         "--plan", str(ROOT / "missions/five_stop_example.json"),
@@ -110,10 +136,14 @@ def prepare_case(name, output):
                        cwd=ROOT / "trajectory_generator", check=True)
         case["waypoint_summary"] = str(summary)
         return case
+    vehicle = artifacts / "vehicle_model.json"
+    environment = artifacts / "environment.json"
+    shutil.copy2(ROOT / "config/planner/x500_sitl_vehicle_model.json", vehicle)
+    shutil.copy2(ROOT / "config/planner/empty_world_environment.json", environment)
     common = dict(
         intent_path=artifacts / "intent.json",
-        vehicle_path=ROOT / "config/planner/x500_sitl_vehicle_model.json",
-        environment_path=ROOT / "config/planner/empty_world_environment.json",
+        vehicle_path=vehicle,
+        environment_path=environment,
         trajectory_path=trajectory, report_path=artifacts / "verification.json",
         summary_path=summary, review_path=artifacts / "review.html",
         control_spacing_m=.5, verification_resolution_m=.02,
@@ -155,7 +185,7 @@ def prepare_case(name, output):
 def run_one(name, args):
     folder = args.output / name
     folder.mkdir()
-    case = prepare_case(name, folder)
+    case = prepare_case(name, folder, args.reviewed_plan)
     runtime = folder / "runtime"
     runtime.mkdir()
     build = args.autopilot / "build/px4_sitl_default"
@@ -177,7 +207,14 @@ def run_one(name, args):
               "world_sha256": digest(args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"),
               "px4_executable_sha256": digest(binary),
               "controller_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
-              "controller_batch_sha256": digest(ROOT / "scripts/sitl_scenario_batch.py")}
+              "controller_batch_sha256": digest(ROOT / "scripts/sitl_scenario_batch.py"),
+              "harness_sha256": digest(Path(__file__)),
+              "model_files_sha256": {
+                  str(path.relative_to(args.autopilot)): digest(path)
+                  for model in ("x500", "x500_base")
+                  for path in sorted((args.autopilot / "Tools/simulation/gz/models" / model).rglob("*"))
+                  if path.is_file()
+              }}
     write_json(folder / "simulation_configuration.json", config)
     log = (folder / "simulator.log").open("w")
     process = subprocess.Popen([str(binary), "-d", str(build / "etc"), "-w", str(runtime)],
@@ -265,8 +302,18 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--world", default="afvl_validation")
     parser.add_argument("--gui", action="store_true")
-    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "drawn-gps-outage-4s", "drawn-control-stall"], default=["five-stop-baseline"])
+    parser.add_argument("--reviewed-plan", type=Path)
+    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "drawn-gps-outage-4s", "drawn-control-stall", "reviewed-plan"], default=["five-stop-baseline"])
     args = parser.parse_args()
+    if (args.reviewed_plan is not None) != (args.cases == ["reviewed-plan"]):
+        parser.error("--reviewed-plan requires exactly --cases reviewed-plan")
+    # One controller owns the simulator ports across studio/browser processes.
+    import fcntl
+    lock = open("/tmp/px4-trajectory-studio.lock", "a")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError as exc:
+        raise RuntimeError("Another planner campaign owns the local simulator") from exc
     args.autopilot = args.autopilot.resolve()
     args.output = args.output.resolve()
     for path in Path("/proc").glob("[0-9]*/cmdline"):
@@ -282,7 +329,17 @@ def main():
         for name in args.cases:
             write_json(args.output / "status.json", {"stage": "RUNNING", "case": name})
             results.append(run_one(name, args))
+            # Assess after the owned simulator has landed, stopped propulsion,
+            # and closed its ULog. Startup or a lifecycle pass is insufficient.
+            sys.path.insert(0, str(ROOT / "analysis"))
+            from planner_rehearsal import assess_case
+            assessment = assess_case(args.output / name)
+            results[-1]["sampled_rehearsal_passed"] = assessment["sampled_rehearsal_passed"]
             write_json(args.output / "results.json", results)
+            if name in ("drawn-nominal", "circle-nominal", "reviewed-plan") and not assessment["sampled_rehearsal_passed"]:
+                raise RuntimeError("Sampled rehearsal targets failed; inspect assessment.json")
+            if name in ("drawn-gps-outage-4s", "drawn-control-stall") and not assessment["fault_response_passed"]:
+                raise RuntimeError("Fault response targets failed; inspect assessment.json")
     except Exception as exc:
         write_json(args.output / "status.json", {"stage": "FAILED", "case": name,
                                                   "error": f"{type(exc).__name__}: {exc}"})

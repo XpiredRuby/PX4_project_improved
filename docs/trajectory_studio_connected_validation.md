@@ -1,8 +1,8 @@
 # Connected-machine validation checkpoint
 
 Date: 19 October 2026. This follows the offline validation record. It records
-actual browser checks and simulator startup/pre-arm attempts. **No aircraft
-armed, no mission flew, and no successful Gazebo mission campaign is claimed.**
+actual browser checks, simulator refusals and executed simulation missions.
+All flights described here are Gazebo SITL. Physical aircraft have not flown.
 
 ## Browser result: passed
 
@@ -51,8 +51,8 @@ before making stronger reproducibility claims.
 
 The wrapper confirmed ground/disarm/zero actuator outputs before shutting down
 completed earlier attempts. Failed results are retained and are not upgraded
-to nominal passes. The last connection was lost before the prepared heartbeat
-change could be confirmed deployed and tested; recheck process state on resume.
+to nominal passes. After the connection returned, the heartbeat change was deployed and the
+baseline completed, including native landing and automatic disarm.
 
 ## Software changes from these findings
 
@@ -61,8 +61,8 @@ runner, supports a bound SITL acknowledgement for drawn artifacts, and rejects
 missing or conflicting artifacts before execution. A missing final-state field
 reports the runner's actual refusal instead of hiding it behind a `KeyError`.
 
-The new `planner_sitl_campaign.py` is **draft infrastructure requiring further
-live validation**. It creates a separate PX4 working directory for each case,
+The new `planner_sitl_campaign.py` has completed live lifecycle runs and is
+undergoing the stricter sampled qualification described below. It creates a separate PX4 working directory for each case,
 declares parameter overrides, verifies the estimator was configured at startup,
 checks ground state, reads back post-start safety settings, archives hashes and
 runs the existing scenario assessor. Its prepared GCS heartbeat represents
@@ -76,7 +76,57 @@ height equality check remains active and will reject greater required heights.
 Fixed heading is used for initial circle tracking so launch/tangent alignment
 can be qualified separately. These choices are serialized test conditions.
 
-## Resume procedure
+## Executed flight findings
+
+Commit `d69df17172c584425b2a34aff40f6ce1436c7b35` completed the five-stop
+baseline, drawn path and fixed-heading circle with successful original
+lifecycle audits, native landing, automatic disarm and a separate continuous
+two-second zero-output confirmation. Requested speed factor was 1; the two
+general-path runs enabled the Gazebo GUI.
+
+The additional independent assessment evaluates every flight sample through
+the first native-landing `ON_GROUND` report, exact runtime-reference binding,
+CSV/runner digests, physical position and heading, touchdown truth, shutdown
+and measured real-time factor. Its position/heading statistics combine
+TAKEOFF, TRAJECTORY, RETURN_HOME and ALIGN; per-phase distributions are also
+reported. HANDOFF is excluded from reference tracking because PX4 can already
+be descending while its LAND acknowledgement arrives. Native descent is
+assessed by its lifecycle/contact evidence rather than an inactive offboard
+reference.
+
+This stricter assessment **failed** the initial baseline and drawn run on
+startup heading: maximum physical errors were 11.362° and 13.772° respectively,
+above the predeclared 10° target. Their original lifecycle passes are retained;
+they are not called complete qualification passes.
+
+Investigation found that the averaged heading recorded during GPS yaw
+acquisition lagged the current heading at the transition to position control.
+Commit `832ab7224daeceb115f07ea0fff5cd514f53dabf` preserves the fresh finite
+measured heading at this handoff, while leaving the averaged launch XYZ
+unchanged. Stale/non-finite attitude refuses the transition. No acceptance
+threshold was changed.
+
+The repeated five-stop baseline passed the sampled assessment: aggregate
+physical 3-D position p95 0.193 m / max 0.575 m; heading p95 3.521° / max
+4.831°; measured mean real-time factor 1.000034; complete truth coverage
+through contact; confirmed two-second ground/disarm/zero outputs. Return-home
+position p95 was 0.558 m, so this is an aggregate p95 pass, not a claim that
+every individual phase had p95 below 0.5 m. Full per-phase data are retained.
+The repeated drawn and circle cases were still running at this checkpoint.
+
+PX4 can log an undefined local origin before estimator initialization. The
+truth alignment selects the flight interval plus the allowed 0.25 s bracket;
+invalid values inside that interval still refuse assessment. It never fills
+missing flight truth or extrapolates after ULog recording stops. Post-contact
+rows are excluded from the flight-truth coverage count; fresh post-disarm
+actuator evidence is assessed separately.
+
+Contact speeds currently refer to the first land-detector `ON_GROUND` report.
+They do not identify the instant of rigid-body impact independently. The
+sampled pass also does not establish actual wall-time dynamic/rotor margins,
+obstacle-map clearance, an identified physical airframe, or hardware release.
+
+## Campaign procedure
 
 1. Restore the existing PowerShell tunnel and inspect simulator/process state.
 2. Deploy the current batch adapter and draft harness together; verify hashes.
