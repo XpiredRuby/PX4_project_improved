@@ -7,8 +7,8 @@ and CI update records the results and expands lint scope. This record does not
 claim a live simulator campaign or physical-aircraft qualification.
 
 Follow-up: [connected-machine validation](trajectory_studio_connected_validation.md)
-completed the Chrome checks and records the subsequent pre-arm simulator
-findings. The "not completed" list below describes this earlier checkpoint.
+records the Chrome checks, executed Gazebo missions, scoped truth assessment
+and subsequent fault-response results. The "not completed" list below describes this earlier checkpoint.
 
 ## Checks completed
 

@@ -295,16 +295,16 @@ apply to their original requirements.
 | INT-010 | Serialize speed semantics, effective cap and optimization scope | UI/API round-trip and limit tests | Partial: review documentation; schema migration planned |
 | PLN-009 | Distinguish found feasible duration from proven lower bound/infeasibility | Known solvable short-deadline counterexamples | Summary scope and refusal wording implemented; contract field migration planned |
 | PLN-010 | Limit smoothness/margin tiers by explicit finite targets | No gratuitous waits on straight/circle cases | Planned |
-| PLN-011 | Verify full start/route/exit/return/landing composition | Phase-boundary and geofence tests | Planned for general planner |
+| PLN-011 | Verify full start/route/exit/return/landing composition | Phase-boundary and geofence tests | Nominal lifecycle and sampled truth tested; continuous composition certificate remains planned |
 | VER-006 | Check coupled, identified rotor allocation and slew | Wrench saturation/cross-axis adversarial cases | Owner/model blocked |
 | VER-007 | Include tracking, map, localization, latency and body envelope in clearance | Independent inflation and collision oracle | Partial grid baseline; complete budget planned |
 | SIM-005 | Require complete mission-clock track coverage and bounded sample gaps | Truncation, missing-middle and timestamp tests | Implemented in this increment |
-| SIM-006 | Require process/configuration/log provenance and scenario completeness | Kill process, remove log, swap digest | Planned |
-| SIM-007 | Compare estimator and simulator truth separately | Inject bias while estimates track the plan | Planned |
-| SIM-008 | Measure wall time, simulation time and achieved real-time factor | Pause/slow/load cases | Planned |
+| SIM-006 | Require process/configuration/log provenance and scenario completeness | Kill process, remove log, swap digest | Owned process, isolated runtime, parameter readback, provenance and digest tests implemented; wider infrastructure faults planned |
+| SIM-007 | Compare estimator and simulator truth separately | Inject bias while estimates track the plan | Nominal and GPS-outage truth evaluated; deliberate biased-estimate campaign planned |
+| SIM-008 | Measure wall time, simulation time and achieved real-time factor | Pause/slow/load cases | Requested 1× measured on live runs; pause/slow/load cases remain planned |
 | HMI-004 | Confirm interpretation before simulation; approve exact results separately for hardware | State-machine and stale-result tests | Drawing/interview browser QA passed; exact-artifact connected SITL workflow implemented; physical release blocked |
 | EXE-005 | Authenticate approval and deny stale/replayed/changed artifacts | Identity, expiry, replay and live-bind mutation tests | Physical release blocked |
-| LOG-002 | Retain immutable manifests, logs, checksums, seeds and result rubric | Reproduce report on a clean environment | Planned campaign integration |
+| LOG-002 | Retain immutable manifests, logs, checksums, seeds and result rubric | Reproduce report on a clean environment | Per-run logs, hashes and rubric retained; independent clean-machine reproduction remains planned |
 
 ## 9. Experiments and decision gates
 
@@ -456,7 +456,9 @@ without aircraft choices. Live simulation needs access to the machine with
 PX4/Gazebo. The connected Windows/WSL machine is now available. Live baseline, drawing
 and circle missions have completed their original lifecycle audits. The stricter
 independent truth assessment found a startup heading transient; the command
-handoff has been corrected and the same thresholds are being rerun. See
+handoff was corrected and all three repeated nominal cases passed unchanged
+sampled targets. The connected browser rehearsal and GPS-outage response also
+passed; see the checkpoint for the control-stall outcome and remaining scope. See
 `trajectory_studio_connected_validation.md` for exact commits and outcomes.
 
 Before physical qualification, the owner must supply the ten decision groups

@@ -74,9 +74,29 @@ and the assessment's remaining qualification; a successful sampled rehearsal
 is not a physical-flight clearance. The assessment explicitly distinguishes
 an adaptive mission clock from actual wall-time dynamics.
 
-There is no hardware launch button. A real aircraft model, operating domain,
+There is no hardware launch button. The non-executable
+[`physical_aircraft_intake.template.json`](physical_aircraft_intake.template.json)
+lists the missing owner information. A real aircraft model, operating domain,
 qualified failure response, hardware tests and a separate operator approval
 are required before a physical execution adapter can be enabled.
+
+## Browser regression on a configured simulation machine
+
+The reusable browser check requires optional Playwright (`python -m pip install
+playwright`) and an installed Chrome executable. It actively confirms and runs
+one local SITL mission, checks artifact mismatch refusal, edit invalidation,
+refresh recovery, truth overlay, assessment download and responsive layout.
+Use a new output directory:
+
+```bash
+python3 scripts/check_studio_browser.py --confirm-sitl \
+  --chrome /absolute/path/to/chrome \
+  --output /absolute/path/to/new-browser-evidence
+```
+
+On Windows, use the connected Python environment and the installed Chrome path.
+The test accepts only a loopback studio URL. Its assertions never approve a
+physical flight.
 
 ## Explicit preview assumptions
 

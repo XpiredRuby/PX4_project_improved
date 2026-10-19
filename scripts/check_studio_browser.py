@@ -76,7 +76,9 @@ def main():
             page = context.new_page()
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(url, wait_until="networkidle", timeout=30000)
-            page.wait_for_function("sitlEnabled===true")
+            page.locator("#simulationStatus").filter(
+                has_text="Local PX4/Gazebo backend configured"
+            ).wait_for()
             page.locator("#linePreset").click()
             assert page.locator("#altitude").input_value() == "20"
             with page.expect_response(
@@ -86,7 +88,7 @@ def main():
             result = response.value.json()
             identifier = result["plan_id"]
             assert result["accepted"] and result["verification"]["accepted"]
-            page.wait_for_function("lastResult!==null")
+            page.locator("#results").wait_for(state="visible")
             assert page.locator("#rehearse").is_disabled()
             digest = result["summary"]["controller_trajectory_sha256"]
             bad = page.request.post(
@@ -115,7 +117,9 @@ def main():
             second = context.new_page()
             second.on("pageerror", lambda e: errors.append(str(e)))
             second.goto(url, wait_until="networkidle")
-            second.wait_for_function("activeJob!==null")
+            second.locator("#simulationStatus").filter(
+                has_text="Earlier confirmed plan:"
+            ).wait_for()
             second.locator("#altitude").fill("21")
             assert second.locator("#results").is_hidden()
             assert (
@@ -123,7 +127,9 @@ def main():
                 in second.locator("#simulationStatus").inner_text().lower()
             )
             second.reload(wait_until="networkidle")
-            second.wait_for_function("activeJob!==null")
+            second.locator("#simulationStatus").filter(
+                has_text="Earlier confirmed plan:"
+            ).wait_for()
             results.append(
                 {
                     "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
@@ -145,9 +151,15 @@ def main():
                 c for c in status["assessment"]["checks"] if not c["passed"]
             ]
             assert status["flight_approval"] is False
-            page.wait_for_function("simulationAssessment!==null", timeout=10000)
-            assert "Gazebo sampled rehearsal passed" in page.locator("#status").inner_text()
-            assert "Gazebo completed; sampled checks passed" in page.locator("#gazeboNotice").inner_text()
+            page.locator("#downloadAssessment").wait_for(state="visible", timeout=10000)
+            assert (
+                "Gazebo sampled rehearsal passed"
+                in page.locator("#status").inner_text()
+            )
+            assert (
+                "Gazebo completed; sampled checks passed"
+                in page.locator("#gazeboNotice").inner_text()
+            )
             assert page.evaluate("simulationAssessment.plan_id===lastResult.plan_id")
             assert page.locator("#rehearse").is_disabled()
             with page.expect_download() as download:

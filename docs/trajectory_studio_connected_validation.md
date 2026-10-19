@@ -36,9 +36,10 @@ preview remains offline evidence; the tangent-yaw case did not execute in PX4.
 - No running PX4/Gazebo instance was present at initial inspection.
 
 The autopilot checkout has local additions. A commit identifier alone therefore
-does not describe the complete simulator configuration. The new harness records
-the world and executable hashes and must be extended with model/plugin hashes
-before making stronger reproducibility claims.
+does not describe the complete simulator configuration. Early runs record the
+world and executable hashes; the connected/fault harness also records model
+files and harness hashes. Shared Gazebo plugin hashes and independent
+clean-machine reproduction remain needed for stronger reproducibility claims.
 
 ## Startup and pre-arm findings
 
@@ -84,7 +85,7 @@ lifecycle audits, native landing, automatic disarm and a separate continuous
 two-second zero-output confirmation. Requested speed factor was 1; the two
 general-path runs enabled the Gazebo GUI.
 
-The additional independent assessment evaluates every flight sample through
+The additional independent assessment evaluates every recorded mission sample through
 the first native-landing `ON_GROUND` report, exact runtime-reference binding,
 CSV/runner digests, physical position and heading, touchdown truth, shutdown
 and measured real-time factor. Its position/heading statistics combine
@@ -94,9 +95,9 @@ be descending while its LAND acknowledgement arrives. Native descent is
 assessed by its lifecycle/contact evidence rather than an inactive offboard
 reference.
 
-This stricter assessment **failed** the initial baseline and drawn run on
-startup heading: maximum physical errors were 11.362° and 13.772° respectively,
-above the predeclared 10° target. Their original lifecycle passes are retained;
+This stricter assessment **failed** all three initial nominal runs on startup
+heading: maximum physical errors were 11.362° (baseline), 13.772° (drawing) and
+14.909° (circle), above the predeclared 10° target. Their original lifecycle passes are retained;
 they are not called complete qualification passes.
 
 Investigation found that the averaged heading recorded during GPS yaw
@@ -112,7 +113,17 @@ physical 3-D position p95 0.193 m / max 0.575 m; heading p95 3.521° / max
 through contact; confirmed two-second ground/disarm/zero outputs. Return-home
 position p95 was 0.558 m, so this is an aggregate p95 pass, not a claim that
 every individual phase had p95 below 0.5 m. Full per-phase data are retained.
-The repeated drawn and circle cases were still running at this checkpoint.
+The repeated drawn and circle cases also passed. Their aggregate 3-D position
+p95/max errors were 0.295/0.418 m and 0.161/0.387 m. Heading p95/max errors
+were 2.036/4.046° and 2.361/3.072°. Measured mean real-time factors were
+0.999526 and 1.000017. Maximum physical distance from the original input
+polyline was 0.308 m for the drawing and 0.256 m for the circle, within each
+0.5 m tolerance. This distance check is sampled and does not claim a continuous
+ordered Fréchet certificate.
+
+Machine-readable records, including the initial failed assessments and raw
+CSV/ULog hashes, are under `evidence/planner/2026-10-19/qualification.json`.
+The full raw evidence remains on the simulator machine under `/home/xpire/PX4-runs`.
 
 PX4 can log an undefined local origin before estimator initialization. The
 truth alignment selects the flight interval plus the allowed 0.25 s bracket;
@@ -121,10 +132,56 @@ missing flight truth or extrapolates after ULog recording stops. Post-contact
 rows are excluded from the flight-truth coverage count; fresh post-disarm
 actuator evidence is assessed separately.
 
+The controller CSV starts after the guarded GPS/IMU yaw bootstrap. Its prior
+armed motion remains in ULog and controller diagnostics, but this sampled
+assessment does not independently score that pre-CSV segment. This is an
+explicit remaining qualification item, alongside continuous dynamics.
+
 Contact speeds currently refer to the first land-detector `ON_GROUND` report.
 They do not identify the instant of rigid-body impact independently. The
 sampled pass also does not establish actual wall-time dynamic/rotor margins,
 obstacle-map clearance, an identified physical airframe, or hardware release.
+
+## Connected studio and fault results
+
+The connected studio rehearsal used the actual Chrome page, HTTP compiler,
+exact digest confirmation, isolated PX4/Gazebo backend and independent truth
+assessment. It passed a 25.167786 s straight-route plan, including native
+landing and disarm. The browser test also confirmed that a modified digest
+cannot start a rehearsal; editing another draft does not cancel/rebind the
+running job; a refreshed tab resumes monitoring; the matching truth overlay
+and assessment download work; desktop/mobile layouts do not overflow; and no
+JavaScript errors were reported.
+
+Live browser testing found and corrected two integration issues: the review
+checkbox initially triggered the draft invalidator, and whole-number browser
+JSON differed from the compiler's normalized floating-point intent digest.
+The fixes preserve explicit confirmation and retain the normalized contract;
+no digest check was removed. The reusable browser regression is
+`scripts/check_studio_browser.py`. Its first final rerun completed the backend
+mission but hit a Playwright string-evaluation restriction under the page CSP.
+The helper now waits on DOM state; production CSP was not weakened. The final
+rerun passed, including correct completion text, truth overlay and download.
+That failed helper result remains in the evidence record separately from the
+successful backend assessment.
+
+The bounded fault campaign at commit
+`3a25bd08461cfcec1f59931cbc30d6d43942ac3d` completed both response assessments:
+
+| Case | Recorded behavior | Assessment |
+|---|---|---|
+| Four-second GPS interruption at route clock 8 s | Entered HOLD, recovered healthy navigation, resumed and completed; native LAND/disarm confirmed | Fault response passed; nominal reference-invariance checks correctly fail during the safety HOLD |
+| 0.4 s control-worker stall at route clock 8 s | Command expiry, one fresh brake, stopped offboard publication, yielded to PX4 LAND; disarm/zero outputs confirmed | Fault response passed; trajectory incomplete and 0.319 s telemetry gap remain nominal failures |
+
+The stall runner returns exit code 1 and outcome `PX4_FAILSAFE` deliberately.
+The campaign passes its declared interruption response, not nominal mission
+completion. Both assessments retain `hardware_approval: false`.
+
+Local full validation passed **331 tests** in 234.214 s, including deterministic
+compilation. Focused checks after the browser fixes passed; lint and JavaScript
+syntax checks passed. GitHub's Python 3.10 Controller validation and Validation
+workflows also succeeded on the integration branch. Later evidence-only
+commits do not alter the tested controller law.
 
 ## Campaign procedure
 

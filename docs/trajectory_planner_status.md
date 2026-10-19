@@ -20,9 +20,9 @@ PX4/Gazebo rehearsals. It has no physical-flight endpoint.
 - Chrome drawing/interview, refusal, download and mobile checks pass.
 - Gazebo baseline, drawn path and fixed-heading circle completed lifecycle
   audits. A stricter truth check exposed a startup heading transient; the
-  handoff was fixed and the repeated baseline and drawing passed unchanged
-  sampled targets. The repeated circle and fault scenarios are still being
-  evaluated at this checkpoint.
+  handoff was fixed and all three repeated nominal cases passed unchanged sampled targets.
+  The connected browser rehearsal and bounded GPS-outage/control-stall
+  responses passed. Broader fault/physical qualification remains open.
 - Physical release is blocked on an identified aircraft, operating decisions,
   hardware qualification and a separate authenticated operator decision.
 
@@ -235,7 +235,7 @@ initial tangent.
 
 ### Still software, and still not a flight release
 
-These do not need the ten owner decisions, and they are not in the repository:
+Further offline research and software qualification, beyond the demonstrated baseline:
 
 - a periodic seam whose velocity stays nonzero, and an `open_depart` ending
   that is still moving when the path finishes;
@@ -245,26 +245,30 @@ These do not need the ten owner decisions, and they are not in the repository:
   uncertainty on the vehicle contract;
 - general soft weights on intent, beyond hard stops and the deviation tube;
 - a fuller interval checker than the current hull and Lipschitz bounds;
-- a live drawing and interview UI, including abort actions on the review;
+- dedicated reviewed cancel/abort controls; drawing/interview, confirmation,
+  simulation status, truth overlay and assessment download are implemented;
 - weather, GNSS, and communications assumptions as a full operating-domain
   record, rather than the single wind limit stored today.
 
 ### Needs Gazebo and PX4 on a machine that has them
 
-This environment does not have `gz`, `gazebo`, `ign`, or `px4`. Nothing below
-has been run:
+The connected PX4/Gazebo machine has now run nominal baseline, drawing and
+circle missions, plus a browser-confirmed artifact. The repeated nominal
+cases passed the sampled truth assessment after the startup heading fix.
+A four-second GPS interruption passed its bounded HOLD/recovery assessment.
+The 0.4 s control stall also passed its command-expiry/PX4 landing response
+assessment; it is correctly recorded as an incomplete trajectory. Remaining broader qualification includes:
 
-- nominal SITL of drawn paths and interviews, compared with the planned
-  extrema and with PX4's estimates;
-- start, hard points, closure, landing, disarm, and post-disarm checks driven
-  by these artifacts;
+- additional mission patterns, tangent launch alignment, hard-point and
+  altitude transitions, and continuous composition/dynamic checks;
 - fault cases: wind, map failure, stale map, localization error, and a failed
   simulation that must not produce a launchable artifact;
 - proof that a failed simulator run cannot be approved.
 
 ### Needs the owner, before any real aircraft
 
-- the ten decisions in section 11;
+- the ten decisions in architecture section 11; the non-executable
+  `physical_aircraft_intake.template.json` collects the initial information;
 - an identified vehicle model and a check that matches that aircraft's
   allocator, not only the Gazebo x500 torque model;
 - a sensor or a surveyed map, if obstacle clearance is going to be claimed
@@ -282,5 +286,6 @@ out of this offline planner. Unconstrained yaw stays refused.
 
 The repository can take a drawing or an interview, produce a checked
 rest-to-rest trajectory, explain the binding limit, and refuse a plan that
-breaks the x500 SITL model. It cannot yet show that trajectory in a live
-Gazebo run, and it cannot authorize a real flight.
+breaks the x500 SITL model. It can rehearse an exactly confirmed fixed-heading artifact in local Gazebo
+and show its sampled truth/evidence. It cannot authorize a real flight.
+Read the connected validation record for the tested conditions and limits.

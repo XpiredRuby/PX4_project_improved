@@ -60,7 +60,7 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground):
                              & df.landed_state.eq(1).to_numpy())
     active = np.arange(len(df)) <= (contacts[0] if len(contacts) else len(df))
     coverage = np.isfinite(physical).all(axis=1) & np.isfinite(yaw) & np.isfinite(velocity).all(axis=1)
-    add("Truth covers every flight sample through contact", len(contacts) > 0 and np.all(coverage[active]),
+    add("Truth covers every recorded mission sample through contact", len(contacts) > 0 and np.all(coverage[active]),
         {"required_rows": int(active.sum()), "covered_rows": int(coverage[active].sum()),
          "post_contact_rows_excluded": int((~active).sum())})
     offboard = df.phase.isin(["TAKEOFF", "TRAJECTORY", "RETURN_HOME", "ALIGN"]).to_numpy()
@@ -112,7 +112,8 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground):
                           for phase in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME", "ALIGN")},
             "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
             "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
-            "remaining_qualification": ["rigid-body contact timing", "actual dynamics and actuator reserves",
+            "remaining_qualification": ["pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
+                                        "rigid-body contact timing", "actual dynamics and actuator reserves",
                                         "identified aircraft and environment", "obstacle-map clearance if applicable"]}
 
 
@@ -184,7 +185,7 @@ def assess_case(folder):
     result["scenario_expected"] = scenario.get("expected")
     # A forced interruption is judged on its declared fault response, not on
     # nominal route completion or the intentionally interrupted sampling gap.
-    fault_names = {"Existing lifecycle/scenario audit", "Truth covers every flight sample through contact",
+    fault_names = {"Existing lifecycle/scenario audit", "Truth covers every recorded mission sample through contact",
                    "Touchdown truth within predeclared position/speed targets",
                    "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
                    "Measured mean real-time factor in 0.95–1.05",
