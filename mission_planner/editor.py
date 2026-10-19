@@ -81,7 +81,7 @@ def preview(payload: dict) -> dict:
             "campaign_ran": False,
             "simulation_status": "NOT_RUN",
             "flight_approval": False,
-            "intent": intent,
+            "intent": contract.to_dict(),
             "vehicle_model": load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", VehicleModel.from_dict).to_dict(),
             "environment": load_contract(ROOT / "config/planner/empty_world_environment.json", EnvironmentSnapshot.from_dict).to_dict(),
             "summary": summary,

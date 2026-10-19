@@ -20,6 +20,11 @@ class StudioJobTests(unittest.TestCase):
     def setUpClass(cls):
         document = json.loads((ROOT / "missions/drawn_path_example.json").read_text())
         document["path"]["points"] = [document["path"]["points"][0], document["path"]["points"][-1]]
+        # Browser JSON serializes whole numbers as integers. The retained
+        # document must use the compiler's normalized numeric representation.
+        for point in document["path"]["points"]:
+            for field in ("north_m", "east_m", "down_m"):
+                point[field] = int(point[field])
         cls.result = preview({"source": "drawing", "document": document})
 
     def setUp(self):
