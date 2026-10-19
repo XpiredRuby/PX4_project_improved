@@ -159,10 +159,19 @@ def load_contract(
     def reject_constant(value: str) -> None:
         raise ValueError(f"contract contains non-finite JSON constant: {value}")
 
+    def unique_object(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"contract contains duplicate JSON key: {key}")
+            value[key] = item
+        return value
+
     try:
         raw = json.loads(
             source.read_text(encoding="utf-8"),
             parse_constant=reject_constant,
+            object_pairs_hook=unique_object,
         )
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"cannot load contract {source}: {exc}") from exc

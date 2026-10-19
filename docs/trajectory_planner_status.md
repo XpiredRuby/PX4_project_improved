@@ -12,6 +12,17 @@ what is still left.
 
 Rough completion, as of this date:
 
+Follow-up increment: see the [research review](trajectory_planner_research_review.md)
+for corrected duration/optimality claims, stage-specific trade studies and
+additional requirements. An [offline drawing/interview editor](trajectory_studio_quickstart.md)
+now compiles through the existing verifier and displays route and dynamics.
+Strict interview/JSON input checks and complete-track/gap checks were added.
+These additions do not establish that a live Gazebo campaign ran, and the
+editor does not start simulation or issue hardware commands. Browser visual
+QA remains pending because the browser binary could not be downloaded here.
+The completion estimates below describe the preceding baseline and have not
+been recalculated from test counts or this UI increment.
+
 - about **40 / 100** of the whole product (plan, Gazebo, real flight);
 - about **80 / 100** of the offline planner that can run without Gazebo or a
   real aircraft;

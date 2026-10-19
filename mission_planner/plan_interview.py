@@ -15,10 +15,15 @@ import json
 import math
 from pathlib import Path
 
-from .contracts import OBJECTIVE_PRIORITY, EnvironmentSnapshot, load_contract
+from .contracts import (
+    OBJECTIVE_PRIORITY, EnvironmentSnapshot, MissionIntent, load_contract,
+)
 from .explain import PlanningError
 from .mapping import OccupancyMap, corridor_polyline
 from .plan_drawn_path import compile_drawn_path
+
+
+MAX_GENERATED_PATH_POINTS = 10_000
 
 
 def _object(value, field: str) -> dict:
@@ -38,6 +43,15 @@ def _number(value, field: str, *, minimum: float | None = None) -> float:
     return result
 
 
+def _fields(value: dict, required: set[str], field: str) -> None:
+    missing = required - set(value)
+    unknown = set(value) - required
+    if missing:
+        raise ValueError(f"{field} is missing fields: " + ", ".join(sorted(missing)))
+    if unknown:
+        raise ValueError(f"{field} has unknown fields: " + ", ".join(sorted(unknown)))
+
+
 def _circle_points(center_north: float, center_east: float, altitude: float, deviation: float):
     radius = math.hypot(center_north, center_east)
     if radius < 1.0:
@@ -48,6 +62,8 @@ def _circle_points(center_north: float, center_east: float, altitude: float, dev
     allowance = min(0.25, deviation / (4.0 * radius))
     half = math.acos(max(-1.0, min(1.0, 1.0 - allowance)))
     count = max(12, math.ceil(math.tau / max(2.0 * half, 1e-3)))
+    if count + 1 > MAX_GENERATED_PATH_POINTS:
+        raise ValueError("circle exceeds the generated path point budget")
     theta0 = math.atan2(-center_east, -center_north)
     points = []
     for index in range(count):
@@ -109,6 +125,8 @@ def _unrolled_laps(closed, laps: int):
     final seam is the stop, and an exact mark on an endpoint does not change
     the rest-to-rest time law.
     """
+    if (len(closed) - 1) * laps + 1 > MAX_GENERATED_PATH_POINTS:
+        raise ValueError("circle laps exceed the generated path point budget")
     ring = closed[:-1]
     chain = []
     for lap in range(laps):
@@ -196,6 +214,8 @@ def _survey_points(length: float, width: float, spacing: float, altitude: float)
             limiting_constraint="geometry",
         )
     lanes = max(1, math.floor(width / spacing) + 1)
+    if 2 * lanes > MAX_GENERATED_PATH_POINTS:
+        raise ValueError("survey exceeds the generated path point budget")
     points = []
     for lane in range(lanes):
         east = min(width, lane * spacing)
@@ -239,13 +259,19 @@ def _waypoint_points(raw_points, altitude: float):
         allowed = {"north_m", "east_m", "hard", "exact"}
         if set(value) - allowed:
             raise ValueError(f"waypoints[{index}] has unknown fields")
+        if not {"north_m", "east_m"} <= set(value):
+            raise ValueError(f"waypoints[{index}] requires north_m and east_m")
+        hard = value.get("hard", False)
+        exact = value.get("exact", False)
+        if not isinstance(hard, bool) or not isinstance(exact, bool):
+            raise ValueError(f"waypoints[{index}] hard and exact must be boolean")
         points.append({
             "point_id": f"waypoint-{index}",
             "north_m": _number(value["north_m"], f"waypoints[{index}].north_m"),
             "east_m": _number(value["east_m"], f"waypoints[{index}].east_m"),
             "down_m": -altitude,
-            "hard": bool(value.get("hard", False)),
-            "exact": bool(value.get("exact", False)),
+            "hard": hard,
+            "exact": exact,
         })
     if abs(points[0]["north_m"]) > 1e-9 or abs(points[0]["east_m"]) > 1e-9:
         raise PlanningError(
@@ -327,27 +353,35 @@ def intent_from_interview(
     ):
         if field not in value:
             raise ValueError(f"interview.{field} is required")
-    if value["schema_version"] != 1:
+    if type(value["schema_version"]) is not int or value["schema_version"] != 1:
         raise ValueError("interview.schema_version must be 1")
     pattern = value["pattern"]
-    if pattern not in {"waypoints", "circle", "survey", "corridor"}:
+    if not isinstance(pattern, str) or pattern not in {"waypoints", "circle", "survey", "corridor"}:
         raise ValueError(
             "interview.pattern must be waypoints, circle, survey, or corridor"
         )
+    for other in {"waypoints", "circle", "survey", "corridor"} - {pattern}:
+        if other in value:
+            raise ValueError(f"interview.{other} does not apply to {pattern}")
     if pattern != "circle" and ("entry" in value or "exit" in value):
         raise PlanningError(
             "an entry or exit leg is only valid on a circle",
             limiting_constraint="geometry",
         )
+    if pattern not in value:
+        raise ValueError(f"interview.{pattern} is required")
     altitude = _number(value["altitude_m"], "interview.altitude_m", minimum=0.1)
     deviation = _number(
         value["maximum_deviation_m"], "interview.maximum_deviation_m", minimum=0.0
     )
-    loop_count = int(value.get("loop_count", 1))
-    if loop_count < 1 or loop_count > 20:
-        raise ValueError("interview.loop_count must be in [1, 20]")
+    loop_count = value.get("loop_count", 1)
+    if type(loop_count) is not int or loop_count < 1 or loop_count > 20:
+        raise ValueError("interview.loop_count must be an integer in [1, 20]")
+    if pattern != "circle" and loop_count != 1:
+        raise ValueError("interview.loop_count greater than one requires a circle")
     if pattern == "circle":
         circle = _object(value["circle"], "interview.circle")
+        _fields(circle, {"center_north_m", "center_east_m"}, "interview.circle")
         points = _circle_points(
             _number(circle["center_north_m"], "interview.circle.center_north_m"),
             _number(circle["center_east_m"], "interview.circle.center_east_m"),
@@ -370,6 +404,7 @@ def intent_from_interview(
             closure = "periodic"
     elif pattern == "survey":
         survey = _object(value["survey"], "interview.survey")
+        _fields(survey, {"length_m", "width_m", "lane_spacing_m"}, "interview.survey")
         points = _survey_points(
             _number(survey["length_m"], "interview.survey.length_m", minimum=0.1),
             _number(survey["width_m"], "interview.survey.width_m", minimum=0.0),
@@ -389,6 +424,7 @@ def intent_from_interview(
                 limiting_constraint="map",
             )
         corridor = _object(value["corridor"], "interview.corridor")
+        _fields(corridor, {"goal_north_m", "goal_east_m"}, "interview.corridor")
         points = _corridor_points(
             occupancy,
             _number(corridor["goal_north_m"], "interview.corridor.goal_north_m"),
@@ -400,7 +436,7 @@ def intent_from_interview(
         closure = "open_stop"
         loop_count = 1
     yaw_mode = value["yaw_mode"]
-    if yaw_mode not in {"fixed", "tangent", "look_at", "profile"}:
+    if not isinstance(yaw_mode, str) or yaw_mode not in {"fixed", "tangent", "look_at", "profile"}:
         raise PlanningError(
             "choose fixed, tangent, look-at, or an explicit profile; "
             "roll and pitch are not mission inputs",
@@ -458,6 +494,9 @@ def intent_from_interview(
         "environment_id": value["environment_id"],
         "objective_priority": list(OBJECTIVE_PRIORITY),
     }
+    # Validate before writing or returning normalized intent. Conversion must
+    # never turn malformed flags or contradictory motion into plausible input.
+    MissionIntent.from_dict(intent)
     return intent, loop_count
 
 
@@ -479,7 +518,7 @@ def compile_interview(
     deviation_utilization: float = 0.75,
     obstacle_map_path: Path | None = None,
 ) -> dict:
-    raw = json.loads(interview_path.read_text(encoding="utf-8"))
+    raw = load_contract(interview_path, lambda value: value)
     environment = load_contract(environment_path, EnvironmentSnapshot.from_dict)
     occupancy = None
     if obstacle_map_path is not None:

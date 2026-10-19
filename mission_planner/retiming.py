@@ -116,8 +116,9 @@ def _select_duration(
             raise RuntimeError("validated exact timing has no duration")
         if requested + 1e-12 < minimum_feasible_duration_s:
             raise PlanningError(
-                "requested exact duration is infeasible; minimum feasible "
-                f"duration is {minimum_feasible_duration_s:.6f} s",
+                "requested exact duration is not certified by this planner; "
+                "minimum feasible duration found for this candidate family is "
+                f"{minimum_feasible_duration_s:.6f} s; global optimality is not established",
                 limiting_constraint="duration",
                 minimum_feasible_duration_s=minimum_feasible_duration_s,
             )
@@ -127,8 +128,9 @@ def _select_duration(
             raise RuntimeError("validated maximum timing has no duration")
         if minimum_feasible_duration_s > requested + 1e-12:
             raise PlanningError(
-                "requested maximum duration is infeasible; minimum feasible "
-                f"duration is {minimum_feasible_duration_s:.6f} s",
+                "requested maximum duration is not certified by this planner; "
+                "minimum feasible duration found for this candidate family is "
+                f"{minimum_feasible_duration_s:.6f} s; global optimality is not established",
                 limiting_constraint="duration",
                 minimum_feasible_duration_s=minimum_feasible_duration_s,
             )
