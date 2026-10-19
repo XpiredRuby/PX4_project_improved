@@ -75,6 +75,7 @@ def wait_for_parameter(master, name, timeout_s=3.0):
             continue
         if (
             message.get_srcSystem() != master.target_system
+            or message.get_srcComponent() != (master.target_component or 1)
             or clean_parameter_id(message.param_id) != name
         ):
             continue
@@ -89,13 +90,23 @@ def wait_for_parameter(master, name, timeout_s=3.0):
 
 
 def read_parameter(master, name, timeout_s=3.0):
-    master.mav.param_request_read_send(
-        master.target_system,
-        master.target_component,
-        name.encode("ascii"),
-        -1,
-    )
-    return wait_for_parameter(master, name, timeout_s)
+    if not math.isfinite(timeout_s) or timeout_s <= 0:
+        raise ValueError("Parameter read timeout must be finite and positive")
+    deadline = time.monotonic() + timeout_s
+    # Retransmit lost read requests within the original total deadline.
+    # Reading again never changes an in-flight simulation parameter.
+    while time.monotonic() < deadline:
+        master.mav.param_request_read_send(
+            master.target_system,
+            master.target_component or 1,
+            name.encode("ascii"),
+            -1,
+        )
+        try:
+            return wait_for_parameter(master, name, min(.5, max(0., deadline - time.monotonic())))
+        except TimeoutError:
+            continue
+    raise TimeoutError(f"No PARAM_VALUE received for {name}")
 
 
 def set_parameter(master, name, desired, parameter_type, attempts=4):
@@ -104,7 +115,7 @@ def set_parameter(master, name, desired, parameter_type, attempts=4):
     for _ in range(attempts):
         master.mav.param_set_send(
             master.target_system,
-            master.target_component,
+            master.target_component or 1,
             name.encode("ascii"),
             encoded,
             parameter_type,

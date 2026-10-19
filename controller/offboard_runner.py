@@ -16,6 +16,7 @@ from mission_state import FailureAction, MissionOutcome
 from PID_position_new import PositionController
 from px4_policy import audit_px4_configuration
 from run_record import RunRecord
+from touchdown_quality import UnsafeTouchdown, touchdown_violations
 
 
 PRESTREAM_SECONDS = 2.0
@@ -254,9 +255,20 @@ def wait_for_native_landing(
     deadline = time.monotonic() + timeout
     on_ground = mavutil.mavlink.MAV_LANDED_STATE_ON_GROUND
     safe_disarm_since = None
+    first_touchdown_checked = False
+    first_touchdown_sequence = None
+    quality_violations = set()
+    reference_xy = getattr(controller, "native_landing_reference_xy", None)
+
+    def inspect_contact(pose):
+        violations = touchdown_violations(pose, reference_xy)
+        valid = getattr(controller, "_local_estimate_valid", None)
+        if reference_xy is not None and callable(valid) and not valid(pose):
+            violations.append("touchdown local position estimate invalid")
+        return violations
 
     while time.monotonic() < deadline:
-        controller.log_native_landing_sample(phase=phase)
+        logged_snapshot = controller.log_native_landing_sample(phase=phase)
         main_mode, sub_mode, armed = heartbeat_snapshot(controller)
         landed_state, age, sequence = landing_snapshot(controller)
         fresh_on_ground = (
@@ -264,6 +276,25 @@ def wait_for_native_landing(
             and age <= 1.5
             and landed_state == on_ground
         )
+        contact_sequences = []
+        if (isinstance(logged_snapshot, dict)
+                and logged_snapshot.get("landed_state") == on_ground
+                and logged_snapshot.get("extended_state_age_s", math.inf) <= 1.5
+                and logged_snapshot.get("extended_state_seq", 0) > after_sequence):
+            # Preserve the exact contact sample written to the flight log;
+            # a newer IMU sample must not erase a brief contact violation.
+            quality_violations.update(inspect_contact(logged_snapshot))
+            contact_sequences.append(logged_snapshot["extended_state_seq"])
+        if fresh_on_ground:
+            quality_violations.update(inspect_contact(
+                controller._snapshot(time.monotonic())))
+            contact_sequences.append(sequence)
+        if contact_sequences and not first_touchdown_checked:
+            first_touchdown_checked = True
+            first_touchdown_sequence = min(contact_sequences)
+        if (first_touchdown_checked and sequence > first_touchdown_sequence
+                and age <= 1.5 and landed_state != on_ground):
+            quality_violations.add("PX4 left ON_GROUND after first contact")
         if armed is False:
             if not fresh_on_ground:
                 raise RuntimeError(
@@ -285,6 +316,13 @@ def wait_for_native_landing(
                     time.monotonic() - safe_disarm_since
                     >= post_disarm_confirm_s
                 ):
+                    # Always finish ground/disarm/zero-output confirmation
+                    # before reporting a quality violation. Native PX4 keeps
+                    # ownership of the landing and automatic motor shutdown.
+                    quality_violations.update(inspect_contact(
+                        controller._snapshot(time.monotonic())))
+                    if quality_violations:
+                        raise UnsafeTouchdown("; ".join(sorted(quality_violations)))
                     return
             else:
                 safe_disarm_since = None
@@ -372,9 +410,9 @@ def classify_failure(controller, vehicle_was_armed):
     return MissionOutcome.PREARM_REJECTED
 
 
-def main():
+def main(config=None):
     run_record = RunRecord()
-    c = PositionController()
+    c = PositionController(config=config)
     run_record.attach_context(c, {})
     worker = None
     controller_stopped = False
@@ -453,6 +491,8 @@ def main():
             if c.handoff_ready_event.wait(timeout=0.05):
                 break
             if not worker.is_alive():
+                if c.worker_error is not None:
+                    raise RuntimeError(f"Controller failed: {c.worker_error}")
                 phase = c.phase_snapshot()
                 raise RuntimeError(
                     f"Controller stopped before handoff; phase={phase}"
@@ -473,6 +513,8 @@ def main():
                 if c.handoff_ready_event.wait(timeout=0.05):
                     break
                 if not worker.is_alive():
+                    if c.worker_error is not None:
+                        raise RuntimeError(f"Controller failed: {c.worker_error}")
                     phase = c.phase_snapshot()
                     raise RuntimeError(
                         "Controller stopped during timeout recovery; "
@@ -515,7 +557,10 @@ def main():
 
     except BaseException as exc:
         outcome_reason = f"{type(exc).__name__}: {exc}"
-        outcome = classify_failure(c, vehicle_was_armed)
+        outcome = (MissionOutcome.UNSAFE_TOUCHDOWN if isinstance(exc, UnsafeTouchdown)
+                   else classify_failure(c, vehicle_was_armed))
+        if isinstance(exc, UnsafeTouchdown):
+            cleanup_status = "landed_with_quality_violation"
         raise
 
     finally:
@@ -559,6 +604,9 @@ def main():
         except Exception as exc:
             cleanup_status = "failed"
             cleanup_error = repr(exc)
+            if isinstance(exc, UnsafeTouchdown):
+                outcome = MissionOutcome.UNSAFE_TOUCHDOWN
+                cleanup_status = "landed_with_quality_violation"
             print(f"[runner] Failure LAND cleanup error: {exc!r}")
         finally:
             try:

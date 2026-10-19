@@ -171,7 +171,7 @@ class TrajectoryGenerator:
         self.pose = deepcopy(self.start_pose)
         self.segments = []
 
-        for command, motion in zip(commands, profiles):
+        for command, motion in zip(commands, profiles, strict=True):
             self.add_command(command, motion)
 
         trajectory = self.sample_segments()
@@ -335,7 +335,6 @@ class TrajectoryGenerator:
 
         local_x = [0.0]
         local_y = [0.0]
-        previous_heading = 0.0
         previous_tx = 1.0
         previous_ty = 0.0
 
@@ -352,7 +351,6 @@ class TrajectoryGenerator:
             local_y.append(
                 local_y[-1] + 0.5 * (previous_ty + ty) * du
             )
-            previous_heading = heading
             previous_tx = tx
             previous_ty = ty
 
