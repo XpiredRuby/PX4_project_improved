@@ -79,6 +79,12 @@ async function pollRehearsal(id){
   try{
     const response=await fetch('/api/rehearsal/'+id);
     const state=await response.json();
+    if(response.status===404){
+      if(activeJob===id){activeJob=null;activeJobDigest=null;cancelRequested=false;localStorage.removeItem('px4-studio-active-job')}
+      $('simulationStatus').textContent='Previous rehearsal is unavailable on this server. Plan a new route; any running simulator is preserved.';
+      updateRehearsalButton();
+      return;
+    }
     if(!response.ok)throw Error(state.error);
     activeJobDigest=state.controller_trajectory_sha256||activeJobDigest;
     cancelRequested=!!state.cancel_requested;

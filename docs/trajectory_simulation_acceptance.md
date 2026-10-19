@@ -66,7 +66,7 @@ python scripts/check_studio_browser.py --confirm-sitl --cancel-during-route \
 
 ## Manual trial
 
-Open <http://localhost:8766>. Keep the reference simulator and Fixed heading;
+Open <http://localhost:8766>. Keep the reference simulator and **Hold launch heading** (fixed heading);
 begin at the demonstrated 20 m height, 1 m/s preferred cap, 1.25 m/s hard cap
 and 0.5 m path tolerance.
 

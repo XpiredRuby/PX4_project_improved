@@ -4,7 +4,7 @@
   "scope": "Reference x500, fixed-heading trajectory planning and Gazebo simulation; manual user acceptance remains.",
   "implementation_commit": "34cb0dc76c58217baaea16f6732f4458a7b692ff",
   "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
-  "ui_html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af",
+  "ui_html_sha256": "bc1d67de204207a55ef46c2ec5aa7976f6e51317cf30195e27206823739daa4e",
   "browser_check_sha256": "7e59c66cd176522d52c75f28f977ed8ac34ed80313346fa4663fd7fee19b6772",
   "executed_windows_browser_check_sha256": "7e59c66cd176522d52c75f28f977ed8ac34ed80313346fa4663fd7fee19b6772",
   "software_checks": {
@@ -675,7 +675,8 @@
       ],
       "final_stage": "COMPLETED",
       "cancel_confirmed": null,
-      "final_job_sha256": "5da4acd0775e6c35588820aa42afc88f7131db866d7e832dbe5b0885b8c8f18f"
+      "final_job_sha256": "5da4acd0775e6c35588820aa42afc88f7131db866d7e832dbe5b0885b8c8f18f",
+      "html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af"
     },
     {
       "case": "cancel",
@@ -701,7 +702,8 @@
       ],
       "final_stage": "CANCELLED",
       "cancel_confirmed": true,
-      "final_job_sha256": "0272baae763a09646b816a08f1e5709d6c90ce026769567131a5cdb0ffb84503"
+      "final_job_sha256": "0272baae763a09646b816a08f1e5709d6c90ce026769567131a5cdb0ffb84503",
+      "html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af"
     }
   ],
   "raw_evidence": {
@@ -713,5 +715,18 @@
     "Connected rehearsal requires fixed heading; other heading policies retain offline scope.",
     "Actual speed/tilt and stop quality are sampled checks; no continuous actual jerk/rotor certificate.",
     "Known-clear simulator environment; no unexpected-obstacle sensing or online replanning."
-  ]
+  ],
+  "full_browser_workflow_html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af",
+  "final_ui_recovery": {
+    "stage": "PASSED",
+    "checks": [
+      "unavailable_saved_rehearsal_clears_monitoring_state",
+      "reference_model_visible_without_questionnaire",
+      "new_plan_and_exact_confirmation_available_after_recovery"
+    ],
+    "page_errors": [],
+    "html_sha256": "bc1d67de204207a55ef46c2ec5aa7976f6e51317cf30195e27206823739daa4e",
+    "simulation_started": false,
+    "implementation_sha256": "678c43af22c8e6f7333f8e2f80cfbc616907e428f0fec7f2b999482de2c1aacf"
+  }
 }

@@ -19,3 +19,13 @@ The separate hard-stop audit checks actual simulator position and speed at the r
 Raw CSV, ULog, simulator logs, Chrome profiles and screenshots remain on the flash-drive-backed machine at the paths recorded in summary.json. Compact hashes and results are retained here; large raw artifacts are intentionally not copied into Git.
 
 Reproduction and manual trial: [trajectory simulation acceptance](../../docs/trajectory_simulation_acceptance.md). These results apply to the named fixed-heading x500 scenarios and do not establish arbitrary-path, all-weather or continuous actual-dynamics guarantees.
+
+## Final interface recovery
+
+A dedicated Chrome check confirms that an unavailable saved rehearsal is cleared, the reference simulator is visible without a questionnaire, and a new plan can reach its explicit confirmation gate. See final-ui-recovery.json for the final HTML and executable check hashes. Reproduce on Windows with the Playwright environment:
+
+```powershell
+python validation/2026-10-19-trajectory-acceptance/check_session_recovery_windows.py --output F:\PX4\new-recovery-check
+```
+
+The full nominal/cancellation browser runs and targeted final recovery check retain separate HTML hashes in summary.json. An earlier hidden-selector browser failure is retained under F:\PX4\readiness-browser-oct19\nominal-hidden-selector-failed; the selector was made directly visible before the successful full browser runs.
