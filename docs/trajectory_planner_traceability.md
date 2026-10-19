@@ -34,13 +34,13 @@ physical-flight readiness.
 | VER-004 | Canonical hashing and tamper-evident `PlanArtifact` | Implemented for `SITL_ONLY` |
 | VER-005 | Cross-contract identity/frame/envelope binding plus runner checks of CSV digest and live cruise height | Partial; map/weather/battery binding planned |
 | SIM-001 | Existing deterministic waypoint validation, pinned baseline digest, and deterministic drawn-path compiler tests | Implemented before live SITL |
-| SIM-002..SIM-004 | Existing fault harness is not yet driven by general planner artifacts | Planned |
+| SIM-002..SIM-004 | General artifacts now drive the isolated Gazebo harness; baseline/drawing/circle and browser-confirmed missions passed sampled checks; GPS outage passed its response audit | Partial; wider fault and physical qualification remain open |
 | EXE-001 | Artifact changes invalidate its digest; flight approval is prohibited | Implemented for `SITL_ONLY` |
 | EXE-002..EXE-004 | Existing controller behavior and validation evidence | Existing controller; artifact binding planned |
-| HMI-001 | Static review page shows route, speed, duration, heading error, and the binding constraint | Partial; live UI and abort actions planned |
+| HMI-001 | Local studio shows route and dynamic limits; exact confirmation starts optional SITL and returns truth/evidence | Implemented for tested fixed-heading SITL flow; reviewed abort controls remain planned |
 | HMI-002 | Review text says "not a clearance to fly" and does not say "safe to fly" | Implemented for the static page |
 | HMI-003 | The review page has no control that dismisses a hard failure | Implemented for the static page |
-| LOG-001 | Artifact binds component and simulation-evidence digests | Partial; full run collation planned |
+| LOG-001 | Per-run configuration, parameter readback, CSV/ULog hashes, lifecycle/ground records and sampled assessment are collated | Implemented for isolated SITL cases; physical evidence remains open |
 
 ## Executable evidence
 
@@ -120,3 +120,18 @@ physical-flight readiness.
 The machine-readable schemas are under `schemas/planner/`. They intentionally
 cover structural validation; Python contracts enforce cross-field and
 cross-document invariants that JSON Schema alone does not express.
+
+## Physical release implementation (19 October 2026)
+
+`mission_planner.flight_release` and `flight_preflight` add the separate local
+qualification, prepare, supervised launch and abort workflow. The bundle pins
+source, exact profile/trajectory, complete rehearsed configuration, firmware
+and UID2, reviewed parameters/evidence, site, battery and motor-output mapping.
+Live checks are read-only; one-use confirmation precedes arming. Runtime guards
+feed existing native LAND/PX4-failsafe cleanup. There is no physical HTTP
+launch endpoint. See [physical release](physical_flight_release.md).
+
+Synthetic refusal tests and an owned SITL exercise verify software behavior;
+they do not close physical identification, bench, RC or flight-test gates.
+The historical research roadmap above remains a record of optional advanced
+planners and wider qualification, not a claim that every aircraft class works.

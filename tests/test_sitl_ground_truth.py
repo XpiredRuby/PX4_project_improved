@@ -79,6 +79,21 @@ class GroundTruthTests(unittest.TestCase):
         _, physical = audit_ground_truth(df, truth, local)
         np.testing.assert_allclose(physical[:, 2], [0., 10.])
 
+    def test_undefined_preflight_origin_is_outside_flight_but_inflight_nan_refuses(self):
+        df = pd.DataFrame({"position_time_boot_ms": [1000., 1100.], "phase": "TRAJECTORY",
+                           "desired_x": 0., "desired_y": 0., "desired_z": 0.,
+                           "x": 0., "y": 0., "z": 0.})
+        truth = {"timestamp": [0., 1000000., 1100000.], "lat": [47.]*3,
+                 "lon": [8.]*3, "alt": [500.]*3}
+        local = {"timestamp": [0., 1000000., 1100000.], "ref_lat": [np.nan, 47., 47.],
+                 "ref_lon": [np.nan, 8., 8.], "ref_alt": [np.nan, 500., 500.]}
+        result, physical = audit_ground_truth(df, truth, local)
+        self.assertEqual(result["coverage"]["covered_rows"], 2)
+        np.testing.assert_allclose(physical, 0.)
+        local["ref_lat"][1] = np.nan
+        with self.assertRaisesRegex(ValueError, "ref_lat"):
+            audit_ground_truth(df, truth, local)
+
     def test_invalid_truth_clocks_reject_alignment(self):
         df = pd.DataFrame({"position_time_boot_ms": [1.]})
         for invalid in ([], [float("nan")], [float("inf")], [2000., 1000.]):

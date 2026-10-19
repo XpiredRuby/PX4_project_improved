@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from sitl_monitor import monitor_child, trial_phase_clock, allow_next_trial, quality_rejection_confirmed  # noqa: E402
-from sitl_scenario_batch import stage_case_artifacts  # noqa: E402
+from sitl_scenario_batch import stage_case_artifacts, stage_sitl_acknowledgement  # noqa: E402
 
 
 class SitlMonitorTests(unittest.TestCase):
@@ -33,6 +33,24 @@ class SitlMonitorTests(unittest.TestCase):
             self.assertEqual(staged_trajectory.parent, output.resolve())
             with self.assertRaisesRegex(ValueError, "requires trajectory"):
                 stage_case_artifacts({"waypoint_summary": str(summary)}, output)
+            with self.assertRaisesRegex(ValueError, "requires its"):
+                stage_case_artifacts({"trajectory": str(trajectory)}, output)
+            with self.assertRaisesRegex(ValueError, "not both"):
+                stage_case_artifacts({"trajectory": str(trajectory),
+                                      "waypoint_summary": str(summary),
+                                      "planner_summary": str(summary)}, output)
+
+    def test_drawn_artifact_requires_its_acknowledgement_before_execution(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            trajectory = root / "trajectory.csv"
+            summary = root / "summary.json"
+            with self.assertRaisesRegex(ValueError, "requires sitl_acknowledgement"):
+                stage_sitl_acknowledgement({"planner_summary": str(summary)}, root,
+                                           trajectory, summary)
+            with self.assertRaisesRegex(ValueError, "requires planner_summary"):
+                stage_sitl_acknowledgement({"sitl_acknowledgement": "x"}, root,
+                                           trajectory, summary)
 
     def test_align_trigger_uses_elapsed_phase_time(self):
         row = {"phase": "ALIGN", "phase_clock_s": 0., "phase_elapsed_s": .3}

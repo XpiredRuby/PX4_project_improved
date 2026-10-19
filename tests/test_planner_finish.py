@@ -580,6 +580,7 @@ class PlannerFinishTests(unittest.TestCase):
                 flown,
                 maximum_position_error_m=0.2,
                 maximum_yaw_error_rad=0.1,
+                maximum_sample_gap_s=2.0,
             )
             self.assertTrue(report["accepted"])
             self.assertFalse(report["campaign_ran"])
@@ -590,6 +591,7 @@ class PlannerFinishTests(unittest.TestCase):
                 flown,
                 maximum_position_error_m=0.2,
                 maximum_yaw_error_rad=0.1,
+                maximum_sample_gap_s=2.0,
             )
             self.assertFalse(drifted["accepted"])
         status = simulator_status()

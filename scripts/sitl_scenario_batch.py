@@ -54,9 +54,13 @@ def fixture(world, folder, height, slope_deg=0, ridge=False):
 def stage_case_artifacts(case, folder):
     """Freeze the exact planned trajectory and summary inside run evidence."""
     trajectory_value = case.get("trajectory")
-    summary_value = case.get("waypoint_summary")
+    if case.get("waypoint_summary") is not None and case.get("planner_summary") is not None:
+        raise ValueError("choose waypoint_summary or planner_summary, not both")
+    summary_value = case.get("waypoint_summary", case.get("planner_summary"))
     if summary_value is not None and trajectory_value is None:
-        raise ValueError("waypoint_summary requires trajectory")
+        raise ValueError("planner/waypoint summary requires trajectory")
+    if trajectory_value is not None and summary_value is None:
+        raise ValueError("explicit trajectory requires its planner/waypoint summary")
 
     def source_path(value):
         path = Path(value)
@@ -78,11 +82,32 @@ def stage_case_artifacts(case, folder):
     return trajectory, summary
 
 
+def stage_sitl_acknowledgement(case, folder, trajectory, summary):
+    """Freeze and validate a drawn-plan review binding before simulation commands."""
+    value = case.get("sitl_acknowledgement")
+    if case.get("planner_summary") is None:
+        if value is not None:
+            raise ValueError("sitl_acknowledgement requires planner_summary")
+        return None
+    if value is None:
+        raise ValueError("planner_summary requires sitl_acknowledgement")
+    source = Path(value)
+    source = (source if source.is_absolute() else ROOT / source).resolve()
+    target = (folder / "sitl_acknowledgement.json").resolve()
+    shutil.copy2(source, target)
+    from mission_planner.acknowledgement import load_sitl_acknowledgement
+    load_sitl_acknowledgement(target, summary, trajectory)
+    return target
+
+
 def run_case(case, output, world, master):
     folder = output / case["name"]
     folder.mkdir(exist_ok=False)
     (folder / "scenario.json").write_text(json.dumps(case, indent=2) + "\n")
     trajectory_path, waypoint_summary_path = stage_case_artifacts(case, folder)
+    acknowledgement_path = stage_sitl_acknowledgement(
+        case, folder, trajectory_path, waypoint_summary_path
+    )
     wait_while_armed_or_ground(master, armed=False)
     if read_parameter(master, "SIM_GPS_USED")[0] < 4:
         raise RuntimeError("SITL GPS restoration not confirmed before next trial")
@@ -101,13 +126,25 @@ def run_case(case, output, world, master):
                        "from flight_logger import FlightLogger; "
                        f"install_storage_stall(FlightLogger, {case['storage_stall_s']!r}, "
                        f"{case.get('storage_after_rows', 100)!r}, {str(folder / 'storage_stall.json')!r}); ")
+    release_code, release_argument = "", ""
+    if case.get("release_probe") is not None:
+        release_code = (f"sys.path[:0]=[{str(ROOT)!r},{str(ROOT / 'scripts')!r}]; "
+                        "from sitl_release_probe import SITLReleaseProbe; "
+                        f"release_probe=SITLReleaseProbe({case['release_probe']['folder']!r}, "
+                        f"{case['release_probe'].get('abort_after_s')!r}); ")
+        release_argument = ", release_authority=release_probe"
     code = ("import sys; from dataclasses import replace; "
             f"sys.path.insert(0,{str(ROOT / 'controller')!r}); "
             "from mission_config import MissionConfig; import offboard_runner; "
-            + fault_code + "offboard_runner.main(replace(MissionConfig(), "
+            + fault_code + release_code + "offboard_runner.main(replace(MissionConfig(), "
+            f"cruise_height_m={case.get('cruise_height_m', 15.)!r}, "
             f"tracking_governor_enabled={case.get('governor', True)!r}, "
-            f"position_prediction_enabled={case.get('prediction', True)!r}), "
-            f"trajectory_path={str(trajectory_path) if trajectory_path else None!r})")
+            f"position_prediction_enabled={case.get('prediction', True)!r}, "
+            f"**{case.get('controller_overrides', {})!r}), "
+            f"trajectory_path={str(trajectory_path) if trajectory_path else None!r}, "
+            f"planner_summary_path={str(waypoint_summary_path) if waypoint_summary_path else None!r}, "
+            f"acknowledgement_path={str(acknowledgement_path) if acknowledgement_path else None!r}"
+            + release_argument + ")")
     events = []
     battery_restore = {}
     heartbeat_state = {"armed": None, "received_at": -math.inf}
@@ -182,8 +219,11 @@ def run_case(case, output, world, master):
         raise RuntimeError("No unique completed mission manifest")
     manifest = json.loads(manifests[0].read_text())
     state = manifest["final_state"]
-    if state["armed"] is not False or state["landed_state"] != 1:
-        raise RuntimeError("Ground/disarm not confirmed; no further trial authorized")
+    if state.get("armed") is not False or state.get("landed_state") != 1:
+        raise RuntimeError(
+            "Ground/disarm not confirmed in runner manifest; no further trial authorized: "
+            f"{manifest.get('outcome')}: {manifest.get('reason')}"
+        )
     wait_while_armed_or_ground(master, armed=False)
     for name, (value, kind) in battery_restore.items():
         set_parameter(master, name, value, kind)
@@ -191,7 +231,13 @@ def run_case(case, output, world, master):
                    "initial_wind": wind_evidence})
     (folder / "events.json").write_text(json.dumps(events, indent=2) + "\n")
     (folder / "battery_status.json").write_text(json.dumps(battery_messages, indent=2) + "\n")
-    df = pd.read_csv(next(folder.glob("research_log_*.csv")), low_memory=False)
+    telemetry = list(folder.glob("research_log_*.csv"))
+    if len(telemetry) != 1:
+        raise RuntimeError(
+            f"Expected one controller telemetry file, found {len(telemetry)}; "
+            f"{manifest.get('outcome')}: {manifest.get('reason')}"
+        )
+    df = pd.read_csv(telemetry[0], low_memory=False)
     if case.get("expected") == "storage_stall":
         injection_path = folder / "storage_stall.json"
         injection = json.loads(injection_path.read_text()) if injection_path.exists() else {}
@@ -200,6 +246,20 @@ def run_case(case, output, world, master):
         injection_path = folder / "control_stall.json"
         injection = json.loads(injection_path.read_text()) if injection_path.exists() else {}
         audit = build_control_stall_audit(df, manifest, injection)
+    elif case.get("expected") == "release_abort":
+        view = df.copy()
+        view["phase"] = view["phase"].replace({"PX4_FAILSAFE": "PX4_LAND"})
+        audit = build_safety_audit(view)
+        audit["checks"] = [c for c in audit["checks"] if c["name"] != "Nominal phase sequence"]
+        injected = folder.parent.parent / "abort_injection.json"
+        audit["checks"].append(dict(name="Release abort reached confirmed native shutdown",
+            passed=(injected.is_file() and "operator requested abort" in manifest.get("reason", "")
+                    and manifest["outcome"] in ("PX4_FAILSAFE", "ABORTED_TO_LAND")
+                    and manifest["cleanup_error"] is None
+                    and manifest["cleanup_status"] in ("px4_land_and_disarm_confirmed",
+                                                       "px4_failsafe_land_and_disarm_confirmed")),
+            detail=manifest.get("reason")))
+        audit["overall_passed"] = all(c["passed"] for c in audit["checks"])
     elif case.get("expected") == "battery_failsafe":
         view = df.copy()
         view["phase"] = view["phase"].replace({"PX4_FAILSAFE": "PX4_LAND"})
@@ -228,7 +288,7 @@ def run_case(case, output, world, master):
     else:
         audit = build_nominal_run_audit(df, manifest)
     waypoint_audit = None
-    if waypoint_summary_path is not None:
+    if case.get("waypoint_summary") is not None:
         waypoint_summary = json.loads(waypoint_summary_path.read_text())
         waypoint_audit = build_waypoint_audit(df, waypoint_summary, manifest)
         (folder / "waypoint_audit.json").write_text(

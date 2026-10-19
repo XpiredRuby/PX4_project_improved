@@ -234,6 +234,8 @@ class PositionController:
 
     def request_message_intervals(self):
         requests = [
+            ("MAVLINK_MSG_ID_BATTERY_STATUS", 2.0),
+            ("MAVLINK_MSG_ID_RC_CHANNELS", 5.0),
             ("MAVLINK_MSG_ID_LOCAL_POSITION_NED", 30.0),
             ("MAVLINK_MSG_ID_ATTITUDE", 30.0),
             ("MAVLINK_MSG_ID_HIGHRES_IMU", 20.0),
@@ -297,7 +299,11 @@ class PositionController:
 
         with self.state_lock:
             self.state.note_message(msg_type)
-            if msg_type == "LOCAL_POSITION_NED":
+            if msg_type == "BATTERY_STATUS":
+                self.state.update_battery(msg)
+            elif msg_type == "RC_CHANNELS":
+                self.state.update_rc(msg)
+            elif msg_type == "LOCAL_POSITION_NED":
                 self.state.update_position(msg)
             elif msg_type == "ATTITUDE":
                 self.state.update_attitude(msg)
@@ -373,6 +379,9 @@ class PositionController:
 
     def _send_velocity_packet(self, vx, vy, vz, yaw):
         """Caller holds the transport lock and has checked command authority."""
+        guard = getattr(self, "release_guard", None)
+        if guard is not None:
+            guard()
         self.master.mav.set_position_target_local_ned_send(
             self._estimated_px4_boot_ms(),
             self.master.target_system,
@@ -1204,6 +1213,14 @@ class PositionController:
 
         if start_from_current:
             snapshot = self._snapshot(time.monotonic())
+            # Home XYZ is averaged across the yaw bootstrap. Its historical
+            # mean heading can lag the attitude now being commanded by the
+            # bootstrap's zero-velocity hold. Preserve the latest measured
+            # heading at this handoff instead of introducing a yaw step.
+            if (not math.isfinite(snapshot["yaw"])
+                    or not 0 <= snapshot["attitude_age_s"] <= self.max_attitude_age_s):
+                raise RuntimeError("Fresh finite attitude required for controller handoff")
+            self.yaw0 = snapshot["yaw"]
             segment_start = (
                 snapshot["x"],
                 snapshot["y"],

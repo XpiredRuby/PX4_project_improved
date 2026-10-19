@@ -4,18 +4,41 @@ Status date: 19 October 2026. This file is a progress record for the drawn-path
 and interview planner in this repository. It is not a flight authorization.
 Every planner artifact is `SITL_ONLY` and is not a clearance to fly.
 
+The reusable-aircraft extension adds a guided configuration questionnaire,
+profile import/export, general parallel-rotor allocation, profile-specific
+navigation/tracking allowances, disturbance bounds and energy/time budgets.
+It supports offline quad/hex/octo/custom layouts rather than one owner's
+aircraft. A matching registered Gazebo model is required for custom rehearsals;
+unsupported aircraft types and missing values are explicitly refused.
+See [aircraft profiles](aircraft_profiles.md). Physical evidence is still
+specific to each loaded configuration; the software collects that information
+as a reusable product workflow instead of requiring it during development.
+
 The research plan and the requirement matrix live in
 [`trajectory_planner_architecture.md`](trajectory_planner_architecture.md) and
 [`trajectory_planner_traceability.md`](trajectory_planner_traceability.md).
 This file says what that plan is, what the repository actually does today, and
 what is still left.
 
-Rough completion, as of this date:
+Current evidence is recorded in the [research review](trajectory_planner_research_review.md)
+and [connected validation record](trajectory_studio_connected_validation.md).
+The [local studio](trajectory_studio_quickstart.md) supports both inputs,
+independent verification, exact-artifact confirmation and optional local
+PX4/Gazebo rehearsals. It has no physical-flight endpoint.
 
-- about **40 / 100** of the whole product (plan, Gazebo, real flight);
-- about **80 / 100** of the offline planner that can run without Gazebo or a
-  real aircraft;
-- **0 / 100** for a live Gazebo campaign and for physical-flight release.
+- Offline geometry/timing checks and adversarial contract tests pass.
+- Chrome drawing/interview, refusal, download and mobile checks pass.
+- Gazebo baseline, drawn path and fixed-heading circle completed lifecycle
+  audits. A stricter truth check exposed a startup heading transient; the
+  handoff was fixed and all three repeated nominal cases passed unchanged sampled targets.
+  The connected browser rehearsal and bounded GPS-outage/control-stall
+  responses passed. Broader fault/physical qualification remains open.
+- Physical release is blocked on an identified aircraft, operating decisions,
+  hardware qualification and a separate explicit local operator decision. The
+  [physical-release CLI](physical_flight_release.md) now implements that data
+  intake, prepared bundle, live checks, one-use launch and abort integration.
+
+Completion is tracked by these evidence gates, not an uncalibrated percentage.
 
 ## 1. The whole plan
 
@@ -38,7 +61,8 @@ Time is the last priority. The order is:
 5. then make the flight as short as those limits allow.
 
 A short deadline that breaks a limit is rejected. The planner reports the
-shortest duration that still fits and which limit is binding. It does not
+feasible duration found for its current candidate family and its binding limit;
+this is not a proof of a global minimum. It does not
 silently fly faster than the model allows. It also does not give the aircraft
 a long idle flight when a shorter feasible trajectory exists.
 
@@ -103,14 +127,16 @@ section 11 of the architecture:
 9. confidence targets and why the test sample is large enough;
 10. who keeps the evidence, who operates, and who may approve a flight.
 
-Until those exist, the model is the conservative Gazebo x500 SITL model, and
-every artifact is labeled `SITL_ONLY`.
+Reference mode uses the Gazebo x500 model. Aircraft setup can generate a checked
+v2 model from the user's complete profile. Both remain `SITL_ONLY`; neither
+profile completion nor another aircraft's simulation evidence is a flight release.
 
 ## 2. What has been done
 
-The offline planner compiles, checks, and exports a trajectory. The last full
-run of `python3 scripts/validate.py` passed **298 tests**. The work is on
-pull request 3.
+The offline planner compiles, checks, and exports a trajectory. The original
+baseline passed 298 tests on pull request 3. Reusable-aircraft and connected
+workflow changes are on pull request 4; their current validation is recorded in
+the aircraft guide and retained evidence rather than inferred from that older count.
 
 ### Contracts and evidence
 
@@ -184,7 +210,13 @@ initial tangent.
 - A path that is still moving at the end is refused. The current runner lands
   from the final sample, so the schedule stays rest-to-rest.
 
-### Vehicle limits checked on the x500 SITL model
+### Vehicle limits and configuration
+
+The x500 checks below describe the original baseline. The reusable v2 model
+adds individual rotor geometry, full thrust/roll/pitch/yaw interval allocation,
+declared disturbance bounds, loaded hover feasibility and simultaneous
+roll/pitch torque reserve. The installed x500 SDF constants have also been
+corrected; see the correction/evidence discussion in the aircraft guide.
 
 - Tilt, thrust, and body rate are bounded from the acceleration the timing
   already certified. If translation would finish sooner than those bounds
@@ -223,7 +255,7 @@ initial tangent.
 
 ### Still software, and still not a flight release
 
-These do not need the ten owner decisions, and they are not in the repository:
+Further offline research and software qualification, beyond the demonstrated baseline:
 
 - a periodic seam whose velocity stays nonzero, and an `open_depart` ending
   that is still moving when the path finishes;
@@ -233,33 +265,42 @@ These do not need the ten owner decisions, and they are not in the repository:
   uncertainty on the vehicle contract;
 - general soft weights on intent, beyond hard stops and the deviation tube;
 - a fuller interval checker than the current hull and Lipschitz bounds;
-- a live drawing and interview UI, including abort actions on the review;
+- broader browser mission cancellation; physical local abort is implemented
+  through the release guard and native landing cleanup;
 - weather, GNSS, and communications assumptions as a full operating-domain
   record, rather than the single wind limit stored today.
 
 ### Needs Gazebo and PX4 on a machine that has them
 
-This environment does not have `gz`, `gazebo`, `ign`, or `px4`. Nothing below
-has been run:
+The connected PX4/Gazebo machine has now run nominal baseline, drawing and
+circle missions, plus a browser-confirmed artifact. The repeated nominal
+cases passed the sampled truth assessment after the startup heading fix.
+A four-second GPS interruption passed its bounded HOLD/recovery assessment.
+The 0.4 s control stall also passed its command-expiry/PX4 landing response
+assessment; it is correctly recorded as an incomplete trajectory. Remaining broader qualification includes:
 
-- nominal SITL of drawn paths and interviews, compared with the planned
-  extrema and with PX4's estimates;
-- start, hard points, closure, landing, disarm, and post-disarm checks driven
-  by these artifacts;
+- additional mission patterns, tangent launch alignment, hard-point and
+  altitude transitions, and continuous composition/dynamic checks;
 - fault cases: wind, map failure, stale map, localization error, and a failed
   simulation that must not produce a launchable artifact;
-- proof that a failed simulator run cannot be approved.
+- broader mission/fault coverage; failed nominal rehearsal, changed source,
+  stale/altered evidence and missing qualification already refuse the separate
+  physical preparation path in regression tests.
 
 ### Needs the owner, before any real aircraft
 
-- the ten decisions in section 11;
+- the ten decisions in architecture section 11; the non-executable
+  `physical_aircraft_intake.template.json` collects the initial information;
 - an identified vehicle model and a check that matches that aircraft's
   allocator, not only the Gazebo x500 torque model;
-- a sensor or a surveyed map, if obstacle clearance is going to be claimed
-  outside a hand-written grid;
+- pre-provided/surveyed environment information if obstacle clearance is to
+  be claimed, with GPS/IMU-only navigation retained;
+- PhD mentor presence before any physical arming, motor spin, command upload
+  or operation, as the owner already required;
 - bench evidence, flight-test cards, abort criteria, and a named approver;
-- a flight-approval record that is allowed to exist only after that evidence.
-  `SITL_ONLY` artifacts cannot carry one.
+- completed physical qualification records and the live supervised launch
+  decision. The implemented workflow keeps original planner artifacts
+  `SITL_ONLY` and prepares a separate integrity-bound physical release.
 
 ### Explicitly later
 
@@ -270,5 +311,9 @@ out of this offline planner. Unconstrained yaw stays refused.
 
 The repository can take a drawing or an interview, produce a checked
 rest-to-rest trajectory, explain the binding limit, and refuse a plan that
-breaks the x500 SITL model. It cannot yet show that trajectory in a live
-Gazebo run, and it cannot authorize a real flight.
+breaks the selected aircraft model or its declared budgets. It can rehearse an exactly confirmed fixed-heading artifact with a matching registered local Gazebo model
+and show its sampled truth/evidence. The separate local physical-release
+workflow can run a human-qualified PX4 multicopter configuration after live
+checks and explicit operator/mentor confirmation. No physical aircraft has
+been qualified or operated by this implementation work.
+Read the connected validation record for the tested conditions and limits.

@@ -255,6 +255,9 @@ def capture_launch_reference(controller):
 
 
 def send_attitude_target(controller, pitch_rad, thrust, yaw=None):
+    guard = getattr(controller, "release_guard", None)
+    if guard is not None:
+        guard()
     computed_at = time.monotonic()
     snapshot = controller._snapshot(computed_at)
     yaw = snapshot["yaw"] if yaw is None else yaw

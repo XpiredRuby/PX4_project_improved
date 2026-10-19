@@ -8,6 +8,9 @@ class VehicleState:
     """Latest PX4 telemetry plus freshness and message counters."""
 
     def __init__(self):
+        self.battery_received_at = self.rc_received_at = None
+        self.battery_remaining_percent = self.battery_voltage_v = math.nan
+        self.rc_channel_count = self.rc_rssi = 0
         self.x = self.y = self.z = 0.0
         self.vx = self.vy = self.vz = 0.0
 
@@ -344,3 +347,19 @@ class VehicleState:
         )
         self.command_ack_received = True
         self.command_ack_received_at = self._now()
+
+    def update_battery(self, msg):
+        # Adapter deliberately supports one monitored pack; other IDs cannot
+        # overwrite the qualified pack. UINT16_MAX is unknown voltage.
+        if int(msg.id) != 0:
+            return
+        volts = [int(v) for v in [*msg.voltages, *getattr(msg, "voltages_ext", [])]
+                 if 0 < int(v) < 65535]
+        self.battery_voltage_v = sum(volts) / 1000. if volts else math.nan
+        self.battery_remaining_percent = float(msg.battery_remaining)
+        self.battery_received_at = self._now()
+
+    def update_rc(self, msg):
+        self.rc_channel_count = int(msg.chancount)
+        self.rc_rssi = int(msg.rssi)
+        self.rc_received_at = self._now()

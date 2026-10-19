@@ -93,8 +93,9 @@ def _segment_motions(motion, geometries, vehicle, *, limit_scale: float):
     if motion.time_mode == "exact":
         if motion.requested_duration_s + 1e-12 < total:
             raise PlanningError(
-                "requested exact duration is infeasible across hard-point stops; "
-                f"minimum feasible duration is {total:.6f} s",
+                "requested exact duration is not certified across hard-point stops; "
+                f"minimum feasible duration found for this candidate family is {total:.6f} s; "
+                "global optimality is not established",
                 limiting_constraint="duration",
                 minimum_feasible_duration_s=total,
             )
@@ -109,8 +110,9 @@ def _segment_motions(motion, geometries, vehicle, *, limit_scale: float):
         )
     if motion.time_mode == "maximum" and total > motion.requested_duration_s + 1e-12:
         raise PlanningError(
-            "requested maximum duration is infeasible across hard-point stops; "
-            f"minimum feasible duration is {total:.6f} s",
+            "requested maximum duration is not certified across hard-point stops; "
+            f"minimum feasible duration found for this candidate family is {total:.6f} s; "
+            "global optimality is not established",
             limiting_constraint="duration",
             minimum_feasible_duration_s=total,
         )
@@ -295,6 +297,7 @@ def compile_drawn_path(
                 else [asdict(item.smoothing) for item in geometries]
             ),
             "retiming": asdict(candidate.summary),
+            "duration_scope": "certified feasible candidate family; not a proven global minimum",
             "controller_cruise_height_m": controller_cruise_height_m,
             "limitations": [
                 "yaw commands are added to the heading measured at launch; "
@@ -308,7 +311,7 @@ def compile_drawn_path(
                 "open_depart is refused because the runner lands from a final stop",
                 "unconstrained yaw is refused",
                 "obstacle clearance is claimed only for a hashed map bound to the environment",
-                "rotor yaw torque uses the Gazebo x500 inertia and paired-rotor model, not an identified aircraft",
+                ("rotor allocation uses declared individual geometry with simultaneous roll/pitch reserve; actual torque demand remains an identification assumption" if vehicle.schema_version == 2 else "rotor yaw torque uses the configured simplified paired-rotor model, not an identified aircraft"),
                 "controller cruise height must match the compiled value",
                 "a SITL acknowledgement is not a clearance to fly",
                 "not a clearance to fly",

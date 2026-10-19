@@ -1,0 +1,161 @@
+{
+  "$id": "https://example.invalid/px4-planner/vehicle-model-v2.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "configuration": {
+      "maxLength": 256,
+      "minLength": 1,
+      "type": "string"
+    },
+    "disturbance_acceleration_m_s2": {
+      "description": "External-force/model-error acceleration bound.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "disturbance_jerk_m_s3": {
+      "description": "Disturbance acceleration rate bound.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "identified_for_physical_flight": {
+      "type": "boolean"
+    },
+    "mass_kg": {
+      "description": "All-up modeled mass.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_acceleration_m_s2": {
+      "description": "Verified translational acceleration ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_body_rate_deg_s": {
+      "description": "Verified body-rate ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_jerk_m_s3": {
+      "description": "Verified translational jerk ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_speed_m_s": {
+      "description": "Verified model speed ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_thrust_n": {
+      "description": "Maximum modeled collective thrust.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_tilt_deg": {
+      "description": "Verified body tilt ceiling.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_yaw_acceleration_deg_s2": {
+      "description": "Verified yaw-acceleration ceiling, at or below the controller limit.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_yaw_jerk_deg_s3": {
+      "description": "Verified yaw-jerk ceiling, at or below the controller limit.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "maximum_yaw_rate_deg_s": {
+      "description": "Verified yaw-rate ceiling, at or below the controller limit.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "minimum_thrust_n": {
+      "description": "Minimum modeled collective thrust.",
+      "minimum": 0,
+      "type": "number"
+    },
+    "roll_pitch_torque_reserve_nm": {
+      "description": "Simultaneous reserve on each body roll/pitch axis.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    },
+    "rotors": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "maximum_thrust_n": {
+            "description": "Rotor ceiling.",
+            "exclusiveMinimum": 0,
+            "type": "number"
+          },
+          "minimum_thrust_n": {
+            "description": "Rotor floor.",
+            "minimum": 0,
+            "type": "number"
+          },
+          "x_m": {
+            "type": "number"
+          },
+          "y_m": {
+            "type": "number"
+          },
+          "yaw_torque_per_thrust_m": {
+            "not": {
+              "const": 0
+            },
+            "type": "number"
+          }
+        },
+        "required": [
+          "x_m",
+          "y_m",
+          "yaw_torque_per_thrust_m",
+          "minimum_thrust_n",
+          "maximum_thrust_n"
+        ],
+        "type": "object"
+      },
+      "maxItems": 16,
+      "minItems": 4,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "vehicle_model_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$",
+      "type": "string"
+    },
+    "yaw_inertia_kg_m2": {
+      "description": "Yaw inertia used for the paired-rotor torque check.",
+      "exclusiveMinimum": 0,
+      "type": "number"
+    }
+  },
+  "required": [
+    "schema_version",
+    "vehicle_model_id",
+    "configuration",
+    "mass_kg",
+    "maximum_speed_m_s",
+    "maximum_acceleration_m_s2",
+    "maximum_jerk_m_s3",
+    "maximum_yaw_rate_deg_s",
+    "maximum_yaw_acceleration_deg_s2",
+    "maximum_yaw_jerk_deg_s3",
+    "maximum_tilt_deg",
+    "maximum_body_rate_deg_s",
+    "minimum_thrust_n",
+    "maximum_thrust_n",
+    "yaw_inertia_kg_m2",
+    "identified_for_physical_flight",
+    "rotors",
+    "roll_pitch_torque_reserve_nm",
+    "disturbance_acceleration_m_s2",
+    "disturbance_jerk_m_s3"
+  ],
+  "title": "VehicleModel v2",
+  "type": "object"
+}

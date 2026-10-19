@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "record_type": "OWNER_INPUT_FOR_PHYSICAL_QUALIFICATION",
+  "execution_configuration": false,
+  "status": "OWNER_INPUT_REQUIRED",
+  "aircraft": {
+    "manufacturer_and_model": null,
+    "mass_with_battery_and_payload_kg": null,
+    "motor_esc_and_propeller_configuration": null,
+    "battery_cells_capacity_and_voltage_range": null,
+    "flight_controller_board": null,
+    "px4_version_or_commit": null,
+    "px4_parameter_export": null,
+    "companion_computer_and_control_interface": null,
+    "measured_thrust_power_and_response_data": null,
+    "permitted_navigation_sensors": [
+      "GPS",
+      "IMU"
+    ],
+    "gps_and_imu_models_and_quality": null
+  },
+  "operation": {
+    "country_and_operating_basis": null,
+    "indoor_or_outdoor": null,
+    "cleared_flight_volume_and_altitude_datum": null,
+    "terrain_and_obstacle_map_source": null,
+    "wind_and_weather_limits": null,
+    "gnss_and_communications_conditions": null,
+    "manual_override_and_lost_link_policy": null
+  },
+  "intent_decisions": {
+    "accepted_path_error_m": null,
+    "corner_rounding_and_stop_permissions": null,
+    "heading_policy_and_launch_alignment": null,
+    "time_priority": "last, after feasibility, intent fidelity and useful operating margins"
+  },
+  "qualification": {
+    "bench_access_and_measurement_equipment": null,
+    "operator_and_approver_roles": null,
+    "abort_criteria_and_test_area": null,
+    "existing_hardware_or_flight_test_evidence": null,
+    "mentor_presence_for_physical_operations": "Owner requires PhD mentor present before physical arming, motor spin, flight-command upload or operation."
+  },
+  "instruction": "Supply known values or evidence and leave unknowns null. This intake is not a vehicle model, approval, execution artifact, or command to arm.",
+  "confirmed_owner_constraints": [
+    "GPS/IMU-only navigation; no cameras, LiDAR, sonar, radar or rangefinders",
+    "Terrain may include height offsets and slopes; do not assume flat terrain",
+    "Physical specifications have not yet been supplied; do not identify the aircraft from the x500 simulator"
+  ]
+}

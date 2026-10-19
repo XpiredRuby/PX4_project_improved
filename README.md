@@ -1,4 +1,17 @@
-# PX4 Research Controller
+# PX4 Trajectory Studio and Research Controller
+
+Draw a route or answer the mission interview, complete a reusable aircraft
+profile, independently verify the trajectory, inspect its interpretation and
+confirm an exact-artifact Gazebo rehearsal. Start with the
+[studio quickstart](docs/trajectory_studio_quickstart.md) and
+[aircraft setup](docs/aircraft_profiles.md). The separate
+[physical release guide](docs/physical_flight_release.md) documents the local
+qualification, prepared bundle, supervised launch and abort CLI.
+
+Planning supports 4–16 parallel rotors; the current PX4 execution adapter
+supports 4–12. Fixed-wing, VTOL and other autopilots are explicitly unsupported.
+Only x500 has connected simulator evidence; no physical aircraft is qualified
+by the checked-in examples.
 
 The validated software envelope includes a four-second GNSS-outage recovery budget;
 combined gusts and a 12-second outage still fail touchdown position limits.
@@ -15,7 +28,8 @@ Milestone 0 contract coverage is tracked in the
 Computed-command
 expiry, arming/control ownership, stale shutdown evidence, pre-arm plan validation,
 and bounded asynchronous evidence writing are described in
-[code logic](docs/code-logic.md). Aircraft and sensor integration are deferred.
+[code logic](docs/code-logic.md). Physical identification and bench/flight
+qualification remain required for each loaded aircraft configuration.
 
 GPS/IMU mission control for smooth takeoff, trajectory tracking, return, and
 landing without a supplied ground height. PX4 owns the final descent and
@@ -45,7 +59,9 @@ automatic disarm.
 Motion, navigation, and terrain bounds are in `controller/mission_config.py`.
 The default ground-height range is -10 to +10 m relative to takeoff.
 It is a bounded terrain assumption; GPS/IMU cannot identify a clear landing site.
-The current SITL configuration and propulsion checks use the x500 quadrotor.
+The connected reference simulator is the x500 quadrotor. Reusable profiles
+and registered simulator bindings support other multicopter configurations.
+Physical output mapping and disarmed values come from reviewed bench evidence.
 
 Horizontal velocity commands normally change at no more than 1.5 m/s².
 During navigation HOLD, the default bound is 3.0 m/s² to brake the inherited
@@ -103,8 +119,14 @@ python -m mission_planner.plan_drawn_path \
 
 python controller/offboard_runner.py \
   --trajectory drawn-path.csv \
-  --planner-summary drawn-path.summary.json
+  --planner-summary drawn-path.summary.json \
+  --sitl-acknowledgement drawn-path.acknowledgement.json
 ```
+
+The acknowledgement must be issued for the exact displayed CSV/report after
+review. The studio manages that SITL review flow; the low-level runner is a
+research/SITL entrypoint. Use the separate physical-release workflow for a real
+aircraft.
 
 The compiler flies open paths and closed laps rest-to-rest. A periodic curve
 starts and stops at its seam; extra laps repeat that loop. Interior hard points
@@ -123,9 +145,10 @@ add an entry, an exit, or both: the laps are one open path, the lead-in meets
 the seam without stopping, and the path stops at the exit or back on the seam.
 The speed on a flown-through seam is the certified schedule. Yaw can follow an
 explicit heading profile, certified to the requested samples on one
-rest-to-rest piece. A path that ends while still moving, energy qualification,
-a live Gazebo campaign, and physical-flight release are not in this repository. The x500 model is a
-conservative SITL configuration, not an identified aircraft model.
+rest-to-rest piece. A path that ends while still moving remains unsupported.
+Profile-based power/time/reserve budgets, registered local Gazebo campaigns
+and a separate human-qualified physical-release workflow are implemented.
+The x500 model is a simulator configuration, not an identified physical aircraft.
 The compiler binds the expected controller cruise height into its summary.
 The runner checks both that summary's trajectory hash and the live
 uncertainty-adjusted cruise height before execution; a mismatch is rejected.
@@ -185,7 +208,7 @@ SITL, not obstacle avoidance or unattended physical flight.
 
 ```bash
 python -m pip install -r requirements-dev.txt
-python -m ruff check controller analysis scripts tests trajectory_generator
+python -m ruff check controller mission_planner analysis scripts tests trajectory_generator
 python scripts/validate.py
 ```
 

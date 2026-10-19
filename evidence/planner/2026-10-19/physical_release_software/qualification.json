@@ -1,0 +1,1051 @@
+{
+  "schema_version": 1,
+  "release_class": "SITL_ONLY",
+  "physical_qualification": false,
+  "source_sha256": "15f3544155596fb5523927fdc1802bb284200c2560c9330b5a479e944d5452e8",
+  "tests": {
+    "command": "python3 scripts/validate.py",
+    "count": 366,
+    "passed": true,
+    "log_sha256": "cb4d8802801c069025df96a12c4e1baf528dfc5c80a51801cf35d0fcba7b9856"
+  },
+  "cases": [
+    {
+      "case": "nominal",
+      "directory": "/home/xpire/PX4-runs/release-workflow-final-oct19/nominal/reviewed-plan",
+      "assessment_sha256": "58061ae0958b8fa6033f12475c124a06f707e9f63699d047c2f5a6eb3e1a721f",
+      "result": {
+        "name": "reviewed-plan",
+        "exit_code": 0,
+        "audit_passed": true,
+        "outcome": "SUCCESS",
+        "waypoint_audit_passed": null,
+        "quality_rejection_confirmed": false,
+        "final_state": {
+          "armed": false,
+          "failure_action": "LAND",
+          "heartbeat_main_mode": 6,
+          "heartbeat_sub_mode": 0,
+          "landed_state": 1,
+          "mission_phase": "HANDOFF",
+          "native_landing_reference_xy": [
+            -0.01718320148501966,
+            0.10038080381803692
+          ]
+        },
+        "scenario_errors": [],
+        "release_class": "SITL_ONLY",
+        "physical_qualification": false,
+        "sampled_rehearsal_passed": true
+      },
+      "final_ground": {
+        "actuators": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "landed_state": 1,
+        "armed": false,
+        "continuous_confirmation_s": 2.000072603999797
+      },
+      "runner": {
+        "cleanup_error": null,
+        "cleanup_status": "not_required",
+        "completed_at_utc": "2026-10-19T16:40:43.363139Z",
+        "controller_config": {
+          "align_angular_rate_deg_s": 20.0,
+          "align_hold_s": 1.0,
+          "align_horizontal_speed_m_s": 0.25,
+          "align_tilt_deg": 8.0,
+          "align_vertical_speed_m_s": 0.2,
+          "align_xy_tolerance_m": 0.35,
+          "align_z_tolerance_m": 0.35,
+          "altitude_tracking_margin_m": 1.0,
+          "bootstrap_altitude_m": 2.0,
+          "bootstrap_max_altitude_m": 4.0,
+          "bootstrap_max_thrust": 0.9,
+          "bootstrap_max_tilt_deg": 25.0,
+          "bootstrap_min_thrust": 0.45,
+          "bootstrap_navigation_confirm_s": 1.0,
+          "bootstrap_pitch_deg": -10.0,
+          "bootstrap_pitch_start_altitude_m": 0.75,
+          "bootstrap_thrust_bias": 0.12,
+          "bootstrap_timeout_s": 18.0,
+          "bootstrap_vertical_kd": 0.16,
+          "bootstrap_vertical_kp": 0.12,
+          "clearance_budget_hysteresis_m": 0.5,
+          "command_xy_accel_limit_m_s2": 0.9,
+          "command_z_accel_limit_m_s2": 0.9,
+          "cruise_command_speed_limit_m_s": 1.25,
+          "cruise_height_m": 20.0,
+          "cruise_reference_speed_m_s": 1.0,
+          "estimator_good_test_ratio": 0.35,
+          "estimator_max_age_s": 1.5,
+          "estimator_max_test_ratio": 1.0,
+          "gps_good_hdop": 1.0,
+          "gps_good_horizontal_accuracy_m": 1.0,
+          "gps_good_vdop": 1.5,
+          "gps_good_vertical_accuracy_m": 2.0,
+          "gps_max_age_s": 1.5,
+          "gps_max_hdop": 2.5,
+          "gps_max_horizontal_accuracy_m": 5.0,
+          "gps_max_vdop": 3.5,
+          "gps_max_vertical_accuracy_m": 8.0,
+          "gps_min_fix_type": 3,
+          "gps_min_satellites": 6,
+          "gps_outage_recovery_budget_s": 4.0,
+          "ground_offset_max_m": 10.0,
+          "ground_offset_min_m": -10.0,
+          "home_max_horizontal_speed_m_s": 0.2,
+          "home_max_horizontal_spread_m": 1.5,
+          "home_max_vertical_speed_m_s": 0.15,
+          "home_max_vertical_spread_m": 2.0,
+          "home_max_yaw_spread_deg": 15.0,
+          "home_min_samples": 30,
+          "home_recovery_duration_s": 2.0,
+          "home_recovery_min_samples": 6,
+          "home_required_horizontal_accuracy_m": 1.5,
+          "home_sample_duration_s": 3.0,
+          "land_timeout_s": 180.0,
+          "launch_reference_duration_s": 3.0,
+          "launch_reference_min_samples": 10,
+          "max_accel_m_s2": 0.9,
+          "max_control_command_age_s": 0.25,
+          "max_height_above_launch_m": 30.0,
+          "max_horizontal_speed_m_s": 2.7,
+          "max_jerk_m_s3": 1.35,
+          "max_measured_speed_m_s": 8.0,
+          "max_offboard_drop_below_launch_m": 2.0,
+          "max_offboard_loss_timeout_s": 1.0,
+          "max_operating_radius_m": 80.0,
+          "max_vertical_speed_m_s": 0.36000000000000004,
+          "max_yaw_acceleration_deg_s2": 54.0,
+          "max_yaw_jerk_deg_s3": 108.0,
+          "max_yaw_rate_deg_s": 40.5,
+          "minimum_navigation_speed_scale": 0.25,
+          "minimum_segment_duration_s": 2.0,
+          "minimum_vertical_uncertainty_margin_m": 1.0,
+          "mission_timeout_s": 240.0,
+          "navigation_abort_s": 8.0,
+          "navigation_confidence_fall_tau_s": 0.3,
+          "navigation_confidence_rise_tau_s": 2.0,
+          "navigation_degraded_entry_s": 0.1,
+          "navigation_hold_accel_limit_m_s2": 1.0,
+          "navigation_hold_entry_s": 0.2,
+          "navigation_hold_velocity_damping": 0.8,
+          "navigation_recovery_s": 2.0,
+          "offboard_stream_max_gap_s": 0.5,
+          "position_prediction_enabled": true,
+          "position_prediction_max_age_s": 0.075,
+          "position_prediction_max_displacement_m": 0.15,
+          "preflight_timeout_s": 30.0,
+          "return_max_speed_m_s": 2.0,
+          "return_recovery_timeout_s": 120.0,
+          "setpoint_watchdog_timeout_s": 0.1,
+          "takeoff_max_speed_m_s": 0.36000000000000004,
+          "takeoff_position_tolerance_m": 0.2,
+          "takeoff_settle_s": 0.75,
+          "takeoff_speed_tolerance_m_s": 0.25,
+          "terrain_clearance_m": 5.0,
+          "tracking_governor_enabled": true,
+          "tracking_minimum_speed_scale": 0.35,
+          "tracking_scale_fall_tau_s": 0.3,
+          "tracking_scale_rise_tau_s": 2.0,
+          "tracking_slowdown_full_m": 2.0,
+          "tracking_slowdown_start_m": 0.5,
+          "vertical_accuracy_multiplier": 2.0
+        },
+        "controller_runtime": {
+          "connection_string": "udp:127.0.0.1:14540",
+          "control_rate_hz": 20.0,
+          "max_horizontal_speed_m_s": 2.7,
+          "max_vertical_speed_m_s": 0.36000000000000004,
+          "setpoint_watchdog_timeout_s": 0.1,
+          "trajectory_path": "/home/xpire/PX4-runs/release-workflow-final-oct19/nominal/reviewed-plan/batch/reviewed-plan/selected_trajectory.csv",
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        "dependencies": {
+          "matplotlib": "3.10.9",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pymavlink": "2.4.49"
+        },
+        "execution_authority": {
+          "release_class": "SITL_ONLY",
+          "release_sha256": "a7a3d2f044c48d311d45fbb74d4b3a802f44c267bf7f1da0fe71c13bb6f8ca4a"
+        },
+        "final_state": {
+          "armed": false,
+          "failure_action": "LAND",
+          "heartbeat_main_mode": 6,
+          "heartbeat_sub_mode": 0,
+          "landed_state": 1,
+          "mission_phase": "HANDOFF",
+          "native_landing_reference_xy": [
+            -0.01718320148501966,
+            0.10038080381803692
+          ]
+        },
+        "git_commit": "3aa3d4859c408f0b0e2680787ce67138f885fcdb",
+        "outcome": "SUCCESS",
+        "px4_parameters": {
+          "BAT_CRIT_THR": 0.15000000596046448,
+          "BAT_EMERGEN_THR": 0.10000000149011612,
+          "BAT_LOW_THR": 0.20000000298023224,
+          "COM_DISARM_LAND": 2.0,
+          "COM_LOW_BAT_ACT": 2.0,
+          "COM_OBL_RC_ACT": 4.0,
+          "COM_OF_LOSS_T": 0.5,
+          "EKF2_AGP_CTRL": 0.0,
+          "EKF2_BARO_CTRL": 0.0,
+          "EKF2_EV_CTRL": 0.0,
+          "EKF2_GPS_CTRL": 7.0,
+          "EKF2_HGT_REF": 1.0,
+          "EKF2_MAG_TYPE": 5.0,
+          "EKF2_NOAID_TOUT": 6000000.0,
+          "EKF2_OF_CTRL": 0.0,
+          "EKF2_REQ_GPS_H": 0.5,
+          "EKF2_RNG_CTRL": 0.0,
+          "MPC_LAND_CRWL": 0.30000001192092896,
+          "MPC_LAND_SPEED": 0.4000000059604645,
+          "MPC_THR_HOVER": 0.6000000238418579,
+          "MPC_THR_MAX": 1.0,
+          "SYS_FAILURE_EN": 0.0
+        },
+        "python_version": "3.10.12",
+        "random_seed": null,
+        "reason": "PX4 ON_GROUND and automatic disarm confirmed",
+        "run_id": "20261019T163727177448Z",
+        "schema_version": 1,
+        "source_sha256": {
+          "PID_Controller.py": "a62984b70bfe4212cd0e25fa7a540fa8ddb5a6ddbe203330a228702c8aca9400",
+          "PID_position_new.py": "e8580f47cd01a034da5cb1e15074891dd0c5206c8d9c0ba68c35a52423f9a212",
+          "VehicleState.py": "135c432ed65f377a4df2680b2d0f93112af12a67f14c7545bf68a758c852b2fe",
+          "flight_logger.py": "f1420180a5a8b9b8979d301be7ede3b6f6aca80cf363518ede6223dffa680b1d",
+          "magless_bootstrap.py": "80a6904988a84892aa07dbcf812589a780e3ae00f07e1dd15e34b8ff86bf9dd7",
+          "minimum_jerk.py": "8bdb71e9790ed5d342222a3d8c0f9875f209d53e4d290b4fce0f5a3c82766400",
+          "mission_config.py": "e1fa6642e5e5e2a84f338a0f03b4850f753cd2df4c148a6147458c4b9e389e99",
+          "mission_state.py": "42589304ddd951eba6bf3708c00b443cd2b027954d24200fb89d658d49babd05",
+          "offboard_runner.py": "0b684ea4a01970ff279416333d1f64de57fb7abd69e87f7a0ed2db65a3a00d85",
+          "position_prediction.py": "06d308aefa8fffe76e83bca16a672ea6e0c52512e4074d550044b931db68bea9",
+          "px4_policy.py": "74c4d7d131b2734d823e4504bc875a2e3b08dc4c3ef195194c9503b3f6b0eed6",
+          "run_record.py": "34726b3dcfc01f8101f7756c0d9ebea1287163efb9b709a6ba75ce349ae28074",
+          "touchdown_quality.py": "d7bf62a66b8e6a5c6d5590bfd71b16fa60600b9e8f77c3a31b12e262e738b07b",
+          "tracking_governor.py": "5390c1bbf11a3710cef73c249eeaff1137528923405c1605748baea2d3c28a3e",
+          "trajectory.csv": "63ef95b87f3e9bf05a64fc008ce1a18007f417f9bcc9a2e813a44f8116d29937",
+          "trajectory.py": "599ee113177b8a00d512bd35e33c6770c1954913dbaf694f973057c8278921d0"
+        },
+        "started_at_utc": "2026-10-19T16:37:27.177448Z",
+        "trajectory_randomized": false
+      },
+      "checks": [
+        {
+          "name": "Existing lifecycle/scenario audit",
+          "passed": true,
+          "detail": [
+            {
+              "name": "Nominal phase sequence",
+              "passed": true,
+              "detail": "TAKEOFF -> TRAJECTORY -> RETURN_HOME -> ALIGN -> HANDOFF -> PX4_LAND"
+            },
+            {
+              "name": "Automatic disarm confirmed",
+              "passed": true,
+              "detail": "final armed=False"
+            },
+            {
+              "name": "PX4 touchdown confirmed",
+              "passed": true,
+              "detail": "final landed_state=1"
+            },
+            {
+              "name": "Command envelope respected",
+              "passed": true,
+              "detail": "checked 3025/3025 commands"
+            },
+            {
+              "name": "Offboard stream continuity",
+              "passed": true,
+              "detail": "maximum gap=0.061s, limit=0.500s"
+            },
+            {
+              "name": "No telemetry time regression",
+              "passed": true,
+              "detail": "regression flags=0, unreadable=0"
+            },
+            {
+              "name": "No navigation loss",
+              "passed": true,
+              "detail": "LOST samples=0"
+            },
+            {
+              "name": "Touchdown dynamics within limits",
+              "passed": true,
+              "detail": "horizontal=0.020m/s (limit=0.500), vertical=0.007m/s (limit=0.500), tilt=0.06deg (limit=10.00)"
+            },
+            {
+              "name": "Touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.025m (limit=1.500)"
+            },
+            {
+              "name": "No post-touchdown bounce",
+              "passed": true,
+              "detail": "post-touchdown non-ground samples=0"
+            },
+            {
+              "name": "Automatic disarm timing",
+              "passed": true,
+              "detail": "delay=2.419s (limit=5.000)"
+            },
+            {
+              "name": "Propulsion outputs zero after disarm",
+              "passed": true,
+              "detail": "max_abs_output=0.0000, actuator_age=0.022s"
+            },
+            {
+              "name": "Nominal mission completed successfully",
+              "passed": true,
+              "detail": "SUCCESS"
+            },
+            {
+              "name": "Nominal cleanup has no error",
+              "passed": true,
+              "detail": null
+            },
+            {
+              "name": "Nominal manifest confirms shutdown",
+              "passed": true,
+              "detail": {
+                "armed": false,
+                "failure_action": "LAND",
+                "heartbeat_main_mode": 6,
+                "heartbeat_sub_mode": 0,
+                "landed_state": 1,
+                "mission_phase": "HANDOFF",
+                "native_landing_reference_xy": [
+                  -0.01718320148501966,
+                  0.10038080381803692
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Telemetry gaps at most 0.25 s",
+          "passed": true,
+          "detail": {
+            "maximum_s": 0.06119990200022585
+          }
+        },
+        {
+          "name": "Entire planned mission clock covered",
+          "passed": true,
+          "detail": {
+            "planned_s": 25.167786000580893,
+            "first_s": 0.0,
+            "last_s": 25.199995306000343,
+            "endpoint_sampling_tolerance_s": 0.1
+          }
+        },
+        {
+          "name": "Runtime reference follows exact CSV with one translation",
+          "passed": true,
+          "detail": {
+            "launch_translation_ned_m": [
+              -0.0171832014850196,
+              0.1003808038180369,
+              -0.028823401537806603
+            ]
+          }
+        },
+        {
+          "name": "Runtime heading follows exact CSV with one launch offset",
+          "passed": true,
+          "detail": {
+            "launch_offset_rad": 1.5343025922775269
+          }
+        },
+        {
+          "name": "Truth covers every recorded mission sample through contact",
+          "passed": true,
+          "detail": {
+            "required_rows": 3573,
+            "covered_rows": 3573,
+            "post_contact_rows_excluded": 68
+          }
+        },
+        {
+          "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+          "passed": true,
+          "detail": {
+            "samples": 3020,
+            "rms": 0.09091433160757331,
+            "p95": 0.18372627849424394,
+            "max_abs": 0.3682329366075574
+          }
+        },
+        {
+          "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+          "passed": true,
+          "detail": {
+            "samples": 3020,
+            "rms": 1.4963806775309458,
+            "p95": 1.8157215574690324,
+            "max_abs": 1.826916181607873
+          }
+        },
+        {
+          "name": "Touchdown truth within predeclared position/speed targets",
+          "passed": true,
+          "detail": {
+            "position_error_m": 0.045430286611731444,
+            "horizontal_speed_m_s": 1.466540848921185e-06,
+            "vertical_speed_m_s": 2.059133112197742e-05,
+            "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+          }
+        },
+        {
+          "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+          "passed": true,
+          "detail": {
+            "actuators": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "landed_state": 1,
+            "armed": false,
+            "continuous_confirmation_s": 2.000072603999797
+          }
+        },
+        {
+          "name": "Measured mean real-time factor in 0.95\u20131.05",
+          "passed": true,
+          "detail": {
+            "mean": 0.9997508076833557,
+            "one_second_windows": {
+              "samples": 3621,
+              "rms": 0.999753535702014,
+              "p95": 1.0210326443403,
+              "max_abs": 1.0335015354171775
+            },
+            "windows_below_0_9": 0,
+            "windows_above_1_1": 0
+          }
+        },
+        {
+          "name": "Sampled navigation error fits the aircraft allowance",
+          "passed": true,
+          "detail": {
+            "error_m": {
+              "samples": 505,
+              "rms": 0.08652739559297024,
+              "p95": 0.1111361340199036,
+              "max_abs": 0.11524634901341879
+            },
+            "limit_m": 0.2
+          }
+        },
+        {
+          "name": "Sampled estimated tracking error fits the aircraft allowance",
+          "passed": true,
+          "detail": {
+            "error_m": {
+              "samples": 505,
+              "rms": 0.10354998873263266,
+              "p95": 0.3001705522566503,
+              "max_abs": 0.3557909060025039
+            },
+            "limit_m": 0.45
+          }
+        },
+        {
+          "name": "Observed nominal lifecycle fits the declared energy/time budget",
+          "passed": true,
+          "detail": {
+            "observed_wall_s": 182.20940518379211,
+            "nominal_budget_s": 217.75167900087135,
+            "route_wall_s": 25.19987940788269,
+            "route_budget_s": 37.75167900087134
+          }
+        },
+        {
+          "name": "Executed CSV digest matches retained plan and runner manifest",
+          "passed": true,
+          "detail": {
+            "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+          }
+        },
+        {
+          "name": "Sampled physical route stays inside user's geometric tolerance",
+          "passed": true,
+          "detail": {
+            "distance_m": {
+              "samples": 505,
+              "rms": 0.06208113711367064,
+              "p95": 0.0618365702466434,
+              "max_abs": 0.3353051710351298
+            },
+            "limit_m": 1.0,
+            "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+          }
+        }
+      ],
+      "independent_contact_and_hold_audit": {
+        "overall_passed": true,
+        "checks": [
+          {
+            "name": "Physical contact recorded",
+            "passed": true,
+            "detail": "contact samples=69"
+          },
+          {
+            "name": "Landing reference frozen before contact",
+            "passed": true,
+            "detail": "native reference samples=548"
+          },
+          {
+            "name": "Physical contact truth covered",
+            "passed": true,
+            "detail": "contact row=3572"
+          },
+          {
+            "name": "Physical touchdown position within limit",
+            "passed": true,
+            "detail": "error=0.045430286611731444m, limit=1.5m"
+          }
+        ],
+        "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."
+      },
+      "raw_evidence_sha256": {
+        "batch/reviewed-plan/research_log_20261019T163727177448Z.csv": "be73cc95a913fb7296d5d80a7b209014c55c591d9f56f351f6f7785e10174e28",
+        "runtime/log/2026-10-19/16_37_20.ulg": "e38f65893c9acc4263fd0c0cff84c9c192d734d0d75c428cef6d52e305fa0fc4",
+        "plan/trajectory.csv": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+        "batch/reviewed-plan/audit.json": "14fe7078adb3e1f2485ba8d7518b9ab048c343e74c5652627175281de42565fb",
+        "final_ground.json": "b0644d6a77c0f7c89a91aa8048d8b21220a545902cd0dd768b645e034bcc63d4",
+        "batch/reviewed-plan/run_manifest_20261019T163727177448Z.json": "9bac41081bd4d907e937df52a70a317db4f6bc0011ac45aa81281dcd76b72419",
+        "batch/reviewed-plan/scenario.json": "b2bd9768833eabc5cbd945ac018e17faa8b47644b2003fe7fb84e25362ae3ec8"
+      },
+      "nominal_route_completed": true,
+      "abort_response_passed": false,
+      "retained_files_sha256": {
+        "assessment.json": "58061ae0958b8fa6033f12475c124a06f707e9f63699d047c2f5a6eb3e1a721f",
+        "simulation_configuration.json": "f99d1de4edfd5259a5183759377d32e25201133df929b4799317663fb9cd9e04",
+        "effective_parameters.json": "2aa8183f63fcd14b148e96b55f558db177d3b4007d0404276647e1600460ccaf",
+        "release_probe.json": "39e26b778af624615ed9a5a6df2f5bd386051de504c06f902546fd9e8242c820",
+        "SITL_RELEASE_CONSUMED.json": "b632f53bc5b3165ad2354407f2209229b02eeec062cb4236bfe720a5464e07ce"
+      }
+    },
+    {
+      "case": "operator-abort",
+      "directory": "/home/xpire/PX4-runs/release-abort-final-oct19/operator-abort/reviewed-plan",
+      "assessment_sha256": "f91ffb64ddea413b931aa44e330b9c01a347ee8d2f26242e586210bf8777d361",
+      "result": {
+        "name": "reviewed-plan",
+        "exit_code": 1,
+        "audit_passed": true,
+        "outcome": "ABORTED_TO_LAND",
+        "waypoint_audit_passed": null,
+        "quality_rejection_confirmed": false,
+        "final_state": {
+          "armed": false,
+          "failure_action": "PX4_FAILSAFE",
+          "heartbeat_main_mode": 6,
+          "heartbeat_sub_mode": 0,
+          "landed_state": 1,
+          "mission_phase": "TRAJECTORY",
+          "native_landing_reference_xy": [
+            1.6380764486904218,
+            0.05350971462941452
+          ]
+        },
+        "scenario_errors": [],
+        "release_class": "SITL_ONLY",
+        "physical_qualification": false,
+        "sampled_rehearsal_passed": false
+      },
+      "final_ground": {
+        "actuators": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "landed_state": 1,
+        "armed": false,
+        "continuous_confirmation_s": 2.000097014999483
+      },
+      "runner": {
+        "cleanup_error": null,
+        "cleanup_status": "px4_land_and_disarm_confirmed",
+        "completed_at_utc": "2026-10-19T16:43:37.677550Z",
+        "controller_config": {
+          "align_angular_rate_deg_s": 20.0,
+          "align_hold_s": 1.0,
+          "align_horizontal_speed_m_s": 0.25,
+          "align_tilt_deg": 8.0,
+          "align_vertical_speed_m_s": 0.2,
+          "align_xy_tolerance_m": 0.35,
+          "align_z_tolerance_m": 0.35,
+          "altitude_tracking_margin_m": 1.0,
+          "bootstrap_altitude_m": 2.0,
+          "bootstrap_max_altitude_m": 4.0,
+          "bootstrap_max_thrust": 0.9,
+          "bootstrap_max_tilt_deg": 25.0,
+          "bootstrap_min_thrust": 0.45,
+          "bootstrap_navigation_confirm_s": 1.0,
+          "bootstrap_pitch_deg": -10.0,
+          "bootstrap_pitch_start_altitude_m": 0.75,
+          "bootstrap_thrust_bias": 0.12,
+          "bootstrap_timeout_s": 18.0,
+          "bootstrap_vertical_kd": 0.16,
+          "bootstrap_vertical_kp": 0.12,
+          "clearance_budget_hysteresis_m": 0.5,
+          "command_xy_accel_limit_m_s2": 0.9,
+          "command_z_accel_limit_m_s2": 0.9,
+          "cruise_command_speed_limit_m_s": 1.25,
+          "cruise_height_m": 20.0,
+          "cruise_reference_speed_m_s": 1.0,
+          "estimator_good_test_ratio": 0.35,
+          "estimator_max_age_s": 1.5,
+          "estimator_max_test_ratio": 1.0,
+          "gps_good_hdop": 1.0,
+          "gps_good_horizontal_accuracy_m": 1.0,
+          "gps_good_vdop": 1.5,
+          "gps_good_vertical_accuracy_m": 2.0,
+          "gps_max_age_s": 1.5,
+          "gps_max_hdop": 2.5,
+          "gps_max_horizontal_accuracy_m": 5.0,
+          "gps_max_vdop": 3.5,
+          "gps_max_vertical_accuracy_m": 8.0,
+          "gps_min_fix_type": 3,
+          "gps_min_satellites": 6,
+          "gps_outage_recovery_budget_s": 4.0,
+          "ground_offset_max_m": 10.0,
+          "ground_offset_min_m": -10.0,
+          "home_max_horizontal_speed_m_s": 0.2,
+          "home_max_horizontal_spread_m": 1.5,
+          "home_max_vertical_speed_m_s": 0.15,
+          "home_max_vertical_spread_m": 2.0,
+          "home_max_yaw_spread_deg": 15.0,
+          "home_min_samples": 30,
+          "home_recovery_duration_s": 2.0,
+          "home_recovery_min_samples": 6,
+          "home_required_horizontal_accuracy_m": 1.5,
+          "home_sample_duration_s": 3.0,
+          "land_timeout_s": 180.0,
+          "launch_reference_duration_s": 3.0,
+          "launch_reference_min_samples": 10,
+          "max_accel_m_s2": 0.9,
+          "max_control_command_age_s": 0.25,
+          "max_height_above_launch_m": 30.0,
+          "max_horizontal_speed_m_s": 2.7,
+          "max_jerk_m_s3": 1.35,
+          "max_measured_speed_m_s": 8.0,
+          "max_offboard_drop_below_launch_m": 2.0,
+          "max_offboard_loss_timeout_s": 1.0,
+          "max_operating_radius_m": 80.0,
+          "max_vertical_speed_m_s": 0.36000000000000004,
+          "max_yaw_acceleration_deg_s2": 54.0,
+          "max_yaw_jerk_deg_s3": 108.0,
+          "max_yaw_rate_deg_s": 40.5,
+          "minimum_navigation_speed_scale": 0.25,
+          "minimum_segment_duration_s": 2.0,
+          "minimum_vertical_uncertainty_margin_m": 1.0,
+          "mission_timeout_s": 240.0,
+          "navigation_abort_s": 8.0,
+          "navigation_confidence_fall_tau_s": 0.3,
+          "navigation_confidence_rise_tau_s": 2.0,
+          "navigation_degraded_entry_s": 0.1,
+          "navigation_hold_accel_limit_m_s2": 1.0,
+          "navigation_hold_entry_s": 0.2,
+          "navigation_hold_velocity_damping": 0.8,
+          "navigation_recovery_s": 2.0,
+          "offboard_stream_max_gap_s": 0.5,
+          "position_prediction_enabled": true,
+          "position_prediction_max_age_s": 0.075,
+          "position_prediction_max_displacement_m": 0.15,
+          "preflight_timeout_s": 30.0,
+          "return_max_speed_m_s": 2.0,
+          "return_recovery_timeout_s": 120.0,
+          "setpoint_watchdog_timeout_s": 0.1,
+          "takeoff_max_speed_m_s": 0.36000000000000004,
+          "takeoff_position_tolerance_m": 0.2,
+          "takeoff_settle_s": 0.75,
+          "takeoff_speed_tolerance_m_s": 0.25,
+          "terrain_clearance_m": 5.0,
+          "tracking_governor_enabled": true,
+          "tracking_minimum_speed_scale": 0.35,
+          "tracking_scale_fall_tau_s": 0.3,
+          "tracking_scale_rise_tau_s": 2.0,
+          "tracking_slowdown_full_m": 2.0,
+          "tracking_slowdown_start_m": 0.5,
+          "vertical_accuracy_multiplier": 2.0
+        },
+        "controller_runtime": {
+          "connection_string": "udp:127.0.0.1:14540",
+          "control_rate_hz": 20.0,
+          "max_horizontal_speed_m_s": 2.7,
+          "max_vertical_speed_m_s": 0.36000000000000004,
+          "setpoint_watchdog_timeout_s": 0.1,
+          "trajectory_path": "/home/xpire/PX4-runs/release-abort-final-oct19/operator-abort/reviewed-plan/batch/reviewed-plan/selected_trajectory.csv",
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        "dependencies": {
+          "matplotlib": "3.10.9",
+          "numpy": "2.2.6",
+          "pandas": "2.3.3",
+          "pymavlink": "2.4.49"
+        },
+        "execution_authority": {
+          "release_class": "SITL_ONLY",
+          "release_sha256": "a7a3d2f044c48d311d45fbb74d4b3a802f44c267bf7f1da0fe71c13bb6f8ca4a"
+        },
+        "final_state": {
+          "armed": false,
+          "failure_action": "PX4_FAILSAFE",
+          "heartbeat_main_mode": 6,
+          "heartbeat_sub_mode": 0,
+          "landed_state": 1,
+          "mission_phase": "TRAJECTORY",
+          "native_landing_reference_xy": [
+            1.6380764486904218,
+            0.05350971462941452
+          ]
+        },
+        "git_commit": "3aa3d4859c408f0b0e2680787ce67138f885fcdb",
+        "outcome": "ABORTED_TO_LAND",
+        "px4_parameters": {
+          "BAT_CRIT_THR": 0.15000000596046448,
+          "BAT_EMERGEN_THR": 0.10000000149011612,
+          "BAT_LOW_THR": 0.20000000298023224,
+          "COM_DISARM_LAND": 2.0,
+          "COM_LOW_BAT_ACT": 2.0,
+          "COM_OBL_RC_ACT": 4.0,
+          "COM_OF_LOSS_T": 0.5,
+          "EKF2_AGP_CTRL": 0.0,
+          "EKF2_BARO_CTRL": 0.0,
+          "EKF2_EV_CTRL": 0.0,
+          "EKF2_GPS_CTRL": 7.0,
+          "EKF2_HGT_REF": 1.0,
+          "EKF2_MAG_TYPE": 5.0,
+          "EKF2_NOAID_TOUT": 6000000.0,
+          "EKF2_OF_CTRL": 0.0,
+          "EKF2_REQ_GPS_H": 0.5,
+          "EKF2_RNG_CTRL": 0.0,
+          "MPC_LAND_CRWL": 0.30000001192092896,
+          "MPC_LAND_SPEED": 0.4000000059604645,
+          "MPC_THR_HOVER": 0.6000000238418579,
+          "MPC_THR_MAX": 1.0,
+          "SYS_FAILURE_EN": 0.0
+        },
+        "python_version": "3.10.12",
+        "random_seed": null,
+        "reason": "RuntimeError: operator requested abort; yielding to LAND cleanup",
+        "run_id": "20261019T164110550694Z",
+        "schema_version": 1,
+        "source_sha256": {
+          "PID_Controller.py": "a62984b70bfe4212cd0e25fa7a540fa8ddb5a6ddbe203330a228702c8aca9400",
+          "PID_position_new.py": "e8580f47cd01a034da5cb1e15074891dd0c5206c8d9c0ba68c35a52423f9a212",
+          "VehicleState.py": "135c432ed65f377a4df2680b2d0f93112af12a67f14c7545bf68a758c852b2fe",
+          "flight_logger.py": "f1420180a5a8b9b8979d301be7ede3b6f6aca80cf363518ede6223dffa680b1d",
+          "magless_bootstrap.py": "80a6904988a84892aa07dbcf812589a780e3ae00f07e1dd15e34b8ff86bf9dd7",
+          "minimum_jerk.py": "8bdb71e9790ed5d342222a3d8c0f9875f209d53e4d290b4fce0f5a3c82766400",
+          "mission_config.py": "e1fa6642e5e5e2a84f338a0f03b4850f753cd2df4c148a6147458c4b9e389e99",
+          "mission_state.py": "42589304ddd951eba6bf3708c00b443cd2b027954d24200fb89d658d49babd05",
+          "offboard_runner.py": "0b684ea4a01970ff279416333d1f64de57fb7abd69e87f7a0ed2db65a3a00d85",
+          "position_prediction.py": "06d308aefa8fffe76e83bca16a672ea6e0c52512e4074d550044b931db68bea9",
+          "px4_policy.py": "74c4d7d131b2734d823e4504bc875a2e3b08dc4c3ef195194c9503b3f6b0eed6",
+          "run_record.py": "34726b3dcfc01f8101f7756c0d9ebea1287163efb9b709a6ba75ce349ae28074",
+          "touchdown_quality.py": "d7bf62a66b8e6a5c6d5590bfd71b16fa60600b9e8f77c3a31b12e262e738b07b",
+          "tracking_governor.py": "5390c1bbf11a3710cef73c249eeaff1137528923405c1605748baea2d3c28a3e",
+          "trajectory.csv": "63ef95b87f3e9bf05a64fc008ce1a18007f417f9bcc9a2e813a44f8116d29937",
+          "trajectory.py": "599ee113177b8a00d512bd35e33c6770c1954913dbaf694f973057c8278921d0"
+        },
+        "started_at_utc": "2026-10-19T16:41:10.550694Z",
+        "trajectory_randomized": false
+      },
+      "checks": [
+        {
+          "name": "Existing lifecycle/scenario audit",
+          "passed": true,
+          "detail": [
+            {
+              "name": "Automatic disarm confirmed",
+              "passed": true,
+              "detail": "final armed=False"
+            },
+            {
+              "name": "PX4 touchdown confirmed",
+              "passed": true,
+              "detail": "final landed_state=1"
+            },
+            {
+              "name": "Command envelope respected",
+              "passed": true,
+              "detail": "checked 2063/2063 commands"
+            },
+            {
+              "name": "Offboard stream continuity",
+              "passed": true,
+              "detail": "maximum gap=0.060s, limit=0.500s"
+            },
+            {
+              "name": "No telemetry time regression",
+              "passed": true,
+              "detail": "regression flags=0, unreadable=0"
+            },
+            {
+              "name": "No navigation loss",
+              "passed": true,
+              "detail": "LOST samples=0"
+            },
+            {
+              "name": "Touchdown dynamics within limits",
+              "passed": true,
+              "detail": "horizontal=0.004m/s (limit=0.500), vertical=0.003m/s (limit=0.500), tilt=0.05deg (limit=10.00)"
+            },
+            {
+              "name": "Touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.654m (limit=1.500)"
+            },
+            {
+              "name": "No post-touchdown bounce",
+              "passed": true,
+              "detail": "post-touchdown non-ground samples=0"
+            },
+            {
+              "name": "Automatic disarm timing",
+              "passed": true,
+              "detail": "delay=2.016s (limit=5.000)"
+            },
+            {
+              "name": "Propulsion outputs zero after disarm",
+              "passed": true,
+              "detail": "max_abs_output=0.0000, actuator_age=0.016s"
+            },
+            {
+              "name": "Release abort reached confirmed native shutdown",
+              "passed": true,
+              "detail": "RuntimeError: operator requested abort; yielding to LAND cleanup"
+            }
+          ]
+        },
+        {
+          "name": "Telemetry gaps at most 0.25 s",
+          "passed": true,
+          "detail": {
+            "maximum_s": 0.06361631200070406
+          }
+        },
+        {
+          "name": "Entire planned mission clock covered",
+          "passed": false,
+          "detail": {
+            "planned_s": 25.167786000580893,
+            "first_s": 0.0,
+            "last_s": 3.749889809999331,
+            "endpoint_sampling_tolerance_s": 0.1
+          }
+        },
+        {
+          "name": "Runtime reference follows exact CSV with one translation",
+          "passed": true,
+          "detail": {
+            "launch_translation_ned_m": [
+              0.0741328340490819,
+              0.0535097146294145,
+              -0.02410699775002456
+            ]
+          }
+        },
+        {
+          "name": "Runtime heading follows exact CSV with one launch offset",
+          "passed": true,
+          "detail": {
+            "launch_offset_rad": 1.532145380973816
+          }
+        },
+        {
+          "name": "Truth covers every recorded mission sample through contact",
+          "passed": true,
+          "detail": {
+            "required_rows": 2600,
+            "covered_rows": 2600,
+            "post_contact_rows_excluded": 60
+          }
+        },
+        {
+          "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+          "passed": true,
+          "detail": {
+            "samples": 2063,
+            "rms": 0.0694289916062419,
+            "p95": 0.08545731014047617,
+            "max_abs": 0.36589261101357695
+          }
+        },
+        {
+          "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+          "passed": true,
+          "detail": {
+            "samples": 2063,
+            "rms": 2.11745052329133,
+            "p95": 2.4141740117786403,
+            "max_abs": 2.44314079386141
+          }
+        },
+        {
+          "name": "Touchdown truth within predeclared position/speed targets",
+          "passed": true,
+          "detail": {
+            "position_error_m": 0.6593086284309487,
+            "horizontal_speed_m_s": 1.5095237214611017e-06,
+            "vertical_speed_m_s": 2.364016690989956e-05,
+            "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+          }
+        },
+        {
+          "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+          "passed": true,
+          "detail": {
+            "actuators": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "landed_state": 1,
+            "armed": false,
+            "continuous_confirmation_s": 2.000097014999483
+          }
+        },
+        {
+          "name": "Measured mean real-time factor in 0.95\u20131.05",
+          "passed": true,
+          "detail": {
+            "mean": 0.9999908418626984,
+            "one_second_windows": {
+              "samples": 2640,
+              "rms": 1.0001336743463183,
+              "p95": 1.0215315826601479,
+              "max_abs": 1.03368938200103
+            },
+            "windows_below_0_9": 0,
+            "windows_above_1_1": 0
+          }
+        },
+        {
+          "name": "Sampled navigation error fits the aircraft allowance",
+          "passed": true,
+          "detail": {
+            "error_m": {
+              "samples": 76,
+              "rms": 0.06045122334595573,
+              "p95": 0.10972961434947943,
+              "max_abs": 0.11024838030187957
+            },
+            "limit_m": 0.2
+          }
+        },
+        {
+          "name": "Sampled estimated tracking error fits the aircraft allowance",
+          "passed": true,
+          "detail": {
+            "error_m": {
+              "samples": 76,
+              "rms": 0.2033972449069021,
+              "p95": 0.3146514813483954,
+              "max_abs": 0.32671571265274696
+            },
+            "limit_m": 0.45
+          }
+        },
+        {
+          "name": "Observed nominal lifecycle fits the declared energy/time budget",
+          "passed": true,
+          "detail": {
+            "observed_wall_s": 133.16521954536438,
+            "nominal_budget_s": 217.75167900087135,
+            "route_wall_s": 3.749595880508423,
+            "route_budget_s": 37.75167900087134
+          }
+        },
+        {
+          "name": "Executed CSV digest matches retained plan and runner manifest",
+          "passed": true,
+          "detail": {
+            "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+          }
+        },
+        {
+          "name": "Sampled physical route stays inside user's geometric tolerance",
+          "passed": true,
+          "detail": {
+            "distance_m": {
+              "samples": 76,
+              "rms": 0.045320845868416414,
+              "p95": 0.07452612138966637,
+              "max_abs": 0.2043389121542536
+            },
+            "limit_m": 1.0,
+            "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+          }
+        }
+      ],
+      "independent_contact_and_hold_audit": {
+        "overall_passed": true,
+        "checks": [
+          {
+            "name": "Physical contact recorded",
+            "passed": true,
+            "detail": "contact samples=61"
+          },
+          {
+            "name": "Landing reference frozen before contact",
+            "passed": true,
+            "detail": "native reference samples=537"
+          },
+          {
+            "name": "Physical contact truth covered",
+            "passed": true,
+            "detail": "contact row=2599"
+          },
+          {
+            "name": "Physical touchdown position within limit",
+            "passed": true,
+            "detail": "error=0.6593086284309487m, limit=1.5m"
+          }
+        ],
+        "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."
+      },
+      "raw_evidence_sha256": {
+        "batch/reviewed-plan/research_log_20261019T164110550694Z.csv": "89aa311dfa63b4b8cce9595ce834180c81ef3963f4d1a8b4216ae71d0a29e369",
+        "runtime/log/2026-10-19/16_41_03.ulg": "18a3efdfa5031d4074214ccab83c897544206369ab08631c7843c1348663f260",
+        "plan/trajectory.csv": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+        "batch/reviewed-plan/audit.json": "a77b833b33cd396d629ff155d5de45a02d3f710ca05c336b641462f69dba9200",
+        "final_ground.json": "5ed1d9cfbc9759bd8d488aa6a9ea1a3db3b813ec04cc3ae96e9156fc8391615c",
+        "batch/reviewed-plan/run_manifest_20261019T164110550694Z.json": "a8d2c7d8549ce5169e9920e687ee2b5facb3b0f4c7e49731b00f8ee7d819fc3e",
+        "batch/reviewed-plan/scenario.json": "a290a3c2c19001b71a0a72cc80db563b5669f29720e12cc56fa8b23577074a69"
+      },
+      "nominal_route_completed": false,
+      "abort_response_passed": true,
+      "retained_files_sha256": {
+        "assessment.json": "f91ffb64ddea413b931aa44e330b9c01a347ee8d2f26242e586210bf8777d361",
+        "simulation_configuration.json": "8a3768f2423e9cb83ace7836c7d3e57da6acb074281162cb8a9760c22becd9e7",
+        "effective_parameters.json": "2aa8183f63fcd14b148e96b55f558db177d3b4007d0404276647e1600460ccaf",
+        "release_probe.json": "39e26b778af624615ed9a5a6df2f5bd386051de504c06f902546fd9e8242c820",
+        "SITL_RELEASE_CONSUMED.json": "60432fa90446ff53682958d7d71dbcccb5bd6560e703aac86883abb7da6fb763"
+      }
+    }
+  ],
+  "missing_qualification_refusal": {
+    "expected_refusal": true,
+    "reason": "qualification reviewer is required",
+    "physical_operation": false
+  }
+}

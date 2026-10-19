@@ -159,10 +159,19 @@ def load_contract(
     def reject_constant(value: str) -> None:
         raise ValueError(f"contract contains non-finite JSON constant: {value}")
 
+    def unique_object(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"contract contains duplicate JSON key: {key}")
+            value[key] = item
+        return value
+
     try:
         raw = json.loads(
             source.read_text(encoding="utf-8"),
             parse_constant=reject_constant,
+            object_pairs_hook=unique_object,
         )
     except (OSError, json.JSONDecodeError) as exc:
         raise ValueError(f"cannot load contract {source}: {exc}") from exc
@@ -476,11 +485,35 @@ class VehicleModel:
     yaw_inertia_kg_m2: float
     yaw_torque_per_thrust_m: float
     identified_for_physical_flight: bool
+    rotors: tuple = ()
+    roll_pitch_torque_reserve_nm: float = 0.0
+    disturbance_acceleration_m_s2: float = 0.0
+    disturbance_jerk_m_s3: float = 0.0
 
     @classmethod
     def from_dict(cls, raw: Any) -> "VehicleModel":
         value = _object(raw, "vehicle_model")
-        fields = set(cls.__dataclass_fields__)
+        extensions = {"rotors", "roll_pitch_torque_reserve_nm", "disturbance_acceleration_m_s2", "disturbance_jerk_m_s3"}
+        fields = set(cls.__dataclass_fields__) - extensions
+        version = value.get("schema_version")
+        if isinstance(version, bool) or not isinstance(version, int) or version not in (1, 2):
+            raise ValueError("vehicle schema_version must be 1 or 2")
+        legacy = {"rotor_thrust_minimum_n", "rotor_thrust_maximum_n", "yaw_torque_per_thrust_m"}
+        rotors, reserve, disturbance, disturbance_jerk = (), 0.0, 0.0, 0.0
+        if version == 2:
+            _strict(value, required=fields - legacy | extensions, field="vehicle_model")
+            from .allocation import Rotor, right_inverse
+            rotors = tuple(Rotor.from_dict(r) for r in _array(value["rotors"], "rotors"))
+            right_inverse(rotors)
+            reserve = _number(value["roll_pitch_torque_reserve_nm"], "roll_pitch_torque_reserve_nm", exclusive_minimum=0.)
+            disturbance = _number(value["disturbance_acceleration_m_s2"], "disturbance_acceleration_m_s2", minimum=0.)
+            disturbance_jerk = _number(value["disturbance_jerk_m_s3"], "disturbance_jerk_m_s3", minimum=0.)
+            value = dict(value)
+            value.update(rotor_thrust_minimum_n=min(r.minimum_thrust_n for r in rotors),
+                         rotor_thrust_maximum_n=max(r.maximum_thrust_n for r in rotors),
+                         yaw_torque_per_thrust_m=min(abs(r.yaw_torque_per_thrust_m) for r in rotors))
+            for extension in extensions:
+                value.pop(extension)
         _strict(value, required=fields, field="vehicle_model")
         minimum_thrust = _number(
             value["minimum_thrust_n"], "minimum_thrust_n", minimum=0.0
@@ -502,12 +535,14 @@ class VehicleModel:
         )
         if rotor_minimum >= rotor_maximum:
             raise ValueError("rotor minimum thrust must be below rotor maximum thrust")
-        if 4.0 * rotor_maximum + 1e-9 < maximum_thrust:
+        collective_max = sum(r.maximum_thrust_n for r in rotors) if rotors else 4. * rotor_maximum
+        collective_min = sum(r.minimum_thrust_n for r in rotors) if rotors else 4. * rotor_minimum
+        if collective_max + 1e-9 < maximum_thrust:
             raise ValueError("collective thrust exceeds the four rotor limits")
-        if 4.0 * rotor_minimum > minimum_thrust + 1e-9:
+        if collective_min > minimum_thrust + 1e-9:
             raise ValueError("collective minimum thrust is below the four rotor floors")
         return cls(
-            schema_version=_version(value["schema_version"], "schema_version"),
+            schema_version=version,
             vehicle_model_id=_identifier(
                 value["vehicle_model_id"], "vehicle_model_id"
             ),
@@ -571,10 +606,22 @@ class VehicleModel:
                 value["identified_for_physical_flight"],
                 "identified_for_physical_flight",
             ),
+            rotors=rotors,
+            roll_pitch_torque_reserve_nm=reserve,
+            disturbance_acceleration_m_s2=disturbance,
+            disturbance_jerk_m_s3=disturbance_jerk,
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        result = asdict(self)
+        if self.schema_version == 1:
+            for key in ("rotors", "roll_pitch_torque_reserve_nm", "disturbance_acceleration_m_s2", "disturbance_jerk_m_s3"):
+                result.pop(key)
+        else:
+            for key in ("rotor_thrust_minimum_n", "rotor_thrust_maximum_n", "yaw_torque_per_thrust_m"):
+                result.pop(key)
+            result["rotors"] = [r.to_dict() for r in self.rotors]
+        return result
 
 
 @dataclass(frozen=True)

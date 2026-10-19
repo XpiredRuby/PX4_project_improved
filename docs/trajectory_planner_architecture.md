@@ -4,6 +4,12 @@ Status: proposed architecture, 17 October 2026. This document is a research and
 engineering plan, not a flight authorization or a claim of physical-aircraft
 readiness.
 
+Current follow-up: [research review and implementation decisions](trajectory_planner_research_review.md)
+clarifies the baseline, stage-specific trade studies, duration claims, finite
+priority bands, additional requirements, and qualification gates. Some sections
+below preserve historical implementation descriptions; use the pinned source,
+status record and follow-up review when assessing what is implemented today.
+
 ## 1. Decision summary
 
 Build a deterministic, model-based planner around the controller that already
