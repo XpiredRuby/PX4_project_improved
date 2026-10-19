@@ -9,12 +9,14 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 
 from sitl_ground_truth import audit_ground_truth, interpolation_coverage, ordered_samples, source_window
 from trajectory_quality import distribution
+from simulation_physics import assess_simulation_physics, interpolate_quaternions, quaternion_tilt_deg
 
 
 def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4):
@@ -164,12 +166,15 @@ def assess_case(folder):
         result = np.column_stack([np.interp(samples, times, data[key]) for key in keys])
         result[~interpolation_coverage(samples, times)] = np.nan
         return result
-    quaternion = interpolate(names[2], tuple(f"q[{i}]" for i in range(4)))
-    # Interpolate unit quaternion components then normalize before computing yaw.
-    quaternion /= np.linalg.norm(quaternion, axis=1)[:, None]
+    keys = tuple(f"q[{i}]" for i in range(4))
+    attitude_times, attitude_data, _ = ordered_samples(source_window(datasets[names[2]], samples), keys)
+    quaternion = interpolate_quaternions(
+        attitude_times, np.column_stack([attitude_data[k] for k in keys]), samples)
     w, x, y, z = quaternion.T
     yaw = np.arctan2(2 * (w*z + x*y), 1 - 2 * (y*y + z*z))
     velocity = interpolate(names[3], ("vx", "vy", "vz"))
+    acceleration = interpolate(names[3], ("ax", "ay", "az"))
+    tilt_deg = quaternion_tilt_deg(quaternion)
     plan_path = folder / "plan/trajectory.csv"
     configuration = json.loads((folder / "simulation_configuration.json").read_text())
     binding = configuration.get("simulation_binding")
@@ -177,6 +182,22 @@ def assess_case(folder):
     result = assess_frames(df, pd.read_csv(plan_path), physical, yaw, velocity,
                            json.loads((run / "audit.json").read_text()),
                            json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count)
+    model_file = folder / "plan/vehicle_model.json"
+    if not model_file.exists() and folder.name == "five-stop-baseline":
+        # The legacy five-stop regression uses the same x500 SITL model.
+        model_file = Path(__file__).resolve().parents[1] / "config/planner/x500_sitl_vehicle_model.json"
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    from mission_planner.contracts import VehicleModel, load_contract
+    vehicle = load_contract(model_file, VehicleModel.from_dict)
+    kinematics = assess_simulation_physics(
+        df.phase.to_numpy(), velocity, acceleration, tilt_deg,
+        maximum_speed_m_s=vehicle.maximum_speed_m_s,
+        maximum_tilt_deg=vehicle.maximum_tilt_deg,
+    )
+    result["checks"].extend(kinematics["checks"])
+    result["simulator_kinematics"] = {
+        "observations": kinematics["observations"], "scope": kinematics["scope"]}
+    result["sampled_rehearsal_passed"] &= all(c["passed"] for c in kinematics["checks"])
     profile_path = folder / "plan/aircraft_profile.json"
     if profile_path.is_file():
         profile = json.loads(profile_path.read_text())
@@ -225,6 +246,7 @@ def assess_case(folder):
     # A forced interruption is judged on its declared fault response, not on
     # nominal route completion or the intentionally interrupted sampling gap.
     fault_names = {"Existing lifecycle/scenario audit", "Truth covers every recorded mission sample through contact",
+                   *(check["name"] for check in kinematics["checks"]),
                    "Touchdown truth within predeclared position/speed targets",
                    "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
                    "Measured mean real-time factor in 0.95–1.05",
@@ -247,6 +269,7 @@ def assess_case(folder):
     result["assessment_implementation_sha256"] = {
         "planner_rehearsal.py": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "sitl_ground_truth.py": hashlib.sha256(Path(sitl_ground_truth.__file__).read_bytes()).hexdigest(),
+        "simulation_physics.py": hashlib.sha256((Path(__file__).parent / "simulation_physics.py").read_bytes()).hexdigest(),
     }
     (folder / "assessment.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     return result

@@ -23,6 +23,8 @@ def main():
     parser.add_argument("--timeout-s", type=float, default=420.0)
     parser.add_argument("--registered-aircraft", action="store_true",
                         help="load and check the registered reusable aircraft profile")
+    parser.add_argument("--cancel-during-route", action="store_true",
+                        help="exercise the browser cancellation button during the simulated route")
     args = parser.parse_args()
     parsed = urlparse(args.url)
     if (
@@ -82,6 +84,7 @@ def main():
                 has_text="Local PX4/Gazebo backend configured"
             ).wait_for()
             if args.registered_aircraft:
+                page.locator("#advancedSetup").evaluate("el => el.open=true")
                 page.locator("#useRegisteredAircraft").click()
                 with page.expect_response(lambda r: r.url.endswith("/api/aircraft/assess")) as setup:
                     page.locator("#checkAircraft").click()
@@ -90,7 +93,33 @@ def main():
                 page.locator("#deviation").fill("1.0")
                 results.append({"case": "reusable_aircraft_setup_and_model_binding", "passed": True})
             else:
+                assert page.locator("#aircraftMode").input_value() == "demo"
+                assert page.locator("#aircraftControls").is_hidden()
                 page.locator("#aircraftMode").select_option("demo")
+                page.locator("#clear").click()
+                box = page.locator("#route").bounding_box()
+                def pointer(east, north):
+                    return (box["x"]+(450+16*east)*box["width"]/900,
+                            box["y"]+(520-16*north)*box["height"]/630)
+                page.mouse.move(*pointer(0, 0))
+                page.mouse.down()
+                page.mouse.move(*pointer(0, 6), steps=12)
+                page.mouse.move(*pointer(4, 6), steps=8)
+                page.mouse.up()
+                with page.expect_response(lambda r: r.url.endswith("/api/preview"), timeout=125000) as drawn:
+                    page.locator("#compile").click()
+                drawn_result = drawn.value.json()
+                assert drawn_result["accepted"]
+                assert len(drawn_result["intent"]["path"]["points"]) >= 5
+                assert page.locator("#results").is_visible()
+                page.locator("#deadline").fill("1")
+                assert page.locator("#results").is_hidden()
+                with page.expect_response(lambda r: r.url.endswith("/api/preview"), timeout=125000) as refused:
+                    page.locator("#compile").click()
+                assert refused.value.status == 422 and refused.value.json()["accepted"] is False
+                assert page.locator("#results").is_hidden()
+                page.locator("#deadline").fill("")
+                results.append({"case": "freehand_drawing_and_impossible_deadline_refusal", "passed": True})
             page.locator("#linePreset").click()
             assert page.locator("#altitude").input_value() == "20"
             with page.expect_response(
@@ -149,15 +178,35 @@ def main():
                 }
             )
             deadline = time.monotonic() + args.timeout_s
+            cancellation_sent = False
             while time.monotonic() < deadline:
                 status = page.request.get(url + "/api/rehearsal/" + identifier).json()
                 state(status["stage"], latest_error=status.get("error"))
-                if status["stage"] in ("COMPLETED", "FAILED"):
+                if args.cancel_during_route and not cancellation_sent and status["stage"] == "RUNNING":
+                    # The retained controller log distinguishes route flight
+                    # from startup. The browser sends the actual cancel request.
+                    live = page.request.get(url + "/api/rehearsal/" + identifier).json()
+                    if live.get("phase") == "TRAJECTORY":
+                        page.locator("#cancelRehearsal").click()
+                        cancellation_sent = True
+                if status["stage"] in ("COMPLETED", "FAILED", "CANCELLED"):
                     break
                 page.wait_for_timeout(2000)
             else:
                 raise TimeoutError("connected rehearsal exceeded its test timeout")
             (base / "final_job.json").write_text(json.dumps(status, indent=2))
+            if args.cancel_during_route:
+                assert cancellation_sent, "route-phase cancellation was never requested"
+                assert status["stage"] == "CANCELLED" and status["cancel_confirmed"] is True, status
+                page.locator("#simulationStatus").filter(has_text="Cancellation confirmed").wait_for(timeout=10000)
+                assert page.locator("#cancelRehearsal").is_disabled()
+                assert page.locator("#downloadAssessment").is_hidden()
+                assert not errors, errors
+                results.append({"case": "browser_cancel_during_route_and_native_shutdown", "passed": True})
+                page.screenshot(path=str(base / "cancelled-desktop.png"), full_page=True)
+                context.close()
+                state("PASSED")
+                return
             assert status["stage"] == "COMPLETED", status.get("error")
             assert status["assessment"]["sampled_rehearsal_passed"], [
                 c for c in status["assessment"]["checks"] if not c["passed"]

@@ -10,13 +10,14 @@ from __future__ import annotations
 import argparse
 from copy import deepcopy
 import csv
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
 
 from .contracts import EnvironmentSnapshot, MissionIntent, VehicleModel, load_contract
 from .plan_drawn_path import compile_drawn_path
@@ -30,6 +31,7 @@ MAX_REQUEST_BYTES = 65_536
 MAX_RESPONSE_BYTES = 24 * 1024 * 1024
 MAX_INPUT_POINTS = 256
 WORKER_TIMEOUT_S = 120
+PREVIEW_SLOT = threading.BoundedSemaphore(1)
 
 
 def preview(payload: dict) -> dict:
@@ -249,12 +251,21 @@ class PreviewHandler(BaseHTTPRequestHandler):
             with tempfile.TemporaryDirectory(prefix="px4-preview-request-") as directory:
                 request = Path(directory) / "request.json"
                 request.write_bytes(body)
-                result = subprocess.run(
-                    [sys.executable, "-m", "mission_planner.editor",
-                     "--compile-request", str(request)],
-                    cwd=ROOT, capture_output=True, timeout=WORKER_TIMEOUT_S,
-                    check=False,
-                )
+                # Planning must not block status polling or a cancellation.
+                # A second expensive compiler is refused rather than queued.
+                if not PREVIEW_SLOT.acquire(blocking=False):
+                    self._json(409, {"accepted": False,
+                                     "error": "Another plan is compiling; wait for it and retry."})
+                    return
+                try:
+                    result = subprocess.run(
+                        [sys.executable, "-m", "mission_planner.editor",
+                         "--compile-request", str(request)],
+                        cwd=ROOT, capture_output=True, timeout=WORKER_TIMEOUT_S,
+                        check=False,
+                    )
+                finally:
+                    PREVIEW_SLOT.release()
             if result.returncode:
                 raise ValueError("preview worker failed; no accepted output")
             if len(result.stdout) > MAX_RESPONSE_BYTES:
@@ -287,7 +298,7 @@ def main(argv=None):
                       "campaign_ran": False, "error": str(exc)}
         print(json.dumps(result, allow_nan=False))
         return
-    with HTTPServer(("127.0.0.1", args.port), PreviewHandler) as server:
+    with ThreadingHTTPServer(("127.0.0.1", args.port), PreviewHandler) as server:
         if args.sitl_autopilot:
             if args.runs is None:
                 parser.error("--sitl-autopilot requires --runs")
