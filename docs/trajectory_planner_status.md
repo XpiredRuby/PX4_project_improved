@@ -271,8 +271,10 @@ assessment; it is correctly recorded as an incomplete trajectory. Remaining broa
   `physical_aircraft_intake.template.json` collects the initial information;
 - an identified vehicle model and a check that matches that aircraft's
   allocator, not only the Gazebo x500 torque model;
-- a sensor or a surveyed map, if obstacle clearance is going to be claimed
-  outside a hand-written grid;
+- pre-provided/surveyed environment information if obstacle clearance is to
+  be claimed, with GPS/IMU-only navigation retained;
+- PhD mentor presence before any physical arming, motor spin, command upload
+  or operation, as the owner already required;
 - bench evidence, flight-test cards, abort criteria, and a named approver;
 - a flight-approval record that is allowed to exist only after that evidence.
   `SITL_ONLY` artifacts cannot carry one.

@@ -461,6 +461,12 @@ sampled targets. The connected browser rehearsal and GPS-outage response also
 passed; see the checkpoint for the control-stall outcome and remaining scope. See
 `trajectory_studio_connected_validation.md` for exact commits and outcomes.
 
+The owner's existing constraints remain GPS/IMU-only navigation and PhD mentor
+presence for any physical arming, motor spin, command upload or operation.
+Terrain may have height offsets and slopes; the empty-world nominal tests do
+not qualify arbitrary unknown terrain. These constraints were preserved in
+the non-executable physical-aircraft intake.
+
 Before physical qualification, the owner must supply the ten decision groups
 already listed in architecture section 11: aircraft/configuration; operating
 basis; operating domain; obstacle/map source; drawing/altitude interpretation;

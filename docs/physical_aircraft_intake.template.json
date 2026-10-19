@@ -11,9 +11,13 @@
     "flight_controller_board": null,
     "px4_version_or_commit": null,
     "px4_parameter_export": null,
-    "sensors_and_active_estimator_sources": null,
     "companion_computer_and_control_interface": null,
-    "measured_thrust_power_and_response_data": null
+    "measured_thrust_power_and_response_data": null,
+    "permitted_navigation_sensors": [
+      "GPS",
+      "IMU"
+    ],
+    "gps_and_imu_models_and_quality": null
   },
   "operation": {
     "country_and_operating_basis": null,
@@ -34,7 +38,13 @@
     "bench_access_and_measurement_equipment": null,
     "operator_and_approver_roles": null,
     "abort_criteria_and_test_area": null,
-    "existing_hardware_or_flight_test_evidence": null
+    "existing_hardware_or_flight_test_evidence": null,
+    "mentor_presence_for_physical_operations": "Owner requires PhD mentor present before physical arming, motor spin, flight-command upload or operation."
   },
-  "instruction": "Supply known values or evidence and leave unknowns null. This intake is not a vehicle model, approval, execution artifact, or command to arm."
+  "instruction": "Supply known values or evidence and leave unknowns null. This intake is not a vehicle model, approval, execution artifact, or command to arm.",
+  "confirmed_owner_constraints": [
+    "GPS/IMU-only navigation; no cameras, LiDAR, sonar, radar or rangefinders",
+    "Terrain may include height offsets and slopes; do not assume flat terrain",
+    "Physical specifications have not yet been supplied; do not identify the aircraft from the x500 simulator"
+  ]
 }
