@@ -133,6 +133,14 @@ def run_case(case, output, world, master):
                         f"release_probe=SITLReleaseProbe({case['release_probe']['folder']!r}, "
                         f"{case['release_probe'].get('abort_after_s')!r}); ")
         release_argument = ", release_authority=release_probe"
+    elif case.get("studio_cancel_marker") is not None:
+        # Owned reviewed-plan SITL only. The cancellation marker comes from
+        # the local studio, never from a user-supplied file path.
+        release_code = (f"sys.path[:0]=[{str(ROOT)!r},{str(ROOT / 'scripts')!r}]; "
+                        "from sitl_studio_cancel import StudioCancelAuthority; "
+                        f"release_probe=StudioCancelAuthority({str(folder.parent.parent)!r}, "
+                        f"{case['studio_cancel_marker']!r}); ")
+        release_argument = ", release_authority=release_probe"
     code = ("import sys; from dataclasses import replace; "
             f"sys.path.insert(0,{str(ROOT / 'controller')!r}); "
             "from mission_config import MissionConfig; import offboard_runner; "

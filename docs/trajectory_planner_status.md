@@ -265,8 +265,7 @@ Further offline research and software qualification, beyond the demonstrated bas
   uncertainty on the vehicle contract;
 - general soft weights on intent, beyond hard stops and the deviation tube;
 - a fuller interval checker than the current hull and Lipschitz bounds;
-- broader browser mission cancellation; physical local abort is implemented
-  through the release guard and native landing cleanup;
+- connected-browser cancellation qualification across aircraft models and flight phases; the studio now implements a SITL-only exact-artifact cancellation request and proof-bound native landing/disarm verdict;
 - weather, GNSS, and communications assumptions as a full operating-domain
   record, rather than the single wind limit stored today.
 

@@ -211,7 +211,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if not self._local_request():
             self._json(403, {"error": "local origin required"})
             return
-        if self.path not in ("/api/preview", "/api/rehearsal", "/api/aircraft/assess", "/api/aircraft/parameters"):
+        if self.path not in ("/api/preview", "/api/rehearsal", "/api/rehearsal/cancel", "/api/aircraft/assess", "/api/aircraft/parameters"):
             self._json(404, {"error": "not found"})
             return
         try:
@@ -233,7 +233,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
                          else import_px4_parameters(payload.get("text")))
                 self._json(200, value)
                 return
-            if self.path == "/api/rehearsal":
+            if self.path in ("/api/rehearsal", "/api/rehearsal/cancel"):
                 if getattr(self.server, "jobs", None) is None:
                     self._json(409, {"error": "local SITL backend is not configured"})
                     return
@@ -242,7 +242,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
                     request = Path(directory) / "request.json"
                     request.write_bytes(body)
                     payload = load_contract(request, dict)
-                self._json(202, self.server.jobs.start(payload))
+                result = (self.server.jobs.start(payload) if self.path == "/api/rehearsal"
+                          else self.server.jobs.cancel(payload))
+                self._json(202, result)
                 return
             with tempfile.TemporaryDirectory(prefix="px4-preview-request-") as directory:
                 request = Path(directory) / "request.json"

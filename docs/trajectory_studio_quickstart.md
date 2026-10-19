@@ -81,6 +81,8 @@ resumes monitoring the active job after a page refresh. Editing a draft does
 not cancel an already confirmed rehearsal; results remain associated with
 the earlier artifact. Use a newly verified plan for a new rehearsal.
 
+**Safe simulator cancellation:** While a confirmed Gazebo rehearsal is running, use **Request safe simulator cancellation**. The request is tied to the exact retained plan ID and CSV SHA-256. The controller yields to native PX4 LAND/failsafe cleanup; the browser never kills an airborne simulator or force-disarms. Only fresh landing, disarm and stopped propulsion evidence permits a `CANCELLED` verdict. Missing evidence remains `FAILED`, and cancellation is not hardware authorization. Create and confirm a new plan to repeat the rehearsal.
+
 Each retained plan contains its intent, model, environment, CSV, summary,
 verification report and review record. Its `rehearsal/` directory contains
 configuration and parameter readback, controller telemetry, ULog, lifecycle

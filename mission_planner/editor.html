@@ -40,7 +40,7 @@
 <div class="stack">
 <section class="panel"><div class="steps"><b>1 · Plan</b><span>2 · Confirm interpretation</span><span>3 · Gazebo rehearsal</span><span>4 · Review and hardware approval</span></div><div class="row"><h2>Route / local north–east</h2><p id="pointCount" class="muted" style="text-align:right"></p></div><canvas id="route" width="900" height="630" aria-label="Draw a route in metres, east to the right and north upward"></canvas><div class="legend"><span>Input route</span><span class="planned">Verified planned route</span><span class="flown">Simulator truth</span></div><p class="muted">Equal scale on both axes. Launch is marked with a cross. Grid spacing: 5 m. This editor supports a horizontal drawing plane.</p></section>
 <section class="panel"><h2>Planning result</h2><div id="status" class="notice" role="status">Draft. Add a route and select Plan and verify. Simulation has not run.</div><div id="results" hidden><p id="aircraftSummary" class="notice" style="margin-top:12px"></p><div class="metrics" style="margin-top:14px"><div class="metric"><strong id="duration">—</strong><span>Route duration</span></div><div class="metric"><strong id="binding">—</strong><span>Binding limit</span></div><div class="metric"><strong id="speedBound">—</strong><span>Certified speed bound</span></div><div class="metric"><strong id="tiltBound">—</strong><span>Certified tilt bound</span></div></div><div class="plots" style="margin-top:18px"><div><h3>Speed / m·s⁻¹</h3><canvas id="speed" width="550" height="220"></canvas></div><div><h3>Height above launch / m</h3><canvas id="height" width="550" height="220"></canvas></div><div><h3>Heading / degrees</h3><canvas id="heading" width="550" height="220"></canvas></div><div><h3>Acceleration magnitude / m·s⁻²</h3><canvas id="acceleration" width="550" height="220"></canvas></div></div><div class="row" style="margin-top:16px"><button id="downloadCsv">Download trajectory CSV</button><button id="downloadEvidence">Download offline plan bundle</button></div><details style="margin-top:14px"><summary>Certificate, assumptions and limitations</summary><pre id="certificate"></pre></details></div></section>
-<section class="panel"><h2>Next gate: Gazebo rehearsal</h2><p class="muted">Confirm the proposed interpretation, then run this exact artifact on the PX4/Gazebo machine. Compare the whole mission, including takeoff, tracking, landing and disarm.</p><p id="gazeboNotice" class="notice" style="margin:12px 0">Gazebo has not run. This preview is not a clearance to fly. Hardware approval requires a qualified aircraft and a separate operator decision.</p><label><input id="confirmPlan" type="checkbox" style="width:auto"> I reviewed this exact route and its assumptions for a simulator rehearsal.</label><button id="rehearse" disabled>Confirm and rehearse in Gazebo</button><p id="simulationStatus" class="notice" style="margin-top:12px" role="status">Checking local simulation connection…</p><button id="downloadAssessment" hidden style="margin-top:12px">Download simulation assessment</button><details><summary>Simulation evidence and remaining qualification</summary><pre id="simulationEvidence"></pre></details></section>
+<section class="panel"><h2>Next gate: Gazebo rehearsal</h2><p class="muted">Confirm the proposed interpretation, then run this exact artifact on the PX4/Gazebo machine. Compare the whole mission, including takeoff, tracking, landing and disarm.</p><p id="gazeboNotice" class="notice" style="margin:12px 0">Gazebo has not run. This preview is not a clearance to fly. Hardware approval requires a qualified aircraft and a separate operator decision.</p><label><input id="confirmPlan" type="checkbox" style="width:auto"> I reviewed this exact route and its assumptions for a simulator rehearsal.</label><button id="rehearse" disabled>Confirm and rehearse in Gazebo</button><button id="cancelRehearsal" disabled>Request safe simulator cancellation</button><p class="muted">Cancellation asks the controller to yield to native PX4 LAND. The simulator is never killed while airborne; cancellation is confirmed only after fresh landing, disarm and stopped-output evidence.</p><p id="simulationStatus" class="notice" style="margin-top:12px" role="status">Checking local simulation connection…</p><button id="downloadAssessment" hidden style="margin-top:12px">Download simulation assessment</button><details><summary>Simulation evidence and remaining qualification</summary><pre id="simulationEvidence"></pre></details></section>
 </div>
 </main>
 <footer>Scientific preview using the existing planner and independent checker. Display plots do not replace the continuous bounds in the verification report.</footer>
@@ -48,7 +48,7 @@
 'use strict';
 const $=id=>document.getElementById(id), route=$('route'), ctx=route.getContext('2d');
 const completedPlanIds=new Set();
-let sitlEnabled=false, activeJob=null, simulationAssessment=null;
+let sitlEnabled=false, activeJob=null, activeJobDigest=null, cancelRequested=false, simulationAssessment=null;
 let mode='drawing', points=[[0,0],[0,8],[6,15],[0,22]], lastResult=null, revision=0, down=false;
 const scale=16, origin=[450,520];
 const number=id=>{const value=Number($(id).value);if(!Number.isFinite(value))throw Error(`Enter a finite value for ${id}`);return value};
@@ -69,11 +69,72 @@ function show(result){lastResult=result;$('gazeboNotice').textContent='Gazebo ha
 $('compile').onclick=async()=>{const submitted=revision;lastResult=null;$('results').hidden=true;draw();$('compile').disabled=true;$('busy').style.display='block';$('status').className='notice';$('status').textContent='Planning and independently verifying the trajectory…';try{const document=documentInput();const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:mode,document,...($('aircraftMode').value==='custom'?{aircraft_profile:aircraftSetup.profile}:{})})});const result=await response.json();if(submitted!==revision){$('status').textContent='Input changed while planning. The earlier result was discarded; plan the new draft.';return}if(!response.ok||!result.accepted)throw Error(result.error||'Planner refused this input.');show(result)}catch(e){if(submitted===revision){$('status').className='notice error';$('status').textContent=`No accepted plan: ${e.message}`}}finally{$('compile').disabled=false;$('busy').style.display='none'}};
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 $('downloadCsv').onclick=()=>{if(lastResult)download('trajectory.csv',lastResult.trajectory_csv,'text/csv')};$('downloadEvidence').onclick=()=>{if(lastResult){const {trajectory_csv,...bundle}=lastResult;download('offline_plan_bundle.json',JSON.stringify(bundle,null,2),'application/json')}};
-function updateRehearsalButton(){$('rehearse').disabled=!(sitlEnabled&&lastResult?.plan_id&&lastResult.simulation_compatible!==false&&$('confirmPlan').checked&&!activeJob&&!completedPlanIds.has(lastResult.plan_id))}
+function updateRehearsalButton(){
+  $('rehearse').disabled=!(sitlEnabled&&lastResult?.plan_id&&lastResult.simulation_compatible!==false&&$('confirmPlan').checked&&!activeJob&&!completedPlanIds.has(lastResult.plan_id));
+  $('cancelRehearsal').disabled=!(sitlEnabled&&activeJob&&activeJobDigest&&!cancelRequested);
+}
 $('confirmPlan').onchange=updateRehearsalButton;
 fetch('/api/capabilities').then(r=>r.json()).then(c=>{sitlEnabled=c.sitl_enabled;$('simulationStatus').textContent=sitlEnabled?'Local PX4/Gazebo backend configured. Confirm a verified plan to start its isolated rehearsal. The live altitude and health checks can still refuse it.':'Local simulation backend is not configured. Preview and downloads remain available.';updateRehearsalButton()}).catch(()=>{$('simulationStatus').textContent='Could not read simulation capabilities.'});
-async function pollRehearsal(id){try{const response=await fetch('/api/rehearsal/'+id);const state=await response.json();if(!response.ok)throw Error(state.error);$('simulationEvidence').textContent=JSON.stringify(state,null,2);const same=lastResult?.plan_id===id;const prefix=same?'Confirmed plan: ':'Earlier confirmed plan: ';$('simulationStatus').textContent=prefix+state.stage+(state.error?' — '+state.error:'');if(['COMPLETED','FAILED'].includes(state.stage)){activeJob=null;completedPlanIds.add(id);localStorage.removeItem('px4-studio-active-job');if(state.assessment){simulationAssessment={...state.assessment,plan_id:id};if(same){$('status').textContent='Offline verification passed for this aircraft candidate. Its Gazebo sampled rehearsal '+(state.assessment.sampled_rehearsal_passed?'passed.':'failed.')+' Inspect the simulation assessment and remaining qualification.'}$('gazeboNotice').textContent=prefix+'Gazebo completed; '+(state.assessment.sampled_rehearsal_passed?'sampled checks passed.':'sampled checks failed.')+' Hardware approval is separate.';draw();$('downloadAssessment').hidden=false;$('simulationStatus').textContent=prefix+(state.assessment.sampled_rehearsal_passed?'sampled rehearsal checks passed. ':'rehearsal checks failed. ')+'Inspect the assessment and remaining qualification. Hardware approval is separate.'}updateRehearsalButton();return}}catch(e){$('simulationStatus').textContent='Simulation status unavailable: '+e.message+'. The running mission is not cancelled.'}setTimeout(()=>pollRehearsal(id),1500)}
-$('rehearse').onclick=async()=>{if(!lastResult?.plan_id||!$('confirmPlan').checked)return;const id=lastResult.plan_id;$('rehearse').disabled=true;try{const response=await fetch('/api/rehearsal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:id,controller_trajectory_sha256:lastResult.summary.controller_trajectory_sha256,confirm_interpretation:true})});const state=await response.json();if(!response.ok)throw Error(state.error);activeJob=id;$('status').textContent='Offline plan accepted. Its Gazebo rehearsal is now running.';localStorage.setItem('px4-studio-active-job',id);$('gazeboNotice').textContent='Gazebo rehearsal requested for the confirmed artifact. A completed assessment is required; hardware approval is separate.';simulationAssessment=null;$('downloadAssessment').hidden=true;pollRehearsal(id)}catch(e){$('simulationStatus').textContent='Rehearsal did not start: '+e.message;updateRehearsalButton()}};
+async function pollRehearsal(id){
+  try{
+    const response=await fetch('/api/rehearsal/'+id);
+    const state=await response.json();
+    if(!response.ok)throw Error(state.error);
+    activeJobDigest=state.controller_trajectory_sha256||activeJobDigest;
+    cancelRequested=!!state.cancel_requested;
+    $('simulationEvidence').textContent=JSON.stringify(state,null,2);
+    const same=lastResult?.plan_id===id;
+    const prefix=same?'Confirmed plan: ':'Earlier confirmed plan: ';
+    $('simulationStatus').textContent=prefix+state.stage+(state.error?' — '+state.error:'');
+    if(state.cancel_requested&&['STARTING','RUNNING'].includes(state.stage)){
+      $('simulationStatus').textContent='Safe cancellation requested. Waiting for PX4 LAND, disarm and stopped-output confirmation. The simulator is not being killed.';
+    }
+    if(['COMPLETED','FAILED','CANCELLED'].includes(state.stage)){
+      activeJob=null;
+      activeJobDigest=null;
+      completedPlanIds.add(id);
+      localStorage.removeItem('px4-studio-active-job');
+      if(state.stage==='CANCELLED'){
+        $('simulationStatus').textContent=prefix+'Cancellation confirmed after PX4 LAND, disarm and stopped propulsion. No successful mission assessment is claimed.';
+        $('gazeboNotice').textContent='SITL cancellation completed safely. This is not hardware approval.';
+      }else if(state.assessment){
+        simulationAssessment={...state.assessment,plan_id:id};
+        if(same){
+          $('status').textContent='Offline verification passed for this aircraft candidate. Its Gazebo sampled rehearsal '+(state.assessment.sampled_rehearsal_passed?'passed.':'failed.')+' Inspect the simulation assessment and remaining qualification.';
+        }
+        $('gazeboNotice').textContent=prefix+'Gazebo completed; '+(state.assessment.sampled_rehearsal_passed?'sampled checks passed.':'sampled checks failed.')+' Hardware approval is separate.';
+        draw();
+        $('downloadAssessment').hidden=false;
+        $('simulationStatus').textContent=prefix+(state.assessment.sampled_rehearsal_passed?'sampled rehearsal checks passed. ':'rehearsal checks failed. ')+'Inspect the assessment and remaining qualification. Hardware approval is separate.';
+      }
+      updateRehearsalButton();
+      return;
+    }
+    updateRehearsalButton();
+  }catch(e){
+    $('simulationStatus').textContent='Simulation status unavailable: '+e.message+'. The running mission is not cancelled.';
+  }
+  setTimeout(()=>pollRehearsal(id),1500);
+}
+$('cancelRehearsal').onclick=async()=>{
+  if(!activeJob||!activeJobDigest||cancelRequested)return;
+  const id=activeJob;
+  $('cancelRehearsal').disabled=true;
+  try{
+    const response=await fetch('/api/rehearsal/cancel',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({plan_id:id,controller_trajectory_sha256:activeJobDigest})
+    });
+    const state=await response.json();
+    if(!response.ok)throw Error(state.error);
+    cancelRequested=true;
+    $('simulationStatus').textContent='Cancellation requested. The controller must complete native landing and disarm before the job can be marked cancelled.';
+  }catch(e){
+    $('simulationStatus').textContent='Cancellation request was not accepted: '+e.message+'. Check the retained simulation status.';
+  }
+  updateRehearsalButton();
+};
+$('rehearse').onclick=async()=>{if(!lastResult?.plan_id||!$('confirmPlan').checked)return;const id=lastResult.plan_id;$('rehearse').disabled=true;try{const response=await fetch('/api/rehearsal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:id,controller_trajectory_sha256:lastResult.summary.controller_trajectory_sha256,confirm_interpretation:true})});const state=await response.json();if(!response.ok)throw Error(state.error);activeJob=id;activeJobDigest=state.controller_trajectory_sha256;cancelRequested=false;updateRehearsalButton();$('status').textContent='Offline plan accepted. Its Gazebo rehearsal is now running.';localStorage.setItem('px4-studio-active-job',id);$('gazeboNotice').textContent='Gazebo rehearsal requested for the confirmed artifact. A completed assessment is required; hardware approval is separate.';simulationAssessment=null;$('downloadAssessment').hidden=true;pollRehearsal(id)}catch(e){$('simulationStatus').textContent='Rehearsal did not start: '+e.message;updateRehearsalButton()}};
 $('downloadAssessment').onclick=()=>{if(simulationAssessment)download('simulation_assessment.json',JSON.stringify(simulationAssessment,null,2),'application/json')};
 
 let aircraftCatalog=null, aircraftSetup=null, aircraftRevision=0, checkedAircraftRevision=-1, parameterSuggestions=null, registeredProfile=null;

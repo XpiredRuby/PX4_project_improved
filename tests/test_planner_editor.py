@@ -109,6 +109,20 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, _ = self.request("POST", "/api/launch", "{}", {"Content-Type": "application/json"})
         self.assertEqual(status, 404)
 
+    def test_cancellation_has_no_hardware_route_and_requires_owned_backend(self):
+        status, body = self.request("POST", "/api/rehearsal/cancel", "{}",
+                                    {"Content-Type": "application/json"})
+        self.assertEqual(status, 409)
+        self.assertIn(b"not configured", body)
+        status, _ = self.request("GET", "/api/rehearsal/cancel")
+        self.assertEqual(status, 404)
+        headers = {"Content-Type": "application/json",
+                   "Origin": "https://attacker.example"}
+        with patch("mission_planner.editor.subprocess.run") as worker:
+            status, _ = self.request("POST", "/api/rehearsal/cancel", "{}", headers)
+            self.assertEqual(status, 403)
+            worker.assert_not_called()
+
     def test_aircraft_api_lists_missing_inputs_and_refuses_hidden_authority(self):
         status, body = self.request("GET", "/api/aircraft/catalog")
         self.assertEqual(status, 200)

@@ -2,7 +2,7 @@
 
 Draw a route or answer the mission interview, complete a reusable aircraft
 profile, independently verify the trajectory, inspect its interpretation and
-confirm an exact-artifact Gazebo rehearsal. Start with the
+confirm an exact-artifact Gazebo rehearsal, with a controlled simulator-only cancellation request if needed. Start with the
 [studio quickstart](docs/trajectory_studio_quickstart.md) and
 [aircraft setup](docs/aircraft_profiles.md). The separate
 [physical release guide](docs/physical_flight_release.md) documents the local

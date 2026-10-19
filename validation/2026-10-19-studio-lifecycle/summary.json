@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-19",
+  "release_class": "SITL_ONLY",
+  "test_type": "Connected PX4 v1.17 / Gazebo x500; no physical aircraft",
+  "source_digest_sha256": "b04fc84f28a04610bf66f4000a91c2c164d8376a93f383e7d8619f96f4e746b7",
+  "nominal": {
+    "run_id": "df0b306e82deb6d300fe1be4f869a490",
+    "stage": "COMPLETED",
+    "accepted_sampled_rehearsal": true,
+    "checks_passed": 13,
+    "checks_total": 13,
+    "names_of_checks": [
+      "Existing lifecycle/scenario audit",
+      "Telemetry gaps at most 0.25 s",
+      "Entire planned mission clock covered",
+      "Runtime reference follows exact CSV with one translation",
+      "Runtime heading follows exact CSV with one launch offset",
+      "Truth covers every recorded mission sample through contact",
+      "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+      "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+      "Touchdown truth within predeclared position/speed targets",
+      "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+      "Measured mean real-time factor in 0.95\u20131.05",
+      "Executed CSV digest matches retained plan and runner manifest",
+      "Sampled physical route stays inside user's geometric tolerance"
+    ],
+    "planned_duration_s": 22.916205246788437,
+    "controller_trajectory_sha256": "fcde911f3266ec7cc58428b8243c6fd375ae451785eaa8725a2ed3d4470bee0a",
+    "ground": {
+      "armed": false,
+      "landed_state": 1,
+      "continuous_confirmation_s": 2.0000210819998756,
+      "actuator_outputs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "evidence_sha256": "90f21febaaf5617ed1651fa1d093149377c99853ae5187a16067a9cb8daae3e4"
+    },
+    "assessment_sha256": "8fffe6ad8ce1d3237a6f2fd33cc9317ca1387a4dc77cde1956ece6c236738be4",
+    "final_job_sha256": "352fc5f464ad11d8565fe8919b104473aa27ab2879838df03d96f237f0a331f7"
+  },
+  "cancel": {
+    "run_id": "b67e7a6c1265ba3a1b464aa35687d683",
+    "stage": "CANCELLED",
+    "requested_in_active_trajectory": true,
+    "cancel_confirmed": true,
+    "outcome": "ABORTED_TO_LAND",
+    "cleanup_status": "px4_land_and_disarm_confirmed",
+    "cleanup_error": null,
+    "runner_reason": "RuntimeError: studio simulation cancellation requested; yielding to native PX4 LAND cleanup",
+    "controller_trajectory_sha256": "fcde911f3266ec7cc58428b8243c6fd375ae451785eaa8725a2ed3d4470bee0a",
+    "ground": {
+      "armed": false,
+      "landed_state": 1,
+      "continuous_confirmation_s": 2.0000126109998746,
+      "actuator_outputs": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "evidence_sha256": "6e142ac37f2ee1d6d1da62ec4192f9d03c14eda047158e65473e277dd6b8a509"
+    },
+    "run_manifest_sha256": "5306d7df3054097c826ff671a93ab0777f1de77d5d75745b5ef126ce37c3ed1c",
+    "final_job_sha256": "2fb5fab8bf6fe35a45f4f3bd57de5ced55193ade4bca5fab49544a081e95d600"
+  },
+  "scope": {
+    "hardware_flight_clearance": false,
+    "tested_vehicle": "Gazebo x500 only",
+    "unverified": "other aircraft bindings, physical devices, real-world safety and broad environmental disturbances",
+    "raw_artifacts": "retained in external-drive WSL /home/xpire/PX4-runs/final-studio-e2e-oct19; large ULogs are not in this GitHub snapshot"
+  }
+}

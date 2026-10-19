@@ -204,6 +204,10 @@ def run_one(name, args):
     folder = args.output / name
     folder.mkdir()
     case = prepare_case(name, folder, args.reviewed_plan)
+    if name == "reviewed-plan" and args.reviewed_plan is not None:
+        # The owner-controlled marker exists in the retained studio plan.
+        # This does not introduce a hardware endpoint or allow process killing.
+        case["studio_cancel_marker"] = str(args.reviewed_plan / "CANCEL_REQUEST.json")
     binding_path = folder / "plan/simulation_binding.json"
     binding = validate_binding(load_contract(binding_path, dict), args.autopilot) if binding_path.is_file() else None
     if (folder / "plan/aircraft_profile.json").exists() and binding is None:
@@ -332,6 +336,37 @@ def run_one(name, args):
         gcs.close()
 
 
+
+def cancellation_verified(run, marker):
+    """A cancelled verdict requires actual native LAND/disarm evidence."""
+    run, marker = Path(run), Path(marker)
+    if not marker.is_file() or not (run / "final_ground.json").is_file():
+        return False
+    manifests = list((run / "batch/reviewed-plan").glob("run_manifest_*.json"))
+    if len(manifests) != 1:
+        return False
+    try:
+        request = load_contract(marker, dict)
+        ground = load_contract(run / "final_ground.json", dict)
+        manifest = load_contract(manifests[0], dict)
+        state = manifest.get("final_state", {})
+        outputs = ground.get("actuators", [])
+        return (request.get("requested") is True
+                and request.get("release_class") == "SITL_ONLY"
+                and "studio simulation cancellation requested" in manifest.get("reason", "")
+                and manifest.get("outcome") in ("PX4_FAILSAFE", "ABORTED_TO_LAND")
+                and manifest.get("cleanup_error") is None
+                and manifest.get("cleanup_status") in
+                    ("px4_land_and_disarm_confirmed",
+                     "px4_failsafe_land_and_disarm_confirmed")
+                and state.get("armed") is False and state.get("landed_state") == 1
+                and ground.get("armed") is False and ground.get("landed_state") == 1
+                and float(ground.get("continuous_confirmation_s", 0)) >= 2.
+                and bool(outputs) and all(math.isfinite(v) and abs(v) <= .01 for v in outputs))
+    except (OSError, ValueError, TypeError, KeyError):
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--confirm-sitl", action="store_true", required=True)
@@ -378,6 +413,15 @@ def main():
             if name in ("drawn-gps-outage-4s", "drawn-control-stall") and not assessment["fault_response_passed"]:
                 raise RuntimeError("Fault response targets failed; inspect assessment.json")
     except Exception as exc:
+        cancelled = (name == "reviewed-plan" and args.reviewed_plan is not None
+                     and cancellation_verified(args.output / name,
+                                               args.reviewed_plan / "CANCEL_REQUEST.json"))
+        if cancelled:
+            write_json(args.output / "status.json", {
+                "stage": "CANCELLED", "case": name,
+                "cancel_confirmed": True,
+                "message": "Simulator cancellation verified: PX4 landing, disarm and stopped outputs."})
+            return
         write_json(args.output / "status.json", {"stage": "FAILED", "case": name,
                                                   "error": f"{type(exc).__name__}: {exc}"})
         raise

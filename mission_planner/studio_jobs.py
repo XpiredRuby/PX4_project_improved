@@ -100,8 +100,38 @@ class StudioJobs:
             status["assessment"] = json.loads(assessment.read_text())
         if status["stage"] == "FAILED" and (folder / "worker.log").is_file():
             status["diagnostics"] = (folder / "worker.log").read_text(errors="replace")[-6000:]
-        status.update(release_class="SITL_ONLY", flight_approval=False)
+        status.update(release_class="SITL_ONLY", flight_approval=False,
+                      cancel_requested=(folder / "CANCEL_REQUEST.json").is_file())
         return status
+
+    def cancel(self, payload):
+        """Request controller-managed landing; never kill the simulator process.
+
+        No physical endpoint is exposed. Even a failed mission must retain
+        landing, disarm and propulsion evidence before a cancelled verdict.
+        """
+        if (not isinstance(payload, dict)
+                or set(payload) != {"plan_id", "controller_trajectory_sha256"}):
+            raise ValueError("SITL cancellation needs the exact active plan and trajectory digest")
+        identifier = payload["plan_id"]
+        folder = self.folder(identifier)
+        summary = load_contract(folder / "summary.json", dict)
+        if (payload["controller_trajectory_sha256"] != summary["controller_trajectory_sha256"]
+                or hashlib.sha256((folder / "trajectory.csv").read_bytes()).hexdigest()
+                    != summary["controller_trajectory_sha256"]):
+            raise ValueError("cancellation does not match the confirmed trajectory")
+        status = self.status(identifier)
+        if (self.current != identifier or self.process is None
+                or self.process.poll() is not None
+                or status["stage"] not in ("STARTING", "RUNNING")):
+            raise ValueError("this rehearsal is not running; inspect its retained assessment")
+        marker = folder / "CANCEL_REQUEST.json"
+        if not marker.exists():
+            write_json(marker, {"release_class": "SITL_ONLY", "requested": True,
+                                "plan_id": identifier,
+                                "controller_trajectory_sha256": summary["controller_trajectory_sha256"],
+                                "requested_at": datetime.now(timezone.utc).isoformat()})
+        return self.status(identifier)
 
     def start(self, payload):
         if (not isinstance(payload, dict)

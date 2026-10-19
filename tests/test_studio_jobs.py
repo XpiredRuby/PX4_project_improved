@@ -93,6 +93,43 @@ class StudioJobTests(unittest.TestCase):
         self.assertEqual(status["stage"], "FAILED")
         self.assertFalse(status["flight_approval"])
 
+    def test_cancellation_is_exact_artifact_bound_and_never_kills_worker(self):
+        process = Mock(pid=123)
+        process.poll.return_value = None
+        with patch("mission_planner.studio_jobs.subprocess.Popen", return_value=process):
+            self.jobs.start(self.confirmation)
+        self.addCleanup(self.jobs.log.close)
+        payload = {"plan_id": self.identifier,
+                   "controller_trajectory_sha256": self.confirmation["controller_trajectory_sha256"]}
+        for wrong in (dict(payload, plan_id="../outside"),
+                      dict(payload, controller_trajectory_sha256="0"*64),
+                      dict(payload, force_kill=True), {}):
+            with self.subTest(payload=wrong), self.assertRaises(ValueError):
+                self.jobs.cancel(wrong)
+        with patch.object(process, "terminate", side_effect=AssertionError("never kill"), create=True) as kill:
+            status = self.jobs.cancel(payload)
+            self.assertEqual(status["stage"], "STARTING")
+            self.assertTrue(status["cancel_requested"])
+            self.assertTrue(self.jobs.cancel(payload)["cancel_requested"])
+            kill.assert_not_called()
+        marker = json.loads((self.jobs.folder(self.identifier) / "CANCEL_REQUEST.json").read_text())
+        self.assertEqual(marker["release_class"], "SITL_ONLY")
+        self.assertEqual(marker["plan_id"], self.identifier)
+        self.assertTrue(marker["requested"])
+        self.assertFalse(status["flight_approval"])
+
+    def test_no_cancel_before_start_or_after_process_exit(self):
+        payload = {"plan_id": self.identifier,
+                   "controller_trajectory_sha256": self.confirmation["controller_trajectory_sha256"]}
+        with self.assertRaisesRegex(ValueError, "not running"):
+            self.jobs.cancel(payload)
+        with patch("mission_planner.studio_jobs.subprocess.Popen",
+                   return_value=SimpleNamespace(poll=lambda: 1)):
+            self.jobs.start(self.confirmation)
+        with self.assertRaisesRegex(ValueError, "not running"):
+            self.jobs.cancel(payload)
+        self.assertFalse((self.jobs.folder(self.identifier) / "CANCEL_REQUEST.json").exists())
+
     def test_unregistered_aircraft_cannot_silently_use_the_x500_simulator(self):
         from mission_planner.aircraft import assess_profile
         profile = json.loads((ROOT / "config/planner/aircraft/hex.json").read_text())
