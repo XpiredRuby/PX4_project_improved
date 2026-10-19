@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "release_class": "SITL_ONLY",
+  "stops": [
+    {
+      "point_id": "p1",
+      "planned_stop_s": 9.733659579603485,
+      "passed": true,
+      "clock_mismatch_s": 0.01572712139656396,
+      "position_error_m": 0.31048767429298774,
+      "actual_speed_m_s": 0.04447927524087495
+    }
+  ],
+  "thresholds": {
+    "position_m": 0.5,
+    "speed_m_s": 0.2,
+    "clock_s": 0.1
+  },
+  "scope": "sampled near-rest at interior hard points, not continuous stopping proof",
+  "implementation_sha256": "b02ef049014771658d1b9151e3e696fdcece51901f0cc8df62cc8fe848c945cb",
+  "evidence_sha256": {
+    "plan/trajectory.csv": "86c6f6df53b6ce33bf2d54d20b0c646fc3baed86076a3f2711bfc218e72662d8",
+    "plan/intent.json": "d9fd13a36770e121bdf49660ef7586c8b09db4d2833beb49b6e553c26baadcf6",
+    "assessment.json": "0d2793876535fede5bbecbc3d09f7846921be87ce189ad9e39ce01b9902217ca",
+    "batch/hard-stop-nominal/research_log_20261019T203828570173Z.csv": "7f7e48da86c27cba4f18cd2d03e57474fa72837986175cd50cdb1387854a3477",
+    "runtime/log/2026-10-19/20_38_21.ulg": "fec7b18921be3fcedff66df5645a3de08b8931d7e2b49d1d922f557f9d8dd179"
+  }
+}

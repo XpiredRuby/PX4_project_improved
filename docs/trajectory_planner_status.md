@@ -40,6 +40,16 @@ PX4/Gazebo rehearsals. It has no physical-flight endpoint.
 
 Completion is tracked by these evidence gates, not an uncalibrated percentage.
 
+## Scoped trajectory/simulation acceptance checkpoint
+
+The reference workflow now opens without an aircraft questionnaire, keeps
+status/cancellation responsive during compilation, and serializes job ownership.
+The [retained acceptance record](../validation/2026-10-19-trajectory-acceptance/README.md)
+contains the 16-case offline matrix, five connected Gazebo route classes,
+measured simulator speed/tilt and interior-stop checks, and Chrome nominal and
+cancellation results. See [manual trial steps](trajectory_simulation_acceptance.md).
+Manual user acceptance remains; physical flight is outside this milestone.
+
 ## 1. The whole plan
 
 The product has two ways to describe a mission. Both become the same checked

@@ -12,8 +12,8 @@
 <header><div><div class="eyebrow">PX4 research / mission planning</div><h1>Trajectory studio</h1><p class="muted">Shape the route. Inspect the physics. Review the evidence.</p></div><div class="badge">SITL_ONLY</div></header>
 <main>
 <aside class="stack">
-<section class="panel"><h2>Simulation model</h2><p class="muted">Start with the configured x500 reference model. No aircraft questionnaire is needed to draw and rehearse.</p><details id="advancedSetup"><summary>Advanced simulator setup (optional)</summary>
-<label for="aircraftMode">Aircraft for this mission</label><select id="aircraftMode"><option value="demo" selected>x500 reference simulation</option><option value="custom">Use a custom simulator profile</option></select>
+<section class="panel"><h2>Simulation model</h2><p class="muted">Start with the configured x500 reference model. No aircraft questionnaire is needed to draw and rehearse.</p>
+<label for="aircraftMode">Selected model</label><select id="aircraftMode"><option value="demo" selected>x500 reference simulation</option><option value="custom">Use a custom simulator profile</option></select><details id="advancedSetup"><summary>Advanced simulator setup (optional)</summary>
 <div id="aircraftControls" hidden><p class="muted">Enter the loaded configuration once, then save or reuse it. Empty values remain unknown. Examples are software fixtures, not measured aircraft.</p>
 <div class="row"><select id="aircraftExample" aria-label="Example aircraft"><option value="quad">Example quad</option><option value="hex">Example hex</option><option value="octo">Example octo</option><option value="x500">Installed x500 SDF</option></select><button id="loadAircraftExample">Load example</button></div>
 <button id="useRegisteredAircraft" hidden style="margin-top:8px">Use registered simulator aircraft</button>
@@ -146,7 +146,7 @@ function loadAircraft(profile){$('advancedSetup').open=true;for(const q of aircr
 function selectedAircraftSetup(){if($('aircraftMode').value==='demo')return null;if(!aircraftSetup?.ready||checkedAircraftRevision!==aircraftRevision)throw Error('Complete Aircraft setup and check the inputs before planning.');return aircraftSetup}
 async function checkAircraft(){const submitted=aircraftRevision;try{const response=await fetch('/api/aircraft/assess',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(aircraftInput())});const result=await response.json();if(submitted!==aircraftRevision)return;if(!response.ok)throw Error(result.error);aircraftSetup=result;checkedAircraftRevision=submitted;const missing=result.missing_questions.map(q=>q.label);const errors=result.errors.map(e=>e.field+': '+e.error);$('aircraftStatus').className=result.ready?'notice':'notice error';$('aircraftStatus').textContent=result.ready?`Setup complete for planning. Thrust/weight ${result.thrust_to_weight.toFixed(2)}; energy permits ${result.energy_limited_flight_s.toFixed(0)} s including lifecycle and contingency. These remain declared bounds.`:[...result.compatibility_blockers,...errors,missing.length?'Missing: '+missing.join(', '):''].filter(Boolean).join('\n');invalidate()}catch(e){$('aircraftStatus').className='notice error';$('aircraftStatus').textContent=e.message}}
 $('checkAircraft').onclick=checkAircraft;
-$('aircraftMode').onchange=()=>{$('aircraftControls').hidden=$('aircraftMode').value==='demo';invalidate()};
+$('aircraftMode').onchange=()=>{const custom=$('aircraftMode').value==='custom';$('aircraftControls').hidden=!custom;if(custom)$('advancedSetup').open=true;invalidate()};
 $('rotorJson').oninput=aircraftChanged;
 $('loadAircraftExample').onclick=async()=>{try{const r=await fetch('/api/aircraft/example/'+$('aircraftExample').value);if(!r.ok)throw Error('Example unavailable');loadAircraft(await r.json())}catch(e){$('aircraftStatus').textContent=e.message}};
 $('useRegisteredAircraft').onclick=()=>{if(registeredProfile)loadAircraft(registeredProfile)};
