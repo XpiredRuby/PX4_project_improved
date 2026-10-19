@@ -9,12 +9,14 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
 
 import numpy as np
 import pandas as pd
 
 from sitl_ground_truth import audit_ground_truth, interpolation_coverage, ordered_samples, source_window
 from trajectory_quality import distribution
+from simulation_physics import assess_simulation_physics, quaternion_tilt_deg
 
 
 def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4):
@@ -143,6 +145,11 @@ def assess_aircraft_envelope(df, physical, profile, budget):
 
 
 def assess_case(folder):
+    # Support both an imported harness and direct CLI invocation from analysis/.
+    project_root = Path(__file__).resolve().parents[1]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    from mission_planner.contracts import VehicleModel, load_contract
     from pyulog import ULog
     folder = Path(folder)
     run = folder / "batch" / folder.name
@@ -170,6 +177,8 @@ def assess_case(folder):
     w, x, y, z = quaternion.T
     yaw = np.arctan2(2 * (w*z + x*y), 1 - 2 * (y*y + z*z))
     velocity = interpolate(names[3], ("vx", "vy", "vz"))
+    acceleration = interpolate(names[3], ("ax", "ay", "az"))
+    tilt_deg = quaternion_tilt_deg(quaternion)
     plan_path = folder / "plan/trajectory.csv"
     configuration = json.loads((folder / "simulation_configuration.json").read_text())
     binding = configuration.get("simulation_binding")
@@ -177,6 +186,20 @@ def assess_case(folder):
     result = assess_frames(df, pd.read_csv(plan_path), physical, yaw, velocity,
                            json.loads((run / "audit.json").read_text()),
                            json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count)
+    model_file = folder / "plan/vehicle_model.json"
+    if not model_file.exists():
+        # The legacy five-stop regression uses the same x500 SITL model.
+        model_file = project_root / "config/planner/x500_sitl_vehicle_model.json"
+    vehicle = load_contract(model_file, VehicleModel.from_dict)
+    kinematics = assess_simulation_physics(
+        df.phase.to_numpy(), velocity, acceleration, tilt_deg,
+        maximum_speed_m_s=vehicle.maximum_speed_m_s,
+        maximum_tilt_deg=vehicle.maximum_tilt_deg,
+    )
+    result["checks"].extend(kinematics["checks"])
+    result["simulator_kinematics"] = {
+        "observations": kinematics["observations"], "scope": kinematics["scope"]}
+    result["sampled_rehearsal_passed"] &= all(c["passed"] for c in kinematics["checks"])
     profile_path = folder / "plan/aircraft_profile.json"
     if profile_path.is_file():
         profile = json.loads(profile_path.read_text())
@@ -225,6 +248,7 @@ def assess_case(folder):
     # A forced interruption is judged on its declared fault response, not on
     # nominal route completion or the intentionally interrupted sampling gap.
     fault_names = {"Existing lifecycle/scenario audit", "Truth covers every recorded mission sample through contact",
+                   *(check["name"] for check in kinematics["checks"]),
                    "Touchdown truth within predeclared position/speed targets",
                    "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
                    "Measured mean real-time factor in 0.95–1.05",
