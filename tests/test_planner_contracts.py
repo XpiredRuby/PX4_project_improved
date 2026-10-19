@@ -76,6 +76,7 @@ def mission():
             "look_at_north_m": None,
             "look_at_east_m": None,
             "look_at_down_m": None,
+            "yaw_profile": None,
             "time_mode": "minimize",
             "requested_duration_s": None,
         },
@@ -216,6 +217,25 @@ class PlannerContractTests(unittest.TestCase):
         yaw["motion"].update(yaw_mode="fixed", fixed_yaw_deg=None)
         with self.assertRaisesRegex(ValueError, "fixed yaw"):
             MissionIntent.from_dict(yaw)
+
+        profile = mission()
+        profile["motion"].update(
+            yaw_mode="profile",
+            yaw_profile=[
+                {"parameter": 0.0, "yaw_deg": 0.0},
+                {"parameter": 0.4, "yaw_deg": 15.0},
+            ],
+        )
+        with self.assertRaisesRegex(ValueError, "end at 1"):
+            MissionIntent.from_dict(profile)
+        profile["motion"]["yaw_profile"] = [
+            {"parameter": 0.0, "yaw_deg": 0.0},
+            {"parameter": 1.0, "yaw_deg": 15.0},
+        ]
+        self.assertEqual(MissionIntent.from_dict(profile).motion.yaw_mode, "profile")
+        profile["motion"].update(yaw_mode="fixed", fixed_yaw_deg=0.0)
+        with self.assertRaisesRegex(ValueError, "inconsistent"):
+            MissionIntent.from_dict(profile)
 
         periodic = mission()
         periodic["path"]["closure"] = "periodic"

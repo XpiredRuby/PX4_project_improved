@@ -26,6 +26,7 @@ from .timing import PathBounds, certified_dynamics, repeated_bounds, schedule_de
 from .yaw import (
     MAXIMUM_HEADING_ERROR_RAD,
     curve_parameter,
+    explicit_heading_error_bound,
     heading_error_bound,
 )
 
@@ -110,7 +111,20 @@ def _trajectory_binds_to_curve(
     schedule = candidate.schedule
     profile = candidate.yaw_profile
     look_at = None
-    if motion.yaw_mode in {"tangent", "look_at"}:
+    if motion.yaw_mode == "profile":
+        if profile is None or not motion.yaw_profile:
+            return False
+        try:
+            error = explicit_heading_error_bound(
+                profile,
+                motion.yaw_profile,
+                count=8_000,
+            )
+        except ValueError:
+            return False
+        if error > MAXIMUM_HEADING_ERROR_RAD + 1e-9:
+            return False
+    elif motion.yaw_mode in {"tangent", "look_at"}:
         if profile is None:
             return False
         if motion.yaw_mode == "look_at":
@@ -157,7 +171,7 @@ def _trajectory_binds_to_curve(
         rate = q1 * loops
         acceleration_rate = q2 * loops
         jerk_rate = q3 * loops
-        if motion.yaw_mode in {"tangent", "look_at"}:
+        if motion.yaw_mode in {"tangent", "look_at", "profile"}:
             yaw_first = profile.evaluate(normalized, 1)[0]
             yaw_second = profile.evaluate(normalized, 2)[0]
             yaw_third = profile.evaluate(normalized, 3)[0]
@@ -311,7 +325,7 @@ def _dynamic_margins(
             candidate.schedule,
             duration,
         ))
-        tracked_yaw = motion.yaw_mode in {"tangent", "look_at"}
+        tracked_yaw = motion.yaw_mode in {"tangent", "look_at", "profile"}
         if tracked_yaw:
             if candidate.yaw_profile is None:
                 return False, -math.inf

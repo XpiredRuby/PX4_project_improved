@@ -191,6 +191,12 @@ def compile_drawn_path(
             f"(0, 0, {-controller_cruise_height_m}) to match controller rebasing"
         )
     pieces = _split_on_hard_points(intent.path)
+    if intent.motion.yaw_mode == "profile" and len(pieces) != 1:
+        raise PlanningError(
+            "an explicit yaw profile applies to one rest-to-rest piece; "
+            "a stop splits the path",
+            limiting_constraint="yaw",
+        )
     geometries = [
         build_smooth_path(
             piece,
@@ -295,6 +301,8 @@ def compile_drawn_path(
                 "tangent mode requires the aircraft to start pointed along the initial path tangent",
                 "a periodic path starts and stops at its seam; extra laps repeat that loop",
                 "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
+                "a circle entry flies a lead-in from launch and meets the seam without stopping",
+                "an explicit yaw profile is a certified fit to requested heading samples on one rest-to-rest piece",
                 "interior hard points are full stops; exact points are flown through",
                 "look-at yaw tracks one fixed point and is refused if the path can reach it",
                 "open_depart is refused because the runner lands from a final stop",

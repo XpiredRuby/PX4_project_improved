@@ -2,8 +2,10 @@
 
 Roll and pitch are not questions. They are whatever attitude the acceleration
 requires, and the verifier checks them against tilt, thrust, and body rate.
-A circle may name an exit. Those laps become one open path that flies each
-launch seam through and stops at the end of the exit.
+A circle may name an entry, an exit, or both. The lead-in leaves launch and
+meets the circle without a stop. The laps become one open path that flies each
+launch seam through and stops at the end of the exit, or at the seam when
+there is no exit. Yaw may be an explicit heading profile on that one piece.
 """
 
 from __future__ import annotations
@@ -66,36 +68,32 @@ def _circle_points(center_north: float, center_east: float, altitude: float, dev
     return points
 
 
-def _exit_points(raw_exit, altitude: float):
-    if not isinstance(raw_exit, list) or len(raw_exit) < 1:
-        raise ValueError("interview.exit must contain at least one point")
+def _leg_points(raw_leg, altitude: float, leg: str):
+    field = f"interview.{leg}"
+    if not isinstance(raw_leg, list) or len(raw_leg) < 1:
+        raise ValueError(f"{field} must contain at least one point")
     points = []
-    for index, raw in enumerate(raw_exit):
-        value = _object(raw, f"interview.exit[{index}]")
+    for index, raw in enumerate(raw_leg):
+        value = _object(raw, f"{field}[{index}]")
         unknown = set(value) - {"north_m", "east_m", "hard", "exact"}
         if unknown:
             raise ValueError(
-                f"interview.exit[{index}] has unknown fields: "
-                + ", ".join(sorted(unknown))
+                f"{field}[{index}] has unknown fields: " + ", ".join(sorted(unknown))
             )
         if "north_m" not in value or "east_m" not in value:
-            raise ValueError(
-                f"interview.exit[{index}] requires north_m and east_m"
-            )
+            raise ValueError(f"{field}[{index}] requires north_m and east_m")
         hard = value.get("hard", False)
         exact = value.get("exact", False)
         if not isinstance(hard, bool) or not isinstance(exact, bool):
-            raise ValueError(
-                f"interview.exit[{index}] hard and exact must be boolean"
-            )
+            raise ValueError(f"{field}[{index}] hard and exact must be boolean")
         if hard and exact:
             raise ValueError(
-                f"interview.exit[{index}] cannot both stop and be flown through"
+                f"{field}[{index}] cannot both stop and be flown through"
             )
         points.append({
-            "point_id": f"exit-{index}",
-            "north_m": _number(value["north_m"], f"interview.exit[{index}].north_m"),
-            "east_m": _number(value["east_m"], f"interview.exit[{index}].east_m"),
+            "point_id": f"{leg}-{index}",
+            "north_m": _number(value["north_m"], f"{field}[{index}].north_m"),
+            "east_m": _number(value["east_m"], f"{field}[{index}].east_m"),
             "down_m": -altitude,
             "hard": hard,
             "exact": exact,
@@ -103,14 +101,13 @@ def _exit_points(raw_exit, altitude: float):
     return points
 
 
-def _circle_with_exit(closed, laps: int, exit_points):
-    """Repeat the ring, fly each launch seam through, then leave and stop.
+def _unrolled_laps(closed, laps: int):
+    """Repeat the ring so two laps of A B C become A B C A B C A.
 
-    The ring begins at the launch. Lap 0 emits the whole ring and then the
-    seam. Each later lap emits the ring after that launch point and then the
-    seam again, so two laps of A B C become A B C A B C A. The exit is appended
-    and must not sit on the seam. The returned path is open, so the time law
-    is stationary only at the launch and at the end of the exit.
+    Every return to the launch point is an exact fly-through, including the
+    final one. A later exit makes that final seam interior. With no exit the
+    final seam is the stop, and an exact mark on an endpoint does not change
+    the rest-to-rest time law.
     """
     ring = closed[:-1]
     chain = []
@@ -130,6 +127,10 @@ def _circle_with_exit(closed, laps: int, exit_points):
             "hard": False,
             "exact": True,
         })
+    return chain
+
+
+def _append_exit(chain, exit_points):
     first = exit_points[0]
     if math.hypot(first["north_m"], first["east_m"]) <= 1e-6:
         raise PlanningError(
@@ -149,6 +150,43 @@ def _circle_with_exit(closed, laps: int, exit_points):
         chain.append(point)
         previous = point
     return chain
+
+
+def _prepend_entry(chain, entry_points):
+    """Fly from launch, through the lead-in, and onto the circle seam."""
+    if math.hypot(entry_points[0]["north_m"], entry_points[0]["east_m"]) <= 1e-6:
+        raise PlanningError(
+            "the entry must leave the launch point",
+            limiting_constraint="geometry",
+        )
+    launch = {
+        "point_id": "circle-launch",
+        "north_m": 0.0,
+        "east_m": 0.0,
+        "down_m": chain[0]["down_m"],
+        "hard": False,
+        "exact": False,
+    }
+    seam = dict(chain[0])
+    seam["hard"] = False
+    seam["exact"] = True
+    previous = launch
+    for point in entry_points:
+        if math.hypot(
+            point["north_m"] - previous["north_m"],
+            point["east_m"] - previous["east_m"],
+        ) <= 1e-6:
+            raise PlanningError(
+                "the entry repeats the previous point",
+                limiting_constraint="geometry",
+            )
+        previous = point
+    if math.hypot(previous["north_m"], previous["east_m"]) <= 1e-6:
+        raise PlanningError(
+            "the entry must reach the circle from off the seam",
+            limiting_constraint="geometry",
+        )
+    return [launch, *entry_points, seam, *chain[1:]]
 
 
 def _survey_points(length: float, width: float, spacing: float, altitude: float):
@@ -265,10 +303,12 @@ def intent_from_interview(
         "survey",
         "waypoints",
         "corridor",
+        "entry",
         "exit",
         "look_at_north_m",
         "look_at_east_m",
         "look_at_down_m",
+        "yaw_profile",
     }
     unknown = set(value) - allowed
     if unknown:
@@ -294,9 +334,9 @@ def intent_from_interview(
         raise ValueError(
             "interview.pattern must be waypoints, circle, survey, or corridor"
         )
-    if "exit" in value and pattern != "circle":
+    if pattern != "circle" and ("entry" in value or "exit" in value):
         raise PlanningError(
-            "an exit leg is only valid on a circle",
+            "an entry or exit leg is only valid on a circle",
             limiting_constraint="geometry",
         )
     altitude = _number(value["altitude_m"], "interview.altitude_m", minimum=0.1)
@@ -314,10 +354,16 @@ def intent_from_interview(
             altitude,
             deviation,
         )
-        if "exit" in value:
-            points = _circle_with_exit(
-                points, loop_count, _exit_points(value["exit"], altitude)
-            )
+        if "exit" in value or "entry" in value:
+            points = _unrolled_laps(points, loop_count)
+            if "exit" in value:
+                points = _append_exit(
+                    points, _leg_points(value["exit"], altitude, "exit")
+                )
+            if "entry" in value:
+                points = _prepend_entry(
+                    points, _leg_points(value["entry"], altitude, "entry")
+                )
             closure = "open_stop"
             loop_count = 1
         else:
@@ -354,9 +400,21 @@ def intent_from_interview(
         closure = "open_stop"
         loop_count = 1
     yaw_mode = value["yaw_mode"]
-    if yaw_mode not in {"fixed", "tangent", "look_at"}:
+    if yaw_mode not in {"fixed", "tangent", "look_at", "profile"}:
         raise PlanningError(
-            "choose fixed, tangent, or look-at yaw; roll and pitch are not mission inputs",
+            "choose fixed, tangent, look-at, or an explicit profile; "
+            "roll and pitch are not mission inputs",
+            limiting_constraint="yaw",
+        )
+    profile = value.get("yaw_profile")
+    if yaw_mode == "profile" and profile is None:
+        raise PlanningError(
+            "an explicit yaw profile needs heading samples",
+            limiting_constraint="yaw",
+        )
+    if yaw_mode != "profile" and profile is not None:
+        raise PlanningError(
+            "yaw profile samples require profile yaw",
             limiting_constraint="yaw",
         )
     look_at = (
@@ -392,6 +450,7 @@ def intent_from_interview(
             "look_at_north_m": None if yaw_mode != "look_at" else look_at[0],
             "look_at_east_m": None if yaw_mode != "look_at" else look_at[1],
             "look_at_down_m": None if yaw_mode != "look_at" else look_at[2],
+            "yaw_profile": None if yaw_mode != "profile" else profile,
             "time_mode": value["time_mode"],
             "requested_duration_s": value.get("requested_duration_s"),
         },

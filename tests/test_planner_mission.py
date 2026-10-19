@@ -131,6 +131,7 @@ class PlannerMissionTests(unittest.TestCase):
                     "look_at_north_m": None,
                     "look_at_east_m": None,
                     "look_at_down_m": None,
+                    "yaw_profile": None,
                     "time_mode": "minimize",
                     "requested_duration_s": None,
                 },

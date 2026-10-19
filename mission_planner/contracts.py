@@ -273,6 +273,45 @@ class PathIntent:
 
 
 @dataclass(frozen=True)
+class YawWaypoint:
+    """One sample of an explicit heading command, in unwrapped degrees.
+
+    ``parameter`` is the normalized path coordinate of one rest-to-rest piece,
+    from 0 at the start to 1 at the stop. Degrees are the heading change added
+    to the heading measured at launch, and they are not wrapped back into
+    ``[-180, 180]``.
+    """
+
+    parameter: float
+    yaw_deg: float
+
+
+def _yaw_profile(value: Any) -> tuple[YawWaypoint, ...] | None:
+    field = "motion.yaw_profile"
+    if value is None:
+        return None
+    samples = _array(value, field)
+    if not 2 <= len(samples) <= 128:
+        raise ValueError(f"{field} must contain 2..128 samples")
+    parsed: list[YawWaypoint] = []
+    previous: float | None = None
+    for index, raw in enumerate(samples):
+        item = _object(raw, f"{field}[{index}]")
+        _strict(item, required={"parameter", "yaw_deg"}, field=f"{field}[{index}]")
+        parameter = _number(item["parameter"], f"{field}[{index}].parameter")
+        yaw_deg = _number(item["yaw_deg"], f"{field}[{index}].yaw_deg")
+        if not 0.0 <= parameter <= 1.0:
+            raise ValueError(f"{field}[{index}].parameter must be in [0, 1]")
+        if previous is not None and parameter < previous + 1e-6:
+            raise ValueError(f"{field} parameters must strictly increase")
+        previous = parameter
+        parsed.append(YawWaypoint(parameter=parameter, yaw_deg=yaw_deg))
+    if abs(parsed[0].parameter) > 1e-9 or abs(parsed[-1].parameter - 1.0) > 1e-9:
+        raise ValueError(f"{field} must start at 0 and end at 1")
+    return tuple(parsed)
+
+
+@dataclass(frozen=True)
 class MotionIntent:
     target_speed_m_s: float | None
     maximum_speed_m_s: float
@@ -281,6 +320,7 @@ class MotionIntent:
     look_at_north_m: float | None
     look_at_east_m: float | None
     look_at_down_m: float | None
+    yaw_profile: tuple[YawWaypoint, ...] | None
     time_mode: str
     requested_duration_s: float | None
 
@@ -295,6 +335,7 @@ class MotionIntent:
             "look_at_north_m",
             "look_at_east_m",
             "look_at_down_m",
+            "yaw_profile",
             "time_mode",
             "requested_duration_s",
         }
@@ -325,7 +366,7 @@ class MotionIntent:
             raise ValueError("requested duration is inconsistent with time mode")
         yaw_mode = _choice(
             value["yaw_mode"],
-            {"fixed", "tangent", "look_at", "unconstrained"},
+            {"fixed", "tangent", "look_at", "profile", "unconstrained"},
             "motion.yaw_mode",
         )
         fixed_yaw = _optional_number(
@@ -346,6 +387,9 @@ class MotionIntent:
         )
         if (yaw_mode == "look_at") != all(item is not None for item in look_at):
             raise ValueError("look-at point is inconsistent with yaw mode")
+        profile = _yaw_profile(value["yaw_profile"])
+        if (yaw_mode == "profile") != (profile is not None):
+            raise ValueError("yaw profile is inconsistent with yaw mode")
         return cls(
             target_speed_m_s=target,
             maximum_speed_m_s=maximum,
@@ -354,6 +398,7 @@ class MotionIntent:
             look_at_north_m=look_at[0],
             look_at_east_m=look_at[1],
             look_at_down_m=look_at[2],
+            yaw_profile=profile,
             time_mode=time_mode,
             requested_duration_s=duration,
         )

@@ -38,9 +38,21 @@ def path(*, closure="open_stop"):
     })
 
 
-def motion(*, time_mode="minimize", duration=None, yaw_mode="fixed", look_at=None):
+def motion(
+    *,
+    time_mode="minimize",
+    duration=None,
+    yaw_mode="fixed",
+    look_at=None,
+    yaw_profile=None,
+):
     if yaw_mode == "look_at" and look_at is None:
         look_at = (0.0, 40.0, -8.0)
+    if yaw_mode == "profile" and yaw_profile is None:
+        yaw_profile = [
+            {"parameter": 0.0, "yaw_deg": 0.0},
+            {"parameter": 1.0, "yaw_deg": 90.0},
+        ]
     return MotionIntent.from_dict({
         "target_speed_m_s": 1.0,
         "maximum_speed_m_s": 1.25,
@@ -49,6 +61,7 @@ def motion(*, time_mode="minimize", duration=None, yaw_mode="fixed", look_at=Non
         "look_at_north_m": None if look_at is None else look_at[0],
         "look_at_east_m": None if look_at is None else look_at[1],
         "look_at_down_m": None if look_at is None else look_at[2],
+        "yaw_profile": None if yaw_mode != "profile" else yaw_profile,
         "time_mode": time_mode,
         "requested_duration_s": duration,
     })

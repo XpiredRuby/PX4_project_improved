@@ -1,11 +1,11 @@
-"""Tangent-yaw profiles with a certified heading error.
+"""Heading profiles with a certified error.
 
-The flown yaw is a scalar quintic of normalized mission time's path parameter,
-not the raw atan2 of the tangent. A polynomial cannot reproduce atan2 exactly,
-so the profile is accepted only when a Lipschitz argument bounds its error
-against the true horizontal heading. The aircraft is then commanded to follow
-the profile, whose own convex-hull derivatives are what the yaw rate,
-acceleration, and jerk limits are checked against.
+The flown yaw is a scalar quintic of the normalized path parameter, not the
+raw atan2 of the tangent and not a free heading command. A polynomial cannot
+reproduce atan2 or an arbitrary requested heading exactly, so the profile is
+accepted only when a Lipschitz argument bounds its error. The aircraft is then
+commanded to follow the profile, whose own convex-hull derivatives are what
+the yaw rate, acceleration, and jerk limits are checked against.
 """
 
 from __future__ import annotations
@@ -261,6 +261,57 @@ def plan_tangent_yaw(curve: BSplinePath, *, loops: int = 1) -> YawTrack:
         heading_at=None,
         slope=tangent_heading_slope_bound(curve),
         failure="tangent heading",
+    )
+
+
+def explicit_heading_error_bound(profile: BSplinePath, samples, *, count: int) -> float:
+    """Bound |profile - requested heading| for an explicit, unwrapped profile.
+
+    The request is the piecewise-linear heading through the supplied samples.
+    Its Lipschitz constant is the steepest segment. The same half-interval
+    remainder used for tangent and look-at yaw covers the gaps between samples.
+    ``samples`` are already in normalized path parameter, so lap count does not
+    scale this slope.
+    """
+    if isinstance(count, bool) or not isinstance(count, int) or count < 2:
+        raise ValueError("heading sample count must be an integer of at least 2")
+    parameters = np.asarray([sample.parameter for sample in samples], dtype=float)
+    heading = np.radians(np.asarray([sample.yaw_deg for sample in samples], dtype=float))
+    slope = float(np.max(np.abs(np.diff(heading) / np.diff(parameters))))
+    normalized = np.linspace(0.0, 1.0, count)
+    truth = np.interp(normalized, parameters, heading)
+    predicted = np.asarray([
+        profile.evaluate(float(value))[0] for value in normalized
+    ])
+    point_error = float(np.max(np.abs(predicted - truth)))
+    lipschitz = slope + profile.derivative_norm_bound(1)
+    return point_error + 0.5 * lipschitz / (count - 1)
+
+
+def plan_explicit_yaw(samples) -> YawTrack:
+    """Fit a heading to requested samples and accept it inside the 2 degree tube."""
+    parameters = np.asarray([sample.parameter for sample in samples], dtype=float)
+    heading = np.radians(np.asarray([sample.yaw_deg for sample in samples], dtype=float))
+    count = HEADING_SAMPLE_LADDER[-1]
+    normalized = np.linspace(0.0, 1.0, count)
+    requested = np.interp(normalized, parameters, heading)
+    best_error = math.inf
+    for intervals in HEADING_INTERVAL_LADDER:
+        profile = _fit_heading(normalized, requested, intervals)
+        error = explicit_heading_error_bound(profile, samples, count=count)
+        best_error = min(best_error, error)
+        if error <= MAXIMUM_HEADING_ERROR_RAD:
+            return YawTrack(
+                profile=profile,
+                error_bound_rad=error,
+                bounds=PathBounds.of(profile),
+                loops=1,
+            )
+    raise PlanningError(
+        "explicit heading cannot be followed within "
+        f"{math.degrees(MAXIMUM_HEADING_ERROR_RAD):.1f} degrees; best certified "
+        f"error is {math.degrees(best_error):.2f} degrees",
+        limiting_constraint="yaw_tracking",
     )
 
 

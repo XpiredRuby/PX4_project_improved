@@ -76,7 +76,7 @@ def mission_intent_schema():
         },
         "maximum_speed_m_s": _positive("Hard mission speed ceiling."),
         "yaw_mode": {
-            "enum": ["fixed", "tangent", "look_at", "unconstrained"]
+            "enum": ["fixed", "tangent", "look_at", "profile", "unconstrained"]
         },
         "fixed_yaw_deg": {
             "anyOf": [
@@ -87,6 +87,24 @@ def mission_intent_schema():
         "look_at_north_m": {"anyOf": [{"type": "number"}, {"type": "null"}]},
         "look_at_east_m": {"anyOf": [{"type": "number"}, {"type": "null"}]},
         "look_at_down_m": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "yaw_profile": {
+            "anyOf": [
+                {"type": "null"},
+                {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 128,
+                    "items": _strict_object({
+                        "parameter": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                        },
+                        "yaw_deg": {"type": "number"},
+                    }),
+                },
+            ]
+        },
         "time_mode": {"enum": ["minimize", "exact", "maximum", "none"]},
         "requested_duration_s": {
             "anyOf": [_positive("Requested mission duration."), {"type": "null"}]

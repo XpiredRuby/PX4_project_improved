@@ -123,7 +123,38 @@
             "fixed",
             "tangent",
             "look_at",
+            "profile",
             "unconstrained"
+          ]
+        },
+        "yaw_profile": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "parameter": {
+                    "maximum": 1,
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "yaw_deg": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "parameter",
+                  "yaw_deg"
+                ],
+                "type": "object"
+              },
+              "maxItems": 128,
+              "minItems": 2,
+              "type": "array"
+            }
           ]
         }
       },
@@ -135,6 +166,7 @@
         "look_at_north_m",
         "look_at_east_m",
         "look_at_down_m",
+        "yaw_profile",
         "time_mode",
         "requested_duration_s"
       ],

@@ -183,12 +183,15 @@ The baseline implements the stopped lap, including repeats of that lap. The
 time law is stationary through jerk at the seam, so velocity, acceleration, and
 jerk match there because they are all zero.
 
-A circle interview can also name an exit. The ring is written once per
-requested lap as a single open polyline. Each return to the launch point is an
-exact fly-through, and the exit is appended. The time law is stationary only at
-the launch and at the end of the exit, which is where the runner lands. Speed
-on the seam is the speed of that certified schedule. It is not a separate
-cruise command, and the path does not end in motion.
+A circle interview can name an entry, an exit, or both. The ring is written
+once per requested lap as a single open polyline. An entry starts at launch,
+flies the listed lead-in, and meets the circle at the launch seam without
+stopping. Each later return to that seam is an exact fly-through. An exit is
+appended after the last seam. With no exit the path stops on the seam. The
+time law is stationary only at the real start and at the real stop, which is
+where the runner lands. Speed on a seam that is flown through is the speed of
+that certified schedule. It is not a separate cruise command, and the path
+does not end in motion.
 
 A periodic seam whose velocity stays nonzero, and an `open_depart` ending, are
 not implemented. The current schedule can represent a rest-to-rest parameter
@@ -607,11 +610,15 @@ The executable baseline now covers the following, all still marked `SITL_ONLY`:
   or body rate. Rotor allocation is not checked.
 - **Interview.** Waypoints, a circle through the launch point, a survey
   lawnmower, and a corridor on a bound map become an ordinary `MissionIntent`.
-  Roll and pitch are not inputs. A circle may name an exit: the requested laps
-  are one open polyline, each return to the launch seam is an exact
-  fly-through, and the path stops at the end of the exit. Seam speed is the
-  certified schedule. Without an exit the circle stays periodic and stops at
-  the seam.
+  Roll and pitch are not inputs. A circle may name an entry, an exit, or both.
+  With either leg the requested laps are one open polyline. The entry meets
+  the launch seam without a stop, each later return to that seam is an exact
+  fly-through, and the path stops at the exit or, with no exit, on the seam.
+  Seam speed is the certified schedule. With neither leg the circle stays
+  periodic and stops at the seam. Yaw may be fixed, tangent, look-at, or an
+  explicit heading profile. The profile is a certified quintic through the
+  requested unwrapped samples on one rest-to-rest piece. A stop that splits
+  the path refuses that profile.
 - **Review.** A self-contained page shows the route, speed, duration, binding
   constraint, and the limitation list. It contains the phrase "not a clearance
   to fly" and has no control that dismisses a hard failure.

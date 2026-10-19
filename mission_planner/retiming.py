@@ -22,7 +22,13 @@ from .timing import (
     plan_time_law,
     repeated_bounds,
 )
-from .yaw import YawTrack, curve_parameter, plan_look_at_yaw, plan_tangent_yaw
+from .yaw import (
+    YawTrack,
+    curve_parameter,
+    plan_explicit_yaw,
+    plan_look_at_yaw,
+    plan_tangent_yaw,
+)
 
 
 MAX_TRAJECTORY_POINTS = 200_000
@@ -154,7 +160,7 @@ def retime_stop_path(
     if motion.yaw_mode == "unconstrained":
         raise PlanningError(
             "unconstrained yaw does not produce a flyable heading command; "
-            "choose fixed or tangent",
+            "choose fixed, tangent, look-at, or an explicit profile",
             limiting_constraint="yaw",
         )
     if motion.yaw_mode == "fixed" and motion.fixed_yaw_deg is None:
@@ -162,7 +168,7 @@ def retime_stop_path(
             "fixed yaw is missing its heading",
             limiting_constraint="yaw",
         )
-    if motion.yaw_mode not in {"fixed", "tangent", "look_at"}:
+    if motion.yaw_mode not in {"fixed", "tangent", "look_at", "profile"}:
         raise PlanningError(
             f"yaw mode {motion.yaw_mode} is not supported",
             limiting_constraint="yaw",
@@ -197,6 +203,13 @@ def retime_stop_path(
             ),
             loops=loop_count,
         )
+    elif motion.yaw_mode == "profile":
+        if not motion.yaw_profile:
+            raise PlanningError(
+                "an explicit yaw profile needs heading samples",
+                limiting_constraint="yaw",
+            )
+        yaw_track = plan_explicit_yaw(motion.yaw_profile)
     law = plan_time_law(
         geometry,
         speed_limit_m_s=speed_limit,

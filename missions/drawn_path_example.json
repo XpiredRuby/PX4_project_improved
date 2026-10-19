@@ -16,7 +16,8 @@
     "requested_duration_s": null,
     "target_speed_m_s": 1.0,
     "time_mode": "minimize",
-    "yaw_mode": "fixed"
+    "yaw_mode": "fixed",
+    "yaw_profile": null
   },
   "objective_priority": [
     "legal_and_safety",

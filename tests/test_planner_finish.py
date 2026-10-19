@@ -22,6 +22,7 @@ from mission_planner.mapping import (
     corridor_polyline,
 )
 from mission_planner.explain import PlanningError
+from mission_planner.plan_drawn_path import compile_drawn_path
 from mission_planner.plan_interview import intent_from_interview
 from mission_planner.retiming import retime_stop_path
 from mission_planner.rotors import rotor_duration_s, yaw_torque_available_nm
@@ -353,6 +354,196 @@ class PlannerFinishTests(unittest.TestCase):
         self.assertLess(math.hypot(seam.north_m, seam.east_m), 1.0)
         self.assertGreater(_horizontal_speed(seam), 1e-3)
 
+    def test_explicit_heading_tracks_the_request_and_a_fast_turn_takes_longer(self):
+        samples = [
+            {"parameter": 0.0, "yaw_deg": 0.0},
+            {"parameter": 1.0, "yaw_deg": 90.0},
+        ]
+        requested = motion(yaw_mode="profile", yaw_profile=samples)
+        plan = retime_stop_path(geometry(), requested, vehicle())
+        report = verify_candidate_trajectory(
+            geometry(),
+            plan,
+            requested,
+            vehicle(),
+            environment(),
+            maximum_deviation_m=0.75,
+        )
+        self.assertTrue(report.accepted)
+        self.assertLessEqual(plan.summary.heading_error_bound_rad, math.radians(2.0))
+        self.assertAlmostEqual(plan.points[0].yaw_rad, 0.0, delta=math.radians(2.0))
+        self.assertAlmostEqual(
+            plan.points[-1].yaw_rad, math.radians(90.0), delta=math.radians(2.0)
+        )
+        self.assertLess(abs(plan.points[0].yaw_rate_rad_s), 1e-6)
+        self.assertLess(abs(plan.points[-1].yaw_rate_rad_s), 1e-6)
+        self.assertGreater(
+            max(abs(point.yaw_rate_rad_s) for point in plan.points),
+            0.05,
+        )
+        fast = motion(
+            yaw_mode="profile",
+            yaw_profile=[
+                {"parameter": 0.0, "yaw_deg": 0.0},
+                {"parameter": 1.0, "yaw_deg": 1440.0},
+            ],
+        )
+        spun = retime_stop_path(geometry(), fast, vehicle())
+        held = retime_stop_path(geometry(), motion(), vehicle())
+        self.assertGreater(
+            spun.summary.selected_duration_s,
+            held.summary.selected_duration_s,
+        )
+        sharp = motion(
+            yaw_mode="profile",
+            yaw_profile=[
+                {"parameter": 0.0, "yaw_deg": 0.0},
+                {"parameter": 0.499, "yaw_deg": 0.0},
+                {"parameter": 0.501, "yaw_deg": 180.0},
+                {"parameter": 1.0, "yaw_deg": 180.0},
+            ],
+        )
+        with self.assertRaisesRegex(PlanningError, "explicit heading"):
+            retime_stop_path(geometry(), sharp, vehicle())
+
+    def test_explicit_heading_is_refused_when_a_stop_splits_the_path(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            intent = {
+                "schema_version": 1,
+                "mission_id": "split-yaw-v1",
+                "release_class": "SITL_ONLY",
+                "frame": _frame(),
+                "path": {
+                    "kind": "polyline",
+                    "closure": "open_stop",
+                    "maximum_deviation_m": 0.5,
+                    "points": [
+                        {
+                            "point_id": "start",
+                            "north_m": 0.0,
+                            "east_m": 0.0,
+                            "down_m": -8.0,
+                            "hard": True,
+                            "exact": False,
+                        },
+                        {
+                            "point_id": "gate",
+                            "north_m": 8.0,
+                            "east_m": 0.0,
+                            "down_m": -8.0,
+                            "hard": True,
+                            "exact": False,
+                        },
+                        {
+                            "point_id": "finish",
+                            "north_m": 8.0,
+                            "east_m": 8.0,
+                            "down_m": -8.0,
+                            "hard": True,
+                            "exact": False,
+                        },
+                    ],
+                },
+                "motion": {
+                    "target_speed_m_s": 1.0,
+                    "maximum_speed_m_s": 1.25,
+                    "yaw_mode": "profile",
+                    "fixed_yaw_deg": None,
+                    "look_at_north_m": None,
+                    "look_at_east_m": None,
+                    "look_at_down_m": None,
+                    "yaw_profile": [
+                        {"parameter": 0.0, "yaw_deg": 0.0},
+                        {"parameter": 1.0, "yaw_deg": 20.0},
+                    ],
+                    "time_mode": "minimize",
+                    "requested_duration_s": None,
+                },
+                "vehicle_model_id": "px4-x500-sitl-v1",
+                "environment_id": "empty-world-v1",
+                "objective_priority": [
+                    "legal_and_safety",
+                    "vehicle_and_environment",
+                    "intent_fidelity",
+                    "tracking_margin_and_energy",
+                    "duration",
+                ],
+            }
+            intent_path = root / "intent.json"
+            intent_path.write_text(json.dumps(intent), encoding="utf-8")
+            with self.assertRaisesRegex(PlanningError, "one rest-to-rest piece"):
+                compile_drawn_path(
+                    intent_path=intent_path,
+                    vehicle_path=ROOT / "config/planner/x500_sitl_vehicle_model.json",
+                    environment_path=ROOT / "config/planner/empty_world_environment.json",
+                    trajectory_path=root / "trajectory.csv",
+                    report_path=root / "report.json",
+                    summary_path=root / "summary.json",
+                    control_spacing_m=0.5,
+                    verification_resolution_m=0.05,
+                    sample_period_s=0.1,
+                    limit_scale=0.9,
+                    controller_cruise_height_m=8.0,
+                    deviation_utilization=0.75,
+                )
+
+    def test_circle_entry_meets_the_seam_in_motion_and_stops(self):
+        intent, loops = intent_from_interview(
+            _circle_interview(
+                maximum_deviation_m=1.5,
+                entry=[{"north_m": 0.0, "east_m": 6.0}],
+            )
+        )
+        self.assertEqual(loops, 1)
+        parsed = MissionIntent.from_dict(intent)
+        self.assertEqual(parsed.path.closure, "open_stop")
+        self.assertEqual(parsed.path.points[0].point_id, "circle-launch")
+        self.assertEqual(
+            (parsed.path.points[1].north_m, parsed.path.points[1].east_m),
+            (0.0, 6.0),
+        )
+        self.assertEqual(parsed.path.points[-1].north_m, 0.0)
+        self.assertEqual(parsed.path.points[-1].east_m, 0.0)
+        self.assertTrue(any(
+            point.exact and math.hypot(point.north_m, point.east_m) < 1e-9
+            for point in parsed.path.points[1:-1]
+        ))
+        with self.assertRaisesRegex(PlanningError, "must leave the launch point"):
+            intent_from_interview(
+                _circle_interview(entry=[{"north_m": 0.0, "east_m": 0.0}])
+            )
+        plan = build_smooth_path(
+            parsed.path,
+            control_spacing_m=1.0,
+            verification_resolution_m=0.1,
+        )
+        timed = retime_stop_path(plan, parsed.motion, vehicle(), sample_period_s=0.1)
+        start, finish = timed.points[0], timed.points[-1]
+        self.assertLess(_horizontal_speed(start), 1e-6)
+        self.assertLess(_horizontal_speed(finish), 1e-6)
+        self.assertAlmostEqual(finish.north_m, 0.0, places=6)
+        self.assertAlmostEqual(finish.east_m, 0.0, places=6)
+        entry_times = [
+            point.time_s
+            for point in timed.points
+            if point.north_m < 2.0 and point.east_m > 3.0
+        ]
+        far = [point for point in timed.points if point.north_m > 6.0]
+        self.assertTrue(entry_times)
+        self.assertLess(min(entry_times), min(point.time_s for point in far))
+        self.assertGreater(max(_horizontal_speed(point) for point in far), 0.2)
+        after_entry = [
+            point for point in timed.points if point.time_s > max(entry_times)
+        ]
+        seam = next(
+            point
+            for point in after_entry
+            if math.hypot(point.north_m, point.east_m) < 0.75
+        )
+        self.assertGreater(_horizontal_speed(seam), 1e-3)
+        self.assertLess(seam.time_s, finish.time_s - 1.0)
+
     def test_circle_exit_rejects_a_stop_on_the_seam_and_other_patterns(self):
         with self.assertRaisesRegex(PlanningError, "must leave the circle seam"):
             intent_from_interview(
@@ -404,6 +595,9 @@ class PlannerFinishTests(unittest.TestCase):
         status = simulator_status()
         self.assertFalse(status["campaign_ran"])
         self.assertIn("not a clearance to fly", status["clearance"])
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _circle_interview(**overrides):
