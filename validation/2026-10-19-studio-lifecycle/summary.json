@@ -2,9 +2,9 @@
   "date": "2026-10-19",
   "release_class": "SITL_ONLY",
   "test_type": "Connected PX4 v1.17 / Gazebo x500; no physical aircraft",
-  "source_digest_sha256": "b04fc84f28a04610bf66f4000a91c2c164d8376a93f383e7d8619f96f4e746b7",
+  "source_digest_sha256": "3156a3ac3bbcf47a07d2d444f010c62730280394577460d60e0e67fa37dcdb06",
   "nominal": {
-    "run_id": "df0b306e82deb6d300fe1be4f869a490",
+    "run_id": "c8540a8626eb12a6d7754f2612a8078d",
     "stage": "COMPLETED",
     "accepted_sampled_rehearsal": true,
     "checks_passed": 13,
@@ -29,20 +29,20 @@
     "ground": {
       "armed": false,
       "landed_state": 1,
-      "continuous_confirmation_s": 2.0000210819998756,
+      "continuous_confirmation_s": 2.0000623959999757,
       "actuator_outputs": [
         0.0,
         0.0,
         0.0,
         0.0
       ],
-      "evidence_sha256": "90f21febaaf5617ed1651fa1d093149377c99853ae5187a16067a9cb8daae3e4"
+      "evidence_sha256": "fbf026388d591e404597851a70e2d05f6b58c08ea6045f7307fe9b57f37ea1b5"
     },
-    "assessment_sha256": "8fffe6ad8ce1d3237a6f2fd33cc9317ca1387a4dc77cde1956ece6c236738be4",
-    "final_job_sha256": "352fc5f464ad11d8565fe8919b104473aa27ab2879838df03d96f237f0a331f7"
+    "assessment_sha256": "e19da2d14ad0435e50a3a7190b603d618b55f4274595be481f756b28e64a6181",
+    "final_job_sha256": "f860e508849e57e8d0ef3f366c34068eebc8bd24ca57d26757a02667f2a55f31"
   },
   "cancel": {
-    "run_id": "b67e7a6c1265ba3a1b464aa35687d683",
+    "run_id": "89aab84be58644df53f2921553816437",
     "stage": "CANCELLED",
     "requested_in_active_trajectory": true,
     "cancel_confirmed": true,
@@ -54,22 +54,22 @@
     "ground": {
       "armed": false,
       "landed_state": 1,
-      "continuous_confirmation_s": 2.0000126109998746,
+      "continuous_confirmation_s": 2.000018405999981,
       "actuator_outputs": [
         0.0,
         0.0,
         0.0,
         0.0
       ],
-      "evidence_sha256": "6e142ac37f2ee1d6d1da62ec4192f9d03c14eda047158e65473e277dd6b8a509"
+      "evidence_sha256": "b4467ee7d0dada45b45678966285bed54d147d30116944bbdfea354826e5206f"
     },
-    "run_manifest_sha256": "5306d7df3054097c826ff671a93ab0777f1de77d5d75745b5ef126ce37c3ed1c",
-    "final_job_sha256": "2fb5fab8bf6fe35a45f4f3bd57de5ced55193ade4bca5fab49544a081e95d600"
+    "run_manifest_sha256": "747602a4b34d5232870a9fd8e169de7b4f31accf84eaf2ba414c45ac4bb096f7",
+    "final_job_sha256": "b952c7ad8b1e6934421ae117d8d3a351f0c7ca8e6206771c198870e27e058a2c"
   },
   "scope": {
     "hardware_flight_clearance": false,
     "tested_vehicle": "Gazebo x500 only",
     "unverified": "other aircraft bindings, physical devices, real-world safety and broad environmental disturbances",
-    "raw_artifacts": "retained in external-drive WSL /home/xpire/PX4-runs/final-studio-e2e-oct19; large ULogs are not in this GitHub snapshot"
+    "raw_artifacts": "retained in external-drive WSL /home/xpire/PX4-runs/final-studio-e2e-recheck-oct19; large ULogs are not in this GitHub snapshot"
   }
 }
