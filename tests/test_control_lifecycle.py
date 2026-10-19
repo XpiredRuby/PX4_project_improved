@@ -26,6 +26,22 @@ from test_runner_protocol import FakeController, TickClock
 
 
 class ControlLifecycleTests(unittest.TestCase):
+    def test_bootstrap_handoff_preserves_current_heading_without_moving_home(self):
+        controller = PositionController()
+        controller.home_reference_ready = True
+        controller.x0, controller.y0, controller.z0 = 1., 2., .1
+        controller.yaw0 = -.2  # historical average during yaw acquisition
+        current = {"x": 1.5, "y": 3., "z": -2., "yaw": .2, "attitude_age_s": .02}
+        with patch.object(controller, "wait_for_fresh_telemetry"), patch.object(controller, "_snapshot", return_value=current):
+            controller.initialize_target(start_from_current=True)
+        self.assertEqual(controller.yaw0, current["yaw"])
+        self.assertEqual((controller.x0, controller.y0, controller.z0), (1., 2., .1))
+        self.assertEqual(controller.last_trusted_navigation_reference[-1], current["yaw"])
+        for changes in ({"yaw": math.nan}, {"attitude_age_s": 2.}, {"attitude_age_s": -1.}):
+            with self.subTest(changes=changes), patch.object(controller, "wait_for_fresh_telemetry"), patch.object(controller, "_snapshot", return_value=dict(current, **changes)):
+                with self.assertRaisesRegex(RuntimeError, "Fresh finite attitude"):
+                    controller.initialize_target(start_from_current=True)
+
     def test_estimator_replay_cannot_renew_validity_or_replace_flags(self):
         state = VehicleState()
         message = dict(time_usec=1000000, flags=55, vel_ratio=.1,

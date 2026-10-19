@@ -1204,6 +1204,14 @@ class PositionController:
 
         if start_from_current:
             snapshot = self._snapshot(time.monotonic())
+            # Home XYZ is averaged across the yaw bootstrap. Its historical
+            # mean heading can lag the attitude now being commanded by the
+            # bootstrap's zero-velocity hold. Preserve the latest measured
+            # heading at this handoff instead of introducing a yaw step.
+            if (not math.isfinite(snapshot["yaw"])
+                    or not 0 <= snapshot["attitude_age_s"] <= self.max_attitude_age_s):
+                raise RuntimeError("Fresh finite attitude required for controller handoff")
+            self.yaw0 = snapshot["yaw"]
             segment_start = (
                 snapshot["x"],
                 snapshot["y"],
