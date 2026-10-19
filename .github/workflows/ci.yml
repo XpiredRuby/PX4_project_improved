@@ -28,7 +28,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Lint safety-critical Python
-        run: python -m ruff check controller analysis scripts tests
+        run: python -m ruff check mission_planner controller analysis scripts tests
 
       - name: Generate trajectory and run regression tests
         env:

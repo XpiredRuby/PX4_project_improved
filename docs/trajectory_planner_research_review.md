@@ -413,6 +413,28 @@ circle does not qualify a changed map, aircraft, yaw profile or payload.
 
 ## 10. Work sequence and completion criteria
 
+### Hazard register to maintain through implementation
+
+Severity below is a qualitative engineering screening judgment. Exposure,
+probability, accepted residual risk and responsible named owner remain to be
+established for the aircraft and site; no numerical safety score is inferred.
+
+| Hazard | Potential severity | Required prevention or response | Evidence before physical release |
+|---|---|---|---|
+| Wrong scale, datum, yaw or origin | High: route leaves intended volume | Explicit transforms, overlay, launch binding and reset detection | Frame mutations and live-origin reset tests |
+| Smoothed corner enters obstacle | High: collision | Combined geometry/body/map/localization/tracking clearance budget | Independent continuous clearance and truth-based tracking tests |
+| Wrench or battery margin exhausted | High: loss of control or forced landing | Identified coupled allocation, power reserve and bounded ODD | Bench identification, voltage/load boundary tests and mission energy evidence |
+| Stale command continues after compute loss | High: unintended motion | Existing command expiry, independent supervision and PX4 fallback | Process-kill/stall and actual setpoint-age traces |
+| Position estimate is fresh but wrong | High: collision or departure | Innovation/quality supervision, uncertainty budget and defined lost-position action | Biased-estimate scenarios evaluated against simulator truth |
+| Old approval reused after edit | High: unintended mission | Exact artifact/configuration binding, expiry and authenticated authority | Replay, mutation and concurrent-edit tests |
+| Truncated or substituted simulation accepted | High: untested mission is launched | Provenance, complete-case manifest, coverage/gap checks and fail-closed assessor | Crash/log removal/digest substitution tests |
+| Landing/return transition omitted from plan | High: terminal collision | Full lifecycle geometry, reserved energy and approved terminal region | Transition/return/contact/disarm evidence |
+| Operator misreads an optimistic result | High: launch outside qualified domain | Separate mathematical, simulation and flight states; show assumptions | Human review exercises and state-transition tests |
+
+Each hazard must ultimately have a named owner, linked requirements, linked
+tests and recorded residual-risk disposition. This table is a starting register,
+not a completed operational risk assessment.
+
 | Increment | Concrete deliverable | Exit criterion |
 |---|---|---|
 | A | Research review, strict input corrections and complete-track checking | Adversarial tests pass and scope is documented |
