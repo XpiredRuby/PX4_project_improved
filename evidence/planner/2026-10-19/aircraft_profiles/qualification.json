@@ -1,0 +1,3401 @@
+{
+  "schema_version": 1,
+  "release_class": "SITL_ONLY",
+  "hardware_approval": false,
+  "validation": {
+    "status": {
+      "stage": "PASSED",
+      "exit_code": 0
+    },
+    "tests": [
+      "Ran 350 tests in 260.048s"
+    ],
+    "log_sha256": "38ba0c933fc561370d70d6899c224602b8d1312ef22794f45fd95cd31d8340ba"
+  },
+  "browser": {
+    "stage": "PASSED",
+    "plan_id": "7621a8b3d3150d721492724b62f0af55",
+    "results": [
+      {
+        "case": "reusable_aircraft_setup_and_model_binding",
+        "passed": true
+      },
+      {
+        "case": "exact_review_gate_and_modified_hash_refusal",
+        "passed": true,
+        "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+      },
+      {
+        "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
+        "passed": true
+      },
+      {
+        "case": "real_browser_to_gazebo_and_truth_overlay_and_download",
+        "passed": true,
+        "duration_s": 25.167786000580893
+      },
+      {
+        "case": "connected_desktop_and_mobile_layout",
+        "passed": true
+      }
+    ],
+    "page_errors": []
+  },
+  "records": [
+    {
+      "label": "diagnostic-profile-declarations-exceeded",
+      "evidence_directory": "/home/xpire/PX4-runs/aircraft-studio-oct19/0024c80f823daf61f376725688bb38c7/rehearsal/reviewed-plan",
+      "full_assessment_sha256": "54870ed241c88fbb4222240713fb204efe82bb61e029955aa606a0fc2222019d",
+      "assessment": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "campaign_ran": true,
+        "sampled_rehearsal_passed": false,
+        "hardware_approval": false,
+        "checks": [
+          {
+            "name": "Existing lifecycle/scenario audit",
+            "passed": true,
+            "detail": [
+              {
+                "name": "Nominal phase sequence",
+                "passed": true,
+                "detail": "TAKEOFF -> TRAJECTORY -> RETURN_HOME -> ALIGN -> HANDOFF -> PX4_LAND"
+              },
+              {
+                "name": "Automatic disarm confirmed",
+                "passed": true,
+                "detail": "final armed=False"
+              },
+              {
+                "name": "PX4 touchdown confirmed",
+                "passed": true,
+                "detail": "final landed_state=1"
+              },
+              {
+                "name": "Command envelope respected",
+                "passed": true,
+                "detail": "checked 3024/3024 commands"
+              },
+              {
+                "name": "Offboard stream continuity",
+                "passed": true,
+                "detail": "maximum gap=0.063s, limit=0.500s"
+              },
+              {
+                "name": "No telemetry time regression",
+                "passed": true,
+                "detail": "regression flags=0, unreadable=0"
+              },
+              {
+                "name": "No navigation loss",
+                "passed": true,
+                "detail": "LOST samples=0"
+              },
+              {
+                "name": "Touchdown dynamics within limits",
+                "passed": true,
+                "detail": "horizontal=0.008m/s (limit=0.500), vertical=0.009m/s (limit=0.500), tilt=0.37deg (limit=10.00)"
+              },
+              {
+                "name": "Touchdown position within limit",
+                "passed": true,
+                "detail": "error=0.034m (limit=1.500)"
+              },
+              {
+                "name": "No post-touchdown bounce",
+                "passed": true,
+                "detail": "post-touchdown non-ground samples=0"
+              },
+              {
+                "name": "Automatic disarm timing",
+                "passed": true,
+                "detail": "delay=2.822s (limit=5.000)"
+              },
+              {
+                "name": "Propulsion outputs zero after disarm",
+                "passed": true,
+                "detail": "max_abs_output=0.0000, actuator_age=0.001s"
+              },
+              {
+                "name": "Nominal mission completed successfully",
+                "passed": true,
+                "detail": "SUCCESS"
+              },
+              {
+                "name": "Nominal cleanup has no error",
+                "passed": true,
+                "detail": null
+              },
+              {
+                "name": "Nominal manifest confirms shutdown",
+                "passed": true,
+                "detail": {
+                  "armed": false,
+                  "failure_action": "LAND",
+                  "heartbeat_main_mode": 6,
+                  "heartbeat_sub_mode": 0,
+                  "landed_state": 1,
+                  "mission_phase": "HANDOFF",
+                  "native_landing_reference_xy": [
+                    -0.038002254308853234,
+                    0.1618456886031248
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Telemetry gaps at most 0.25 s",
+            "passed": true,
+            "detail": {
+              "maximum_s": 0.05367583800000375
+            }
+          },
+          {
+            "name": "Entire planned mission clock covered",
+            "passed": true,
+            "detail": {
+              "planned_s": 25.167786000580893,
+              "first_s": 0.0,
+              "last_s": 25.19996646100003,
+              "endpoint_sampling_tolerance_s": 0.1
+            }
+          },
+          {
+            "name": "Runtime reference follows exact CSV with one translation",
+            "passed": true,
+            "detail": {
+              "launch_translation_ned_m": [
+                -0.0380022543088532,
+                0.1618456886031248,
+                -0.004122222813691678
+              ]
+            }
+          },
+          {
+            "name": "Runtime heading follows exact CSV with one launch offset",
+            "passed": true,
+            "detail": {
+              "launch_offset_rad": 0.1251892447471618
+            }
+          },
+          {
+            "name": "Truth covers every recorded mission sample through contact",
+            "passed": true,
+            "detail": {
+              "required_rows": 3564,
+              "covered_rows": 3564,
+              "post_contact_rows_excluded": 76
+            }
+          },
+          {
+            "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+            "passed": true,
+            "detail": {
+              "samples": 3014,
+              "rms": 0.08764605232570481,
+              "p95": 0.17860426844366065,
+              "max_abs": 0.39235035589877726
+            }
+          },
+          {
+            "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+            "passed": true,
+            "detail": {
+              "samples": 3014,
+              "rms": 1.0696336971280636,
+              "p95": 1.518777506649786,
+              "max_abs": 3.211987983350818
+            }
+          },
+          {
+            "name": "Touchdown truth within predeclared position/speed targets",
+            "passed": true,
+            "detail": {
+              "position_error_m": 0.027650943470711738,
+              "horizontal_speed_m_s": 8.502706802336344e-07,
+              "vertical_speed_m_s": 1.2214124581078069e-05,
+              "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+            }
+          },
+          {
+            "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+            "passed": true,
+            "detail": {
+              "actuators": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "landed_state": 1,
+              "armed": false,
+              "continuous_confirmation_s": 2.0000301679999666
+            }
+          },
+          {
+            "name": "Measured mean real-time factor in 0.95\u20131.05",
+            "passed": true,
+            "detail": {
+              "mean": 1.0000275654782322,
+              "one_second_windows": {
+                "samples": 3620,
+                "rms": 0.9999033503444815,
+                "p95": 1.0208853537699831,
+                "max_abs": 1.0336161455510773
+              },
+              "windows_below_0_9": 0,
+              "windows_above_1_1": 0
+            }
+          },
+          {
+            "name": "Sampled navigation error fits the aircraft allowance",
+            "passed": false,
+            "detail": {
+              "error_m": {
+                "samples": 505,
+                "rms": 0.08557123296278898,
+                "p95": 0.1277867562081968,
+                "max_abs": 0.13422500843106966
+              },
+              "limit_m": 0.1
+            }
+          },
+          {
+            "name": "Sampled estimated tracking error fits the aircraft allowance",
+            "passed": false,
+            "detail": {
+              "error_m": {
+                "samples": 505,
+                "rms": 0.10171487729435795,
+                "p95": 0.29364188667407054,
+                "max_abs": 0.3407004925097138
+              },
+              "limit_m": 0.1
+            }
+          },
+          {
+            "name": "Observed nominal lifecycle fits the declared energy/time budget",
+            "passed": true,
+            "detail": {
+              "observed_wall_s": 182.15897870063782,
+              "nominal_budget_s": 217.75167900087135,
+              "route_wall_s": 25.199860334396362,
+              "route_budget_s": 37.75167900087134
+            }
+          },
+          {
+            "name": "Executed CSV digest matches retained plan and runner manifest",
+            "passed": true,
+            "detail": {
+              "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+            }
+          },
+          {
+            "name": "Sampled physical route stays inside user's geometric tolerance",
+            "passed": true,
+            "detail": {
+              "distance_m": {
+                "samples": 505,
+                "rms": 0.05800404648103024,
+                "p95": 0.064124467805344,
+                "max_abs": 0.28125569093705177
+              },
+              "limit_m": 0.5,
+              "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+            }
+          }
+        ],
+        "per_phase": {
+          "TAKEOFF": {
+            "position_error_m": {
+              "samples": 1979,
+              "rms": 0.050962057645023345,
+              "p95": 0.07868780758565785,
+              "max_abs": 0.11800770024559541
+            },
+            "heading_error_deg": {
+              "samples": 1979,
+              "rms": 1.2917581821657624,
+              "p95": 1.7126926313717572,
+              "max_abs": 3.211987983350818
+            }
+          },
+          "TRAJECTORY": {
+            "position_error_m": {
+              "samples": 505,
+              "rms": 0.13957946992879677,
+              "p95": 0.327501326361883,
+              "max_abs": 0.39235035589877726
+            },
+            "heading_error_deg": {
+              "samples": 505,
+              "rms": 0.3450166600642026,
+              "p95": 0.9592873959357597,
+              "max_abs": 1.0402225101859628
+            }
+          },
+          "RETURN_HOME": {
+            "position_error_m": {
+              "samples": 508,
+              "rms": 0.12458740134908639,
+              "p95": 0.22831864610314412,
+              "max_abs": 0.2695876742040511
+            },
+            "heading_error_deg": {
+              "samples": 508,
+              "rms": 0.39487150787735786,
+              "p95": 0.5617259034114391,
+              "max_abs": 0.7658843329808603
+            }
+          },
+          "ALIGN": {
+            "position_error_m": {
+              "samples": 22,
+              "rms": 0.11471335888884687,
+              "p95": 0.15132334329327468,
+              "max_abs": 0.15651670184589875
+            },
+            "heading_error_deg": {
+              "samples": 22,
+              "rms": 0.5562379360313181,
+              "p95": 0.5932211324372461,
+              "max_abs": 0.6148962956511185
+            }
+          }
+        },
+        "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
+        "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
+        "remaining_qualification": [
+          "pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
+          "rigid-body contact timing",
+          "actual dynamics and actuator reserves",
+          "identified aircraft and environment",
+          "obstacle-map clearance if applicable"
+        ],
+        "independent_contact_and_hold_audit": {
+          "overall_passed": true,
+          "checks": [
+            {
+              "name": "Physical contact recorded",
+              "passed": true,
+              "detail": "contact samples=77"
+            },
+            {
+              "name": "Landing reference frozen before contact",
+              "passed": true,
+              "detail": "native reference samples=540"
+            },
+            {
+              "name": "Physical contact truth covered",
+              "passed": true,
+              "detail": "contact row=3563"
+            },
+            {
+              "name": "Physical touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.027650943470711738m, limit=1.5m"
+            }
+          ],
+          "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."
+        },
+        "scenario_expected": "nominal",
+        "fault_response_passed": false,
+        "evidence_sha256": {
+          "batch/reviewed-plan/research_log_20261019T151231411488Z.csv": "225b62f052f1aed291260caf84203a56e28534dd55099a1087226f88830f788b",
+          "runtime/log/2026-10-19/15_12_24.ulg": "d28776de5e6f64b9fe3f4fb83d5563c1cab83bd2857d2694f6c4886e08c2a757",
+          "plan/trajectory.csv": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+          "batch/reviewed-plan/audit.json": "a3f2a9c0e03b932dcc39e0a6f04739433f72ee51e70394a7ef474e95bb6583cb",
+          "final_ground.json": "cc97b7d738e0645ee277810c63e0e1522717a5e15877aa0fb0159f3783a45b54",
+          "batch/reviewed-plan/run_manifest_20261019T151231411488Z.json": "7139d5896c42d1faf6c5c7c314772f2df1a95e011242211b438d022cef6a5b01",
+          "batch/reviewed-plan/scenario.json": "279acc13f0437a3a50f76d0c5c30e29ce56d9f8601e67b4e04200dc9b04feabe"
+        },
+        "assessment_implementation_sha256": {
+          "planner_rehearsal.py": "0a0c806a13e3fdbe530dd2938994044b9abf766c79bc32f3f671257bb670ff53",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
+        }
+      },
+      "simulation_configuration.json": {
+        "release_class": "SITL_ONLY",
+        "case": {
+          "name": "reviewed-plan",
+          "expected": "nominal",
+          "trajectory": "/home/xpire/PX4-runs/aircraft-studio-oct19/0024c80f823daf61f376725688bb38c7/rehearsal/reviewed-plan/plan/trajectory.csv",
+          "controller_overrides": {
+            "max_horizontal_speed_m_s": 2.7,
+            "max_vertical_speed_m_s": 0.36000000000000004,
+            "takeoff_max_speed_m_s": 0.36000000000000004,
+            "return_max_speed_m_s": 2.0,
+            "max_accel_m_s2": 0.9,
+            "max_jerk_m_s3": 1.35,
+            "command_xy_accel_limit_m_s2": 0.9,
+            "command_z_accel_limit_m_s2": 0.9,
+            "navigation_hold_accel_limit_m_s2": 1.0,
+            "cruise_command_speed_limit_m_s": 1.25,
+            "cruise_reference_speed_m_s": 1.0,
+            "max_yaw_rate_deg_s": 40.5,
+            "max_yaw_acceleration_deg_s2": 54.0,
+            "max_yaw_jerk_deg_s3": 108.0,
+            "max_operating_radius_m": 80.0,
+            "max_height_above_launch_m": 30.0,
+            "bootstrap_max_tilt_deg": 25.0,
+            "bootstrap_pitch_deg": -10.0
+          },
+          "planner_summary": "/home/xpire/PX4-runs/aircraft-studio-oct19/0024c80f823daf61f376725688bb38c7/rehearsal/reviewed-plan/plan/summary.json",
+          "sitl_acknowledgement": "/home/xpire/PX4-runs/aircraft-studio-oct19/0024c80f823daf61f376725688bb38c7/rehearsal/reviewed-plan/plan/sitl_acknowledgement.json",
+          "cruise_height_m": 20.0
+        },
+        "parameters": {
+          "EKF2_GPS_CTRL": 7,
+          "EKF2_HGT_REF": 1,
+          "EKF2_BARO_CTRL": 0,
+          "EKF2_MAG_TYPE": 5,
+          "EKF2_OF_CTRL": 0,
+          "EKF2_EV_CTRL": 0,
+          "EKF2_RNG_CTRL": 0,
+          "EKF2_AGP_CTRL": 0,
+          "EKF2_NOAID_TOUT": 6000000,
+          "MPC_LAND_SPEED": 0.4,
+          "MPC_LAND_CRWL": 0.3,
+          "COM_OF_LOSS_T": 0.5,
+          "COM_OBL_RC_ACT": 4,
+          "COM_DISARM_LAND": 2,
+          "COM_LOW_BAT_ACT": 2,
+          "BAT_LOW_THR": 0.2,
+          "BAT_CRIT_THR": 0.15,
+          "BAT_EMERGEN_THR": 0.1,
+          "SYS_FAILURE_EN": 0,
+          "CA_AIRFRAME": 0,
+          "CA_ROTOR_COUNT": 4,
+          "CA_ROTOR0_PX": 0.174,
+          "CA_ROTOR0_PY": 0.174,
+          "CA_ROTOR0_KM": 0.016,
+          "CA_ROTOR1_PX": -0.174,
+          "CA_ROTOR1_PY": -0.174,
+          "CA_ROTOR1_KM": 0.016,
+          "CA_ROTOR2_PX": 0.174,
+          "CA_ROTOR2_PY": -0.174,
+          "CA_ROTOR2_KM": -0.016,
+          "CA_ROTOR3_PX": -0.174,
+          "CA_ROTOR3_PY": 0.174,
+          "CA_ROTOR3_KM": -0.016
+        },
+        "world": "afvl_validation",
+        "simulation_speed_factor": 1,
+        "world_sha256": "b0213931e46af3582f7252afbb392e23dcac846cf04a5db9d7edffbcaf928dc4",
+        "px4_executable_sha256": "0105ffbbfbaffa199b5d345d6b8afe76bed513c4689fce2245e1b554b956b1cf",
+        "controller_commit": "931c6b7b217001892913993957a2c1a1f10b6bd1",
+        "controller_batch_sha256": "f153bb77888cae953108b632cf59462af9fe64fad7ae83cb09b09bd798091947",
+        "harness_sha256": "588677226d0de6296f7a7775b5ddc19dc8bdf538a19e6948c64b2c3ab6c58f16",
+        "aircraft_profile_sha256": "2c007501034249e2988b2aee746191a92a4d182acd7f90d33ceaac1f0f398061",
+        "simulation_binding": {
+          "schema_version": 1,
+          "profile": {
+            "schema_version": 1,
+            "profile_id": "x500-sdf-v2",
+            "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+            "vehicle_type": "multicopter",
+            "autopilot": "px4",
+            "mass_kg": 2.0643076923076924,
+            "layout": "custom",
+            "yaw_inertia_kg_m2": 0.04399995371400395,
+            "roll_pitch_torque_reserve_nm": 0.1,
+            "maximum_speed_m_s": 3.0,
+            "maximum_acceleration_m_s2": 1.0,
+            "maximum_jerk_m_s3": 1.5,
+            "maximum_tilt_deg": 25.0,
+            "maximum_body_rate_deg_s": 90.0,
+            "maximum_yaw_rate_deg_s": 45.0,
+            "maximum_yaw_acceleration_deg_s2": 60.0,
+            "maximum_yaw_jerk_deg_s3": 120.0,
+            "maximum_climb_m_s": 1.0,
+            "maximum_descent_m_s": 0.4,
+            "usable_battery_wh": 100.0,
+            "power_upper_bound_w": 800.0,
+            "reserve_fraction": 0.25,
+            "settle_time_s": 5.0,
+            "lifecycle_time_upper_bound_s": 180.0,
+            "route_time_multiplier": 1.5,
+            "contingency_time_s": 30.0,
+            "disturbance_acceleration_m_s2": 0.0,
+            "disturbance_jerk_m_s3": 0.0,
+            "maximum_wind_m_s": 3.0,
+            "expected_wind_m_s": 0.0,
+            "position_uncertainty_m": 0.1,
+            "tracking_error_m": 0.1,
+            "navigation": "gnss_imu",
+            "max_radius_m": 100.0,
+            "max_height_m": 30.0,
+            "evidence_notes": "Gazebo x500/x500_base SDF mass, geometry and motor coefficients; no physical identification. Energy/power envelope is a declared demonstration assumption, not measured battery evidence.",
+            "rotors": [
+              {
+                "x_m": 0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": 0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              }
+            ]
+          },
+          "profile_sha256": "2c007501034249e2988b2aee746191a92a4d182acd7f90d33ceaac1f0f398061",
+          "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+          "airframe_id": 4001,
+          "controller_parameters": {
+            "CA_AIRFRAME": 0,
+            "CA_ROTOR_COUNT": 4,
+            "CA_ROTOR0_PX": 0.174,
+            "CA_ROTOR0_PY": 0.174,
+            "CA_ROTOR0_KM": 0.016,
+            "CA_ROTOR1_PX": -0.174,
+            "CA_ROTOR1_PY": -0.174,
+            "CA_ROTOR1_KM": 0.016,
+            "CA_ROTOR2_PX": 0.174,
+            "CA_ROTOR2_PY": -0.174,
+            "CA_ROTOR2_KM": -0.016,
+            "CA_ROTOR3_PX": -0.174,
+            "CA_ROTOR3_PY": 0.174,
+            "CA_ROTOR3_KM": -0.016
+          },
+          "model": "x500",
+          "mass_kg": 2.0643076923076915,
+          "yaw_inertia_kg_m2": 0.04399995371400395,
+          "rotors": [
+            {
+              "x_m": 0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": 0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            }
+          ],
+          "model_files_sha256": {
+            "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+            "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+            "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+            "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+            "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+            "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+            "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+            "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+          }
+        },
+        "model_files_sha256": {
+          "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+          "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+          "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+          "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+          "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+          "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+          "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+          "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+        }
+      },
+      "final_ground.json": {
+        "actuators": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "landed_state": 1,
+        "armed": false,
+        "continuous_confirmation_s": 2.0000301679999666
+      },
+      "plan/aircraft_profile.json": {
+        "schema_version": 1,
+        "profile_id": "x500-sdf-v2",
+        "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+        "vehicle_type": "multicopter",
+        "autopilot": "px4",
+        "mass_kg": 2.0643076923076924,
+        "layout": "custom",
+        "yaw_inertia_kg_m2": 0.04399995371400395,
+        "roll_pitch_torque_reserve_nm": 0.1,
+        "maximum_speed_m_s": 3.0,
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 1.5,
+        "maximum_tilt_deg": 25.0,
+        "maximum_body_rate_deg_s": 90.0,
+        "maximum_yaw_rate_deg_s": 45.0,
+        "maximum_yaw_acceleration_deg_s2": 60.0,
+        "maximum_yaw_jerk_deg_s3": 120.0,
+        "maximum_climb_m_s": 1.0,
+        "maximum_descent_m_s": 0.4,
+        "usable_battery_wh": 100.0,
+        "power_upper_bound_w": 800.0,
+        "reserve_fraction": 0.25,
+        "settle_time_s": 5.0,
+        "lifecycle_time_upper_bound_s": 180.0,
+        "route_time_multiplier": 1.5,
+        "contingency_time_s": 30.0,
+        "disturbance_acceleration_m_s2": 0.0,
+        "disturbance_jerk_m_s3": 0.0,
+        "maximum_wind_m_s": 3.0,
+        "expected_wind_m_s": 0.0,
+        "position_uncertainty_m": 0.1,
+        "tracking_error_m": 0.1,
+        "navigation": "gnss_imu",
+        "max_radius_m": 100.0,
+        "max_height_m": 30.0,
+        "evidence_notes": "Gazebo x500/x500_base SDF mass, geometry and motor coefficients; no physical identification. Energy/power envelope is a declared demonstration assumption, not measured battery evidence.",
+        "rotors": [
+          {
+            "x_m": 0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": 0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          }
+        ]
+      },
+      "plan/mission_budget.json": {
+        "route_duration_s": 25.167786000580893,
+        "route_wall_time_budget_s": 37.75167900087134,
+        "kinematic_lifecycle_floor_s": 75.0,
+        "lifecycle_and_contingency_s": 210.0,
+        "total_budgeted_s": 247.75167900087135,
+        "allowed_flight_s": 337.5,
+        "upper_bound_energy_wh": 55.0559286668603,
+        "available_at_launch_wh": 100.0,
+        "reserve_fraction": 0.25,
+        "remaining_margin_s": 89.74832099912865,
+        "passed": true
+      },
+      "plan/path_error_budget.json": {
+        "total_tolerance_m": 0.5,
+        "planning_tolerance_m": 0.30000000000000004,
+        "position_uncertainty_m": 0.1,
+        "tracking_error_m": 0.1
+      },
+      "plan/summary.json": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "mission_intent_sha256": "9936fe5816fff9d9b1d18beb5f05d774f98a0b81b6cbfbf51bd98dae5c1ceeca",
+        "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+        "environment_sha256": "28a752ae9c3a5a8854d33832be7fcff48a03e515c6c29c98f316242ec2527153",
+        "candidate_trajectory_sha256": "bfe2c42ace607a66e8ddf824cc16f28d5250f73471bedad4fb88359b921fcb07",
+        "controller_trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+        "verification_report_sha256": "449b90640a74b6fab39b4c9711e1c2ef14d44131f12e7a80d3d4ca3fcd4e3d9e",
+        "point_count": 505,
+        "geometry": {
+          "accepted": true,
+          "maximum_allowed_deviation_m": 0.30000000000000004,
+          "curve_to_stroke_upper_bound_m": 0.010000000000017764,
+          "stroke_to_curve_upper_bound_m": 0.010000000000017766,
+          "symmetric_upper_bound_m": 0.010000000000017766,
+          "curve_sample_count": 1001,
+          "stroke_sample_count": 1001,
+          "verification_resolution_m": 0.02
+        },
+        "smoothing": {
+          "requested_control_spacing_m": 0.5,
+          "selected_control_spacing_m": 4.0,
+          "deviation_utilization": 0.75,
+          "deviation_budget_m": 0.22500000000000003,
+          "control_point_count": 6,
+          "source_length_m": 20.0,
+          "curve_length_m": 19.999999999999996,
+          "heading_slope_bound_rad": 0.0
+        },
+        "retiming": {
+          "minimum_feasible_duration_s": 25.167786000580893,
+          "selected_duration_s": 25.167786000580893,
+          "limiting_constraint": "speed",
+          "limit_scale": 0.9,
+          "speed_limit_m_s": 0.9,
+          "acceleration_limit_m_s2": 0.9,
+          "jerk_limit_m_s3": 1.35,
+          "conservative_speed_bound_m_s": 0.8999999990999998,
+          "conservative_acceleration_bound_m_s2": 0.8185075081470554,
+          "conservative_jerk_bound_m_s3": 1.292077625954773,
+          "time_law": {
+            "schedule_intervals": 256,
+            "control_point_count": 261,
+            "pace_window_spans": 3.0,
+            "cruise_acceleration_share": 0.3,
+            "ramp_fraction": 0.15000000000000002,
+            "equalization_passes": 12,
+            "candidates_evaluated": 324,
+            "minimum_requirement_s": 25.167786000580893,
+            "limiting_constraint": "speed",
+            "limiting_normalized_time": 0.544921875,
+            "speed_limit_m_s": 0.9,
+            "acceleration_limit_m_s2": 0.9,
+            "jerk_limit_m_s3": 1.35,
+            "straight_line_duration_s": 22.222222222222218
+          },
+          "loop_count": 1,
+          "yaw_mode": "fixed",
+          "heading_error_bound_rad": null,
+          "tilt_bound_deg": 4.787735581369095,
+          "minimum_thrust_bound_n": 18.554291685489662,
+          "maximum_thrust_bound_n": 21.9335943760488,
+          "body_rate_bound_deg_s": 8.236473202065337,
+          "segment_count": 1
+        },
+        "duration_scope": "certified feasible candidate family; not a proven global minimum",
+        "controller_cruise_height_m": 20.0,
+        "limitations": [
+          "yaw commands are added to the heading measured at launch; tangent mode requires the aircraft to start pointed along the initial path tangent",
+          "a periodic path starts and stops at its seam; extra laps repeat that loop",
+          "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
+          "a circle entry flies a lead-in from launch and meets the seam without stopping",
+          "an explicit yaw profile is a certified fit to requested heading samples on one rest-to-rest piece",
+          "interior hard points are full stops; exact points are flown through",
+          "look-at yaw tracks one fixed point and is refused if the path can reach it",
+          "open_depart is refused because the runner lands from a final stop",
+          "unconstrained yaw is refused",
+          "obstacle clearance is claimed only for a hashed map bound to the environment",
+          "rotor allocation uses declared individual geometry with simultaneous roll/pitch reserve; actual torque demand remains an identification assumption",
+          "controller cruise height must match the compiled value",
+          "a SITL acknowledgement is not a clearance to fly",
+          "not a clearance to fly",
+          "SITL_ONLY"
+        ],
+        "aircraft_profile_sha256": "2c007501034249e2988b2aee746191a92a4d182acd7f90d33ceaac1f0f398061",
+        "mission_budget_sha256": "867cb60c86b3a8c27193e31a14d4093df73d117307bbfa3f4d087331c477efdf",
+        "path_error_budget_sha256": "00ba1a4e0019e8ddbf2d0e8faf5ad9d366c0d7e22e16fcebda30801585e2a465"
+      }
+    },
+    {
+      "label": "nominal-profile-rerun",
+      "evidence_directory": "/home/xpire/PX4-runs/aircraft-studio-oct19/7621a8b3d3150d721492724b62f0af55/rehearsal/reviewed-plan",
+      "full_assessment_sha256": "ddac5760646c94831dd6a9c322964d8061a2457c2839bb70cf6f84eebb216ddd",
+      "assessment": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "campaign_ran": true,
+        "sampled_rehearsal_passed": true,
+        "hardware_approval": false,
+        "checks": [
+          {
+            "name": "Existing lifecycle/scenario audit",
+            "passed": true,
+            "detail": [
+              {
+                "name": "Nominal phase sequence",
+                "passed": true,
+                "detail": "TAKEOFF -> TRAJECTORY -> RETURN_HOME -> ALIGN -> HANDOFF -> PX4_LAND"
+              },
+              {
+                "name": "Automatic disarm confirmed",
+                "passed": true,
+                "detail": "final armed=False"
+              },
+              {
+                "name": "PX4 touchdown confirmed",
+                "passed": true,
+                "detail": "final landed_state=1"
+              },
+              {
+                "name": "Command envelope respected",
+                "passed": true,
+                "detail": "checked 3024/3024 commands"
+              },
+              {
+                "name": "Offboard stream continuity",
+                "passed": true,
+                "detail": "maximum gap=0.064s, limit=0.500s"
+              },
+              {
+                "name": "No telemetry time regression",
+                "passed": true,
+                "detail": "regression flags=0, unreadable=0"
+              },
+              {
+                "name": "No navigation loss",
+                "passed": true,
+                "detail": "LOST samples=0"
+              },
+              {
+                "name": "Touchdown dynamics within limits",
+                "passed": true,
+                "detail": "horizontal=0.013m/s (limit=0.500), vertical=0.006m/s (limit=0.500), tilt=0.05deg (limit=10.00)"
+              },
+              {
+                "name": "Touchdown position within limit",
+                "passed": true,
+                "detail": "error=0.061m (limit=1.500)"
+              },
+              {
+                "name": "No post-touchdown bounce",
+                "passed": true,
+                "detail": "post-touchdown non-ground samples=0"
+              },
+              {
+                "name": "Automatic disarm timing",
+                "passed": true,
+                "detail": "delay=2.776s (limit=5.000)"
+              },
+              {
+                "name": "Propulsion outputs zero after disarm",
+                "passed": true,
+                "detail": "max_abs_output=0.0000, actuator_age=0.040s"
+              },
+              {
+                "name": "Nominal mission completed successfully",
+                "passed": true,
+                "detail": "SUCCESS"
+              },
+              {
+                "name": "Nominal cleanup has no error",
+                "passed": true,
+                "detail": null
+              },
+              {
+                "name": "Nominal manifest confirms shutdown",
+                "passed": true,
+                "detail": {
+                  "armed": false,
+                  "failure_action": "LAND",
+                  "heartbeat_main_mode": 6,
+                  "heartbeat_sub_mode": 0,
+                  "landed_state": 1,
+                  "mission_phase": "HANDOFF",
+                  "native_landing_reference_xy": [
+                    0.03129896846934948,
+                    0.02967848739457435
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "name": "Telemetry gaps at most 0.25 s",
+            "passed": true,
+            "detail": {
+              "maximum_s": 0.05132923999997274
+            }
+          },
+          {
+            "name": "Entire planned mission clock covered",
+            "passed": true,
+            "detail": {
+              "planned_s": 25.167786000580893,
+              "first_s": 0.0,
+              "last_s": 25.199993691999907,
+              "endpoint_sampling_tolerance_s": 0.1
+            }
+          },
+          {
+            "name": "Runtime reference follows exact CSV with one translation",
+            "passed": true,
+            "detail": {
+              "launch_translation_ned_m": [
+                0.0312989684693494,
+                0.0296784873945743,
+                0.05529437429254358
+              ]
+            }
+          },
+          {
+            "name": "Runtime heading follows exact CSV with one launch offset",
+            "passed": true,
+            "detail": {
+              "launch_offset_rad": 1.5029494762420654
+            }
+          },
+          {
+            "name": "Truth covers every recorded mission sample through contact",
+            "passed": true,
+            "detail": {
+              "required_rows": 3565,
+              "covered_rows": 3565,
+              "post_contact_rows_excluded": 75
+            }
+          },
+          {
+            "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+            "passed": true,
+            "detail": {
+              "samples": 3013,
+              "rms": 0.08870774571182194,
+              "p95": 0.15918802840977964,
+              "max_abs": 0.4090171953511886
+            }
+          },
+          {
+            "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+            "passed": true,
+            "detail": {
+              "samples": 3013,
+              "rms": 3.1444674135801347,
+              "p95": 3.6755690579800624,
+              "max_abs": 3.7341945738594946
+            }
+          },
+          {
+            "name": "Touchdown truth within predeclared position/speed targets",
+            "passed": true,
+            "detail": {
+              "position_error_m": 0.047696576159855925,
+              "horizontal_speed_m_s": 3.1583199236181946e-06,
+              "vertical_speed_m_s": 2.3595889797434213e-05,
+              "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+            }
+          },
+          {
+            "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+            "passed": true,
+            "detail": {
+              "actuators": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "landed_state": 1,
+              "armed": false,
+              "continuous_confirmation_s": 2.0000190989999282
+            }
+          },
+          {
+            "name": "Measured mean real-time factor in 0.95\u20131.05",
+            "passed": true,
+            "detail": {
+              "mean": 0.9999690653218115,
+              "one_second_windows": {
+                "samples": 3620,
+                "rms": 0.9998415088442172,
+                "p95": 1.0210677490508155,
+                "max_abs": 1.03454260329679
+              },
+              "windows_below_0_9": 0,
+              "windows_above_1_1": 0
+            }
+          },
+          {
+            "name": "Sampled navigation error fits the aircraft allowance",
+            "passed": true,
+            "detail": {
+              "error_m": {
+                "samples": 505,
+                "rms": 0.09254712786736158,
+                "p95": 0.13016161118677297,
+                "max_abs": 0.14903406487977974
+              },
+              "limit_m": 0.2
+            }
+          },
+          {
+            "name": "Sampled estimated tracking error fits the aircraft allowance",
+            "passed": true,
+            "detail": {
+              "error_m": {
+                "samples": 505,
+                "rms": 0.10429701691004077,
+                "p95": 0.3014929234877054,
+                "max_abs": 0.35201104774147507
+              },
+              "limit_m": 0.45
+            }
+          },
+          {
+            "name": "Observed nominal lifecycle fits the declared energy/time budget",
+            "passed": true,
+            "detail": {
+              "observed_wall_s": 182.1736354827881,
+              "nominal_budget_s": 217.75167900087135,
+              "route_wall_s": 25.199933290481567,
+              "route_budget_s": 37.75167900087134
+            }
+          },
+          {
+            "name": "Executed CSV digest matches retained plan and runner manifest",
+            "passed": true,
+            "detail": {
+              "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+            }
+          },
+          {
+            "name": "Sampled physical route stays inside user's geometric tolerance",
+            "passed": true,
+            "detail": {
+              "distance_m": {
+                "samples": 505,
+                "rms": 0.05696248306139833,
+                "p95": 0.057175180498763564,
+                "max_abs": 0.3002651284769766
+              },
+              "limit_m": 1.0,
+              "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+            }
+          }
+        ],
+        "per_phase": {
+          "TAKEOFF": {
+            "position_error_m": {
+              "samples": 1979,
+              "rms": 0.05575553642332136,
+              "p95": 0.09437807250821989,
+              "max_abs": 0.12629068991163284
+            },
+            "heading_error_deg": {
+              "samples": 1979,
+              "rms": 3.501276726802208,
+              "p95": 3.705625674885781,
+              "max_abs": 3.7341945738594946
+            }
+          },
+          "TRAJECTORY": {
+            "position_error_m": {
+              "samples": 505,
+              "rms": 0.14542118843513593,
+              "p95": 0.34253399035652693,
+              "max_abs": 0.4090171953511886
+            },
+            "heading_error_deg": {
+              "samples": 505,
+              "rms": 3.1663075674137944,
+              "p95": 3.5824916477447575,
+              "max_abs": 3.596187900222191
+            }
+          },
+          "RETURN_HOME": {
+            "position_error_m": {
+              "samples": 507,
+              "rms": 0.11537090463948195,
+              "p95": 0.23391910003946859,
+              "max_abs": 0.27852877559630373
+            },
+            "heading_error_deg": {
+              "samples": 507,
+              "rms": 0.9419845359776748,
+              "p95": 1.0226744922440842,
+              "max_abs": 1.0318405152167656
+            }
+          },
+          "ALIGN": {
+            "position_error_m": {
+              "samples": 22,
+              "rms": 0.07675797365567967,
+              "p95": 0.10512654329053758,
+              "max_abs": 0.1074733576033089
+            },
+            "heading_error_deg": {
+              "samples": 22,
+              "rms": 0.9137311424240208,
+              "p95": 0.9222292069820328,
+              "max_abs": 0.9232568204782061
+            }
+          }
+        },
+        "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
+        "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
+        "remaining_qualification": [
+          "pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
+          "rigid-body contact timing",
+          "actual dynamics and actuator reserves",
+          "identified aircraft and environment",
+          "obstacle-map clearance if applicable"
+        ],
+        "independent_contact_and_hold_audit": {
+          "overall_passed": true,
+          "checks": [
+            {
+              "name": "Physical contact recorded",
+              "passed": true,
+              "detail": "contact samples=76"
+            },
+            {
+              "name": "Landing reference frozen before contact",
+              "passed": true,
+              "detail": "native reference samples=541"
+            },
+            {
+              "name": "Physical contact truth covered",
+              "passed": true,
+              "detail": "contact row=3564"
+            },
+            {
+              "name": "Physical touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.047696576159855925m, limit=1.5m"
+            }
+          ],
+          "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."
+        },
+        "scenario_expected": "nominal",
+        "fault_response_passed": false,
+        "evidence_sha256": {
+          "batch/reviewed-plan/research_log_20261019T152025449895Z.csv": "a18a94f32f90d7140d3180436332849953a4a860a29e91d48c98f9191a3fe850",
+          "runtime/log/2026-10-19/15_20_18.ulg": "53719491791c0e3f8bcc16a082c85f9de8f80f8758955b31035a7612dee1b280",
+          "plan/trajectory.csv": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+          "batch/reviewed-plan/audit.json": "ed386a31b285d72387e1d20f38d0691f5279cf1e4801a1d8fe369f0c6bfe1a78",
+          "final_ground.json": "b79b6bccfece173e8a177908dd9d28f5400c604362a1ba8ba05b38e01c8d37f0",
+          "batch/reviewed-plan/run_manifest_20261019T152025449895Z.json": "cd6e694baacb745cf149b09694358aef0cf2a3824fd4c90a6a8a0bc66875d6fc",
+          "batch/reviewed-plan/scenario.json": "5d598d2ca84970d3bf6a1d8cc083e5f656525eef9b7bcd49d6f6d0ebc553334d"
+        },
+        "assessment_implementation_sha256": {
+          "planner_rehearsal.py": "601e7e025176ded8e0e48be42a8664b6e0db848dce9a5b3cf040e214fed6a3a7",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
+        }
+      },
+      "simulation_configuration.json": {
+        "release_class": "SITL_ONLY",
+        "case": {
+          "name": "reviewed-plan",
+          "expected": "nominal",
+          "trajectory": "/home/xpire/PX4-runs/aircraft-studio-oct19/7621a8b3d3150d721492724b62f0af55/rehearsal/reviewed-plan/plan/trajectory.csv",
+          "controller_overrides": {
+            "max_horizontal_speed_m_s": 2.7,
+            "max_vertical_speed_m_s": 0.36000000000000004,
+            "takeoff_max_speed_m_s": 0.36000000000000004,
+            "return_max_speed_m_s": 2.0,
+            "max_accel_m_s2": 0.9,
+            "max_jerk_m_s3": 1.35,
+            "command_xy_accel_limit_m_s2": 0.9,
+            "command_z_accel_limit_m_s2": 0.9,
+            "navigation_hold_accel_limit_m_s2": 1.0,
+            "cruise_command_speed_limit_m_s": 1.25,
+            "cruise_reference_speed_m_s": 1.0,
+            "max_yaw_rate_deg_s": 40.5,
+            "max_yaw_acceleration_deg_s2": 54.0,
+            "max_yaw_jerk_deg_s3": 108.0,
+            "max_operating_radius_m": 80.0,
+            "max_height_above_launch_m": 30.0,
+            "bootstrap_max_tilt_deg": 25.0,
+            "bootstrap_pitch_deg": -10.0
+          },
+          "planner_summary": "/home/xpire/PX4-runs/aircraft-studio-oct19/7621a8b3d3150d721492724b62f0af55/rehearsal/reviewed-plan/plan/summary.json",
+          "sitl_acknowledgement": "/home/xpire/PX4-runs/aircraft-studio-oct19/7621a8b3d3150d721492724b62f0af55/rehearsal/reviewed-plan/plan/sitl_acknowledgement.json",
+          "cruise_height_m": 20.0
+        },
+        "parameters": {
+          "EKF2_GPS_CTRL": 7,
+          "EKF2_HGT_REF": 1,
+          "EKF2_BARO_CTRL": 0,
+          "EKF2_MAG_TYPE": 5,
+          "EKF2_OF_CTRL": 0,
+          "EKF2_EV_CTRL": 0,
+          "EKF2_RNG_CTRL": 0,
+          "EKF2_AGP_CTRL": 0,
+          "EKF2_NOAID_TOUT": 6000000,
+          "MPC_LAND_SPEED": 0.4,
+          "MPC_LAND_CRWL": 0.3,
+          "COM_OF_LOSS_T": 0.5,
+          "COM_OBL_RC_ACT": 4,
+          "COM_DISARM_LAND": 2,
+          "COM_LOW_BAT_ACT": 2,
+          "BAT_LOW_THR": 0.2,
+          "BAT_CRIT_THR": 0.15,
+          "BAT_EMERGEN_THR": 0.1,
+          "SYS_FAILURE_EN": 0,
+          "CA_AIRFRAME": 0,
+          "CA_ROTOR_COUNT": 4,
+          "CA_ROTOR0_PX": 0.174,
+          "CA_ROTOR0_PY": 0.174,
+          "CA_ROTOR0_KM": 0.016,
+          "CA_ROTOR0_AX": 0.0,
+          "CA_ROTOR0_AY": 0.0,
+          "CA_ROTOR0_AZ": -1.0,
+          "CA_ROTOR0_CT": 1.0,
+          "CA_ROTOR1_PX": -0.174,
+          "CA_ROTOR1_PY": -0.174,
+          "CA_ROTOR1_KM": 0.016,
+          "CA_ROTOR1_AX": 0.0,
+          "CA_ROTOR1_AY": 0.0,
+          "CA_ROTOR1_AZ": -1.0,
+          "CA_ROTOR1_CT": 1.0,
+          "CA_ROTOR2_PX": 0.174,
+          "CA_ROTOR2_PY": -0.174,
+          "CA_ROTOR2_KM": -0.016,
+          "CA_ROTOR2_AX": 0.0,
+          "CA_ROTOR2_AY": 0.0,
+          "CA_ROTOR2_AZ": -1.0,
+          "CA_ROTOR2_CT": 1.0,
+          "CA_ROTOR3_PX": -0.174,
+          "CA_ROTOR3_PY": 0.174,
+          "CA_ROTOR3_KM": -0.016,
+          "CA_ROTOR3_AX": 0.0,
+          "CA_ROTOR3_AY": 0.0,
+          "CA_ROTOR3_AZ": -1.0,
+          "CA_ROTOR3_CT": 1.0
+        },
+        "world": "afvl_validation",
+        "simulation_speed_factor": 1,
+        "world_sha256": "b0213931e46af3582f7252afbb392e23dcac846cf04a5db9d7edffbcaf928dc4",
+        "px4_executable_sha256": "0105ffbbfbaffa199b5d345d6b8afe76bed513c4689fce2245e1b554b956b1cf",
+        "controller_commit": "d537ff61ad76fce3eff5372da08c34edd9dbfbd1",
+        "controller_batch_sha256": "f153bb77888cae953108b632cf59462af9fe64fad7ae83cb09b09bd798091947",
+        "harness_sha256": "588677226d0de6296f7a7775b5ddc19dc8bdf538a19e6948c64b2c3ab6c58f16",
+        "aircraft_profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+        "simulation_binding": {
+          "schema_version": 1,
+          "profile": {
+            "schema_version": 1,
+            "profile_id": "x500-sdf-v2",
+            "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+            "vehicle_type": "multicopter",
+            "autopilot": "px4",
+            "mass_kg": 2.0643076923076924,
+            "layout": "custom",
+            "yaw_inertia_kg_m2": 0.04399995371400395,
+            "roll_pitch_torque_reserve_nm": 0.1,
+            "maximum_speed_m_s": 3.0,
+            "maximum_acceleration_m_s2": 1.0,
+            "maximum_jerk_m_s3": 1.5,
+            "maximum_tilt_deg": 25.0,
+            "maximum_body_rate_deg_s": 90.0,
+            "maximum_yaw_rate_deg_s": 45.0,
+            "maximum_yaw_acceleration_deg_s2": 60.0,
+            "maximum_yaw_jerk_deg_s3": 120.0,
+            "maximum_climb_m_s": 1.0,
+            "maximum_descent_m_s": 0.4,
+            "usable_battery_wh": 100.0,
+            "power_upper_bound_w": 800.0,
+            "reserve_fraction": 0.25,
+            "settle_time_s": 5.0,
+            "lifecycle_time_upper_bound_s": 180.0,
+            "route_time_multiplier": 1.5,
+            "contingency_time_s": 30.0,
+            "disturbance_acceleration_m_s2": 0.0,
+            "disturbance_jerk_m_s3": 0.0,
+            "maximum_wind_m_s": 3.0,
+            "expected_wind_m_s": 0.0,
+            "position_uncertainty_m": 0.2,
+            "tracking_error_m": 0.45,
+            "navigation": "gnss_imu",
+            "max_radius_m": 100.0,
+            "max_height_m": 30.0,
+            "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
+            "rotors": [
+              {
+                "x_m": 0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": 0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              }
+            ]
+          },
+          "profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+          "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+          "airframe_id": 4001,
+          "controller_parameters": {
+            "CA_AIRFRAME": 0,
+            "CA_ROTOR_COUNT": 4,
+            "CA_ROTOR0_PX": 0.174,
+            "CA_ROTOR0_PY": 0.174,
+            "CA_ROTOR0_KM": 0.016,
+            "CA_ROTOR0_AX": 0.0,
+            "CA_ROTOR0_AY": 0.0,
+            "CA_ROTOR0_AZ": -1.0,
+            "CA_ROTOR0_CT": 1.0,
+            "CA_ROTOR1_PX": -0.174,
+            "CA_ROTOR1_PY": -0.174,
+            "CA_ROTOR1_KM": 0.016,
+            "CA_ROTOR1_AX": 0.0,
+            "CA_ROTOR1_AY": 0.0,
+            "CA_ROTOR1_AZ": -1.0,
+            "CA_ROTOR1_CT": 1.0,
+            "CA_ROTOR2_PX": 0.174,
+            "CA_ROTOR2_PY": -0.174,
+            "CA_ROTOR2_KM": -0.016,
+            "CA_ROTOR2_AX": 0.0,
+            "CA_ROTOR2_AY": 0.0,
+            "CA_ROTOR2_AZ": -1.0,
+            "CA_ROTOR2_CT": 1.0,
+            "CA_ROTOR3_PX": -0.174,
+            "CA_ROTOR3_PY": 0.174,
+            "CA_ROTOR3_KM": -0.016,
+            "CA_ROTOR3_AX": 0.0,
+            "CA_ROTOR3_AY": 0.0,
+            "CA_ROTOR3_AZ": -1.0,
+            "CA_ROTOR3_CT": 1.0
+          },
+          "model": "x500",
+          "mass_kg": 2.0643076923076915,
+          "yaw_inertia_kg_m2": 0.04399995371400395,
+          "rotors": [
+            {
+              "x_m": 0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": 0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            }
+          ],
+          "model_files_sha256": {
+            "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+            "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+            "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+            "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+            "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+            "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+            "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+            "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+          }
+        },
+        "model_files_sha256": {
+          "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+          "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+          "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+          "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+          "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+          "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+          "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+          "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+        }
+      },
+      "final_ground.json": {
+        "actuators": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "landed_state": 1,
+        "armed": false,
+        "continuous_confirmation_s": 2.0000190989999282
+      },
+      "plan/aircraft_profile.json": {
+        "schema_version": 1,
+        "profile_id": "x500-sdf-v2",
+        "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+        "vehicle_type": "multicopter",
+        "autopilot": "px4",
+        "mass_kg": 2.0643076923076924,
+        "layout": "custom",
+        "yaw_inertia_kg_m2": 0.04399995371400395,
+        "roll_pitch_torque_reserve_nm": 0.1,
+        "maximum_speed_m_s": 3.0,
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 1.5,
+        "maximum_tilt_deg": 25.0,
+        "maximum_body_rate_deg_s": 90.0,
+        "maximum_yaw_rate_deg_s": 45.0,
+        "maximum_yaw_acceleration_deg_s2": 60.0,
+        "maximum_yaw_jerk_deg_s3": 120.0,
+        "maximum_climb_m_s": 1.0,
+        "maximum_descent_m_s": 0.4,
+        "usable_battery_wh": 100.0,
+        "power_upper_bound_w": 800.0,
+        "reserve_fraction": 0.25,
+        "settle_time_s": 5.0,
+        "lifecycle_time_upper_bound_s": 180.0,
+        "route_time_multiplier": 1.5,
+        "contingency_time_s": 30.0,
+        "disturbance_acceleration_m_s2": 0.0,
+        "disturbance_jerk_m_s3": 0.0,
+        "maximum_wind_m_s": 3.0,
+        "expected_wind_m_s": 0.0,
+        "position_uncertainty_m": 0.2,
+        "tracking_error_m": 0.45,
+        "navigation": "gnss_imu",
+        "max_radius_m": 100.0,
+        "max_height_m": 30.0,
+        "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
+        "rotors": [
+          {
+            "x_m": 0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": 0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          }
+        ]
+      },
+      "plan/mission_budget.json": {
+        "route_duration_s": 25.167786000580893,
+        "route_wall_time_budget_s": 37.75167900087134,
+        "kinematic_lifecycle_floor_s": 75.0,
+        "lifecycle_and_contingency_s": 210.0,
+        "total_budgeted_s": 247.75167900087135,
+        "allowed_flight_s": 337.5,
+        "upper_bound_energy_wh": 55.0559286668603,
+        "available_at_launch_wh": 100.0,
+        "reserve_fraction": 0.25,
+        "remaining_margin_s": 89.74832099912865,
+        "passed": true
+      },
+      "plan/path_error_budget.json": {
+        "total_tolerance_m": 1.0,
+        "planning_tolerance_m": 0.35000000000000003,
+        "position_uncertainty_m": 0.2,
+        "tracking_error_m": 0.45
+      },
+      "plan/summary.json": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "mission_intent_sha256": "0f735183ff767f1f63ae46bfb9699dfc4c7a7a6a0c6ed0952fbc3e63d0e48fef",
+        "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+        "environment_sha256": "da67123739fab6830579a6bb6dcfde7cad8449623520ea29ea6bba5e4ffbd6d9",
+        "candidate_trajectory_sha256": "bfe2c42ace607a66e8ddf824cc16f28d5250f73471bedad4fb88359b921fcb07",
+        "controller_trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+        "verification_report_sha256": "a207d139241fde4fef052d8c34c54f070f2184da68a5aa9d59681a5dd169f993",
+        "point_count": 505,
+        "geometry": {
+          "accepted": true,
+          "maximum_allowed_deviation_m": 0.35000000000000003,
+          "curve_to_stroke_upper_bound_m": 0.010000000000017764,
+          "stroke_to_curve_upper_bound_m": 0.010000000000017766,
+          "symmetric_upper_bound_m": 0.010000000000017766,
+          "curve_sample_count": 1001,
+          "stroke_sample_count": 1001,
+          "verification_resolution_m": 0.02
+        },
+        "smoothing": {
+          "requested_control_spacing_m": 0.5,
+          "selected_control_spacing_m": 4.0,
+          "deviation_utilization": 0.75,
+          "deviation_budget_m": 0.2625,
+          "control_point_count": 6,
+          "source_length_m": 20.0,
+          "curve_length_m": 19.999999999999996,
+          "heading_slope_bound_rad": 0.0
+        },
+        "retiming": {
+          "minimum_feasible_duration_s": 25.167786000580893,
+          "selected_duration_s": 25.167786000580893,
+          "limiting_constraint": "speed",
+          "limit_scale": 0.9,
+          "speed_limit_m_s": 0.9,
+          "acceleration_limit_m_s2": 0.9,
+          "jerk_limit_m_s3": 1.35,
+          "conservative_speed_bound_m_s": 0.8999999990999998,
+          "conservative_acceleration_bound_m_s2": 0.8185075081470554,
+          "conservative_jerk_bound_m_s3": 1.292077625954773,
+          "time_law": {
+            "schedule_intervals": 256,
+            "control_point_count": 261,
+            "pace_window_spans": 3.0,
+            "cruise_acceleration_share": 0.3,
+            "ramp_fraction": 0.15000000000000002,
+            "equalization_passes": 12,
+            "candidates_evaluated": 324,
+            "minimum_requirement_s": 25.167786000580893,
+            "limiting_constraint": "speed",
+            "limiting_normalized_time": 0.544921875,
+            "speed_limit_m_s": 0.9,
+            "acceleration_limit_m_s2": 0.9,
+            "jerk_limit_m_s3": 1.35,
+            "straight_line_duration_s": 22.222222222222218
+          },
+          "loop_count": 1,
+          "yaw_mode": "fixed",
+          "heading_error_bound_rad": null,
+          "tilt_bound_deg": 4.787735581369095,
+          "minimum_thrust_bound_n": 18.554291685489662,
+          "maximum_thrust_bound_n": 21.9335943760488,
+          "body_rate_bound_deg_s": 8.236473202065337,
+          "segment_count": 1
+        },
+        "duration_scope": "certified feasible candidate family; not a proven global minimum",
+        "controller_cruise_height_m": 20.0,
+        "limitations": [
+          "yaw commands are added to the heading measured at launch; tangent mode requires the aircraft to start pointed along the initial path tangent",
+          "a periodic path starts and stops at its seam; extra laps repeat that loop",
+          "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
+          "a circle entry flies a lead-in from launch and meets the seam without stopping",
+          "an explicit yaw profile is a certified fit to requested heading samples on one rest-to-rest piece",
+          "interior hard points are full stops; exact points are flown through",
+          "look-at yaw tracks one fixed point and is refused if the path can reach it",
+          "open_depart is refused because the runner lands from a final stop",
+          "unconstrained yaw is refused",
+          "obstacle clearance is claimed only for a hashed map bound to the environment",
+          "rotor allocation uses declared individual geometry with simultaneous roll/pitch reserve; actual torque demand remains an identification assumption",
+          "controller cruise height must match the compiled value",
+          "a SITL acknowledgement is not a clearance to fly",
+          "not a clearance to fly",
+          "SITL_ONLY"
+        ],
+        "aircraft_profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+        "mission_budget_sha256": "867cb60c86b3a8c27193e31a14d4093df73d117307bbfa3f4d087331c477efdf",
+        "path_error_budget_sha256": "e53f0fc8b322888efaf3a900b468ff960f0cabd2520f0dbcc4d4280daacec942"
+      }
+    },
+    {
+      "label": "gps-outage-4s",
+      "evidence_directory": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/gps-outage-4s/reviewed-plan",
+      "full_assessment_sha256": "7a8f43e09eb335bad927376814e2bf7a14e787e78c851ef1eeb78b877fb57190",
+      "assessment": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "campaign_ran": true,
+        "sampled_rehearsal_passed": false,
+        "hardware_approval": false,
+        "checks": [
+          {
+            "name": "Existing lifecycle/scenario audit",
+            "passed": true,
+            "detail": [
+              {
+                "name": "Navigation recovered after bounded HOLD",
+                "passed": true,
+                "detail": "HEALTHY -> DEGRADED -> HOLD -> HEALTHY"
+              },
+              {
+                "name": "Recovery HOLD remained bounded",
+                "passed": true,
+                "detail": "duration=5.75s, XY drift=0.684m, Z drift=0.041m, phase-clock change=0.000s"
+              },
+              {
+                "name": "Nominal phase sequence",
+                "passed": true,
+                "detail": "TAKEOFF -> TRAJECTORY -> RETURN_HOME -> ALIGN -> HANDOFF -> PX4_LAND"
+              },
+              {
+                "name": "Automatic disarm confirmed",
+                "passed": true,
+                "detail": "final armed=False"
+              },
+              {
+                "name": "PX4 touchdown confirmed",
+                "passed": true,
+                "detail": "final landed_state=1"
+              },
+              {
+                "name": "Command envelope respected",
+                "passed": true,
+                "detail": "checked 3164/3164 commands"
+              },
+              {
+                "name": "Offboard stream continuity",
+                "passed": true,
+                "detail": "maximum gap=0.059s, limit=0.500s"
+              },
+              {
+                "name": "No telemetry time regression",
+                "passed": true,
+                "detail": "regression flags=0, unreadable=0"
+              },
+              {
+                "name": "No navigation loss",
+                "passed": true,
+                "detail": "LOST samples=0"
+              },
+              {
+                "name": "Touchdown dynamics within limits",
+                "passed": true,
+                "detail": "horizontal=0.011m/s (limit=0.500), vertical=0.005m/s (limit=0.500), tilt=0.07deg (limit=10.00)"
+              },
+              {
+                "name": "Touchdown position within limit",
+                "passed": true,
+                "detail": "error=0.013m (limit=1.500)"
+              },
+              {
+                "name": "No post-touchdown bounce",
+                "passed": true,
+                "detail": "post-touchdown non-ground samples=0"
+              },
+              {
+                "name": "Automatic disarm timing",
+                "passed": true,
+                "detail": "delay=2.018s (limit=5.000)"
+              },
+              {
+                "name": "Propulsion outputs zero after disarm",
+                "passed": true,
+                "detail": "max_abs_output=0.0000, actuator_age=0.005s"
+              },
+              {
+                "name": "Expected recovered mission outcome",
+                "passed": true,
+                "detail": "outcome=SUCCESS"
+              },
+              {
+                "name": "Recovered mission has no cleanup error",
+                "passed": true,
+                "detail": "cleanup_error=None"
+              },
+              {
+                "name": "Recovered mission confirms ground and disarm",
+                "passed": true,
+                "detail": "armed=False, landed_state=1"
+              }
+            ]
+          },
+          {
+            "name": "Telemetry gaps at most 0.25 s",
+            "passed": true,
+            "detail": {
+              "maximum_s": 0.07919159099992612
+            }
+          },
+          {
+            "name": "Entire planned mission clock covered",
+            "passed": true,
+            "detail": {
+              "planned_s": 25.167786000580893,
+              "first_s": 0.0,
+              "last_s": 25.189798769231707,
+              "endpoint_sampling_tolerance_s": 0.1
+            }
+          },
+          {
+            "name": "Runtime reference follows exact CSV with one translation",
+            "passed": false,
+            "detail": {
+              "launch_translation_ned_m": [
+                -0.0475243044901989,
+                0.1054803479999948,
+                0.0243364815278575
+              ]
+            }
+          },
+          {
+            "name": "Runtime heading follows exact CSV with one launch offset",
+            "passed": false,
+            "detail": {
+              "launch_offset_rad": 1.5148437023162842
+            }
+          },
+          {
+            "name": "Truth covers every recorded mission sample through contact",
+            "passed": true,
+            "detail": {
+              "required_rows": 3700,
+              "covered_rows": 3700,
+              "post_contact_rows_excluded": 60
+            }
+          },
+          {
+            "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+            "passed": true,
+            "detail": {
+              "samples": 3148,
+              "rms": 0.15635030299693395,
+              "p95": 0.29696446266681625,
+              "max_abs": 0.8789040693559119
+            }
+          },
+          {
+            "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+            "passed": true,
+            "detail": {
+              "samples": 3148,
+              "rms": 2.670817113363257,
+              "p95": 3.4305049353967005,
+              "max_abs": 3.467436312772429
+            }
+          },
+          {
+            "name": "Touchdown truth within predeclared position/speed targets",
+            "passed": true,
+            "detail": {
+              "position_error_m": 0.0346618401035717,
+              "horizontal_speed_m_s": 1.1273188092286717e-06,
+              "vertical_speed_m_s": 1.7255421334994024e-05,
+              "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+            }
+          },
+          {
+            "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+            "passed": true,
+            "detail": {
+              "actuators": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "landed_state": 1,
+              "armed": false,
+              "continuous_confirmation_s": 2.000086490000058
+            }
+          },
+          {
+            "name": "Measured mean real-time factor in 0.95\u20131.05",
+            "passed": true,
+            "detail": {
+              "mean": 1.0000180259938072,
+              "one_second_windows": {
+                "samples": 3740,
+                "rms": 1.0000248442533526,
+                "p95": 1.0212545471511252,
+                "max_abs": 1.0332383711785929
+              },
+              "windows_below_0_9": 0,
+              "windows_above_1_1": 0
+            }
+          },
+          {
+            "name": "Sampled navigation error fits the aircraft allowance",
+            "passed": true,
+            "detail": {
+              "error_m": {
+                "samples": 638,
+                "rms": 0.08618413923582198,
+                "p95": 0.12162194046710725,
+                "max_abs": 0.14506331699332123
+              },
+              "limit_m": 0.2
+            }
+          },
+          {
+            "name": "Sampled estimated tracking error fits the aircraft allowance",
+            "passed": false,
+            "detail": {
+              "error_m": {
+                "samples": 638,
+                "rms": 0.30335919543754797,
+                "p95": 0.7750234143256599,
+                "max_abs": 0.9577849615488712
+              },
+              "limit_m": 0.45
+            }
+          },
+          {
+            "name": "Observed nominal lifecycle fits the declared energy/time budget",
+            "passed": true,
+            "detail": {
+              "observed_wall_s": 188.1926076412201,
+              "nominal_budget_s": 217.75167900087135,
+              "route_wall_s": 31.849673986434937,
+              "route_budget_s": 37.75167900087134
+            }
+          },
+          {
+            "name": "Executed CSV digest matches retained plan and runner manifest",
+            "passed": true,
+            "detail": {
+              "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+            }
+          },
+          {
+            "name": "Sampled physical route stays inside user's geometric tolerance",
+            "passed": true,
+            "detail": {
+              "distance_m": {
+                "samples": 638,
+                "rms": 0.05179644674233614,
+                "p95": 0.06564287752565057,
+                "max_abs": 0.29717997970141946
+              },
+              "limit_m": 1.0,
+              "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+            }
+          }
+        ],
+        "per_phase": {
+          "TAKEOFF": {
+            "position_error_m": {
+              "samples": 1980,
+              "rms": 0.05886659965739422,
+              "p95": 0.11568619566728468,
+              "max_abs": 0.18427480437868954
+            },
+            "heading_error_deg": {
+              "samples": 1980,
+              "rms": 3.147798209992645,
+              "p95": 3.4508096594880744,
+              "max_abs": 3.467436312772429
+            }
+          },
+          "TRAJECTORY": {
+            "position_error_m": {
+              "samples": 638,
+              "rms": 0.308640437308778,
+              "p95": 0.7738284310212398,
+              "max_abs": 0.8789040693559119
+            },
+            "heading_error_deg": {
+              "samples": 638,
+              "rms": 2.100914123935152,
+              "p95": 3.119667762369945,
+              "max_abs": 3.1597690947720154
+            }
+          },
+          "RETURN_HOME": {
+            "position_error_m": {
+              "samples": 509,
+              "rms": 0.1342995329660844,
+              "p95": 0.26363752037922633,
+              "max_abs": 0.3079480628936869
+            },
+            "heading_error_deg": {
+              "samples": 509,
+              "rms": 0.18859072901657428,
+              "p95": 0.29779025564671163,
+              "max_abs": 0.32319014983142574
+            }
+          },
+          "ALIGN": {
+            "position_error_m": {
+              "samples": 21,
+              "rms": 0.08083660433356839,
+              "p95": 0.10417810535090649,
+              "max_abs": 0.10578507718858574
+            },
+            "heading_error_deg": {
+              "samples": 21,
+              "rms": 0.33003747082002416,
+              "p95": 0.33579415421077297,
+              "max_abs": 0.3370153924392991
+            }
+          }
+        },
+        "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
+        "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
+        "remaining_qualification": [
+          "pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
+          "rigid-body contact timing",
+          "actual dynamics and actuator reserves",
+          "identified aircraft and environment",
+          "obstacle-map clearance if applicable"
+        ],
+        "independent_contact_and_hold_audit": {
+          "overall_passed": true,
+          "checks": [
+            {
+              "name": "Physical contact recorded",
+              "passed": true,
+              "detail": "contact samples=61"
+            },
+            {
+              "name": "Landing reference frozen before contact",
+              "passed": true,
+              "detail": "native reference samples=536"
+            },
+            {
+              "name": "Physical contact truth covered",
+              "passed": true,
+              "detail": "contact row=3699"
+            },
+            {
+              "name": "Physical touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.0346618401035717m, limit=1.5m"
+            },
+            {
+              "name": "Physical HOLD 1 remains bounded",
+              "passed": true,
+              "detail": "rows=2153:2269, xy=0.685326408057625m, z=0.014968147277830468m, limits=1m"
+            }
+          ],
+          "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."
+        },
+        "scenario_expected": "navigation_response",
+        "fault_response_passed": true,
+        "evidence_sha256": {
+          "batch/reviewed-plan/research_log_20261019T152518788793Z.csv": "f1db167edd09dee488905e41fcafb9ef0a79cedd76e45d1ea19d813edba7b56c",
+          "runtime/log/2026-10-19/15_25_11.ulg": "9755141268caf3967de26761eec639d0c657b7287093e365d9bd34bad02d4536",
+          "plan/trajectory.csv": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+          "batch/reviewed-plan/audit.json": "e56ca579a7dc95152e7d0bbae590475636c7917792adc7157aa1939841195aaf",
+          "final_ground.json": "f853ecb09250c65b7e4f9559cedfb326491fbec35e4ad28c29da10b0dc7e722c",
+          "batch/reviewed-plan/run_manifest_20261019T152518788793Z.json": "9f3ac8bea61c5e506edae2aed143f875182171370009db893a3cf330cb2c0a83",
+          "batch/reviewed-plan/scenario.json": "25988c397407da84e3c21bfd8b68133a42290ec45c181a5f75feffea883ddd22"
+        },
+        "assessment_implementation_sha256": {
+          "planner_rehearsal.py": "601e7e025176ded8e0e48be42a8664b6e0db848dce9a5b3cf040e214fed6a3a7",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
+        }
+      },
+      "simulation_configuration.json": {
+        "release_class": "SITL_ONLY",
+        "case": {
+          "name": "reviewed-plan",
+          "expected": "navigation_response",
+          "trajectory": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/gps-outage-4s/reviewed-plan/plan/trajectory.csv",
+          "controller_overrides": {
+            "max_horizontal_speed_m_s": 2.7,
+            "max_vertical_speed_m_s": 0.36000000000000004,
+            "takeoff_max_speed_m_s": 0.36000000000000004,
+            "return_max_speed_m_s": 2.0,
+            "max_accel_m_s2": 0.9,
+            "max_jerk_m_s3": 1.35,
+            "command_xy_accel_limit_m_s2": 0.9,
+            "command_z_accel_limit_m_s2": 0.9,
+            "navigation_hold_accel_limit_m_s2": 1.0,
+            "cruise_command_speed_limit_m_s": 1.25,
+            "cruise_reference_speed_m_s": 1.0,
+            "max_yaw_rate_deg_s": 40.5,
+            "max_yaw_acceleration_deg_s2": 54.0,
+            "max_yaw_jerk_deg_s3": 108.0,
+            "max_operating_radius_m": 80.0,
+            "max_height_above_launch_m": 30.0,
+            "bootstrap_max_tilt_deg": 25.0,
+            "bootstrap_pitch_deg": -10.0
+          },
+          "planner_summary": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/gps-outage-4s/reviewed-plan/plan/summary.json",
+          "sitl_acknowledgement": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/gps-outage-4s/reviewed-plan/plan/sitl_acknowledgement.json",
+          "cruise_height_m": 20.0,
+          "gps_outage_s": 4.0,
+          "trigger_phase": "TRAJECTORY",
+          "trigger_clock_s": 8.0
+        },
+        "parameters": {
+          "EKF2_GPS_CTRL": 7,
+          "EKF2_HGT_REF": 1,
+          "EKF2_BARO_CTRL": 0,
+          "EKF2_MAG_TYPE": 5,
+          "EKF2_OF_CTRL": 0,
+          "EKF2_EV_CTRL": 0,
+          "EKF2_RNG_CTRL": 0,
+          "EKF2_AGP_CTRL": 0,
+          "EKF2_NOAID_TOUT": 6000000,
+          "MPC_LAND_SPEED": 0.4,
+          "MPC_LAND_CRWL": 0.3,
+          "COM_OF_LOSS_T": 0.5,
+          "COM_OBL_RC_ACT": 4,
+          "COM_DISARM_LAND": 2,
+          "COM_LOW_BAT_ACT": 2,
+          "BAT_LOW_THR": 0.2,
+          "BAT_CRIT_THR": 0.15,
+          "BAT_EMERGEN_THR": 0.1,
+          "SYS_FAILURE_EN": 0,
+          "CA_AIRFRAME": 0,
+          "CA_ROTOR_COUNT": 4,
+          "CA_ROTOR0_PX": 0.174,
+          "CA_ROTOR0_PY": 0.174,
+          "CA_ROTOR0_KM": 0.016,
+          "CA_ROTOR0_AX": 0.0,
+          "CA_ROTOR0_AY": 0.0,
+          "CA_ROTOR0_AZ": -1.0,
+          "CA_ROTOR0_CT": 1.0,
+          "CA_ROTOR1_PX": -0.174,
+          "CA_ROTOR1_PY": -0.174,
+          "CA_ROTOR1_KM": 0.016,
+          "CA_ROTOR1_AX": 0.0,
+          "CA_ROTOR1_AY": 0.0,
+          "CA_ROTOR1_AZ": -1.0,
+          "CA_ROTOR1_CT": 1.0,
+          "CA_ROTOR2_PX": 0.174,
+          "CA_ROTOR2_PY": -0.174,
+          "CA_ROTOR2_KM": -0.016,
+          "CA_ROTOR2_AX": 0.0,
+          "CA_ROTOR2_AY": 0.0,
+          "CA_ROTOR2_AZ": -1.0,
+          "CA_ROTOR2_CT": 1.0,
+          "CA_ROTOR3_PX": -0.174,
+          "CA_ROTOR3_PY": 0.174,
+          "CA_ROTOR3_KM": -0.016,
+          "CA_ROTOR3_AX": 0.0,
+          "CA_ROTOR3_AY": 0.0,
+          "CA_ROTOR3_AZ": -1.0,
+          "CA_ROTOR3_CT": 1.0
+        },
+        "world": "afvl_validation",
+        "simulation_speed_factor": 1,
+        "world_sha256": "b0213931e46af3582f7252afbb392e23dcac846cf04a5db9d7edffbcaf928dc4",
+        "px4_executable_sha256": "0105ffbbfbaffa199b5d345d6b8afe76bed513c4689fce2245e1b554b956b1cf",
+        "controller_commit": "5d90c12a21cd4c0bc00b9fee3400c0648e3770c2",
+        "controller_batch_sha256": "f153bb77888cae953108b632cf59462af9fe64fad7ae83cb09b09bd798091947",
+        "harness_sha256": "588677226d0de6296f7a7775b5ddc19dc8bdf538a19e6948c64b2c3ab6c58f16",
+        "aircraft_profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+        "simulation_binding": {
+          "schema_version": 1,
+          "profile": {
+            "schema_version": 1,
+            "profile_id": "x500-sdf-v2",
+            "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+            "vehicle_type": "multicopter",
+            "autopilot": "px4",
+            "mass_kg": 2.0643076923076924,
+            "layout": "custom",
+            "yaw_inertia_kg_m2": 0.04399995371400395,
+            "roll_pitch_torque_reserve_nm": 0.1,
+            "maximum_speed_m_s": 3.0,
+            "maximum_acceleration_m_s2": 1.0,
+            "maximum_jerk_m_s3": 1.5,
+            "maximum_tilt_deg": 25.0,
+            "maximum_body_rate_deg_s": 90.0,
+            "maximum_yaw_rate_deg_s": 45.0,
+            "maximum_yaw_acceleration_deg_s2": 60.0,
+            "maximum_yaw_jerk_deg_s3": 120.0,
+            "maximum_climb_m_s": 1.0,
+            "maximum_descent_m_s": 0.4,
+            "usable_battery_wh": 100.0,
+            "power_upper_bound_w": 800.0,
+            "reserve_fraction": 0.25,
+            "settle_time_s": 5.0,
+            "lifecycle_time_upper_bound_s": 180.0,
+            "route_time_multiplier": 1.5,
+            "contingency_time_s": 30.0,
+            "disturbance_acceleration_m_s2": 0.0,
+            "disturbance_jerk_m_s3": 0.0,
+            "maximum_wind_m_s": 3.0,
+            "expected_wind_m_s": 0.0,
+            "position_uncertainty_m": 0.2,
+            "tracking_error_m": 0.45,
+            "navigation": "gnss_imu",
+            "max_radius_m": 100.0,
+            "max_height_m": 30.0,
+            "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
+            "rotors": [
+              {
+                "x_m": 0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": 0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              }
+            ]
+          },
+          "profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+          "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+          "airframe_id": 4001,
+          "controller_parameters": {
+            "CA_AIRFRAME": 0,
+            "CA_ROTOR_COUNT": 4,
+            "CA_ROTOR0_PX": 0.174,
+            "CA_ROTOR0_PY": 0.174,
+            "CA_ROTOR0_KM": 0.016,
+            "CA_ROTOR0_AX": 0.0,
+            "CA_ROTOR0_AY": 0.0,
+            "CA_ROTOR0_AZ": -1.0,
+            "CA_ROTOR0_CT": 1.0,
+            "CA_ROTOR1_PX": -0.174,
+            "CA_ROTOR1_PY": -0.174,
+            "CA_ROTOR1_KM": 0.016,
+            "CA_ROTOR1_AX": 0.0,
+            "CA_ROTOR1_AY": 0.0,
+            "CA_ROTOR1_AZ": -1.0,
+            "CA_ROTOR1_CT": 1.0,
+            "CA_ROTOR2_PX": 0.174,
+            "CA_ROTOR2_PY": -0.174,
+            "CA_ROTOR2_KM": -0.016,
+            "CA_ROTOR2_AX": 0.0,
+            "CA_ROTOR2_AY": 0.0,
+            "CA_ROTOR2_AZ": -1.0,
+            "CA_ROTOR2_CT": 1.0,
+            "CA_ROTOR3_PX": -0.174,
+            "CA_ROTOR3_PY": 0.174,
+            "CA_ROTOR3_KM": -0.016,
+            "CA_ROTOR3_AX": 0.0,
+            "CA_ROTOR3_AY": 0.0,
+            "CA_ROTOR3_AZ": -1.0,
+            "CA_ROTOR3_CT": 1.0
+          },
+          "model": "x500",
+          "mass_kg": 2.0643076923076915,
+          "yaw_inertia_kg_m2": 0.04399995371400395,
+          "rotors": [
+            {
+              "x_m": 0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": 0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            }
+          ],
+          "model_files_sha256": {
+            "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+            "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+            "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+            "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+            "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+            "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+            "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+            "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+          }
+        },
+        "model_files_sha256": {
+          "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+          "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+          "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+          "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+          "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+          "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+          "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+          "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+        }
+      },
+      "final_ground.json": {
+        "actuators": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "landed_state": 1,
+        "armed": false,
+        "continuous_confirmation_s": 2.000086490000058
+      },
+      "plan/aircraft_profile.json": {
+        "schema_version": 1,
+        "profile_id": "x500-sdf-v2",
+        "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+        "vehicle_type": "multicopter",
+        "autopilot": "px4",
+        "mass_kg": 2.0643076923076924,
+        "layout": "custom",
+        "yaw_inertia_kg_m2": 0.04399995371400395,
+        "roll_pitch_torque_reserve_nm": 0.1,
+        "maximum_speed_m_s": 3.0,
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 1.5,
+        "maximum_tilt_deg": 25.0,
+        "maximum_body_rate_deg_s": 90.0,
+        "maximum_yaw_rate_deg_s": 45.0,
+        "maximum_yaw_acceleration_deg_s2": 60.0,
+        "maximum_yaw_jerk_deg_s3": 120.0,
+        "maximum_climb_m_s": 1.0,
+        "maximum_descent_m_s": 0.4,
+        "usable_battery_wh": 100.0,
+        "power_upper_bound_w": 800.0,
+        "reserve_fraction": 0.25,
+        "settle_time_s": 5.0,
+        "lifecycle_time_upper_bound_s": 180.0,
+        "route_time_multiplier": 1.5,
+        "contingency_time_s": 30.0,
+        "disturbance_acceleration_m_s2": 0.0,
+        "disturbance_jerk_m_s3": 0.0,
+        "maximum_wind_m_s": 3.0,
+        "expected_wind_m_s": 0.0,
+        "position_uncertainty_m": 0.2,
+        "tracking_error_m": 0.45,
+        "navigation": "gnss_imu",
+        "max_radius_m": 100.0,
+        "max_height_m": 30.0,
+        "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
+        "rotors": [
+          {
+            "x_m": 0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": 0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          }
+        ]
+      },
+      "plan/mission_budget.json": {
+        "route_duration_s": 25.167786000580893,
+        "route_wall_time_budget_s": 37.75167900087134,
+        "kinematic_lifecycle_floor_s": 75.0,
+        "lifecycle_and_contingency_s": 210.0,
+        "total_budgeted_s": 247.75167900087135,
+        "allowed_flight_s": 337.5,
+        "upper_bound_energy_wh": 55.0559286668603,
+        "available_at_launch_wh": 100.0,
+        "reserve_fraction": 0.25,
+        "remaining_margin_s": 89.74832099912865,
+        "passed": true
+      },
+      "plan/path_error_budget.json": {
+        "total_tolerance_m": 1.0,
+        "planning_tolerance_m": 0.35000000000000003,
+        "position_uncertainty_m": 0.2,
+        "tracking_error_m": 0.45
+      },
+      "plan/summary.json": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "mission_intent_sha256": "0f735183ff767f1f63ae46bfb9699dfc4c7a7a6a0c6ed0952fbc3e63d0e48fef",
+        "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+        "environment_sha256": "da67123739fab6830579a6bb6dcfde7cad8449623520ea29ea6bba5e4ffbd6d9",
+        "candidate_trajectory_sha256": "bfe2c42ace607a66e8ddf824cc16f28d5250f73471bedad4fb88359b921fcb07",
+        "controller_trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+        "verification_report_sha256": "a207d139241fde4fef052d8c34c54f070f2184da68a5aa9d59681a5dd169f993",
+        "point_count": 505,
+        "geometry": {
+          "accepted": true,
+          "maximum_allowed_deviation_m": 0.35000000000000003,
+          "curve_to_stroke_upper_bound_m": 0.010000000000017764,
+          "stroke_to_curve_upper_bound_m": 0.010000000000017766,
+          "symmetric_upper_bound_m": 0.010000000000017766,
+          "curve_sample_count": 1001,
+          "stroke_sample_count": 1001,
+          "verification_resolution_m": 0.02
+        },
+        "smoothing": {
+          "requested_control_spacing_m": 0.5,
+          "selected_control_spacing_m": 4.0,
+          "deviation_utilization": 0.75,
+          "deviation_budget_m": 0.2625,
+          "control_point_count": 6,
+          "source_length_m": 20.0,
+          "curve_length_m": 19.999999999999996,
+          "heading_slope_bound_rad": 0.0
+        },
+        "retiming": {
+          "minimum_feasible_duration_s": 25.167786000580893,
+          "selected_duration_s": 25.167786000580893,
+          "limiting_constraint": "speed",
+          "limit_scale": 0.9,
+          "speed_limit_m_s": 0.9,
+          "acceleration_limit_m_s2": 0.9,
+          "jerk_limit_m_s3": 1.35,
+          "conservative_speed_bound_m_s": 0.8999999990999998,
+          "conservative_acceleration_bound_m_s2": 0.8185075081470554,
+          "conservative_jerk_bound_m_s3": 1.292077625954773,
+          "time_law": {
+            "schedule_intervals": 256,
+            "control_point_count": 261,
+            "pace_window_spans": 3.0,
+            "cruise_acceleration_share": 0.3,
+            "ramp_fraction": 0.15000000000000002,
+            "equalization_passes": 12,
+            "candidates_evaluated": 324,
+            "minimum_requirement_s": 25.167786000580893,
+            "limiting_constraint": "speed",
+            "limiting_normalized_time": 0.544921875,
+            "speed_limit_m_s": 0.9,
+            "acceleration_limit_m_s2": 0.9,
+            "jerk_limit_m_s3": 1.35,
+            "straight_line_duration_s": 22.222222222222218
+          },
+          "loop_count": 1,
+          "yaw_mode": "fixed",
+          "heading_error_bound_rad": null,
+          "tilt_bound_deg": 4.787735581369095,
+          "minimum_thrust_bound_n": 18.554291685489662,
+          "maximum_thrust_bound_n": 21.9335943760488,
+          "body_rate_bound_deg_s": 8.236473202065337,
+          "segment_count": 1
+        },
+        "duration_scope": "certified feasible candidate family; not a proven global minimum",
+        "controller_cruise_height_m": 20.0,
+        "limitations": [
+          "yaw commands are added to the heading measured at launch; tangent mode requires the aircraft to start pointed along the initial path tangent",
+          "a periodic path starts and stops at its seam; extra laps repeat that loop",
+          "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
+          "a circle entry flies a lead-in from launch and meets the seam without stopping",
+          "an explicit yaw profile is a certified fit to requested heading samples on one rest-to-rest piece",
+          "interior hard points are full stops; exact points are flown through",
+          "look-at yaw tracks one fixed point and is refused if the path can reach it",
+          "open_depart is refused because the runner lands from a final stop",
+          "unconstrained yaw is refused",
+          "obstacle clearance is claimed only for a hashed map bound to the environment",
+          "rotor allocation uses declared individual geometry with simultaneous roll/pitch reserve; actual torque demand remains an identification assumption",
+          "controller cruise height must match the compiled value",
+          "a SITL acknowledgement is not a clearance to fly",
+          "not a clearance to fly",
+          "SITL_ONLY"
+        ],
+        "aircraft_profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+        "mission_budget_sha256": "867cb60c86b3a8c27193e31a14d4093df73d117307bbfa3f4d087331c477efdf",
+        "path_error_budget_sha256": "e53f0fc8b322888efaf3a900b468ff960f0cabd2520f0dbcc4d4280daacec942"
+      }
+    },
+    {
+      "label": "control-stall",
+      "evidence_directory": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/control-stall/reviewed-plan",
+      "full_assessment_sha256": "42d4cbd7bcbb7f19bf509e98b4095928dca35c66f98d769ce2e63c0285478a23",
+      "assessment": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "campaign_ran": true,
+        "sampled_rehearsal_passed": false,
+        "hardware_approval": false,
+        "checks": [
+          {
+            "name": "Existing lifecycle/scenario audit",
+            "passed": true,
+            "detail": [
+              {
+                "name": "Automatic disarm confirmed",
+                "passed": true,
+                "detail": "final armed=False"
+              },
+              {
+                "name": "PX4 touchdown confirmed",
+                "passed": true,
+                "detail": "final landed_state=1"
+              },
+              {
+                "name": "Command envelope respected",
+                "passed": true,
+                "detail": "checked 2144/2144 commands"
+              },
+              {
+                "name": "Offboard stream continuity",
+                "passed": true,
+                "detail": "maximum gap=0.117s, limit=0.500s"
+              },
+              {
+                "name": "No telemetry time regression",
+                "passed": true,
+                "detail": "regression flags=0, unreadable=0"
+              },
+              {
+                "name": "No navigation loss",
+                "passed": true,
+                "detail": "LOST samples=0"
+              },
+              {
+                "name": "Touchdown dynamics within limits",
+                "passed": true,
+                "detail": "horizontal=0.009m/s (limit=0.500), vertical=0.026m/s (limit=0.500), tilt=0.05deg (limit=10.00)"
+              },
+              {
+                "name": "Touchdown position within limit",
+                "passed": true,
+                "detail": "error=0.974m (limit=1.500)"
+              },
+              {
+                "name": "No post-touchdown bounce",
+                "passed": true,
+                "detail": "post-touchdown non-ground samples=0"
+              },
+              {
+                "name": "Automatic disarm timing",
+                "passed": true,
+                "detail": "delay=2.623s (limit=5.000)"
+              },
+              {
+                "name": "Propulsion outputs zero after disarm",
+                "passed": true,
+                "detail": "max_abs_output=0.0000, actuator_age=0.045s"
+              },
+              {
+                "name": "Control stall stopped the Offboard mission",
+                "passed": true,
+                "detail": "TAKEOFF -> TRAJECTORY -> PX4_FAILSAFE"
+              },
+              {
+                "name": "Expected PX4 failsafe outcome",
+                "passed": true,
+                "detail": "outcome=PX4_FAILSAFE"
+              },
+              {
+                "name": "Failsafe landing cleanup completed",
+                "passed": true,
+                "detail": "status=px4_failsafe_land_and_disarm_confirmed, error=None"
+              },
+              {
+                "name": "Manifest confirms ground and disarm",
+                "passed": true,
+                "detail": "armed=False, landed_state=1, failure_action=PX4_FAILSAFE"
+              },
+              {
+                "name": "Control stall exercised command expiry",
+                "passed": true,
+                "detail": "RuntimeError: Controller failed (setpoint_error): Control command expired; yielding to PX4 failsafe"
+              },
+              {
+                "name": "One fresh brake before yielding to PX4",
+                "passed": true,
+                "detail": "distinct_brake_counts=[1]"
+              },
+              {
+                "name": "No Offboard sends after failsafe handoff",
+                "passed": true,
+                "detail": "native_samples=630, distinct_send_counts=1"
+              }
+            ]
+          },
+          {
+            "name": "Telemetry gaps at most 0.25 s",
+            "passed": false,
+            "detail": {
+              "maximum_s": 0.3573359679999015
+            }
+          },
+          {
+            "name": "Entire planned mission clock covered",
+            "passed": false,
+            "detail": {
+              "planned_s": 25.167786000580893,
+              "first_s": 0.0,
+              "last_s": 7.999914812000043,
+              "endpoint_sampling_tolerance_s": 0.1
+            }
+          },
+          {
+            "name": "Runtime reference follows exact CSV with one translation",
+            "passed": true,
+            "detail": {
+              "launch_translation_ned_m": [
+                -0.0190747150921778,
+                0.0739745140919997,
+                0.04809551305771009
+              ]
+            }
+          },
+          {
+            "name": "Runtime heading follows exact CSV with one launch offset",
+            "passed": true,
+            "detail": {
+              "launch_offset_rad": 1.56347393989563
+            }
+          },
+          {
+            "name": "Truth covers every recorded mission sample through contact",
+            "passed": true,
+            "detail": {
+              "required_rows": 2702,
+              "covered_rows": 2702,
+              "post_contact_rows_excluded": 72
+            }
+          },
+          {
+            "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+            "passed": true,
+            "detail": {
+              "samples": 2144,
+              "rms": 0.07534831393754406,
+              "p95": 0.12671363506803776,
+              "max_abs": 0.36051008638804016
+            }
+          },
+          {
+            "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+            "passed": true,
+            "detail": {
+              "samples": 2144,
+              "rms": 0.21669700220165955,
+              "p95": 0.337953989664696,
+              "max_abs": 0.4139283516390061
+            }
+          },
+          {
+            "name": "Touchdown truth within predeclared position/speed targets",
+            "passed": true,
+            "detail": {
+              "position_error_m": 0.967914241725487,
+              "horizontal_speed_m_s": 0.0,
+              "vertical_speed_m_s": 0.0,
+              "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+            }
+          },
+          {
+            "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+            "passed": true,
+            "detail": {
+              "actuators": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "landed_state": 1,
+              "armed": false,
+              "continuous_confirmation_s": 2.000026571000035
+            }
+          },
+          {
+            "name": "Measured mean real-time factor in 0.95\u20131.05",
+            "passed": true,
+            "detail": {
+              "mean": 0.9999821305186335,
+              "one_second_windows": {
+                "samples": 2754,
+                "rms": 1.0000078619363866,
+                "p95": 1.0219272921562446,
+                "max_abs": 1.0332452239890544
+              },
+              "windows_below_0_9": 0,
+              "windows_above_1_1": 0
+            }
+          },
+          {
+            "name": "Sampled navigation error fits the aircraft allowance",
+            "passed": true,
+            "detail": {
+              "error_m": {
+                "samples": 161,
+                "rms": 0.08987513066667648,
+                "p95": 0.1192559118268316,
+                "max_abs": 0.12112121094245332
+              },
+              "limit_m": 0.2
+            }
+          },
+          {
+            "name": "Sampled estimated tracking error fits the aircraft allowance",
+            "passed": true,
+            "detail": {
+              "error_m": {
+                "samples": 161,
+                "rms": 0.12880190702713615,
+                "p95": 0.278907677283376,
+                "max_abs": 0.2953655439482281
+              },
+              "limit_m": 0.45
+            }
+          },
+          {
+            "name": "Observed nominal lifecycle fits the declared energy/time budget",
+            "passed": true,
+            "detail": {
+              "observed_wall_s": 139.19448733329773,
+              "nominal_budget_s": 217.75167900087135,
+              "route_wall_s": 7.999816656112671,
+              "route_budget_s": 37.75167900087134
+            }
+          },
+          {
+            "name": "Executed CSV digest matches retained plan and runner manifest",
+            "passed": true,
+            "detail": {
+              "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+            }
+          },
+          {
+            "name": "Sampled physical route stays inside user's geometric tolerance",
+            "passed": true,
+            "detail": {
+              "distance_m": {
+                "samples": 161,
+                "rms": 0.023656433882425446,
+                "p95": 0.0372771376010453,
+                "max_abs": 0.042339282483351365
+              },
+              "limit_m": 1.0,
+              "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+            }
+          }
+        ],
+        "per_phase": {
+          "TAKEOFF": {
+            "position_error_m": {
+              "samples": 1983,
+              "rms": 0.05744237452856934,
+              "p95": 0.09835910336218247,
+              "max_abs": 0.1319750059116123
+            },
+            "heading_error_deg": {
+              "samples": 1983,
+              "rms": 0.21948619848742165,
+              "p95": 0.3336769920123037,
+              "max_abs": 0.4139283516390061
+            }
+          },
+          "TRAJECTORY": {
+            "position_error_m": {
+              "samples": 161,
+              "rms": 0.18698521454254405,
+              "p95": 0.3461957454456115,
+              "max_abs": 0.36051008638804016
+            },
+            "heading_error_deg": {
+              "samples": 161,
+              "rms": 0.17880995838257024,
+              "p95": 0.3468647543148469,
+              "max_abs": 0.3686856958229306
+            }
+          },
+          "RETURN_HOME": {
+            "position_error_m": null,
+            "heading_error_deg": null
+          },
+          "ALIGN": {
+            "position_error_m": null,
+            "heading_error_deg": null
+          }
+        },
+        "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
+        "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
+        "remaining_qualification": [
+          "pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
+          "rigid-body contact timing",
+          "actual dynamics and actuator reserves",
+          "identified aircraft and environment",
+          "obstacle-map clearance if applicable"
+        ],
+        "independent_contact_and_hold_audit": {
+          "overall_passed": true,
+          "checks": [
+            {
+              "name": "Physical contact recorded",
+              "passed": true,
+              "detail": "contact samples=73"
+            },
+            {
+              "name": "Landing reference frozen before contact",
+              "passed": true,
+              "detail": "native reference samples=558"
+            },
+            {
+              "name": "Physical contact truth covered",
+              "passed": true,
+              "detail": "contact row=2701"
+            },
+            {
+              "name": "Physical touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.967914241725487m, limit=1.5m"
+            }
+          ],
+          "scope": "Independent contact XY and HOLD XYZ only; mission, dynamics and shutdown audits remain required."
+        },
+        "scenario_expected": "control_stall",
+        "fault_response_passed": true,
+        "evidence_sha256": {
+          "batch/reviewed-plan/research_log_20261019T152904940073Z.csv": "1f74826f08a32abcbec15ac2916af68389dc4281b1436df2de6d442b87a0c5cb",
+          "runtime/log/2026-10-19/15_28_58.ulg": "146f44f37e8e4fb45feb62b8045e41300d38968bd2419f927ce003f371c30a5a",
+          "plan/trajectory.csv": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+          "batch/reviewed-plan/audit.json": "1dd08d4511b2cd5e04cd9ee9c10ef62220a85990adb936c03a59f7d134956f3d",
+          "final_ground.json": "986f6106ad8fbf8f4dc3b99181b27728a62de6e1c462a83b8c2a935cdc51ae1e",
+          "batch/reviewed-plan/run_manifest_20261019T152904940073Z.json": "16c8c860c1a229cddef64a787745bc115c3507858d78e45672c4cd25fc04f73d",
+          "batch/reviewed-plan/scenario.json": "0ff1898179b6af59ac53fc660b7d4f7190e84e2b75042e4e96715d2540782060"
+        },
+        "assessment_implementation_sha256": {
+          "planner_rehearsal.py": "601e7e025176ded8e0e48be42a8664b6e0db848dce9a5b3cf040e214fed6a3a7",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
+        }
+      },
+      "simulation_configuration.json": {
+        "release_class": "SITL_ONLY",
+        "case": {
+          "name": "reviewed-plan",
+          "expected": "control_stall",
+          "trajectory": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/control-stall/reviewed-plan/plan/trajectory.csv",
+          "controller_overrides": {
+            "max_horizontal_speed_m_s": 2.7,
+            "max_vertical_speed_m_s": 0.36000000000000004,
+            "takeoff_max_speed_m_s": 0.36000000000000004,
+            "return_max_speed_m_s": 2.0,
+            "max_accel_m_s2": 0.9,
+            "max_jerk_m_s3": 1.35,
+            "command_xy_accel_limit_m_s2": 0.9,
+            "command_z_accel_limit_m_s2": 0.9,
+            "navigation_hold_accel_limit_m_s2": 1.0,
+            "cruise_command_speed_limit_m_s": 1.25,
+            "cruise_reference_speed_m_s": 1.0,
+            "max_yaw_rate_deg_s": 40.5,
+            "max_yaw_acceleration_deg_s2": 54.0,
+            "max_yaw_jerk_deg_s3": 108.0,
+            "max_operating_radius_m": 80.0,
+            "max_height_above_launch_m": 30.0,
+            "bootstrap_max_tilt_deg": 25.0,
+            "bootstrap_pitch_deg": -10.0
+          },
+          "planner_summary": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/control-stall/reviewed-plan/plan/summary.json",
+          "sitl_acknowledgement": "/home/xpire/PX4-runs/aircraft-profile-faults-oct19/control-stall/reviewed-plan/plan/sitl_acknowledgement.json",
+          "cruise_height_m": 20.0,
+          "control_stall_s": 0.4,
+          "stall_clock_s": 8.0
+        },
+        "parameters": {
+          "EKF2_GPS_CTRL": 7,
+          "EKF2_HGT_REF": 1,
+          "EKF2_BARO_CTRL": 0,
+          "EKF2_MAG_TYPE": 5,
+          "EKF2_OF_CTRL": 0,
+          "EKF2_EV_CTRL": 0,
+          "EKF2_RNG_CTRL": 0,
+          "EKF2_AGP_CTRL": 0,
+          "EKF2_NOAID_TOUT": 6000000,
+          "MPC_LAND_SPEED": 0.4,
+          "MPC_LAND_CRWL": 0.3,
+          "COM_OF_LOSS_T": 0.5,
+          "COM_OBL_RC_ACT": 4,
+          "COM_DISARM_LAND": 2,
+          "COM_LOW_BAT_ACT": 2,
+          "BAT_LOW_THR": 0.2,
+          "BAT_CRIT_THR": 0.15,
+          "BAT_EMERGEN_THR": 0.1,
+          "SYS_FAILURE_EN": 0,
+          "CA_AIRFRAME": 0,
+          "CA_ROTOR_COUNT": 4,
+          "CA_ROTOR0_PX": 0.174,
+          "CA_ROTOR0_PY": 0.174,
+          "CA_ROTOR0_KM": 0.016,
+          "CA_ROTOR0_AX": 0.0,
+          "CA_ROTOR0_AY": 0.0,
+          "CA_ROTOR0_AZ": -1.0,
+          "CA_ROTOR0_CT": 1.0,
+          "CA_ROTOR1_PX": -0.174,
+          "CA_ROTOR1_PY": -0.174,
+          "CA_ROTOR1_KM": 0.016,
+          "CA_ROTOR1_AX": 0.0,
+          "CA_ROTOR1_AY": 0.0,
+          "CA_ROTOR1_AZ": -1.0,
+          "CA_ROTOR1_CT": 1.0,
+          "CA_ROTOR2_PX": 0.174,
+          "CA_ROTOR2_PY": -0.174,
+          "CA_ROTOR2_KM": -0.016,
+          "CA_ROTOR2_AX": 0.0,
+          "CA_ROTOR2_AY": 0.0,
+          "CA_ROTOR2_AZ": -1.0,
+          "CA_ROTOR2_CT": 1.0,
+          "CA_ROTOR3_PX": -0.174,
+          "CA_ROTOR3_PY": 0.174,
+          "CA_ROTOR3_KM": -0.016,
+          "CA_ROTOR3_AX": 0.0,
+          "CA_ROTOR3_AY": 0.0,
+          "CA_ROTOR3_AZ": -1.0,
+          "CA_ROTOR3_CT": 1.0
+        },
+        "world": "afvl_validation",
+        "simulation_speed_factor": 1,
+        "world_sha256": "b0213931e46af3582f7252afbb392e23dcac846cf04a5db9d7edffbcaf928dc4",
+        "px4_executable_sha256": "0105ffbbfbaffa199b5d345d6b8afe76bed513c4689fce2245e1b554b956b1cf",
+        "controller_commit": "5d90c12a21cd4c0bc00b9fee3400c0648e3770c2",
+        "controller_batch_sha256": "f153bb77888cae953108b632cf59462af9fe64fad7ae83cb09b09bd798091947",
+        "harness_sha256": "588677226d0de6296f7a7775b5ddc19dc8bdf538a19e6948c64b2c3ab6c58f16",
+        "aircraft_profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+        "simulation_binding": {
+          "schema_version": 1,
+          "profile": {
+            "schema_version": 1,
+            "profile_id": "x500-sdf-v2",
+            "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+            "vehicle_type": "multicopter",
+            "autopilot": "px4",
+            "mass_kg": 2.0643076923076924,
+            "layout": "custom",
+            "yaw_inertia_kg_m2": 0.04399995371400395,
+            "roll_pitch_torque_reserve_nm": 0.1,
+            "maximum_speed_m_s": 3.0,
+            "maximum_acceleration_m_s2": 1.0,
+            "maximum_jerk_m_s3": 1.5,
+            "maximum_tilt_deg": 25.0,
+            "maximum_body_rate_deg_s": 90.0,
+            "maximum_yaw_rate_deg_s": 45.0,
+            "maximum_yaw_acceleration_deg_s2": 60.0,
+            "maximum_yaw_jerk_deg_s3": 120.0,
+            "maximum_climb_m_s": 1.0,
+            "maximum_descent_m_s": 0.4,
+            "usable_battery_wh": 100.0,
+            "power_upper_bound_w": 800.0,
+            "reserve_fraction": 0.25,
+            "settle_time_s": 5.0,
+            "lifecycle_time_upper_bound_s": 180.0,
+            "route_time_multiplier": 1.5,
+            "contingency_time_s": 30.0,
+            "disturbance_acceleration_m_s2": 0.0,
+            "disturbance_jerk_m_s3": 0.0,
+            "maximum_wind_m_s": 3.0,
+            "expected_wind_m_s": 0.0,
+            "position_uncertainty_m": 0.2,
+            "tracking_error_m": 0.45,
+            "navigation": "gnss_imu",
+            "max_radius_m": 100.0,
+            "max_height_m": 30.0,
+            "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
+            "rotors": [
+              {
+                "x_m": 0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": 0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": 0.174,
+                "y_m": -0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              },
+              {
+                "x_m": -0.174,
+                "y_m": 0.174,
+                "yaw_torque_per_thrust_m": -0.016,
+                "minimum_thrust_n": 0.0,
+                "maximum_thrust_n": 8.54858
+              }
+            ]
+          },
+          "profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+          "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+          "airframe_id": 4001,
+          "controller_parameters": {
+            "CA_AIRFRAME": 0,
+            "CA_ROTOR_COUNT": 4,
+            "CA_ROTOR0_PX": 0.174,
+            "CA_ROTOR0_PY": 0.174,
+            "CA_ROTOR0_KM": 0.016,
+            "CA_ROTOR0_AX": 0.0,
+            "CA_ROTOR0_AY": 0.0,
+            "CA_ROTOR0_AZ": -1.0,
+            "CA_ROTOR0_CT": 1.0,
+            "CA_ROTOR1_PX": -0.174,
+            "CA_ROTOR1_PY": -0.174,
+            "CA_ROTOR1_KM": 0.016,
+            "CA_ROTOR1_AX": 0.0,
+            "CA_ROTOR1_AY": 0.0,
+            "CA_ROTOR1_AZ": -1.0,
+            "CA_ROTOR1_CT": 1.0,
+            "CA_ROTOR2_PX": 0.174,
+            "CA_ROTOR2_PY": -0.174,
+            "CA_ROTOR2_KM": -0.016,
+            "CA_ROTOR2_AX": 0.0,
+            "CA_ROTOR2_AY": 0.0,
+            "CA_ROTOR2_AZ": -1.0,
+            "CA_ROTOR2_CT": 1.0,
+            "CA_ROTOR3_PX": -0.174,
+            "CA_ROTOR3_PY": 0.174,
+            "CA_ROTOR3_KM": -0.016,
+            "CA_ROTOR3_AX": 0.0,
+            "CA_ROTOR3_AY": 0.0,
+            "CA_ROTOR3_AZ": -1.0,
+            "CA_ROTOR3_CT": 1.0
+          },
+          "model": "x500",
+          "mass_kg": 2.0643076923076915,
+          "yaw_inertia_kg_m2": 0.04399995371400395,
+          "rotors": [
+            {
+              "x_m": 0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": 0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": 0.174,
+              "y_m": -0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            },
+            {
+              "x_m": -0.174,
+              "y_m": 0.174,
+              "yaw_torque_per_thrust_m": -0.016,
+              "minimum_thrust_n": 0.0,
+              "maximum_thrust_n": 8.54858
+            }
+          ],
+          "model_files_sha256": {
+            "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+            "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+            "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+            "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+            "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+            "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+            "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+            "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+            "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+            "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+            "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+            "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+            "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+            "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+            "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+            "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+            "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+          }
+        },
+        "model_files_sha256": {
+          "Tools/simulation/gz/models/x500/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500/model.config": "52fdda8e66faa5095434d54e4dcaad5a6a8833cd014e0a5b439349ed8b4a1b67",
+          "Tools/simulation/gz/models/x500/model.sdf": "cfe92f98360967faa895b77aa8a6fff3fc9b290286e94e45297c4bdd7b62fbf9",
+          "Tools/simulation/gz/models/x500/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "Tools/simulation/gz/models/x500_base/LICENSE": "cee4ef94e73cd38fb2886f5d7e7a04d6488f54b1e70cd8b1b29d74f38bfdba5b",
+          "Tools/simulation/gz/models/x500_base/materials/textures/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/materials/textures/nxp.png": "6c2262c84e0f5f55dbe38e712e6508d654fb6e7c427d1a19cdd62231bc2d52b1",
+          "Tools/simulation/gz/models/x500_base/materials/textures/rd.png": "9d8851c37dc612c336b46e41744c17fb8333a0af33ac4be93f7147f7549a8e25",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_ccw.stl": "ba197e0961117a3462b555d65edf3433ba8ff5691624100a185242cb5f456244",
+          "Tools/simulation/gz/models/x500_base/meshes/1345_prop_cw.stl": "7aa4b61c1ddc5304c9c1f5602eacf5e2ec5eafb95dd1f2a3368342f256122fc0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Base.dae": "798396a1945c7ff55a0840b77869e27affdd35fed0d784fff96b68f50f160ea0",
+          "Tools/simulation/gz/models/x500_base/meshes/5010Bell.dae": "b90a1b2dd63a8ebbe1f3339ed18cef23673e0d8f03314fd9b9533a68b6b66668",
+          "Tools/simulation/gz/models/x500_base/meshes/CF.png": "3a56ec48eeaaf7774e8d3e8e5e88f6973bfa5652c610974c3eb2dbec6ec85944",
+          "Tools/simulation/gz/models/x500_base/meshes/NXP-HGD-CF.dae": "7321861b113866996dfa79b403def5666d4b796810840d2c057c7b51fc315b0a",
+          "Tools/simulation/gz/models/x500_base/model.config": "4856afbdeb52f19468f56ddaf4be57c04688f347b8cef2f609daacd2d014d437",
+          "Tools/simulation/gz/models/x500_base/model.sdf": "e807dca3406f7cd5cb3d545898601c3ec17e0e5242e25cf467a69df1812cf436",
+          "Tools/simulation/gz/models/x500_base/thumbnails/1.png": "54d00187e5a03766d5e7b73311bc6bfa22f51cd98b823a287b2da8c551c3175e",
+          "Tools/simulation/gz/models/x500_base/thumbnails/2.png": "cb6040c119b2a382030165a2a98ab9e9cf816557808a4549c323f2a3792cb8b4",
+          "Tools/simulation/gz/models/x500_base/thumbnails/3.png": "848f431c64b34df15c59ad874e6211695ac53ee932ad3509ebb7c6372fc67375",
+          "Tools/simulation/gz/models/x500_base/thumbnails/4.png": "86e1b7f31a49894caeef210f43248587d6454eba467a492f9bc147bf732ae666",
+          "Tools/simulation/gz/models/x500_base/thumbnails/5.png": "b76053e95f7aff65c6f83533fb5635554292acb26fe51376c2d62e437e350e75",
+          "ROMFS/px4fmu_common/init.d-posix/airframes/4001_gz_x500": "20ff202101deda060f73b66e08ad047c28f13edbe0d99c389ec663c977e3a4be"
+        }
+      },
+      "final_ground.json": {
+        "actuators": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "landed_state": 1,
+        "armed": false,
+        "continuous_confirmation_s": 2.000026571000035
+      },
+      "plan/aircraft_profile.json": {
+        "schema_version": 1,
+        "profile_id": "x500-sdf-v2",
+        "name": "Installed Gazebo x500 SDF \u2014 simulator only",
+        "vehicle_type": "multicopter",
+        "autopilot": "px4",
+        "mass_kg": 2.0643076923076924,
+        "layout": "custom",
+        "yaw_inertia_kg_m2": 0.04399995371400395,
+        "roll_pitch_torque_reserve_nm": 0.1,
+        "maximum_speed_m_s": 3.0,
+        "maximum_acceleration_m_s2": 1.0,
+        "maximum_jerk_m_s3": 1.5,
+        "maximum_tilt_deg": 25.0,
+        "maximum_body_rate_deg_s": 90.0,
+        "maximum_yaw_rate_deg_s": 45.0,
+        "maximum_yaw_acceleration_deg_s2": 60.0,
+        "maximum_yaw_jerk_deg_s3": 120.0,
+        "maximum_climb_m_s": 1.0,
+        "maximum_descent_m_s": 0.4,
+        "usable_battery_wh": 100.0,
+        "power_upper_bound_w": 800.0,
+        "reserve_fraction": 0.25,
+        "settle_time_s": 5.0,
+        "lifecycle_time_upper_bound_s": 180.0,
+        "route_time_multiplier": 1.5,
+        "contingency_time_s": 30.0,
+        "disturbance_acceleration_m_s2": 0.0,
+        "disturbance_jerk_m_s3": 0.0,
+        "maximum_wind_m_s": 3.0,
+        "expected_wind_m_s": 0.0,
+        "position_uncertainty_m": 0.2,
+        "tracking_error_m": 0.45,
+        "navigation": "gnss_imu",
+        "max_radius_m": 100.0,
+        "max_height_m": 30.0,
+        "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
+        "rotors": [
+          {
+            "x_m": 0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": 0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": 0.174,
+            "y_m": -0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          },
+          {
+            "x_m": -0.174,
+            "y_m": 0.174,
+            "yaw_torque_per_thrust_m": -0.016,
+            "minimum_thrust_n": 0.0,
+            "maximum_thrust_n": 8.54858
+          }
+        ]
+      },
+      "plan/mission_budget.json": {
+        "route_duration_s": 25.167786000580893,
+        "route_wall_time_budget_s": 37.75167900087134,
+        "kinematic_lifecycle_floor_s": 75.0,
+        "lifecycle_and_contingency_s": 210.0,
+        "total_budgeted_s": 247.75167900087135,
+        "allowed_flight_s": 337.5,
+        "upper_bound_energy_wh": 55.0559286668603,
+        "available_at_launch_wh": 100.0,
+        "reserve_fraction": 0.25,
+        "remaining_margin_s": 89.74832099912865,
+        "passed": true
+      },
+      "plan/path_error_budget.json": {
+        "total_tolerance_m": 1.0,
+        "planning_tolerance_m": 0.35000000000000003,
+        "position_uncertainty_m": 0.2,
+        "tracking_error_m": 0.45
+      },
+      "plan/summary.json": {
+        "schema_version": 1,
+        "release_class": "SITL_ONLY",
+        "mission_intent_sha256": "0f735183ff767f1f63ae46bfb9699dfc4c7a7a6a0c6ed0952fbc3e63d0e48fef",
+        "vehicle_model_sha256": "e5af1208f238feb62dad259699e15cc8becbe5f497450f03fff4f6d71ecf6b08",
+        "environment_sha256": "da67123739fab6830579a6bb6dcfde7cad8449623520ea29ea6bba5e4ffbd6d9",
+        "candidate_trajectory_sha256": "bfe2c42ace607a66e8ddf824cc16f28d5250f73471bedad4fb88359b921fcb07",
+        "controller_trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334",
+        "verification_report_sha256": "a207d139241fde4fef052d8c34c54f070f2184da68a5aa9d59681a5dd169f993",
+        "point_count": 505,
+        "geometry": {
+          "accepted": true,
+          "maximum_allowed_deviation_m": 0.35000000000000003,
+          "curve_to_stroke_upper_bound_m": 0.010000000000017764,
+          "stroke_to_curve_upper_bound_m": 0.010000000000017766,
+          "symmetric_upper_bound_m": 0.010000000000017766,
+          "curve_sample_count": 1001,
+          "stroke_sample_count": 1001,
+          "verification_resolution_m": 0.02
+        },
+        "smoothing": {
+          "requested_control_spacing_m": 0.5,
+          "selected_control_spacing_m": 4.0,
+          "deviation_utilization": 0.75,
+          "deviation_budget_m": 0.2625,
+          "control_point_count": 6,
+          "source_length_m": 20.0,
+          "curve_length_m": 19.999999999999996,
+          "heading_slope_bound_rad": 0.0
+        },
+        "retiming": {
+          "minimum_feasible_duration_s": 25.167786000580893,
+          "selected_duration_s": 25.167786000580893,
+          "limiting_constraint": "speed",
+          "limit_scale": 0.9,
+          "speed_limit_m_s": 0.9,
+          "acceleration_limit_m_s2": 0.9,
+          "jerk_limit_m_s3": 1.35,
+          "conservative_speed_bound_m_s": 0.8999999990999998,
+          "conservative_acceleration_bound_m_s2": 0.8185075081470554,
+          "conservative_jerk_bound_m_s3": 1.292077625954773,
+          "time_law": {
+            "schedule_intervals": 256,
+            "control_point_count": 261,
+            "pace_window_spans": 3.0,
+            "cruise_acceleration_share": 0.3,
+            "ramp_fraction": 0.15000000000000002,
+            "equalization_passes": 12,
+            "candidates_evaluated": 324,
+            "minimum_requirement_s": 25.167786000580893,
+            "limiting_constraint": "speed",
+            "limiting_normalized_time": 0.544921875,
+            "speed_limit_m_s": 0.9,
+            "acceleration_limit_m_s2": 0.9,
+            "jerk_limit_m_s3": 1.35,
+            "straight_line_duration_s": 22.222222222222218
+          },
+          "loop_count": 1,
+          "yaw_mode": "fixed",
+          "heading_error_bound_rad": null,
+          "tilt_bound_deg": 4.787735581369095,
+          "minimum_thrust_bound_n": 18.554291685489662,
+          "maximum_thrust_bound_n": 21.9335943760488,
+          "body_rate_bound_deg_s": 8.236473202065337,
+          "segment_count": 1
+        },
+        "duration_scope": "certified feasible candidate family; not a proven global minimum",
+        "controller_cruise_height_m": 20.0,
+        "limitations": [
+          "yaw commands are added to the heading measured at launch; tangent mode requires the aircraft to start pointed along the initial path tangent",
+          "a periodic path starts and stops at its seam; extra laps repeat that loop",
+          "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
+          "a circle entry flies a lead-in from launch and meets the seam without stopping",
+          "an explicit yaw profile is a certified fit to requested heading samples on one rest-to-rest piece",
+          "interior hard points are full stops; exact points are flown through",
+          "look-at yaw tracks one fixed point and is refused if the path can reach it",
+          "open_depart is refused because the runner lands from a final stop",
+          "unconstrained yaw is refused",
+          "obstacle clearance is claimed only for a hashed map bound to the environment",
+          "rotor allocation uses declared individual geometry with simultaneous roll/pitch reserve; actual torque demand remains an identification assumption",
+          "controller cruise height must match the compiled value",
+          "a SITL acknowledgement is not a clearance to fly",
+          "not a clearance to fly",
+          "SITL_ONLY"
+        ],
+        "aircraft_profile_sha256": "6c7811afd55bac14f44b57eb126e1ba3ba7ebd982ee42f8167b96b0c9f65874a",
+        "mission_budget_sha256": "867cb60c86b3a8c27193e31a14d4093df73d117307bbfa3f4d087331c477efdf",
+        "path_error_budget_sha256": "e53f0fc8b322888efaf3a900b468ff960f0cabd2520f0dbcc4d4280daacec942"
+      }
+    }
+  ],
+  "limitations": [
+    "Only the x500 configuration has connected evidence here; quad/hex/octo/custom portability also has offline regression evidence.",
+    "The initial tighter profile declarations failed and remain failed.",
+    "Fault response is judged separately from nominal trajectory completion.",
+    "Power, time, torque and error bounds are declarations and limited sampled evidence, not universal physical qualification."
+  ]
+}

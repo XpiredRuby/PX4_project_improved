@@ -133,6 +133,22 @@ motion ceilings also derive from the profile. Existing GNSS bootstrap and
 controller tuning are still qualification assumptions for a new configuration.
 No physical PX4 parameter writes occur in this workflow.
 
+After a confirmed profile-bound plan is retained, its two supplementary fault
+rehearsals can be repeated on Linux/WSL. Replace `PLAN_ID` with that retained
+plan's identifier and choose a new output directory:
+
+```bash
+python3 scripts/check_aircraft_faults.py --confirm-sitl \
+  --autopilot /home/xpire/PX4-Autopilot \
+  --reviewed-plan /home/xpire/PX4-runs/aircraft-studio-oct19/PLAN_ID \
+  --output /home/xpire/PX4-runs/aircraft-profile-faults-repeat --gui
+```
+
+It reuses the exact confirmed CSV, profile, model and budgets, injects a four
+second GPS interruption and a 0.4 s command-production stall, then records the
+declared fault response separately from nominal accuracy/completion. Existing
+simulator ownership is preserved. A failed response stops the campaign.
+
 ## Installed x500 correction
 
 Inspection found that the installed Gazebo files contain 2 kg of base-link
@@ -171,3 +187,11 @@ tracking allowances for a separate rerun with an explicitly selected 1.0 m
 total path tolerance. These remain demonstration bounds informed by limited
 evidence, not statistical confidence limits or physical-aircraft calibration.
 The generic 0.5 m p95 / 1.0 m maximum tracking targets were unchanged.
+
+The separate rerun passed all sampled profile/generic checks: navigation max
+0.149034 m, estimated tracking max 0.352011 m, route wall time 25.199933 s,
+whole recorded lifecycle 182.173635 s within the predeclared nominal budget.
+Both profile-bound fault responses passed; their nominal outcomes remain failed
+or incomplete as appropriate. Repository validation passed 350 tests.
+The [consolidated evidence](../evidence/planner/2026-10-19/aircraft_profiles/README.md)
+retains the initial failure as well as the rerun and fault results.
