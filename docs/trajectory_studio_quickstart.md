@@ -97,6 +97,38 @@ lists the missing owner information. A real aircraft model, operating domain,
 qualified failure response, hardware tests and a separate operator approval
 are required before a physical execution adapter can be enabled.
 
+## Independent physics-truth checks
+
+Each completed Gazebo rehearsal now reads **actual PX4 ULog ground truth**
+rather than treating the planned spline as physical motion. Three additional
+checks require complete finite simulator kinematics across the trajectory phase,
+measured speed within the configured model's hard speed envelope, and measured
+body tilt within the configured model's hard tilt envelope. The assessment
+includes measured acceleration RMS, p95 and maximum for research comparison;
+the planner's analytic acceleration/jerk limits apply to **reference motion**.
+Observed vehicle acceleration is not silently substituted for reference
+acceleration, and finite-sample ULog jerk is **not** called certified.
+
+These checks are in `analysis/simulation_physics.py` and the connected
+`analysis/planner_rehearsal.py` acceptance path. They are not a new hardware
+release gate or proof that the simulator matches an identified aircraft.
+
+To qualify more trajectory shapes on the already configured x500 simulator,
+run a **new output directory** (each scenario is an owned SITL session; never
+run two simultaneous copies):
+
+```bash
+python3 scripts/planner_sitl_campaign.py --confirm-sitl \
+  --autopilot /home/xpire/PX4-Autopilot \
+  --output /home/xpire/PX4-runs/shape-matrix-YYYYMMDD \
+  --cases five-stop-baseline drawn-nominal circle-nominal
+```
+
+Review each retained `assessment.json`, `final_ground.json`, the executed
+CSV digest, Gazebo ULog, actual vehicle speed/tilt and physical route-fidelity
+checks. A passing regression test on a synthetic fixture is not a successful
+Gazebo run. The x500 verification result does not generalize to other aircraft.
+
 ## Browser regression on a configured simulation machine
 
 The reusable browser check requires optional Playwright (`python -m pip install
