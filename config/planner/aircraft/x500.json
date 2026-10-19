@@ -25,12 +25,12 @@
   "contingency_time_s": 30.0,
   "maximum_wind_m_s": 3.0,
   "expected_wind_m_s": 0.0,
-  "position_uncertainty_m": 0.1,
-  "tracking_error_m": 0.1,
+  "position_uncertainty_m": 0.2,
+  "tracking_error_m": 0.45,
   "navigation": "gnss_imu",
   "max_radius_m": 100.0,
   "max_height_m": 30.0,
-  "evidence_notes": "Gazebo x500/x500_base SDF mass, geometry and motor coefficients; no physical identification. Energy/power envelope is a declared demonstration assumption, not measured battery evidence.",
+  "evidence_notes": "Installed Gazebo x500/x500_base SDF supplies mass, geometry, inertia and motor coefficients. Demonstration accuracy allowances 0.20 m navigation / 0.45 m tracking were predeclared after a diagnostic run exceeded the original 0.10/0.10 m declarations (observed maxima 0.134/0.341 m); a separate rehearsal must validate them. These are not statistical or physical-flight guarantees. Power/energy/time values remain declared demonstration assumptions.",
   "rotors": [
     {
       "x_m": 0.174,

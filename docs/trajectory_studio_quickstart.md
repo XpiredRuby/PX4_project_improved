@@ -17,6 +17,14 @@ Python command. Open <http://127.0.0.1:8765>. A different port is available with
 
 ## Use
 
+Start with **Aircraft setup**. Enter a loaded configuration, import a saved
+profile, or use the registered simulator profile. **Check setup** lists missing
+inputs and compatibility errors. Quad, hex, octo and custom parallel-rotor
+geometry feed the same independent checker. Save/export the profile for reuse.
+The explicit x500 reference demo remains available without custom setup.
+See [aircraft profiles](aircraft_profiles.md) for the input sources, accuracy
+and energy budgets, simulator registration and supported aircraft classes.
+
 1. In **Draw**, click points or drag a stroke. The route starts at launch.
    Undo or clear the input, or select a straight route, L turn or circle.
    Choose final stop or closed lap. The latter visibly closes to launch.
@@ -38,6 +46,11 @@ Python command. Open <http://127.0.0.1:8765>. A different port is available with
 
 Use a Linux or WSL environment with the built PX4 executable, Gazebo and the
 repository dependencies, including `pyulog`. On the configured machine:
+
+The commands below start the reference x500 backend. For reusable profiles,
+register the matching SDF/airframe and add `--sim-binding` as shown in
+[the aircraft setup guide](aircraft_profiles.md#register-a-matching-simulator).
+A custom profile cannot silently use the reference x500 simulator.
 
 ```bash
 cd /home/xpire/PX4-trajectory-studio-oct19

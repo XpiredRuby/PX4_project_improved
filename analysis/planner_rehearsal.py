@@ -17,7 +17,7 @@ from sitl_ground_truth import audit_ground_truth, interpolation_coverage, ordere
 from trajectory_quality import distribution
 
 
-def assess_frames(df, plan, physical, yaw, velocity, audit, ground):
+def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4):
     checks = []
 
     def add(name, passed, detail):
@@ -89,7 +89,7 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground):
     add("Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
         ground.get("armed") is False and ground.get("landed_state") == 1
         and ground.get("continuous_confirmation_s", 0) >= 2.
-        and len(ground.get("actuators", [])) == 4
+        and len(ground.get("actuators", [])) == rotor_count
         and all(np.isfinite(v) and abs(v) <= .01 for v in ground.get("actuators", [])), ground)
     wall = df.wall_time.to_numpy(dtype=float)
     simulated = df.position_time_boot_ms.to_numpy(dtype=float) / 1000.
@@ -115,6 +115,31 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground):
             "remaining_qualification": ["pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
                                         "rigid-body contact timing", "actual dynamics and actuator reserves",
                                         "identified aircraft and environment", "obstacle-map clearance if applicable"]}
+
+
+def assess_aircraft_envelope(df, physical, profile, budget):
+    """Compare observed samples with the declared accuracy and time allowances."""
+    route = df.phase.eq("TRAJECTORY").to_numpy()
+    estimate = df[["x", "y", "z"]].to_numpy(dtype=float)
+    desired = df[["desired_x", "desired_y", "desired_z"]].to_numpy(dtype=float)
+    navigation = np.linalg.norm(physical[route] - estimate[route], axis=1)
+    tracking = np.linalg.norm(estimate[route] - desired[route], axis=1)
+    checks = []
+    for name, errors, limit in (("Sampled navigation error fits the aircraft allowance", navigation, profile["position_uncertainty_m"]),
+                                ("Sampled estimated tracking error fits the aircraft allowance", tracking, profile["tracking_error_m"])):
+        checks.append({"name": name, "passed": bool(len(errors) and np.isfinite(errors).all() and np.max(errors) <= limit),
+                       "detail": {"error_m": distribution(errors), "limit_m": limit}})
+    wall = df.wall_time.to_numpy(dtype=float)
+    observed = float(wall[-1]-wall[0])
+    route_wall = wall[route]
+    route_elapsed = float(route_wall[-1]-route_wall[0]) if len(route_wall) else float("inf")
+    limit = budget["total_budgeted_s"] - profile["contingency_time_s"]
+    checks.append({"name": "Observed nominal lifecycle fits the declared energy/time budget",
+                   "passed": bool(observed <= limit and route_elapsed <= budget["route_wall_time_budget_s"]),
+                   "detail": {"observed_wall_s": observed, "nominal_budget_s": limit,
+                              "route_wall_s": route_elapsed if np.isfinite(route_elapsed) else None,
+                              "route_budget_s": budget["route_wall_time_budget_s"]}})
+    return checks
 
 
 def assess_case(folder):
@@ -146,9 +171,19 @@ def assess_case(folder):
     yaw = np.arctan2(2 * (w*z + x*y), 1 - 2 * (y*y + z*z))
     velocity = interpolate(names[3], ("vx", "vy", "vz"))
     plan_path = folder / "plan/trajectory.csv"
+    configuration = json.loads((folder / "simulation_configuration.json").read_text())
+    binding = configuration.get("simulation_binding")
+    rotor_count = len(binding["rotors"]) if binding else 4
     result = assess_frames(df, pd.read_csv(plan_path), physical, yaw, velocity,
                            json.loads((run / "audit.json").read_text()),
-                           json.loads((folder / "final_ground.json").read_text()))
+                           json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count)
+    profile_path = folder / "plan/aircraft_profile.json"
+    if profile_path.is_file():
+        profile = json.loads(profile_path.read_text())
+        budget = json.loads((folder / "plan/mission_budget.json").read_text())
+        profile_checks = assess_aircraft_envelope(df, physical, profile, budget)
+        result["checks"].extend(profile_checks)
+        result["sampled_rehearsal_passed"] &= all(c["passed"] for c in profile_checks)
     manifest = json.loads(unique(run.glob("run_manifest_*.json")).read_text())
     plan_digest = hashlib.sha256(plan_path.read_bytes()).hexdigest()
     selected_digest = hashlib.sha256((run / "selected_trajectory.csv").read_bytes()).hexdigest()
@@ -172,11 +207,15 @@ def assess_case(folder):
             fraction = np.clip((points-left)@delta / length2, 0., 1.) if length2 > 0 else np.zeros(len(points))
             distances = np.minimum(distances, np.linalg.norm(points-(left+fraction[:, None]*delta), axis=1))
         stats = distribution(distances)
+        tolerance = intent["path"]["maximum_deviation_m"]
+        budget_path = folder / "plan/path_error_budget.json"
+        if budget_path.is_file():
+            tolerance = json.loads(budget_path.read_text())["total_tolerance_m"]
         fidelity = (len(points) > 0 and np.isfinite(distances).all()
-                    and np.max(distances) <= intent["path"]["maximum_deviation_m"])
+                    and np.max(distances) <= tolerance)
         result["checks"].append({"name": "Sampled physical route stays inside user's geometric tolerance",
                                  "passed": bool(fidelity), "detail": {"distance_m": stats,
-                                  "limit_m": intent["path"]["maximum_deviation_m"],
+                                  "limit_m": tolerance,
                                   "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"}})
         result["sampled_rehearsal_passed"] &= bool(fidelity)
     result["independent_contact_and_hold_audit"] = truth_audit["physical_position_audit"]

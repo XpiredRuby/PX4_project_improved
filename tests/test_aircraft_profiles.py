@@ -25,6 +25,7 @@ def request(p):
     setup = assess_profile(p)
     document = json.loads((ROOT / "missions/drawn_path_example.json").read_text())
     document["path"]["points"] = [document["path"]["points"][0], document["path"]["points"][-1]]
+    document["path"]["maximum_deviation_m"] = p["position_uncertainty_m"] + p["tracking_error_m"] + .3
     document.update(vehicle_model_id=p["profile_id"], environment_id="profile-env-"+setup["profile_sha256"][:16])
     return dict(source="drawing", document=document, aircraft_profile=p)
 
@@ -105,6 +106,14 @@ class AircraftProfileTests(unittest.TestCase):
         self.assertGreater(b, a)
         self.assertGreater(c, a)
 
+    def test_wind_requires_force_bounds_and_those_bounds_consume_thrust(self):
+        self.assertFalse(assess_profile(dict(profile(), expected_wind_m_s=1.))["ready"])
+        calm = VehicleModel.from_dict(assess_profile(profile())["vehicle_model"])
+        windy = VehicleModel.from_dict(assess_profile(dict(profile(), expected_wind_m_s=1.,
+                                      disturbance_acceleration_m_s2=2., disturbance_jerk_m_s3=1.))["vehicle_model"])
+        self.assertGreater(vehicle_rotor_duration_s(windy, 100., 10.)[0],
+                           vehicle_rotor_duration_s(calm, 100., 10.)[0])
+
     def test_mission_budget_includes_lifecycle_contingency_and_reserve(self):
         setup = assess_profile(profile())
         budget = mission_budget(setup, 40., 20., 20.)
@@ -177,7 +186,7 @@ class SimulationBindingTests(unittest.TestCase):
         pieces = ['<sdf version="1.9"><model name="test_quad"><link name="base"><inertial><mass>2</mass><inertia><izz>.04</izz></inertia></inertial></link>']
         for i, r in enumerate(setup["vehicle_model"]["rotors"]):
             pieces.append(f'<link name="rotor_{i}"><pose>{r["x_m"]} {-r["y_m"]} 0 0 0 0</pose></link>')
-            pieces.append(f'<plugin name="gz::sim::systems::MulticopterMotorModel"><linkName>rotor_{i}</linkName><turningDirection>{"ccw" if r["yaw_torque_per_thrust_m"]>0 else "cw"}</turningDirection><momentConstant>.016</momentConstant><motorConstant>.00001</motorConstant><maxRotVelocity>1000</maxRotVelocity></plugin>')
+            pieces.append(f'<plugin name="gz::sim::systems::MulticopterMotorModel"><linkName>rotor_{i}</linkName><turningDirection>{"ccw" if r["yaw_torque_per_thrust_m"]>0 else "cw"}</turningDirection><motorNumber>{i}</motorNumber><momentConstant>.016</momentConstant><motorConstant>.00001</motorConstant><maxRotVelocity>1000</maxRotVelocity></plugin>')
         pieces.append('</model></sdf>')
         (self.modeldir / "model.sdf").write_text(''.join(pieces))
         airframe = self.autopilot / "ROMFS/px4fmu_common/init.d-posix/airframes/4001_test_quad"

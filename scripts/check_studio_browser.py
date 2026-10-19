@@ -87,6 +87,7 @@ def main():
                     page.locator("#checkAircraft").click()
                 assert setup.value.json()["ready"]
                 page.locator("#saveAircraft").click()
+                page.locator("#deviation").fill("1.0")
                 results.append({"case": "reusable_aircraft_setup_and_model_binding", "passed": True})
             else:
                 page.locator("#aircraftMode").select_option("demo")

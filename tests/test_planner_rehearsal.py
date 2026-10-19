@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
-from planner_rehearsal import assess_frames  # noqa: E402
+from planner_rehearsal import assess_frames, assess_aircraft_envelope  # noqa: E402
 
 
 class RehearsalTests(unittest.TestCase):
@@ -64,6 +64,28 @@ class RehearsalTests(unittest.TestCase):
                 args[0]["position_time_boot_ms"] *= .5
             with self.subTest(kind=kind):
                 self.assertFalse(assess_frames(*args)["sampled_rehearsal_passed"])
+
+    def test_every_motor_is_checked_for_a_six_rotor_aircraft(self):
+        args = self.evidence()
+        args[-1]["actuators"] = [0.] * 6
+        self.assertTrue(assess_frames(*args, rotor_count=6)["sampled_rehearsal_passed"])
+        args[-1]["actuators"][5] = .2
+        self.assertFalse(assess_frames(*args, rotor_count=6)["sampled_rehearsal_passed"])
+
+    def test_declared_profile_accuracy_and_time_limits_cannot_be_ignored(self):
+        args = self.evidence()
+        df, physical = args[0], args[2]
+        df["x"], df["y"], df["z"] = 0., 0., 0.
+        profile = {"position_uncertainty_m": .1, "tracking_error_m": .1,
+                   "contingency_time_s": 1.}
+        budget = {"total_budgeted_s": 4., "route_wall_time_budget_s": 1.5}
+        self.assertTrue(all(c["passed"] for c in assess_aircraft_envelope(df, physical, profile, budget)))
+        physical[5, 0] = .11
+        self.assertFalse(assess_aircraft_envelope(df, physical, profile, budget)[0]["passed"])
+        df.loc[5, "x"] = .2
+        self.assertFalse(assess_aircraft_envelope(df, physical, profile, budget)[1]["passed"])
+        budget["total_budgeted_s"] = 1.5
+        self.assertFalse(assess_aircraft_envelope(df, physical, profile, budget)[2]["passed"])
 
 
 if __name__ == "__main__":

@@ -4,6 +4,16 @@ Status date: 19 October 2026. This file is a progress record for the drawn-path
 and interview planner in this repository. It is not a flight authorization.
 Every planner artifact is `SITL_ONLY` and is not a clearance to fly.
 
+The reusable-aircraft extension adds a guided configuration questionnaire,
+profile import/export, general parallel-rotor allocation, profile-specific
+navigation/tracking allowances, disturbance bounds and energy/time budgets.
+It supports offline quad/hex/octo/custom layouts rather than one owner's
+aircraft. A matching registered Gazebo model is required for custom rehearsals;
+unsupported aircraft types and missing values are explicitly refused.
+See [aircraft profiles](aircraft_profiles.md). Physical evidence is still
+specific to each loaded configuration; the software collects that information
+as a reusable product workflow instead of requiring it during development.
+
 The research plan and the requirement matrix live in
 [`trajectory_planner_architecture.md`](trajectory_planner_architecture.md) and
 [`trajectory_planner_traceability.md`](trajectory_planner_traceability.md).
@@ -115,8 +125,9 @@ section 11 of the architecture:
 9. confidence targets and why the test sample is large enough;
 10. who keeps the evidence, who operates, and who may approve a flight.
 
-Until those exist, the model is the conservative Gazebo x500 SITL model, and
-every artifact is labeled `SITL_ONLY`.
+Reference mode uses the Gazebo x500 model. Aircraft setup can generate a checked
+v2 model from the user's complete profile. Both remain `SITL_ONLY`; neither
+profile completion nor another aircraft's simulation evidence is a flight release.
 
 ## 2. What has been done
 
@@ -196,7 +207,13 @@ initial tangent.
 - A path that is still moving at the end is refused. The current runner lands
   from the final sample, so the schedule stays rest-to-rest.
 
-### Vehicle limits checked on the x500 SITL model
+### Vehicle limits and configuration
+
+The x500 checks below describe the original baseline. The reusable v2 model
+adds individual rotor geometry, full thrust/roll/pitch/yaw interval allocation,
+declared disturbance bounds, loaded hover feasibility and simultaneous
+roll/pitch torque reserve. The installed x500 SDF constants have also been
+corrected; see the correction/evidence discussion in the aircraft guide.
 
 - Tilt, thrust, and body rate are bounded from the acceleration the timing
   already certified. If translation would finish sooner than those bounds

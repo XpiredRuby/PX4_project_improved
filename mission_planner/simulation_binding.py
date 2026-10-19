@@ -61,6 +61,13 @@ def inspect_model(autopilot, model):
         motors.extend(p for p in root.findall("plugin") if "MulticopterMotorModel" in p.get("name", ""))
 
     visit(model)
+    try:
+        motors.sort(key=lambda p: int(p.findtext("motorNumber")))
+        numbers = [int(p.findtext("motorNumber")) for p in motors]
+    except (TypeError, ValueError) as exc:
+        raise ValueError("each motor needs a numeric motorNumber") from exc
+    if numbers != list(range(len(motors))):
+        raise ValueError("motor numbers must be unique and contiguous from zero")
     mass, yaw_inertia = 0., 0.
     rotors = []
     for link in links.values():
@@ -122,7 +129,9 @@ def create_binding(profile, autopilot, model, airframe_id):
     for i, rotor in enumerate(inspection["rotors"]):
         controller_parameters.update({f"CA_ROTOR{i}_PX": rotor["x_m"],
                                       f"CA_ROTOR{i}_PY": rotor["y_m"],
-                                      f"CA_ROTOR{i}_KM": rotor["yaw_torque_per_thrust_m"]})
+                                      f"CA_ROTOR{i}_KM": rotor["yaw_torque_per_thrust_m"],
+                                      f"CA_ROTOR{i}_AX": 0., f"CA_ROTOR{i}_AY": 0., f"CA_ROTOR{i}_AZ": -1.,
+                                      f"CA_ROTOR{i}_CT": rotor["maximum_thrust_n"] / max(r["maximum_thrust_n"] for r in inspection["rotors"])})
     return dict(schema_version=1, profile=setup["profile"], profile_sha256=setup["profile_sha256"],
                 vehicle_model_sha256=setup["vehicle_model_sha256"], airframe_id=airframe_id,
                 controller_parameters=controller_parameters, **inspection)
