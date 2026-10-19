@@ -362,8 +362,8 @@
           "batch/five-stop-baseline/scenario.json": "547b4aa3ce9e79a94568e1e87599328a566eb4f5f771324c8587a5ac4364234c"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -737,8 +737,8 @@
           "batch/circle-nominal/scenario.json": "16b692282817e3ffc7b177bc31ce1914ac07cc914dcd2a0f6f2f4c124c31910a"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -1112,8 +1112,8 @@
           "batch/drawn-nominal/scenario.json": "3b323ae99f9b4c471f30a79dec60e114f8141a0acdf9a976a634393d2012a833"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -1487,8 +1487,8 @@
           "batch/circle-nominal/scenario.json": "fffe75c8c9ee22f04549fded9b40717dcaeef7cdad575e23988f656aedb9d4b7"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -1862,8 +1862,8 @@
           "batch/drawn-nominal/scenario.json": "a54b5aaf5e13346863ad1cba1ef09a3b7e04f885363676672ad2171983ff4081"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -2226,8 +2226,8 @@
           "batch/five-stop-baseline/scenario.json": "5e3a574a8ae4b8f9a36bf64b7f965a13b4f1519b9a354bc0ac97ae4e5aa322f7"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -2615,8 +2615,8 @@
           "batch/drawn-control-stall/scenario.json": "5e75f264f119597f1e20541ff9f99e4ef48b4f97a4a05a468de8f421b4f206ac"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -3025,8 +3025,8 @@
           "batch/drawn-gps-outage-4s/scenario.json": "a687639b42bb43ff3393545ca26aefaf0b595a288b1532c2ebecadd6d95f3335"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -3428,8 +3428,8 @@
           "batch/reviewed-plan/scenario.json": "6476ad5b4bbb60a87b81b9100cbe68bad5e4164e9088fc6484461a8a4440487d"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -3831,8 +3831,8 @@
           "batch/reviewed-plan/scenario.json": "2f029973f938b23368b9563c28e75c07a6ceebdb280b2c8ac42a07d9d5a4c12a"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     },
@@ -4234,8 +4234,8 @@
           "batch/reviewed-plan/scenario.json": "c536ef8b04e9548453b63a02375dfe521aa7dc0d939aba6692f04f4166a1dbde"
         },
         "assessment_implementation_sha256": {
-          "planner_rehearsal.py": "3d0634274c7f82a3190019407dd85117da8cc58812aa3110ce69bb06eaff7dd5",
-          "sitl_ground_truth.py": "9a6a867360d98698fb397351ef252234dbe83cb4729dfce84f0c88d41208ef58"
+          "planner_rehearsal.py": "95cb35a88cc8bcb22a0c589db039754a677667a32be32bb693da04bb5387ef5d",
+          "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd"
         }
       }
     }
