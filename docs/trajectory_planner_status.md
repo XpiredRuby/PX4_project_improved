@@ -131,9 +131,10 @@ profile completion nor another aircraft's simulation evidence is a flight releas
 
 ## 2. What has been done
 
-The offline planner compiles, checks, and exports a trajectory. The last full
-run of `python3 scripts/validate.py` passed **298 tests**. The work is on
-pull request 3.
+The offline planner compiles, checks, and exports a trajectory. The original
+baseline passed 298 tests on pull request 3. Reusable-aircraft and connected
+workflow changes are on pull request 4; their current validation is recorded in
+the aircraft guide and retained evidence rather than inferred from that older count.
 
 ### Contracts and evidence
 
@@ -305,6 +306,6 @@ out of this offline planner. Unconstrained yaw stays refused.
 
 The repository can take a drawing or an interview, produce a checked
 rest-to-rest trajectory, explain the binding limit, and refuse a plan that
-breaks the x500 SITL model. It can rehearse an exactly confirmed fixed-heading artifact in local Gazebo
+breaks the selected aircraft model or its declared budgets. It can rehearse an exactly confirmed fixed-heading artifact with a matching registered local Gazebo model
 and show its sampled truth/evidence. It cannot authorize a real flight.
 Read the connected validation record for the tested conditions and limits.

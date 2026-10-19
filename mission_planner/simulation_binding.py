@@ -26,7 +26,7 @@ def inspect_model(autopilot, model):
         raise ValueError("invalid Gazebo model name")
     autopilot = Path(autopilot).resolve()
     models = autopilot / "Tools/simulation/gz/models"
-    links, motors, files, visiting = {}, [], {}, set()
+    links, joints, motors, files, visiting = {}, {}, [], {}, set()
 
     def visit(name):
         if name in visiting:
@@ -58,6 +58,10 @@ def inspect_model(autopilot, model):
             if pose is not None and pose.get("relative_to"):
                 raise ValueError("relative link pose requires a transform-aware model adapter")
             links[name] = link
+        for joint in root.findall("joint"):
+            if joint.get("name") in joints:
+                raise ValueError("duplicate joint in merged model")
+            joints[joint.get("name")] = joint
         motors.extend(p for p in root.findall("plugin") if "MulticopterMotorModel" in p.get("name", ""))
 
     visit(model)
@@ -82,6 +86,14 @@ def inspect_model(autopilot, model):
         link = links.get(motor.findtext("linkName"))
         if link is None:
             raise ValueError("motor references an unknown rotor link")
+        joint = joints.get(motor.findtext("jointName"))
+        if joint is None or joint.findtext("child") != link.get("name"):
+            raise ValueError("motor joint must identify its rotor link")
+        axis = joint.find("axis/xyz")
+        joint_pose = [float(x) for x in joint.findtext("pose", "0 0 0 0 0 0").split()]
+        if (axis is None or axis.get("expressed_in") or any(joint_pose)
+                or [float(x) for x in axis.text.split()] != [0., 0., 1.]):
+            raise ValueError("nonparallel/relative rotor axes need a different model adapter")
         pose = [float(x) for x in link.findtext("pose", "0 0 0 0 0 0").split()]
         direction = motor.findtext("turningDirection")
         if direction not in ("cw", "ccw"):

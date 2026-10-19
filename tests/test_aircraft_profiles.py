@@ -186,7 +186,8 @@ class SimulationBindingTests(unittest.TestCase):
         pieces = ['<sdf version="1.9"><model name="test_quad"><link name="base"><inertial><mass>2</mass><inertia><izz>.04</izz></inertia></inertial></link>']
         for i, r in enumerate(setup["vehicle_model"]["rotors"]):
             pieces.append(f'<link name="rotor_{i}"><pose>{r["x_m"]} {-r["y_m"]} 0 0 0 0</pose></link>')
-            pieces.append(f'<plugin name="gz::sim::systems::MulticopterMotorModel"><linkName>rotor_{i}</linkName><turningDirection>{"ccw" if r["yaw_torque_per_thrust_m"]>0 else "cw"}</turningDirection><motorNumber>{i}</motorNumber><momentConstant>.016</momentConstant><motorConstant>.00001</motorConstant><maxRotVelocity>1000</maxRotVelocity></plugin>')
+            pieces.append(f'<joint name="rotor_{i}_joint" type="revolute"><parent>base</parent><child>rotor_{i}</child><axis><xyz>0 0 1</xyz></axis></joint>')
+            pieces.append(f'<plugin name="gz::sim::systems::MulticopterMotorModel"><jointName>rotor_{i}_joint</jointName><linkName>rotor_{i}</linkName><turningDirection>{"ccw" if r["yaw_torque_per_thrust_m"]>0 else "cw"}</turningDirection><motorNumber>{i}</motorNumber><momentConstant>.016</momentConstant><motorConstant>.00001</motorConstant><maxRotVelocity>1000</maxRotVelocity></plugin>')
         pieces.append('</model></sdf>')
         (self.modeldir / "model.sdf").write_text(''.join(pieces))
         airframe = self.autopilot / "ROMFS/px4fmu_common/init.d-posix/airframes/4001_test_quad"

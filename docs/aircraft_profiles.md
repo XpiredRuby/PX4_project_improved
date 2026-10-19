@@ -84,6 +84,11 @@ the current runtime does not enforce a remaining-energy envelope online.
 The profile, vehicle model, environment, path-error budget and mission-energy
 budget are retained with hashes. Confirmation binds the retained trajectory;
 the worker checks the corresponding profile/budget digests before rehearsal.
+The assessment also compares sampled navigation error, estimated tracking error
+and observed lifecycle/route wall time against that profile's declared
+allowances. Passing the generic tracking targets cannot hide a failed tighter
+profile declaration. The whole physical route uses the user's total tolerance;
+the smaller geometric tube is the planner's allocated share.
 
 ## Register a matching simulator
 
@@ -154,3 +159,15 @@ No neural network is used to fill missing physical values. Explicit input
 contracts, conservative bounds and deterministic checks are inspectable and
 repeatable. Future optimization engines can propose better trajectories while
 retaining the independent checker and these configuration bindings.
+
+## Diagnostic evidence and interpretation
+
+The first registered-profile rehearsal passed the original generic sampled
+tracking targets, then failed the added profile-specific check: its 0.10 m
+navigation/tracking declarations were exceeded by 0.134225 m and 0.340700 m.
+That failure is retained. It is not converted into a successful qualification.
+The demonstration x500 profile then predeclared 0.20 m navigation and 0.45 m
+tracking allowances for a separate rerun with an explicitly selected 1.0 m
+total path tolerance. These remain demonstration bounds informed by limited
+evidence, not statistical confidence limits or physical-aircraft calibration.
+The generic 0.5 m p95 / 1.0 m maximum tracking targets were unchanged.
