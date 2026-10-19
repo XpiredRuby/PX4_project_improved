@@ -1,0 +1,294 @@
+#!/usr/bin/env python3
+"""Run isolated local PX4/Gazebo planner scenarios and retain their evidence.
+
+This is SITL-only infrastructure. It requires a compiled local PX4 tree and
+never selects a serial device or a non-loopback MAVLink endpoint.
+"""
+# ruff: noqa: E402
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timedelta, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import threading
+import time
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path[:0] = [str(ROOT), str(ROOT / "scripts")]
+from pymavlink import mavutil
+from mission_planner.acknowledgement import issue_sitl_acknowledgement
+from mission_planner.plan_drawn_path import compile_drawn_path
+from mission_planner.plan_interview import compile_interview
+from sitl_scenario_batch import run_case
+from sitl_fault_injector import read_parameter, set_parameter
+
+
+PARAMETERS = {
+    "EKF2_GPS_CTRL": 7, "EKF2_HGT_REF": 1, "EKF2_BARO_CTRL": 0,
+    "EKF2_MAG_TYPE": 5, "EKF2_OF_CTRL": 0, "EKF2_EV_CTRL": 0,
+    "EKF2_RNG_CTRL": 0, "EKF2_AGP_CTRL": 0, "EKF2_NOAID_TOUT": 6000000,
+    "MPC_LAND_SPEED": .4, "MPC_LAND_CRWL": .3,
+    "COM_OF_LOSS_T": .5, "COM_OBL_RC_ACT": 4, "COM_DISARM_LAND": 2,
+    "COM_LOW_BAT_ACT": 2, "BAT_LOW_THR": .2, "BAT_CRIT_THR": .15,
+    "BAT_EMERGEN_THR": .1, "SYS_FAILURE_EN": 0,
+}
+
+
+def write_json(path, value):
+    Path(path).write_text(json.dumps(value, indent=2, allow_nan=False) + "\n")
+
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def ground_evidence(master, timeout_s=8.):
+    """Require fresh disarm, ground and zero actuator outputs for two seconds."""
+    for _ in range(1000):
+        if master.recv_match(blocking=False) is None:
+            break
+    for message_id in (245, 375):
+        master.mav.command_long_send(master.target_system, 1,
+                                     mavutil.mavlink.MAV_CMD_SET_MESSAGE_INTERVAL,
+                                     0, message_id, 100000, 0, 0, 0, 0, 0)
+    seen, timestamps = {}, {}
+    started = time.monotonic()
+    safe_since = None
+    while time.monotonic() - started < timeout_s:
+        packet = master.recv_match(blocking=True, timeout=.2)
+        now = time.monotonic()
+        if packet is not None and packet.get_srcSystem() == master.target_system and packet.get_srcComponent() == 1:
+            kind = packet.get_type()
+            if kind == "HEARTBEAT":
+                seen["armed"] = bool(packet.base_mode & 128)
+                timestamps["armed"] = now
+            elif kind == "EXTENDED_SYS_STATE":
+                seen["landed_state"] = packet.landed_state
+                timestamps["landed_state"] = now
+            elif kind == "ACTUATOR_OUTPUT_STATUS":
+                seen["actuators"] = list(packet.actuator[:4])
+                timestamps["actuators"] = now
+        fresh = len(timestamps) == 3 and all(now - t <= 1.5 for t in timestamps.values())
+        safe = (fresh and seen.get("armed") is False and seen.get("landed_state") == 1
+                and len(seen.get("actuators", [])) == 4
+                and max(abs(v) for v in seen["actuators"]) <= .01)
+        if safe:
+            safe_since = safe_since if safe_since is not None else now
+            if now - safe_since >= 2.:
+                return {**seen, "continuous_confirmation_s": now - safe_since}
+        else:
+            safe_since = None
+    raise RuntimeError(f"Fresh ground/disarm/zero-output evidence missing: {seen}")
+
+
+def connect():
+    master = mavutil.mavlink_connection("udpin:127.0.0.1:14601", source_system=253,
+                                       source_component=190)
+    if master.wait_heartbeat(timeout=15) is None:
+        master.close()
+        raise RuntimeError("Local simulator heartbeat unavailable")
+    master.target_component = 1
+    return master
+
+
+def prepare_case(name, output):
+    artifacts = output / "plan"
+    artifacts.mkdir()
+    trajectory, summary = artifacts / "trajectory.csv", artifacts / "summary.json"
+    case = {"name": name, "expected": "nominal", "trajectory": str(trajectory)}
+    if name == "five-stop-baseline":
+        subprocess.run([sys.executable, str(ROOT / "trajectory_generator/plan_waypoint_mission.py"),
+                        "--plan", str(ROOT / "missions/five_stop_example.json"),
+                        "--output", str(trajectory), "--summary", str(summary)],
+                       cwd=ROOT / "trajectory_generator", check=True)
+        case["waypoint_summary"] = str(summary)
+        return case
+    common = dict(
+        intent_path=artifacts / "intent.json",
+        vehicle_path=ROOT / "config/planner/x500_sitl_vehicle_model.json",
+        environment_path=ROOT / "config/planner/empty_world_environment.json",
+        trajectory_path=trajectory, report_path=artifacts / "verification.json",
+        summary_path=summary, review_path=artifacts / "review.html",
+        control_spacing_m=.5, verification_resolution_m=.02,
+        sample_period_s=.05, limit_scale=.9, controller_cruise_height_m=20.,
+        deviation_utilization=.75,
+    )
+    if name.startswith("circle"):
+        interview = json.loads((ROOT / "missions/interview_circle_example.json").read_text())
+        # Fixed heading isolates circle tracking from launch-heading alignment.
+        interview.update(yaw_mode="fixed", fixed_yaw_deg=0., altitude_m=20.)
+        source = artifacts / "interview.json"
+        write_json(source, interview)
+        result = compile_interview(interview_path=source, **common)
+    else:
+        intent = json.loads((ROOT / "missions/drawn_path_example.json").read_text())
+        for point in intent["path"]["points"]:
+            point["down_m"] -= 3.
+        write_json(common["intent_path"], intent)
+        result = compile_drawn_path(**common)
+    ack = issue_sitl_acknowledgement(
+        controller_trajectory_sha256=result["controller_trajectory_sha256"],
+        candidate_trajectory_sha256=result["candidate_trajectory_sha256"],
+        verification_report_sha256=result["verification_report_sha256"],
+        expires_at=(datetime.now(timezone.utc) + timedelta(hours=2)).isoformat(),
+        acknowledged_by="automated-sitl-regression-harness",
+    )
+    acknowledgement = artifacts / "sitl_acknowledgement.json"
+    write_json(acknowledgement, ack)
+    case.update(planner_summary=str(summary), sitl_acknowledgement=str(acknowledgement),
+                cruise_height_m=20.)
+    if name == "drawn-gps-outage-4s":
+        case.update(expected="navigation_response", gps_outage_s=4.,
+                    trigger_phase="TRAJECTORY", trigger_clock_s=8.)
+    if name == "drawn-control-stall":
+        case.update(expected="control_stall", control_stall_s=.4, stall_clock_s=8.)
+    return case
+
+
+def run_one(name, args):
+    folder = args.output / name
+    folder.mkdir()
+    case = prepare_case(name, folder)
+    runtime = folder / "runtime"
+    runtime.mkdir()
+    build = args.autopilot / "build/px4_sitl_default"
+    shutil.copy2(build / "rootfs/gz_env.sh", runtime / "gz_env.sh")
+    binary = (build / "bin/px4").resolve()
+    environment = os.environ.copy()
+    for key in ("PX4_GZ_STANDALONE", "GZ_PARTITION", "PX4_GZ_MODEL_NAME"):
+        environment.pop(key, None)
+    environment.update(PX4_SYS_AUTOSTART="4001", PX4_SIM_MODEL="gz_x500",
+                       PX4_GZ_WORLD=args.world, PX4_GZ_MODEL_POSE="0,0,0,0,0,0",
+                       PX4_SIM_SPEED_FACTOR="1", GZ_IP="127.0.0.1")
+    if args.gui:
+        environment.pop("HEADLESS", None)
+    else:
+        environment["HEADLESS"] = "1"
+    environment.update({"PX4_PARAM_" + key: str(value) for key, value in PARAMETERS.items()})
+    config = {"release_class": "SITL_ONLY", "case": case, "parameters": PARAMETERS,
+              "world": args.world, "simulation_speed_factor": 1,
+              "world_sha256": digest(args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"),
+              "px4_executable_sha256": digest(binary),
+              "controller_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+              "controller_batch_sha256": digest(ROOT / "scripts/sitl_scenario_batch.py")}
+    write_json(folder / "simulation_configuration.json", config)
+    log = (folder / "simulator.log").open("w")
+    process = subprocess.Popen([str(binary), "-d", str(build / "etc"), "-w", str(runtime)],
+                               cwd=runtime, env=environment, stdin=subprocess.DEVNULL,
+                               stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+    write_json(folder / "owned_process.json", {"pid": process.pid, "pgid": os.getpgid(process.pid)})
+    master = None
+    gcs = mavutil.mavlink_connection("udpin:127.0.0.1:14550", source_system=254,
+                                    source_component=190)
+    stop_gcs = threading.Event()
+
+    def ground_station_heartbeat():
+        # Keep PX4's GCS health check active using an explicit simulated GCS.
+        # This is transport liveness, not human approval or control authority.
+        while not stop_gcs.is_set():
+            for _ in range(100):
+                if gcs.recv_match(blocking=False) is None:
+                    break
+            gcs.mav.heartbeat_send(mavutil.mavlink.MAV_TYPE_GCS,
+                                   mavutil.mavlink.MAV_AUTOPILOT_INVALID,
+                                   0, 0, mavutil.mavlink.MAV_STATE_ACTIVE)
+            stop_gcs.wait(.5)
+
+    gcs_thread = threading.Thread(target=ground_station_heartbeat, daemon=True)
+    gcs_thread.start()
+    try:
+        deadline = time.monotonic() + 60
+        while "Startup script returned successfully" not in (folder / "simulator.log").read_text(errors="replace"):
+            if process.poll() is not None:
+                raise RuntimeError("Owned simulator exited during startup")
+            if time.monotonic() > deadline:
+                raise RuntimeError("Owned simulator startup exceeded 60 s")
+            time.sleep(.5)
+        subprocess.run([str(build / "bin/px4-mavlink"), "start", "-u", "14600", "-o", "14601",
+                        "-t", "127.0.0.1", "-m", "onboard", "-r", "400000"],
+                       capture_output=True, timeout=10, check=True)
+        master = connect()
+        write_json(folder / "initial_ground.json", ground_evidence(master))
+        before = {key: read_parameter(master, key) for key in PARAMETERS}
+        estimator = {key for key in PARAMETERS if key.startswith("EKF2_")}
+        if any(abs(before[key][0] - PARAMETERS[key]) > 1e-5 for key in estimator):
+            raise RuntimeError("Estimator startup overrides did not take effect; reboot/configuration required")
+        # Airframe startup can override some safety defaults after the rcS
+        # environment loop. Apply only to this owned, disarmed SITL runtime.
+        for key, value in PARAMETERS.items():
+            if abs(before[key][0] - value) > 1e-5:
+                set_parameter(master, key, value, before[key][1])
+        actual = {key: read_parameter(master, key)[0] for key in PARAMETERS}
+        if any(abs(actual[key] - value) > 1e-5 for key, value in PARAMETERS.items()):
+            raise RuntimeError("SITL parameter readback differs from the declared configuration")
+        write_json(folder / "effective_parameters.json", {"before": before, "verified": actual})
+        batch = folder / "batch"
+        batch.mkdir()
+        result = run_case(case, batch, args.world, master)
+        write_json(folder / "result.json", result)
+        if not result.get("audit_passed"):
+            raise RuntimeError(f"Scenario audit failed: {name}")
+        return result
+    finally:
+        if master is not None:
+            master.close()
+        if process.poll() is None:
+            # Do not terminate an airborne runner. A missing ground check
+            # blocks cleanup and all later cases and remains visible.
+            check = connect()
+            try:
+                write_json(folder / "final_ground.json", ground_evidence(check))
+            finally:
+                check.close()
+            command = Path(f"/proc/{process.pid}/cmdline").read_bytes()
+            if str(binary).encode() not in command or str(runtime).encode() not in command or os.getpgid(process.pid) != process.pid:
+                raise RuntimeError("Owned simulator identity changed; shutdown refused")
+            os.killpg(process.pid, signal.SIGTERM)
+            process.wait(timeout=15)
+        log.close()
+        stop_gcs.set()
+        gcs_thread.join(timeout=2.)
+        gcs.close()
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--confirm-sitl", action="store_true", required=True)
+    parser.add_argument("--autopilot", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--world", default="afvl_validation")
+    parser.add_argument("--gui", action="store_true")
+    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "drawn-gps-outage-4s", "drawn-control-stall"], default=["five-stop-baseline"])
+    args = parser.parse_args()
+    args.autopilot = args.autopilot.resolve()
+    args.output = args.output.resolve()
+    for path in Path("/proc").glob("[0-9]*/cmdline"):
+        try:
+            command = path.read_bytes()
+        except OSError:
+            continue
+        if b"/build/px4_sitl_default/bin/px4\x00" in command:
+            raise RuntimeError("A PX4 simulator is already running; existing process preserved")
+    args.output.mkdir(parents=True, exist_ok=False)
+    results = []
+    try:
+        for name in args.cases:
+            write_json(args.output / "status.json", {"stage": "RUNNING", "case": name})
+            results.append(run_one(name, args))
+            write_json(args.output / "results.json", results)
+    except Exception as exc:
+        write_json(args.output / "status.json", {"stage": "FAILED", "case": name,
+                                                  "error": f"{type(exc).__name__}: {exc}"})
+        raise
+    write_json(args.output / "status.json", {"stage": "COMPLETED", "case_count": len(results)})
+
+
+if __name__ == "__main__":
+    main()

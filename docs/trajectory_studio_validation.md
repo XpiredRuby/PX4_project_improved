@@ -6,6 +6,10 @@ in commit `c7db558e34f8e7c58419897d9e65d382f058da58`; the following documentatio
 and CI update records the results and expands lint scope. This record does not
 claim a live simulator campaign or physical-aircraft qualification.
 
+Follow-up: [connected-machine validation](trajectory_studio_connected_validation.md)
+completed the Chrome checks and records the subsequent pre-arm simulator
+findings. The "not completed" list below describes this earlier checkpoint.
+
 ## Checks completed
 
 | Check | Result |

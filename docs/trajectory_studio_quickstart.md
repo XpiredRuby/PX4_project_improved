@@ -97,9 +97,10 @@ python3 -m ruff check mission_planner/editor.py mission_planner/contracts.py \
 The focused tests include both real compiler inputs, a real HTTP-to-worker
 round-trip, rejected cross-origin/host requests, missing launch endpoints,
 parser adversarial cases, truncated tracks, gaps and lost yaw rotations.
-JavaScript syntax was also checked with Node. A browser render/interactivity
-check is still required: a Chromium download failed in the review environment,
-so visual correctness is not claimed from the HTTP tests.
+JavaScript syntax was also checked with Node. The subsequent connected-machine
+Chrome checks passed for drawing, interviews, refusal, invalidation, downloads
+and mobile overflow; see [the connected validation checkpoint](trajectory_studio_connected_validation.md).
+Live nominal mission completion and fault qualification remain outstanding.
 
 For the researched architecture, traceable gaps, benchmark plan and human gates,
 see [the research review](trajectory_planner_research_review.md).
