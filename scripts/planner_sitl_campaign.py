@@ -28,6 +28,8 @@ from mission_planner.acknowledgement import issue_sitl_acknowledgement, load_sit
 from mission_planner.contracts import canonical_sha256, load_contract
 from mission_planner.plan_drawn_path import compile_drawn_path
 from mission_planner.plan_interview import compile_interview
+from mission_planner.simulation_binding import validate_binding
+from mission_planner.aircraft import assess_profile, controller_overrides
 from sitl_scenario_batch import run_case
 from sitl_fault_injector import read_parameter, set_parameter
 
@@ -54,7 +56,7 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def ground_evidence(master, timeout_s=8.):
+def ground_evidence(master, timeout_s=8., rotor_count=4):
     """Require fresh disarm, ground and zero actuator outputs for two seconds."""
     for _ in range(1000):
         if master.recv_match(blocking=False) is None:
@@ -78,11 +80,11 @@ def ground_evidence(master, timeout_s=8.):
                 seen["landed_state"] = packet.landed_state
                 timestamps["landed_state"] = now
             elif kind == "ACTUATOR_OUTPUT_STATUS":
-                seen["actuators"] = list(packet.actuator[:4])
+                seen["actuators"] = list(packet.actuator[:rotor_count])
                 timestamps["actuators"] = now
         fresh = len(timestamps) == 3 and all(now - t <= 1.5 for t in timestamps.values())
         safe = (fresh and seen.get("armed") is False and seen.get("landed_state") == 1
-                and len(seen.get("actuators", [])) == 4
+                and len(seen.get("actuators", [])) == rotor_count
                 and all(math.isfinite(v) and abs(v) <= .01 for v in seen["actuators"]))
         if safe:
             safe_since = safe_since if safe_since is not None else now
@@ -113,6 +115,9 @@ def prepare_case(name, output, reviewed_plan=None):
             raise ValueError("reviewed-plan requires a retained studio artifact")
         for filename in ("trajectory.csv", "summary.json", "intent.json", "verification.json", "vehicle_model.json", "environment.json", "sitl_acknowledgement.json"):
             shutil.copy2(reviewed_plan / filename, artifacts / filename)
+        for filename in ("aircraft_profile.json", "mission_budget.json", "path_error_budget.json", "simulation_binding.json"):
+            if (reviewed_plan / filename).is_file():
+                shutil.copy2(reviewed_plan / filename, artifacts / filename)
         declared = load_contract(summary, dict)
         verification = load_contract(artifacts / "verification.json", dict)
         intent = load_contract(artifacts / "intent.json", dict)
@@ -124,6 +129,18 @@ def prepare_case(name, output, reviewed_plan=None):
                 or canonical_sha256(load_contract(artifacts / "vehicle_model.json", dict)) != declared["vehicle_model_sha256"]
                 or canonical_sha256(load_contract(artifacts / "environment.json", dict)) != declared["environment_sha256"]):
             raise ValueError("retained verification or intent does not match the reviewed plan")
+        if "aircraft_profile_sha256" in declared:
+            for filename, key in (("aircraft_profile.json", "aircraft_profile_sha256"),
+                                  ("mission_budget.json", "mission_budget_sha256"),
+                                  ("path_error_budget.json", "path_error_budget_sha256")):
+                if canonical_sha256(load_contract(artifacts / filename, dict)) != declared[key]:
+                    raise ValueError("aircraft profile or mission budget does not match the reviewed plan")
+            setup = assess_profile(load_contract(artifacts / "aircraft_profile.json", dict))
+            if not setup["ready"] or setup["vehicle_model_sha256"] != declared["vehicle_model_sha256"]:
+                raise ValueError("aircraft setup no longer matches the reviewed vehicle model")
+            case["controller_overrides"] = controller_overrides(setup["profile"])
+            if load_contract(artifacts / "mission_budget.json", dict).get("passed") is not True:
+                raise ValueError("aircraft mission budget failed")
         if intent["motion"]["yaw_mode"] != "fixed":
             raise ValueError("connected studio rehearsal requires fixed heading")
         case.update(planner_summary=str(summary), sitl_acknowledgement=str(acknowledgement),
@@ -186,6 +203,21 @@ def run_one(name, args):
     folder = args.output / name
     folder.mkdir()
     case = prepare_case(name, folder, args.reviewed_plan)
+    binding_path = folder / "plan/simulation_binding.json"
+    binding = validate_binding(load_contract(binding_path, dict), args.autopilot) if binding_path.is_file() else None
+    if (folder / "plan/aircraft_profile.json").exists() and binding is None:
+        raise ValueError("aircraft-specific rehearsal requires a matching registered simulator")
+    if binding is not None:
+        summary = load_contract(folder / "plan/summary.json", dict)
+        if (summary.get("aircraft_profile_sha256") != binding["profile_sha256"]
+                or summary["vehicle_model_sha256"] != binding["vehicle_model_sha256"]):
+            raise ValueError("aircraft does not match the registered simulator")
+    rotor_count = len(binding["rotors"]) if binding else 4
+    parameters = dict(PARAMETERS)
+    if binding is not None:
+        parameters.update(binding["controller_parameters"])
+        parameters["MPC_LAND_SPEED"] = min(parameters["MPC_LAND_SPEED"], binding["profile"]["maximum_descent_m_s"])
+        parameters["MPC_LAND_CRWL"] = min(parameters["MPC_LAND_CRWL"], parameters["MPC_LAND_SPEED"])
     runtime = folder / "runtime"
     runtime.mkdir()
     build = args.autopilot / "build/px4_sitl_default"
@@ -194,27 +226,30 @@ def run_one(name, args):
     environment = os.environ.copy()
     for key in ("PX4_GZ_STANDALONE", "GZ_PARTITION", "PX4_GZ_MODEL_NAME"):
         environment.pop(key, None)
-    environment.update(PX4_SYS_AUTOSTART="4001", PX4_SIM_MODEL="gz_x500",
+    environment.update(PX4_SYS_AUTOSTART=str(binding["airframe_id"]) if binding else "4001",
+                       PX4_SIM_MODEL="gz_" + binding["model"] if binding else "gz_x500",
                        PX4_GZ_WORLD=args.world, PX4_GZ_MODEL_POSE="0,0,0,0,0,0",
                        PX4_SIM_SPEED_FACTOR="1", GZ_IP="127.0.0.1")
     if args.gui:
         environment.pop("HEADLESS", None)
     else:
         environment["HEADLESS"] = "1"
-    environment.update({"PX4_PARAM_" + key: str(value) for key, value in PARAMETERS.items()})
-    config = {"release_class": "SITL_ONLY", "case": case, "parameters": PARAMETERS,
+    environment.update({"PX4_PARAM_" + key: str(value) for key, value in parameters.items()})
+    config = {"release_class": "SITL_ONLY", "case": case, "parameters": parameters,
               "world": args.world, "simulation_speed_factor": 1,
               "world_sha256": digest(args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"),
               "px4_executable_sha256": digest(binary),
               "controller_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "controller_batch_sha256": digest(ROOT / "scripts/sitl_scenario_batch.py"),
               "harness_sha256": digest(Path(__file__)),
+              "aircraft_profile_sha256": binding["profile_sha256"] if binding else None,
+              "simulation_binding": binding,
               "model_files_sha256": {
                   str(path.relative_to(args.autopilot)): digest(path)
                   for model in ("x500", "x500_base")
                   for path in sorted((args.autopilot / "Tools/simulation/gz/models" / model).rglob("*"))
                   if path.is_file()
-              }}
+              } if binding is None else binding["model_files_sha256"]}
     write_json(folder / "simulation_configuration.json", config)
     log = (folder / "simulator.log").open("w")
     process = subprocess.Popen([str(binary), "-d", str(build / "etc"), "-w", str(runtime)],
@@ -252,18 +287,18 @@ def run_one(name, args):
                         "-t", "127.0.0.1", "-m", "onboard", "-r", "400000"],
                        capture_output=True, timeout=10, check=True)
         master = connect()
-        write_json(folder / "initial_ground.json", ground_evidence(master))
-        before = {key: read_parameter(master, key) for key in PARAMETERS}
-        estimator = {key for key in PARAMETERS if key.startswith("EKF2_")}
-        if any(abs(before[key][0] - PARAMETERS[key]) > 1e-5 for key in estimator):
+        write_json(folder / "initial_ground.json", ground_evidence(master, rotor_count=rotor_count))
+        before = {key: read_parameter(master, key) for key in parameters}
+        estimator = {key for key in parameters if key.startswith("EKF2_")}
+        if any(abs(before[key][0] - parameters[key]) > 1e-5 for key in estimator):
             raise RuntimeError("Estimator startup overrides did not take effect; reboot/configuration required")
         # Airframe startup can override some safety defaults after the rcS
         # environment loop. Apply only to this owned, disarmed SITL runtime.
-        for key, value in PARAMETERS.items():
+        for key, value in parameters.items():
             if abs(before[key][0] - value) > 1e-5:
                 set_parameter(master, key, value, before[key][1])
-        actual = {key: read_parameter(master, key)[0] for key in PARAMETERS}
-        if any(abs(actual[key] - value) > 1e-5 for key, value in PARAMETERS.items()):
+        actual = {key: read_parameter(master, key)[0] for key in parameters}
+        if any(abs(actual[key] - value) > 1e-5 for key, value in parameters.items()):
             raise RuntimeError("SITL parameter readback differs from the declared configuration")
         write_json(folder / "effective_parameters.json", {"before": before, "verified": actual})
         batch = folder / "batch"
@@ -281,7 +316,7 @@ def run_one(name, args):
             # blocks cleanup and all later cases and remains visible.
             check = connect()
             try:
-                write_json(folder / "final_ground.json", ground_evidence(check))
+                write_json(folder / "final_ground.json", ground_evidence(check, rotor_count=rotor_count))
             finally:
                 check.close()
             command = Path(f"/proc/{process.pid}/cmdline").read_bytes()

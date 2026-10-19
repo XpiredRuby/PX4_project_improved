@@ -311,7 +311,7 @@ def compile_drawn_path(
                 "open_depart is refused because the runner lands from a final stop",
                 "unconstrained yaw is refused",
                 "obstacle clearance is claimed only for a hashed map bound to the environment",
-                "rotor yaw torque uses the Gazebo x500 inertia and paired-rotor model, not an identified aircraft",
+                ("rotor allocation uses declared individual geometry with simultaneous roll/pitch reserve; actual torque demand remains an identification assumption" if vehicle.schema_version == 2 else "rotor yaw torque uses the configured simplified paired-rotor model, not an identified aircraft"),
                 "controller cruise height must match the compiled value",
                 "a SITL acknowledgement is not a clearance to fly",
                 "not a clearance to fly",

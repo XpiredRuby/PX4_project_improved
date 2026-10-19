@@ -342,8 +342,8 @@ def _dynamic_margins(
             bounds.extend(yaw_bounds)
         elif candidate.yaw_profile is not None:
             return False, -math.inf
-        acceleration = bounds[1]
-        jerk = bounds[2]
+        acceleration = bounds[1] + vehicle.disturbance_acceleration_m_s2
+        jerk = bounds[2] + vehicle.disturbance_jerk_m_s3
         yaw_rate = bounds[3] if tracked_yaw else 0.0
         yaw_acceleration = bounds[4] if tracked_yaw else 0.0
         tilt = maximum_tilt_rad(acceleration)
@@ -366,24 +366,30 @@ def _dynamic_margins(
         return False, -math.inf
     normalized_margins.append((body_limit - body_rate) / body_limit)
     torque = vehicle.yaw_inertia_kg_m2 * yaw_acceleration
-    available = min(
-        yaw_torque_available_nm(
-            thrust_low,
-            rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
-            rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
-            yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
-        ),
-        yaw_torque_available_nm(
-            thrust_high,
-            rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
-            rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
-            yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
-        ),
-    )
-    if available <= 1e-9:
-        normalized_margins.append(-1.0 if torque > 1e-9 else 0.0)
+    if vehicle.schema_version == 2:
+        from .allocation import allocation_margin
+        normalized_margins.append(allocation_margin(
+            vehicle.rotors, thrust_low, thrust_high, torque,
+            vehicle.roll_pitch_torque_reserve_nm))
     else:
-        normalized_margins.append((available - torque) / available)
+        available = min(
+            yaw_torque_available_nm(
+                thrust_low,
+                rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
+                rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
+                yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
+            ),
+            yaw_torque_available_nm(
+                thrust_high,
+                rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
+                rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
+                yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
+            ),
+        )
+        if available <= 1e-9:
+            normalized_margins.append(-1.0 if torque > 1e-9 else 0.0)
+        else:
+            normalized_margins.append((available - torque) / available)
     margin = min(normalized_margins)
     return margin >= -1e-12, margin
 

@@ -69,6 +69,8 @@ def attitude_duration_s(
     minimum_thrust_n: float,
     maximum_thrust_n: float,
     maximum_body_rate_rad_s: float,
+    disturbance_acceleration_m_s2: float = 0.,
+    disturbance_jerk_m_s3: float = 0.,
 ) -> tuple[float, str]:
     """Return the shortest duration that keeps the attitude bounds inside the model.
 
@@ -93,8 +95,8 @@ def attitude_duration_s(
 
     def state(duration: float) -> tuple[float, float, float]:
         return (
-            acceleration_numerator / duration**2,
-            jerk_numerator / duration**3,
+            acceleration_numerator / duration**2 + disturbance_acceleration_m_s2,
+            jerk_numerator / duration**3 + disturbance_jerk_m_s3,
             yaw_rate_numerator / duration,
         )
 

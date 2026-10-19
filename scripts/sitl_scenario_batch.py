@@ -132,7 +132,8 @@ def run_case(case, output, world, master):
             + fault_code + "offboard_runner.main(replace(MissionConfig(), "
             f"cruise_height_m={case.get('cruise_height_m', 15.)!r}, "
             f"tracking_governor_enabled={case.get('governor', True)!r}, "
-            f"position_prediction_enabled={case.get('prediction', True)!r}), "
+            f"position_prediction_enabled={case.get('prediction', True)!r}, "
+            f"**{case.get('controller_overrides', {})!r}), "
             f"trajectory_path={str(trajectory_path) if trajectory_path else None!r}, "
             f"planner_summary_path={str(waypoint_summary_path) if waypoint_summary_path else None!r}, "
             f"acknowledgement_path={str(acknowledgement_path) if acknowledgement_path else None!r})")

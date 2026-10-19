@@ -13,7 +13,7 @@ from .flatness import (
     maximum_tilt_rad,
     thrust_interval_n,
 )
-from .rotors import rotor_duration_s
+from .allocation import vehicle_rotor_duration_s
 from .geometry import BSplinePath, GeometryPlan
 from .timing import (
     PathBounds,
@@ -246,16 +246,11 @@ def retime_stop_path(
         maximum_thrust_n=vehicle.maximum_thrust_n,
         maximum_body_rate_rad_s=math.radians(vehicle.maximum_body_rate_deg_s)
         * limit_scale,
+        disturbance_acceleration_m_s2=vehicle.disturbance_acceleration_m_s2,
+        disturbance_jerk_m_s3=vehicle.disturbance_jerk_m_s3,
     )
-    rotor_duration, rotor_constraint = rotor_duration_s(
-        acceleration_numerator=acceleration_numerator,
-        yaw_acceleration_numerator=yaw_acceleration_numerator,
-        mass_kg=vehicle.mass_kg,
-        yaw_inertia_kg_m2=vehicle.yaw_inertia_kg_m2,
-        rotor_thrust_minimum_n=vehicle.rotor_thrust_minimum_n,
-        rotor_thrust_maximum_n=vehicle.rotor_thrust_maximum_n,
-        yaw_torque_per_thrust_m=vehicle.yaw_torque_per_thrust_m,
-    )
+    rotor_duration, rotor_constraint = vehicle_rotor_duration_s(
+        vehicle, acceleration_numerator, yaw_acceleration_numerator)
     constrained_duration = max(
         law.report.minimum_requirement_s, attitude_duration, rotor_duration
     )
@@ -376,16 +371,16 @@ def retime_stop_path(
         or max_yaw_jerk > yaw_jerk_limit * tolerance
     ):
         raise RuntimeError("sampled trajectory exceeds its retiming limits")
-    tilt_bound = math.degrees(maximum_tilt_rad(conservative_acceleration))
+    tilt_bound = math.degrees(maximum_tilt_rad(conservative_acceleration + vehicle.disturbance_acceleration_m_s2))
     thrust_low, thrust_high = thrust_interval_n(
-        conservative_acceleration, vehicle.mass_kg
+        conservative_acceleration + vehicle.disturbance_acceleration_m_s2, vehicle.mass_kg
     )
     yaw_rate_bound = 0.0 if yaw_track is None else certified_dynamics(
         yaw_track.bounds, law.schedule, duration
     )[0]
     body_rate_bound = math.degrees(body_rate_bound_rad_s(
-        conservative_acceleration,
-        conservative_jerk,
+        conservative_acceleration + vehicle.disturbance_acceleration_m_s2,
+        conservative_jerk + vehicle.disturbance_jerk_m_s3,
         yaw_rate_bound,
     ))
     return CandidateTrajectory(

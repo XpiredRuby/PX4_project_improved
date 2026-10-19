@@ -15,6 +15,8 @@ import subprocess
 import sys
 
 from .acknowledgement import issue_sitl_acknowledgement
+from .contracts import canonical_sha256, load_contract
+from .simulation_binding import validate_binding
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,16 +30,25 @@ def write_json(path, value):
 
 
 class StudioJobs:
-    def __init__(self, directory: Path, autopilot: Path, *, gui=True):
+    def __init__(self, directory: Path, autopilot: Path, *, gui=True, binding=None):
         self.directory = directory.resolve()
         self.directory.mkdir(parents=True, exist_ok=True)
         self.autopilot = autopilot.resolve()
         if not (self.autopilot / "build/px4_sitl_default/bin/px4").is_file():
             raise ValueError("SITL studio requires an existing compiled PX4 tree")
         self.gui = gui
+        self.binding = validate_binding(binding, self.autopilot) if binding is not None else None
         self.process = None
         self.current = None
         self.log = None
+
+    def compatible(self, result):
+        if self.binding is None:
+            default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
+            return (result.get("aircraft_setup") is None
+                    and result["summary"]["vehicle_model_sha256"] == canonical_sha256(default))
+        return ((result.get("aircraft_setup") or {}).get("profile_sha256") == self.binding["profile_sha256"]
+                and result["summary"]["vehicle_model_sha256"] == self.binding["vehicle_model_sha256"])
 
     def folder(self, identifier):
         if not isinstance(identifier, str) or not re.fullmatch(r"[0-9a-f]{32}", identifier):
@@ -62,6 +73,12 @@ class StudioJobs:
                               ("verification.json", "verification"),
                               ("vehicle_model.json", "vehicle_model"), ("environment.json", "environment")):
             write_json(folder / filename, result[key])
+        if result.get("aircraft_setup") is not None:
+            write_json(folder / "aircraft_profile.json", result["aircraft_setup"]["profile"])
+            write_json(folder / "mission_budget.json", result["mission_budget"])
+            write_json(folder / "path_error_budget.json", result["path_error_budget"])
+        if self.binding is not None and self.compatible(result):
+            write_json(folder / "simulation_binding.json", self.binding)
         write_json(folder / "job.json", {"stage": "READY", "plan_id": identifier,
                                         "controller_trajectory_sha256": digest})
         return identifier
@@ -94,6 +111,16 @@ class StudioJobs:
         identifier = payload["plan_id"]
         folder = self.folder(identifier)
         summary = json.loads((folder / "summary.json").read_text())
+        if self.binding is None:
+            default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
+            if ("aircraft_profile_sha256" in summary
+                    or summary["vehicle_model_sha256"] != canonical_sha256(default)):
+                raise ValueError("this aircraft has no matching registered Gazebo model; simulation refused")
+        else:
+            validate_binding(self.binding, self.autopilot)
+            if (summary.get("aircraft_profile_sha256") != self.binding["profile_sha256"]
+                    or summary["vehicle_model_sha256"] != self.binding["vehicle_model_sha256"]):
+                raise ValueError("confirmed aircraft does not match the registered simulator")
         actual = hashlib.sha256((folder / "trajectory.csv").read_bytes()).hexdigest()
         if payload["controller_trajectory_sha256"] != actual or summary["controller_trajectory_sha256"] != actual:
             raise ValueError("confirmation does not match the retained trajectory")

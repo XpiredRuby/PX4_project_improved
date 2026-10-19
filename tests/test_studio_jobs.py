@@ -93,6 +93,23 @@ class StudioJobTests(unittest.TestCase):
         self.assertEqual(status["stage"], "FAILED")
         self.assertFalse(status["flight_approval"])
 
+    def test_unregistered_aircraft_cannot_silently_use_the_x500_simulator(self):
+        from mission_planner.aircraft import assess_profile
+        profile = json.loads((ROOT / "config/planner/aircraft/hex.json").read_text())
+        setup = assess_profile(profile)
+        document = json.loads(json.dumps(self.result["intent"]))
+        document.update(vehicle_model_id=profile["profile_id"],
+                        environment_id="profile-env-" + setup["profile_sha256"][:16])
+        result = preview(dict(source="drawing", document=document, aircraft_profile=profile))
+        self.assertFalse(self.jobs.compatible(result))
+        identifier = self.jobs.retain(result)
+        confirmation = dict(self.confirmation, plan_id=identifier,
+                            controller_trajectory_sha256=result["summary"]["controller_trajectory_sha256"])
+        with patch("mission_planner.studio_jobs.subprocess.Popen") as spawn:
+            with self.assertRaisesRegex(ValueError, "matching registered Gazebo"):
+                self.jobs.start(confirmation)
+            spawn.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

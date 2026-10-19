@@ -200,6 +200,27 @@ def environment_schema():
     return schema
 
 
+def vehicle_model_v2_schema():
+    schema = vehicle_model_schema()
+    for key in ("rotor_thrust_minimum_n", "rotor_thrust_maximum_n", "yaw_torque_per_thrust_m"):
+        schema["properties"].pop(key)
+        schema["required"].remove(key)
+    schema["properties"].update({
+        "schema_version": {"const": 2},
+        "rotors": {"type": "array", "minItems": 4, "maxItems": 16,
+                   "items": _strict_object({
+                       "x_m": {"type": "number"}, "y_m": {"type": "number"},
+                       "yaw_torque_per_thrust_m": {"type": "number", "not": {"const": 0}},
+                       "minimum_thrust_n": _nonnegative("Rotor floor."),
+                       "maximum_thrust_n": _positive("Rotor ceiling.")})},
+        "roll_pitch_torque_reserve_nm": _positive("Simultaneous reserve on each body roll/pitch axis."),
+        "disturbance_acceleration_m_s2": _nonnegative("External-force/model-error acceleration bound."),
+        "disturbance_jerk_m_s3": _nonnegative("Disturbance acceleration rate bound.")})
+    schema["required"].extend(["rotors", "roll_pitch_torque_reserve_nm", "disturbance_acceleration_m_s2", "disturbance_jerk_m_s3"])
+    schema.update({"$id": f"{SCHEMA_BASE}/vehicle-model-v2.schema.json", "title": "VehicleModel v2"})
+    return schema
+
+
 def verification_report_schema():
     check = _strict_object({
         "requirement_id": _identifier(),
@@ -279,6 +300,7 @@ def occupancy_map_schema():
 SCHEMAS = {
     "mission-intent-v1.schema.json": mission_intent_schema,
     "vehicle-model-v1.schema.json": vehicle_model_schema,
+    "vehicle-model-v2.schema.json": vehicle_model_v2_schema,
     "environment-snapshot-v1.schema.json": environment_schema,
     "verification-report-v1.schema.json": verification_report_schema,
     "plan-artifact-v1.schema.json": plan_artifact_schema,

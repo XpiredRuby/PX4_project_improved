@@ -109,6 +109,19 @@ class HTTPBoundaryTests(unittest.TestCase):
         status, _ = self.request("POST", "/api/launch", "{}", {"Content-Type": "application/json"})
         self.assertEqual(status, 404)
 
+    def test_aircraft_api_lists_missing_inputs_and_refuses_hidden_authority(self):
+        status, body = self.request("GET", "/api/aircraft/catalog")
+        self.assertEqual(status, 200)
+        self.assertIn("mass_kg", {q["key"] for q in json.loads(body)["questions"]})
+        status, body = self.request("POST", "/api/aircraft/assess", "{}",
+                                    {"Content-Type": "application/json"})
+        self.assertEqual(status, 200)
+        self.assertFalse(json.loads(body)["ready"])
+        self.assertTrue(json.loads(body)["missing_questions"])
+        status, _ = self.request("POST", "/api/aircraft/assess", '{"arm":true}',
+                                 {"Content-Type": "application/json"})
+        self.assertEqual(status, 400)
+
     def test_invalid_content_and_oversize_requests_fail_before_worker(self):
         for body, headers in (
             ("{}", {"Content-Type": "text/plain"}),

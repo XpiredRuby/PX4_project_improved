@@ -21,6 +21,8 @@ def main():
     parser.add_argument("--chrome", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--timeout-s", type=float, default=420.0)
+    parser.add_argument("--registered-aircraft", action="store_true",
+                        help="load and check the registered reusable aircraft profile")
     args = parser.parse_args()
     parsed = urlparse(args.url)
     if (
@@ -79,6 +81,15 @@ def main():
             page.locator("#simulationStatus").filter(
                 has_text="Local PX4/Gazebo backend configured"
             ).wait_for()
+            if args.registered_aircraft:
+                page.locator("#useRegisteredAircraft").click()
+                with page.expect_response(lambda r: r.url.endswith("/api/aircraft/assess")) as setup:
+                    page.locator("#checkAircraft").click()
+                assert setup.value.json()["ready"]
+                page.locator("#saveAircraft").click()
+                results.append({"case": "reusable_aircraft_setup_and_model_binding", "passed": True})
+            else:
+                page.locator("#aircraftMode").select_option("demo")
             page.locator("#linePreset").click()
             assert page.locator("#altitude").input_value() == "20"
             with page.expect_response(
