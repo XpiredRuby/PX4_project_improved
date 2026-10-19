@@ -126,17 +126,25 @@ def run_case(case, output, world, master):
                        "from flight_logger import FlightLogger; "
                        f"install_storage_stall(FlightLogger, {case['storage_stall_s']!r}, "
                        f"{case.get('storage_after_rows', 100)!r}, {str(folder / 'storage_stall.json')!r}); ")
+    release_code, release_argument = "", ""
+    if case.get("release_probe") is not None:
+        release_code = (f"sys.path[:0]=[{str(ROOT)!r},{str(ROOT / 'scripts')!r}]; "
+                        "from sitl_release_probe import SITLReleaseProbe; "
+                        f"release_probe=SITLReleaseProbe({case['release_probe']['folder']!r}, "
+                        f"{case['release_probe'].get('abort_after_s')!r}); ")
+        release_argument = ", release_authority=release_probe"
     code = ("import sys; from dataclasses import replace; "
             f"sys.path.insert(0,{str(ROOT / 'controller')!r}); "
             "from mission_config import MissionConfig; import offboard_runner; "
-            + fault_code + "offboard_runner.main(replace(MissionConfig(), "
+            + fault_code + release_code + "offboard_runner.main(replace(MissionConfig(), "
             f"cruise_height_m={case.get('cruise_height_m', 15.)!r}, "
             f"tracking_governor_enabled={case.get('governor', True)!r}, "
             f"position_prediction_enabled={case.get('prediction', True)!r}, "
             f"**{case.get('controller_overrides', {})!r}), "
             f"trajectory_path={str(trajectory_path) if trajectory_path else None!r}, "
             f"planner_summary_path={str(waypoint_summary_path) if waypoint_summary_path else None!r}, "
-            f"acknowledgement_path={str(acknowledgement_path) if acknowledgement_path else None!r})")
+            f"acknowledgement_path={str(acknowledgement_path) if acknowledgement_path else None!r}"
+            + release_argument + ")")
     events = []
     battery_restore = {}
     heartbeat_state = {"armed": None, "received_at": -math.inf}
@@ -238,6 +246,20 @@ def run_case(case, output, world, master):
         injection_path = folder / "control_stall.json"
         injection = json.loads(injection_path.read_text()) if injection_path.exists() else {}
         audit = build_control_stall_audit(df, manifest, injection)
+    elif case.get("expected") == "release_abort":
+        view = df.copy()
+        view["phase"] = view["phase"].replace({"PX4_FAILSAFE": "PX4_LAND"})
+        audit = build_safety_audit(view)
+        audit["checks"] = [c for c in audit["checks"] if c["name"] != "Nominal phase sequence"]
+        injected = folder.parent.parent / "abort_injection.json"
+        audit["checks"].append(dict(name="Release abort reached confirmed native shutdown",
+            passed=(injected.is_file() and "operator requested abort" in manifest.get("reason", "")
+                    and manifest["outcome"] in ("PX4_FAILSAFE", "ABORTED_TO_LAND")
+                    and manifest["cleanup_error"] is None
+                    and manifest["cleanup_status"] in ("px4_land_and_disarm_confirmed",
+                                                       "px4_failsafe_land_and_disarm_confirmed")),
+            detail=manifest.get("reason")))
+        audit["overall_passed"] = all(c["passed"] for c in audit["checks"])
     elif case.get("expected") == "battery_failsafe":
         view = df.copy()
         view["phase"] = view["phase"].replace({"PX4_FAILSAFE": "PX4_LAND"})

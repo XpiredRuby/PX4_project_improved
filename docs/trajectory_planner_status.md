@@ -34,7 +34,9 @@ PX4/Gazebo rehearsals. It has no physical-flight endpoint.
   The connected browser rehearsal and bounded GPS-outage/control-stall
   responses passed. Broader fault/physical qualification remains open.
 - Physical release is blocked on an identified aircraft, operating decisions,
-  hardware qualification and a separate authenticated operator decision.
+  hardware qualification and a separate explicit local operator decision. The
+  [physical-release CLI](physical_flight_release.md) now implements that data
+  intake, prepared bundle, live checks, one-use launch and abort integration.
 
 Completion is tracked by these evidence gates, not an uncalibrated percentage.
 
@@ -263,8 +265,8 @@ Further offline research and software qualification, beyond the demonstrated bas
   uncertainty on the vehicle contract;
 - general soft weights on intent, beyond hard stops and the deviation tube;
 - a fuller interval checker than the current hull and Lipschitz bounds;
-- dedicated reviewed cancel/abort controls; drawing/interview, confirmation,
-  simulation status, truth overlay and assessment download are implemented;
+- broader browser mission cancellation; physical local abort is implemented
+  through the release guard and native landing cleanup;
 - weather, GNSS, and communications assumptions as a full operating-domain
   record, rather than the single wind limit stored today.
 
@@ -281,7 +283,9 @@ assessment; it is correctly recorded as an incomplete trajectory. Remaining broa
   altitude transitions, and continuous composition/dynamic checks;
 - fault cases: wind, map failure, stale map, localization error, and a failed
   simulation that must not produce a launchable artifact;
-- proof that a failed simulator run cannot be approved.
+- broader mission/fault coverage; failed nominal rehearsal, changed source,
+  stale/altered evidence and missing qualification already refuse the separate
+  physical preparation path in regression tests.
 
 ### Needs the owner, before any real aircraft
 
@@ -294,8 +298,9 @@ assessment; it is correctly recorded as an incomplete trajectory. Remaining broa
 - PhD mentor presence before any physical arming, motor spin, command upload
   or operation, as the owner already required;
 - bench evidence, flight-test cards, abort criteria, and a named approver;
-- a flight-approval record that is allowed to exist only after that evidence.
-  `SITL_ONLY` artifacts cannot carry one.
+- completed physical qualification records and the live supervised launch
+  decision. The implemented workflow keeps original planner artifacts
+  `SITL_ONLY` and prepares a separate integrity-bound physical release.
 
 ### Explicitly later
 
@@ -307,5 +312,8 @@ out of this offline planner. Unconstrained yaw stays refused.
 The repository can take a drawing or an interview, produce a checked
 rest-to-rest trajectory, explain the binding limit, and refuse a plan that
 breaks the selected aircraft model or its declared budgets. It can rehearse an exactly confirmed fixed-heading artifact with a matching registered local Gazebo model
-and show its sampled truth/evidence. It cannot authorize a real flight.
+and show its sampled truth/evidence. The separate local physical-release
+workflow can run a human-qualified PX4 multicopter configuration after live
+checks and explicit operator/mentor confirmation. No physical aircraft has
+been qualified or operated by this implementation work.
 Read the connected validation record for the tested conditions and limits.

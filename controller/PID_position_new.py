@@ -234,6 +234,8 @@ class PositionController:
 
     def request_message_intervals(self):
         requests = [
+            ("MAVLINK_MSG_ID_BATTERY_STATUS", 2.0),
+            ("MAVLINK_MSG_ID_RC_CHANNELS", 5.0),
             ("MAVLINK_MSG_ID_LOCAL_POSITION_NED", 30.0),
             ("MAVLINK_MSG_ID_ATTITUDE", 30.0),
             ("MAVLINK_MSG_ID_HIGHRES_IMU", 20.0),
@@ -297,7 +299,11 @@ class PositionController:
 
         with self.state_lock:
             self.state.note_message(msg_type)
-            if msg_type == "LOCAL_POSITION_NED":
+            if msg_type == "BATTERY_STATUS":
+                self.state.update_battery(msg)
+            elif msg_type == "RC_CHANNELS":
+                self.state.update_rc(msg)
+            elif msg_type == "LOCAL_POSITION_NED":
                 self.state.update_position(msg)
             elif msg_type == "ATTITUDE":
                 self.state.update_attitude(msg)
@@ -373,6 +379,9 @@ class PositionController:
 
     def _send_velocity_packet(self, vx, vy, vz, yaw):
         """Caller holds the transport lock and has checked command authority."""
+        guard = getattr(self, "release_guard", None)
+        if guard is not None:
+            guard()
         self.master.mav.set_position_target_local_ned_send(
             self._estimated_px4_boot_ms(),
             self.master.target_system,

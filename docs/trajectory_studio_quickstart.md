@@ -2,7 +2,9 @@
 
 The studio adds drawing and interview inputs to the existing verified planner.
 By default it provides an offline preview. An explicit Linux/WSL backend adds
-confirmed local PX4/Gazebo rehearsals. Physical flight has no browser endpoint.
+confirmed local PX4/Gazebo rehearsals. Physical flight has no browser endpoint. The separate
+[supervised physical-release CLI](physical_flight_release.md) handles reviewed
+aircraft qualification, preparation, local launch and abort.
 
 From the repository root, using its Python environment:
 

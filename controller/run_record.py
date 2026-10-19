@@ -107,6 +107,11 @@ class RunRecord:
                 controller.trajectory_path.read_bytes()
             ).hexdigest(),
         }
+        if hasattr(controller, "propulsion_output_indices"):
+            self.data["propulsion_check"] = dict(
+                indices=list(controller.propulsion_output_indices),
+                disarmed_values=list(controller.propulsion_disarmed_values),
+                tolerance=controller.propulsion_stop_tolerance)
         self.data["px4_parameters"] = {
             name: float(value)
             for name, value in sorted(px4_parameters.items())

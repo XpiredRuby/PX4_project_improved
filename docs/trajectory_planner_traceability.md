@@ -120,3 +120,18 @@ physical-flight readiness.
 The machine-readable schemas are under `schemas/planner/`. They intentionally
 cover structural validation; Python contracts enforce cross-field and
 cross-document invariants that JSON Schema alone does not express.
+
+## Physical release implementation (19 October 2026)
+
+`mission_planner.flight_release` and `flight_preflight` add the separate local
+qualification, prepare, supervised launch and abort workflow. The bundle pins
+source, exact profile/trajectory, complete rehearsed configuration, firmware
+and UID2, reviewed parameters/evidence, site, battery and motor-output mapping.
+Live checks are read-only; one-use confirmation precedes arming. Runtime guards
+feed existing native LAND/PX4-failsafe cleanup. There is no physical HTTP
+launch endpoint. See [physical release](physical_flight_release.md).
+
+Synthetic refusal tests and an owned SITL exercise verify software behavior;
+they do not close physical identification, bench, RC or flight-test gates.
+The historical research roadmap above remains a record of optional advanced
+planners and wider qualification, not a claim that every aircraft class works.

@@ -30,6 +30,7 @@ from mission_planner.plan_drawn_path import compile_drawn_path
 from mission_planner.plan_interview import compile_interview
 from mission_planner.simulation_binding import validate_binding
 from mission_planner.aircraft import assess_profile, controller_overrides
+from mission_planner.flight_release import source_digest
 from sitl_scenario_batch import run_case
 from sitl_fault_injector import read_parameter, set_parameter
 
@@ -236,6 +237,7 @@ def run_one(name, args):
         environment["HEADLESS"] = "1"
     environment.update({"PX4_PARAM_" + key: str(value) for key, value in parameters.items()})
     config = {"release_class": "SITL_ONLY", "case": case, "parameters": parameters,
+              "flight_release_source_sha256": source_digest(),
               "world": args.world, "simulation_speed_factor": 1,
               "world_sha256": digest(args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"),
               "px4_executable_sha256": digest(binary),

@@ -155,10 +155,41 @@ def propulsion_snapshot(controller):
             else max(0.0, time.monotonic() - state.actuator_received_at)
         )
         return (
-            tuple(float(value) for value in state.actuator_outputs[:4]),
+            tuple(float(state.actuator_outputs[i]) for i in getattr(
+                controller, "propulsion_output_indices", range(getattr(controller, "rotor_count", 4)))),
             age,
             state.message_counts.get("ACTUATOR_OUTPUT_STATUS", 0),
         )
+
+
+def propulsion_stopped(controller):
+    outputs, age, _ = propulsion_snapshot(controller)
+    expected = getattr(controller, "propulsion_disarmed_values", [0.] * len(outputs))
+    tolerance = getattr(controller, "propulsion_stop_tolerance", PROPULSION_STOP_THRESHOLD)
+    return (len(outputs) == getattr(controller, "rotor_count", 4)
+            and len(expected) == len(outputs)
+            and 0 <= age <= ACTUATOR_MAX_AGE_SECONDS
+            and all(math.isfinite(v) and math.isfinite(e) and abs(v-e) <= tolerance
+                    for v, e in zip(outputs, expected, strict=True)))
+
+
+def wait_for_release_ground(controller, timeout=8.):
+    deadline, safe_since = time.monotonic() + timeout, None
+    while time.monotonic() < deadline:
+        guard = getattr(controller, "release_guard", None)
+        if guard is not None:
+            guard()
+        landed, age, _ = landing_snapshot(controller)
+        safe = (heartbeat_snapshot(controller)[2] is False and landed == 1
+                and age <= 1.5 and propulsion_stopped(controller))
+        if safe:
+            safe_since = time.monotonic() if safe_since is None else safe_since
+            if time.monotonic() - safe_since >= 2.:
+                return
+        else:
+            safe_since = None
+        time.sleep(.05)
+    raise RuntimeError("physical release requires continuous fresh ground/disarm/stopped propulsion")
 
 
 def command_ack_snapshot(controller, command=None):
@@ -176,6 +207,9 @@ def command_ack_snapshot(controller, command=None):
 
 def raise_if_controller_failed(controller):
     """The runner must notice a failed watchdog even if the worker is hung."""
+    guard = getattr(controller, "release_guard", None)
+    if guard is not None:
+        guard()
     for name in ("worker_error", "receiver_error", "setpoint_error"):
         error = getattr(controller, name, None)
         if error is not None:
@@ -426,17 +460,8 @@ def wait_for_native_landing(
                 raise RuntimeError(
                     "Vehicle disarmed without a fresh PX4 ON_GROUND report"
                 )
-            outputs, actuator_age, _ = propulsion_snapshot(controller)
-            propulsion_stopped = (
-                len(outputs) == 4
-                and 0 <= actuator_age <= ACTUATOR_MAX_AGE_SECONDS
-                and all(math.isfinite(value) for value in outputs)
-                and all(
-                    abs(value) <= PROPULSION_STOP_THRESHOLD
-                    for value in outputs
-                )
-            )
-            if propulsion_stopped:
+            stopped = propulsion_stopped(controller)
+            if stopped:
                 if safe_disarm_since is None:
                     safe_disarm_since = time.monotonic()
                 if (
@@ -566,6 +591,9 @@ def main(
     planner_summary_path=None,
     acknowledgement_path=None,
     acknowledgement_time=None,
+    release_authority=None,
+    connection_string=None,
+    rotor_count=4,
 ):
     run_record = RunRecord()
     summary_required = trajectory_path is not None
@@ -574,12 +602,25 @@ def main(
             config=config,
             trajectory_path=trajectory_path,
         )
+        if isinstance(rotor_count, bool) or not isinstance(rotor_count, int) or not 4 <= rotor_count <= 12:
+            raise ValueError("PX4 runner rotor count must be 4–12")
+        c.rotor_count = rotor_count
+        if connection_string is not None:
+            c.connection_string = connection_string
+        if release_authority is not None:
+            release_authority.bind_controller(c)
+            run_record.data["execution_authority"] = dict(
+                release_class=release_authority.release["release_class"],
+                release_sha256=release_authority.expected_digest)
         planner_cruise_height = load_planner_summary(
             planner_summary_path,
             c.trajectory_path,
             required=summary_required,
         )
-        if planner_cruise_height is not None:
+        if release_authority is not None:
+            if planner_cruise_height != release_authority.release["expected_cruise_height_m"]:
+                raise ValueError("physical release cruise height mismatch")
+        elif planner_cruise_height is not None:
             if acknowledgement_path is None or planner_summary_path is None:
                 raise ValueError(
                     "SITL drawn-path execution requires --sitl-acknowledgement"
@@ -618,6 +659,8 @@ def main(
         c.connect()
         px4_parameters = audit_px4_configuration(c)
         run_record.attach_context(c, px4_parameters)
+        if release_authority is not None:
+            release_authority.connected(c, px4_parameters)
 
         c.start_receiver()
         c.wait_for_fresh_telemetry()
@@ -627,6 +670,8 @@ def main(
         c.configure_cruise_height({"gps_vertical_accuracy_m": launch_reference.vertical_accuracy_m})
         validate_planner_cruise_height(c, planner_cruise_height)
         c.validate_mission_plan(require_home=False)
+        if release_authority is not None:
+            wait_for_release_ground(c)
 
         def send_level_disarmed():
             if heartbeat_snapshot(c)[2] is not False:
@@ -653,6 +698,8 @@ def main(
         print("[runner] Requesting arm...")
         # An acknowledgement can be lost after PX4 accepts the request.
         # Cleanup must account for that possibility even before confirmation.
+        if release_authority is not None:
+            release_authority.before_arm(c)
         arm_requested = True
         ack_sequence = request_arm(c)
         wait_for_command_ack(
@@ -759,6 +806,8 @@ def main(
         print(f"[runner] {outcome}")
 
     except BaseException as exc:
+        # Release guards must not prevent the existing native LAND cleanup.
+        c.release_guard = None
         outcome_reason = f"{type(exc).__name__}: {exc}"
         outcome = (MissionOutcome.UNSAFE_TOUCHDOWN if isinstance(exc, UnsafeTouchdown)
                    else classify_failure(c, vehicle_was_armed))

@@ -19,7 +19,7 @@ from its mass or product name.
 | Unregistered aircraft | Offline planning and downloads; rehearsal is refused instead of substituting x500. |
 | Fixed-wing, VTOL, helicopter | Explicit compatibility refusal. These require aerodynamic/minimum-airspeed, transition or different actuator adapters. |
 | Another autopilot or navigation source | Explicit compatibility refusal; the present execution adapter is PX4 with GNSS/IMU navigation. |
-| Physical execution | No browser arm/launch endpoint. Hardware qualification and the separately required supervised operator decision remain outstanding. |
+| Physical execution | Local qualification → prepared release → supervised launch/abort CLI, with live identity/parameter/telemetry checks. No browser arm endpoint. Physical qualification remains required per loaded configuration. See [physical release](physical_flight_release.md). |
 
 The default page opens aircraft setup. The x500 reference demonstration is an
 explicit alternative. Example profiles are illustrative software fixtures and
