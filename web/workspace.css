@@ -21,3 +21,27 @@ body:has(#results:not([hidden])) .map-hint{display:none}
 .mission-card{padding:20px;background:var(--panel);border:1px solid var(--line);border-radius:12px;min-width:0}.mission-card h2{font-size:14px}.ground-sequence{font-size:11px;color:var(--blue);margin:12px 0}.mission-card canvas{background:#101c29;border:1px solid var(--line);border-radius:8px}.mission-phases{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}.mission-phases span{font-size:9px;border:1px solid var(--line);border-radius:5px;padding:4px 6px;color:#b7cbd7}.mission-card p{font-size:11px;line-height:1.8;color:var(--muted)}.mission-card .ground-sequence{color:var(--blue)}.route-export button{font-size:11px;margin-top:10px}.heading-settings{padding-top:8px}.heading-settings p{margin:10px 0}.downloads button{white-space:normal}@media(max-width:900px) and (min-width:601px){#fullMissionView{grid-column:1;grid-row:2}#routeComparison{grid-row:3}#planReview{grid-row:1/6}.simulation-details{grid-row:4}.workspace-help{grid-row:5}}@media(max-width:600px){#fullMissionView{order:1}#routeComparison{order:2}#planReview{order:3}.simulation-details{order:4}.workspace-help{order:5}}
 
 .fidelity-goal{padding:10px 12px;border-left:3px solid #79d5e7;background:#142b37;border-radius:5px;font-size:12px;line-height:1.6}.fidelity-goal[data-met="false"]{border-color:#edc482;background:#302a20;color:#f2d7ac}
+
+/* Keep one result card; details expand in place at every screen size. */
+#results .compact-metrics{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.compact-goal{font-size:12px;line-height:1.5;color:#b4e4d6;max-width:145px}
+.compact-goal[data-met=false]{color:#f2d7ac}
+.review-details{border-top:1px solid var(--line);padding-top:14px;margin-top:14px!important}
+.review-details>summary{min-height:36px;font-size:12px;line-height:1.6;cursor:pointer}
+.review-details .nested-result{padding:0;border:0;background:none;border-radius:0;min-width:0}
+.nested-result>.section-heading,.nested-result>h2{display:none}
+.nested-result canvas{display:block;width:100%;height:auto}
+.motion-details{display:grid;grid-template-columns:1fr 1fr;gap:18px 12px;padding:10px 0}
+.motion-details .metric strong{font-size:20px}.motion-details p{grid-column:1/-1;font-size:12px;line-height:1.7}
+.download-menu{position:relative;margin:16px 0}
+.download-menu>summary{display:block;list-style:none;cursor:pointer;text-align:center;padding:12px 16px;border:1px solid #46635e;border-radius:8px;background:#243c36;color:#d3f3e9;min-height:44px;font-size:13px}
+.download-menu>summary::-webkit-details-marker{display:none}
+.download-menu>summary:after{content:' ▾'}
+.download-options{display:grid;gap:5px;margin-top:7px;padding:7px;border:1px solid var(--line);border-radius:8px;background:#111d28}
+.download-options button{text-align:left;min-height:44px;font-size:12px;padding:10px}
+.error-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}.error-actions[hidden]{display:none}
+.error-actions button{min-height:44px;text-align:left}
+.draft-save-status{font-size:10px;line-height:1.6;color:var(--muted);margin-top:10px}
+.engineering-details details{margin:14px 0!important}.engineering-details pre{max-height:360px;overflow:auto}
+@media(max-width:900px) and (min-width:601px){#planReview{grid-row:1/4}.simulation-details{grid-row:2}.workspace-help{grid-row:3}}
+@media(max-width:600px){#planReview{order:1}.simulation-details{order:2}.workspace-help{order:3}}
