@@ -1,188 +1,121 @@
-# Local trajectory studio
+# Draw a route and try it in Gazebo
 
-The studio adds drawing and interview inputs to the existing verified planner.
-By default it provides an offline preview. An explicit Linux/WSL backend adds
-confirmed local PX4/Gazebo rehearsals. Physical flight has no browser endpoint. The separate
-[supervised physical-release CLI](physical_flight_release.md) handles reviewed
-aircraft qualification, preparation, local launch and abort.
+The studio turns your line into a smoother, checked trajectory, then lets you
+watch the virtual drone follow it. The default virtual drone is ready to use;
+you do not need to complete an aircraft questionnaire.
 
-From the repository root, using its Python environment:
+## First try
+
+Open <http://127.0.0.1:8766> on the configured simulation computer. Keep the
+standard virtual drone, 20 m height and 1 m/s cruising speed for your first run.
+
+1. Choose **Straight**, **L turn** or **Circle** above the map. Alternatively,
+   use **Draw a line**, press at the gold **START** marker, drag and release.
+   Continue a line from **END**. A disconnected line shows a dashed connection
+   for you to add or discard; it is not joined without your decision.
+2. Select **Plan and verify**. Nothing starts flying. Review the blue smooth
+   route and the route-duration summary. Sharp corners may be rounded within
+   the allowed planning distance, and the drone slows for turns and stops.
+3. Tick **I reviewed the blue route and want to simulate this plan**, then
+   select **Start simulation**.
+4. Watch takeoff, the route, return and landing. Afterwards compare the purple
+   simulated flight path with the blue plan and **Download simulation results**.
+
+The route duration excludes takeoff, the controller-generated return and landing.
+Even when an open route ends at END, the current simulator workflow returns to
+START before landing. A faint dotted return indication is not a certified return
+trajectory; the controller generates that motion from its measured state.
+
+## Drawing controls
+
+- **Draw a line:** drag from START, or continue from END. The released endpoint
+  is retained. There is no automatic 0.6 m point-discard rule or unreported
+  simplification of your committed input.
+- **Place points:** click each point in order. The next segment is previewed
+  with the pointer. Each click intentionally connects that point to END.
+- **Undo / Redo:** reverse or restore a complete drawing action.
+- **New drawing:** return to the empty START marker. Undo can restore the route.
+- **Enter points or add stops:** enter east/right and north/up coordinates;
+  Enter adds a point. Interior points can be ordinary rounded corners, full
+  stops, or exact interpolation points. An exact point does not promise a
+  minimum pass-through speed; a stop does not add a timed wait.
+- **Route ending:** finish the open route, or close a loop back to START.
+  Loops with interior marked stops/exact points are not supported and are refused.
+
+The map shows the configured reference boundary and a 5 m grid. Out-of-bounds
+or oversized gestures are refused as a whole; your previous valid route stays
+in place. A route may contain at most 256 points including any added closure.
+For long routes, placing points can be easier than a dense freehand stroke.
+No geometric reduction is currently used, so the full planning tolerance is
+available to the existing trajectory checker.
+
+## Settings in everyday terms
+
+| Setting | Meaning |
+|---|---|
+| Flight height | Height above launch during your route. The reference volume permits up to 30 m; connected health/height checks may still refuse a lower height. |
+| Cruising speed | A preferred cap, not a constant speed. 1 m/s is about walking pace. |
+| Allowed rounding | Maximum modeled distance the smooth plan may depart from the entered line. This is not guaranteed actual flight accuracy. |
+| Never exceed | The hard route speed cap. Cruising speed cannot exceed it. The planner keeps its existing 10% speed margin. |
+| Facing direction | Keep the starting direction for connected rehearsals. Facing along the route is currently preview-only. |
+| Route time limit | Optional maximum for the route only. A too-short request is refused; limits are not relaxed to meet it. |
+
+The details panels contain motion charts, the certificate, assumptions and the
+full report. Display samples are decimated; **Download trajectory CSV** provides
+the complete checked execution data. The reported feasible duration applies to
+this planner's candidate family; it is not a proven global minimum.
+
+Editing a drawing or setting invalidates the plan and confirmation. Replan before
+starting it. An earlier confirmed simulation retains its identity and continues
+monitoring separately, even when you edit the next draft. Reloading resumes job
+monitoring when that job is still retained; unsaved drawing persistence is not
+promised. A missing old job does not permanently block a new plan.
+
+## Stopping a virtual flight
+
+Select **Stop simulation and land**. Wait for explicit landing, disarm and stopped
+motor confirmation. A request to stop is not yet a completed stop. The controller
+uses the existing native landing/cleanup flow; the browser does not kill an
+ airborne simulator or force-disarm it. An interrupted route is not nominal
+mission completion. Status loss does not mean the simulator has stopped.
+
+## Start the local application
+
+From the repository root with its dependencies installed:
 
 ```bash
-python3 -m pip install -r requirements.txt
-python3 -m mission_planner.editor
-```
-
-On Windows, use `python` in place of `python3` if that is the environment's
-Python command. Open <http://127.0.0.1:8765>. A different port is available with
-`--port 8766`. The server binds to loopback only. Stop it with Ctrl+C.
-
-## Use
-
-Start with **Aircraft setup**. Enter a loaded configuration, import a saved
-profile, or use the registered simulator profile. **Check setup** lists missing
-inputs and compatibility errors. Quad, hex, octo and custom parallel-rotor
-geometry feed the same independent checker. Save/export the profile for reuse.
-The explicit x500 reference demo remains available without custom setup.
-See [aircraft profiles](aircraft_profiles.md) for the input sources, accuracy
-and energy budgets, simulator registration and supported aircraft classes.
-
-1. In **Draw**, click points or drag a stroke. The route starts at launch.
-   Undo or clear the input, or select a straight route, L turn or circle.
-   Choose final stop or closed lap. The latter visibly closes to launch.
-2. In **Interview**, choose circle, lawnmower survey or waypoints. Specify the
-   radius/laps, survey dimensions, or waypoint coordinates and optional stop
-   flags. Both flows feed the same `MissionIntent` and independent checker.
-3. Set launch-relative altitude, geometric tolerance, preferred speed cap,
-   hard maximum, heading policy and optional maximum route time.
-4. Select **Plan and verify**. Inspect the input/plan overlay, speed, height,
-   heading, acceleration and certified limits. A refused input produces an
-   error rather than an accepted output. Changing any field invalidates the
-   visible result and downloads; an in-flight preview response is discarded
-   if it belongs to an earlier draft.
-5. Download both the full CSV and offline plan bundle for review. The bundle
-   includes intent, summary, certificate and decimated display samples. The
-   full CSV is the execution data; do not reconstruct it from plotted samples.
-
-## Connected PX4/Gazebo mode
-
-Use a Linux or WSL environment with the built PX4 executable, Gazebo and the
-repository dependencies, including `pyulog`. On the configured machine:
-
-The commands below start the reference x500 backend. For reusable profiles,
-register the matching SDF/airframe and add `--sim-binding` as shown in
-[the aircraft setup guide](aircraft_profiles.md#register-a-matching-simulator).
-A custom profile cannot silently use the reference x500 simulator.
-
-```bash
-cd /home/xpire/PX4-trajectory-studio-oct19
 python3 -m mission_planner.editor --port 8766 \
   --sitl-autopilot /home/xpire/PX4-Autopilot \
   --runs /home/xpire/PX4-runs/trajectory-studio
 ```
 
-Open <http://127.0.0.1:8766>. This mode uses the existing `afvl_validation`
-world and x500 model, a separate PX4 working directory per job, loopback
-MAVLink endpoints and a requested simulation speed factor of 1. The GUI is
-on by default; `--headless` is available for supplementary batch checks.
-An existing PX4 instance is preserved and prevents a new rehearsal.
+Keep code, the WSL disk, temporary files, caches and retained run evidence on the
+configured flash drive. Use the existing tunnel launcher for its environment.
+The server is loopback-only. Starting it without the SITL arguments enables
+planning/downloads but does not enable Gazebo execution. Custom simulator profiles
+and matching model registration remain optional; see [aircraft profiles](aircraft_profiles.md).
 
-After planning, review the proposed interpretation and certificate, check the
-confirmation box, then select **Confirm and rehearse in Gazebo**. Confirmation
-binds the exact retained CSV digest. The server does not recompile or silently
-change its altitude. The default editor height is 20 m; the live controller
-still checks its uncertainty-aware minimum and can refuse a lower height or
-worse navigation state. Connected rehearsals currently require fixed heading;
-tangent launch alignment remains an explicit qualification gap.
+All artifacts remain SITL_ONLY. This increment covers trajectory planning and
+simulation, not a physical-flight workflow or obstacle avoidance.
 
-The page polls the job, shows failed checks as failures, provides the assessment
-for download, and overlays decimated simulator truth for the same plan. It
-resumes monitoring the active job after a page refresh. Editing a draft does
-not cancel an already confirmed rehearsal; results remain associated with
-the earlier artifact. Use a newly verified plan for a new rehearsal.
-
-**Safe simulator cancellation:** While a confirmed Gazebo rehearsal is running, use **Request safe simulator cancellation**. The request is tied to the exact retained plan ID and CSV SHA-256. The controller yields to native PX4 LAND/failsafe cleanup; the browser never kills an airborne simulator or force-disarms. Only fresh landing, disarm and stopped propulsion evidence permits a `CANCELLED` verdict. Missing evidence remains `FAILED`, and cancellation is not hardware authorization. Create and confirm a new plan to repeat the rehearsal.
-
-Each retained plan contains its intent, model, environment, CSV, summary,
-verification report and review record. Its `rehearsal/` directory contains
-configuration and parameter readback, controller telemetry, ULog, lifecycle
-audits, ground/disarm evidence, and `assessment.json`. Inspect failed targets
-and the assessment's remaining qualification; a successful sampled rehearsal
-is not a physical-flight clearance. The assessment explicitly distinguishes
-an adaptive mission clock from actual wall-time dynamics.
-
-There is no hardware launch button. The non-executable
-[`physical_aircraft_intake.template.json`](physical_aircraft_intake.template.json)
-lists the missing owner information. A real aircraft model, operating domain,
-qualified failure response, hardware tests and a separate operator approval
-are required before a physical execution adapter can be enabled.
-
-## Browser regression on a configured simulation machine
-
-The reusable browser check requires optional Playwright (`python -m pip install
-playwright`) and an installed Chrome executable. It actively confirms and runs
-one local SITL mission, checks artifact mismatch refusal, edit invalidation,
-refresh recovery, truth overlay, assessment download and responsive layout.
-Use a new output directory:
-
-```bash
-python3 scripts/check_studio_browser.py --confirm-sitl \
-  --chrome /absolute/path/to/chrome \
-  --output /absolute/path/to/new-browser-evidence
-```
-
-On Windows, use the connected Python environment and the installed Chrome path.
-The test accepts only a loopback studio URL. Its assertions never approve a
-physical flight.
-
-## Explicit preview assumptions
-
-- `LOCAL_NED`, metres, launch origin `launch-001`; horizontal drawing plane.
-- Model: the existing conservative x500 SITL configuration, maximum speed
-  3 m/s. It is not an identified physical aircraft.
-- Environment: existing empty-world contract, 40 m radius and maximum 30 m
-  launch-relative height, without an obstacle map. No obstacle-avoidance claim.
-- Timing: current certified spline schedule, 0.9 limit scale; the preferred
-  speed currently acts as a cap, then is scaled by that reserve.
-- Geometry: requested control spacing 0.5 m, verification resolution 0.02 m,
-  75% smoothing utilization of the accepted geometric deviation tube.
-- CSV sampling: 0.05 s. Display samples are decimated to about 1,000 points;
-  certificates apply to the original continuous representation, not the plot.
-- The first route point is the selected cruise altitude above launch. This
-  route certificate does not itself verify takeoff/landing transitions.
-- Tangent heading requires the existing runner's launch alignment convention.
-  Heading is not silently transformed into an independently verified absolute
-  earth-frame yaw by this editor.
-- At most 256 input points and a 120 s compilation budget. Large/complex
-  requests may require the CLI. Offline preview files are temporary; use downloads
-  to retain them. Connected mode also retains server-side evidence under `--runs`.
-
-Use the CLI for map-bound corridor missions, full 3-D inputs, look-at/profile
-yaw, entry/exit legs and other options already supported outside the basic
-editor. The editor intentionally has no arbitrary file paths or shell-command
-inputs and no hardware execution endpoints.
-
-## Evidence changes in this increment
-
-`load_contract` rejects duplicate JSON keys as well as non-finite constants.
-Interview normalization rejects non-boolean stop flags, fractional/string/bool
-lap counts, incorrect version types and unused/unknown pattern fields. It
-validates the normalized contract before returning it.
-Generated survey/circle expansions are bounded before constructing oversized
-point lists. Plan summaries and duration-refusal messages explicitly scope the
-found duration to the planner's candidate family, without claiming a proven
-global minimum.
-
-`compare_flown_track` now requires complete mission-clock coverage and enforces
-`maximum_sample_gap_s` (default 0.25 s). It rejects non-finite or nonpositive
-thresholds, duplicate columns and invalid time ordering, and preserves
-unwrapped reference yaw during interpolation. `endpoint_tolerance_s` is
-explicit, defaults to 1 microsecond and cannot reach half the mission duration.
-Use a justified gap for synthetic sparse tracks; do not relax it after seeing
-a physical result. Align and trim takeoff/landing separately.
-
-The comparison still reports `campaign_ran: false`. It measures sampled
-tracking only, not continuous error, lifecycle completion, simulator identity
-or a complete Gazebo campaign. Those remain separate implementation gates.
-
-## Validation
+## Developer verification
 
 ```bash
 python3 scripts/validate.py
-python3 -m ruff check mission_planner/editor.py mission_planner/contracts.py \
-  mission_planner/retiming.py mission_planner/plan_drawn_path.py \
-  mission_planner/plan_interview.py mission_planner/sitl_campaign.py \
-  tests/test_planner_input_and_evidence.py tests/test_planner_editor.py
+python3 -m ruff check controller mission_planner analysis scripts tests trajectory_generator
+node --test tests/studio_drawing.test.cjs
 ```
 
-The focused tests include both real compiler inputs, a real HTTP-to-worker
-round-trip, rejected cross-origin/host requests, missing launch endpoints,
-parser adversarial cases, truncated tracks, gaps and lost yaw rotations.
-JavaScript syntax was also checked with Node. The subsequent connected-machine
-Chrome checks passed for drawing, interviews, refusal, invalidation, downloads
-and mobile overflow; see [the connected validation checkpoint](trajectory_studio_connected_validation.md).
-Live results and any remaining failed targets are recorded in that checkpoint;
-unit tests alone do not establish simulator or hardware qualification.
+Browser-only acceptance uses the real HTTP compiler and installed Chrome. Its
+start-race tests intercept simulation endpoints; it never starts a simulator:
 
-For the researched architecture, traceable gaps, benchmark plan and human gates,
-see [the research review](trajectory_planner_research_review.md).
+```bash
+python scripts/check_studio_usability.py --url http://127.0.0.1:8767 \
+  --chrome /absolute/path/to/chrome --output /absolute/path/to/new-ui-evidence
+```
+
+For an actual confirmed browser-to-Gazebo rehearsal, use
+`check_studio_browser.py --confirm-sitl`; add `--cancel-during-route` in a separate
+run for cancellation. Use fresh output directories and retain failed attempts.
+See [acceptance scope](trajectory_simulation_acceptance.md) and
+[interaction specification](trajectory_studio_interaction_plan.md).

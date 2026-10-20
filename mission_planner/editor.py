@@ -24,6 +24,7 @@ from .plan_drawn_path import compile_drawn_path
 from .plan_interview import intent_from_interview
 from .aircraft import assess_profile, catalog, import_px4_parameters, mission_budget
 from .contracts import canonical_sha256
+from .explain import PlanningError
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -190,6 +191,15 @@ class PreviewHandler(BaseHTTPRequestHandler):
         elif self.path == "/":
             self._reply(200, (ROOT / "mission_planner/editor.html").read_bytes(),
                         "text/html; charset=utf-8")
+        elif self.path == "/draft.js":
+            self._reply(200, (ROOT / "mission_planner/draft.js").read_bytes(),
+                        "text/javascript; charset=utf-8")
+        elif self.path == "/api/editor-settings":
+            environment = load_contract(ROOT / "config/planner/empty_world_environment.json", dict)
+            self._json(200, {"max_input_points": MAX_INPUT_POINTS,
+                             "max_radius_m": environment["max_radius_m"],
+                             "max_height_m": environment["max_height_above_launch_m"],
+                             "connected_heading_modes": ["fixed"]})
         elif self.path == "/api/capabilities":
             self._json(200, {"sitl_enabled": getattr(self.server, "jobs", None) is not None,
                              "hardware_enabled": False})
@@ -293,6 +303,8 @@ def main(argv=None):
     if args.compile_request is not None:
         try:
             result = preview(load_contract(args.compile_request, lambda value: value))
+        except PlanningError as exc:
+            result = {**exc.to_dict(), "campaign_ran": False, "error": str(exc)}
         except (ValueError, OSError, KeyError) as exc:
             result = {"accepted": False, "release_class": "SITL_ONLY",
                       "campaign_ran": False, "error": str(exc)}

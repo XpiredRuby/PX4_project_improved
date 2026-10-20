@@ -90,6 +90,19 @@ class HTTPBoundaryTests(unittest.TestCase):
                 status, _ = self.request("GET", path)
                 self.assertEqual(status, 404)
 
+    def test_drawing_script_and_limits_have_explicit_local_routes(self):
+        status, body = self.request("GET", "/draft.js")
+        self.assertEqual(status, 200)
+        self.assertIn(b"class RouteDraft", body)
+        status, body = self.request("GET", "/api/editor-settings")
+        self.assertEqual(status, 200)
+        settings = json.loads(body)
+        self.assertEqual(settings["max_input_points"], 256)
+        self.assertEqual(settings["max_radius_m"], 40.)
+        self.assertEqual(settings["connected_heading_modes"], ["fixed"])
+        status, _ = self.request("GET", "/draft.js", headers={"Host": "attacker.example"})
+        self.assertEqual(status, 403)
+
     def test_cross_origin_and_rebinding_requests_cannot_run_worker(self):
         for headers in (
             {"Host": "attacker.example"},

@@ -81,7 +81,7 @@ def main():
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(url, wait_until="networkidle", timeout=30000)
             page.locator("#simulationStatus").filter(
-                has_text="Local PX4/Gazebo backend configured"
+                has_text="Simulator connected"
             ).wait_for()
             if args.registered_aircraft:
                 page.locator("#advancedSetup").evaluate("el => el.open=true")
@@ -96,11 +96,10 @@ def main():
                 assert page.locator("#aircraftMode").input_value() == "demo"
                 assert page.locator("#aircraftControls").is_hidden()
                 page.locator("#aircraftMode").select_option("demo")
-                page.locator("#clear").click()
-                box = page.locator("#route").bounding_box()
+                if page.locator("#clear").is_enabled():
+                    page.locator("#clear").click()
                 def pointer(east, north):
-                    return (box["x"]+(450+16*east)*box["width"]/900,
-                            box["y"]+(520-16*north)*box["height"]/630)
+                    return page.evaluate("""p => {const b=route.getBoundingClientRect();return [b.x+(origin[0]+scale*p[0])*b.width/route.width,b.y+(origin[1]-scale*p[1])*b.height/route.height]}""", [east,north])
                 page.mouse.move(*pointer(0, 0))
                 page.mouse.down()
                 page.mouse.move(*pointer(0, 6), steps=12)
@@ -112,6 +111,7 @@ def main():
                 assert drawn_result["accepted"]
                 assert len(drawn_result["intent"]["path"]["points"]) >= 5
                 assert page.locator("#results").is_visible()
+                page.locator("#motionOptions").evaluate("el => el.open=true")
                 page.locator("#deadline").fill("1")
                 assert page.locator("#results").is_hidden()
                 with page.expect_response(lambda r: r.url.endswith("/api/preview"), timeout=125000) as refused:
@@ -198,7 +198,7 @@ def main():
             if args.cancel_during_route:
                 assert cancellation_sent, "route-phase cancellation was never requested"
                 assert status["stage"] == "CANCELLED" and status["cancel_confirmed"] is True, status
-                page.locator("#simulationStatus").filter(has_text="Cancellation confirmed").wait_for(timeout=10000)
+                page.locator("#simulationStatus").filter(has_text="Stopped safely").wait_for(timeout=10000)
                 assert page.locator("#cancelRehearsal").is_disabled()
                 assert page.locator("#downloadAssessment").is_hidden()
                 assert not errors, errors
@@ -214,11 +214,11 @@ def main():
             assert status["flight_approval"] is False
             page.locator("#downloadAssessment").wait_for(state="visible", timeout=10000)
             assert (
-                "Gazebo sampled rehearsal passed"
+                "simulation passed."
                 in page.locator("#status").inner_text()
             )
             assert (
-                "Gazebo completed; sampled checks passed"
+                "Simulation finished. All required sampled checks passed"
                 in page.locator("#gazeboNotice").inner_text()
             )
             assert page.evaluate("simulationAssessment.plan_id===lastResult.plan_id")

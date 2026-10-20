@@ -224,13 +224,17 @@ class FlightReleaseTests(unittest.TestCase):
 
     def test_single_use_confirmation_and_atomic_consumption(self):
         a = self.prepared()
-        c = self.controller(a)
-        a.before_arm(c)
-        self.assertTrue((self.output/'CONSUMED.json').exists())
-        with self.assertRaisesRegex(ValueError, 'consumed'):
+        # Synthetic telemetry has no producer to refresh it while disk hashes
+        # are checked. Test one-use consumption without depending on disk speed;
+        # stale-telemetry refusal has its own explicit tests below.
+        with patch("time.monotonic", return_value=time.monotonic()):
+            c = self.controller(a)
             a.before_arm(c)
-        c.state.armed = True
-        a.check(c, force=True)  # Expiry is pre-arm only; flight does not abruptly expire.
+            self.assertTrue((self.output/'CONSUMED.json').exists())
+            with self.assertRaisesRegex(ValueError, 'consumed'):
+                a.before_arm(c)
+            c.state.armed = True
+            a.check(c, force=True)  # Flight does not abruptly expire.
 
     def test_expired_local_confirmation_refuses_without_consuming(self):
         a = self.prepared()
