@@ -73,12 +73,14 @@
  api.show=result=>{
   if(!domReady)return;
   const mission=result.mission,rt=result.summary.retiming,pieces=result.summary.fidelity_policy?.pieces||[];
-  const met=pieces.length?pieces.every(p=>p.soft_target_met):null;
+  const adaptation=result.planning_adjustments;
+  const met=adaptation&&!adaptation.original_rounding_met?false:pieces.length?pieces.every(p=>p.soft_target_met):null;
   $('duration').textContent=duration(mission?.total_duration_s??rt.selected_duration_s);
   $('simpleGoal').textContent=met===true?'Closer-fit goal met':met===false?'Within the limit · closer fit needs work':'Route checks passed';
+  if(adaptation?.adjusted)$('simpleGoal').textContent=adaptation.original_rounding_met?'Feasible route · within requested fit':'Feasible route · drawing adjusted';
   $('simpleGoal').dataset.met=String(met);
   $('reviewSummary').textContent=mission?'Ground → '+(-result.intent.path.points[0].down_m).toFixed(1)+' m → your route → home → ground.':'Follow the checked route shown in blue.';
-  const label={speed:'speed limit',acceleration:'acceleration limit',jerk:'limit on sudden changes',tilt:'tilt limit',thrust:'motor thrust limit',duration:'route time limit'}[rt.limiting_constraint]||'motion limits';
+  const label={speed:'speed limit',acceleration:'acceleration limit',jerk:'limit on sudden changes',tilt:'tilt limit',thrust:'motor thrust limit',duration:'route time limit',stop_and_turn:'stop-and-turn motion'}[rt.limiting_constraint]||'motion limits';
   $('paceExplanation').textContent='The '+label+' sets the pace for this plan. Slowing at turns helps keep the route close to your drawing. '+(mission?'The route itself takes '+duration(mission.route_duration_s)+'. Takeoff, return and landing make up the rest.':'');
   $('status').textContent='Plan checks passed. Gazebo has not run.'+(met===false?' For a closer fit, mark a sharp corner as a stop or revise the route.':'');
   if(mission){[...$('missionPhases').children].forEach((item,i)=>{const phase=mission.phases[i];item.textContent=item.textContent.split(' · ')[0]+' · '+duration(phase.duration_s);});}

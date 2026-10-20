@@ -79,6 +79,8 @@ class StudioJobs:
         self.log = None
 
     def compatible(self, result):
+        if result.get('preview_settings', {}).get('planner_backend') == 'stop_turn':
+            return False  # The connected runner accepts its original spline contract only.
         if self.binding is None:
             default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
             return (result.get("aircraft_setup") is None
@@ -182,6 +184,8 @@ class StudioJobs:
         identifier = payload["plan_id"]
         folder = self.folder(identifier)
         summary = json.loads((folder / "summary.json").read_text())
+        if summary.get("retiming", {}).get("limiting_constraint") == "stop_and_turn":
+            raise ValueError("Adjusted stop/turn plans are available for preview and download; connected playback is not registered.")
         if self.binding is None:
             default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
             if ("aircraft_profile_sha256" in summary

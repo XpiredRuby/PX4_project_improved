@@ -17,3 +17,19 @@ test('layer rendering isolates state and uses visible widths at phone scale',()=
  calls.length=0;compare.view='plan';compare.drawOriginal(ctx,[[0,0],[1,1]],p=>p,2);assert.equal(calls.length,0);
  compare.view='input';compare.drawPlanned(ctx,[[0,0],[1,1]],p=>p,2);assert.equal(calls.length,0);compare.view='overlay';
 });
+
+test('adjusted routes keep the original shadow and its certified displacement',()=>{
+ const result=fixture([[0,0],[0,2]]);
+ result.requested_intent={path:{points:[{east_m:0,north_m:0},{east_m:0,north_m:5}],maximum_deviation_m:.5}};
+ result.planning_adjustments={adjusted:true,original_rounding_met:false,curve_error_bound_from_requested_m:3};
+ const data=compare.analyze(result);
+ assert.deepEqual(data.input,[[0,0],[0,5]]);
+ assert.equal(data.bound,3);assert.equal(data.tolerance,.5);
+ assert.equal(data.adjustment.original_rounding_met,false);
+});
+test('a failed verification cannot turn an adjustment estimate into a certified bound',()=>{
+ const result=fixture([[0,0],[0,2]]);
+ result.verification.accepted=false;
+ result.planning_adjustments={curve_error_bound_from_requested_m:3};
+ assert.equal(compare.analyze(result).bound,null);
+});

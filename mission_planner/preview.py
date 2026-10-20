@@ -20,6 +20,18 @@ MAX_INPUT_POINTS = 256
 
 
 def preview(payload: dict) -> dict:
+    """Keep strict API behavior; the studio opts into closest-feasible planning."""
+    if isinstance(payload, dict) and payload.get("planning_mode") == "closest":
+        from .closest import closest_preview
+        clean = dict(payload)
+        clean.pop("planning_mode")
+        result = closest_preview(clean, _preview_strict)
+        result['requested_document'] = deepcopy(clean['document'])
+        return result
+    return _preview_strict(payload)
+
+
+def _preview_strict(payload: dict, *, loops_override=None) -> dict:
     """Compile one explicit document without importing the flight runner."""
     if (not isinstance(payload, dict) or not {"source", "document"} <= set(payload)
             or set(payload) - {"source", "document", "aircraft_profile"}):
@@ -28,7 +40,7 @@ def preview(payload: dict) -> dict:
     raw = payload["document"]
     if source == "drawing":
         intent = deepcopy(raw)
-        loops = 1
+        loops = 1 if loops_override is None else loops_override
     elif source == "interview":
         intent, loops = intent_from_interview(raw)
     else:
