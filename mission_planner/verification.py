@@ -147,6 +147,9 @@ def _trajectory_binds_to_curve(
                 count=8_000,
                 target=look_at,
             )
+            if error > MAXIMUM_HEADING_ERROR_RAD:
+                error = heading_error_bound(geometry.curve, profile, loops=loops,
+                                            count=32_000, target=look_at)
         except ValueError:
             return False
         if error > MAXIMUM_HEADING_ERROR_RAD + 1e-9:

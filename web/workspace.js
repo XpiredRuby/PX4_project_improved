@@ -63,6 +63,14 @@
  // Keep elements referenced by the core, but remove duplicate actions/instructions.
  const retained=node('div');retained.hidden=true;retained.append(steps,toolbar.querySelector('#planQuick'),byId('planRoute'),byId('routeNextTitle'),byId('routeNextHint'),byId('lifecycle'),examples);
  originalMain.replaceWith(main);document.body.append(dialog,retained);
+ const yawLabel=document.querySelector('label[for="yaw"]'),fixedLabel=document.querySelector('label[for="fixedYaw"]');
+ const headingGroup=node('div','heading-settings');headingGroup.append(yawLabel,byId('yaw'),fixedLabel,byId('fixedYaw'));
+ flight.insertBefore(headingGroup,byId('motionOptions'));byId('yaw').value='tangent';
+ byId('yaw').querySelector('[value="tangent"]').textContent='Face along the route';
+ const headingExplanation=node('p','muted');headingExplanation.id='headingExplanation';headingGroup.append(headingExplanation);
+ function headingSummary(){const fixed=byId('yaw').value==='fixed';fixedLabel.hidden=byId('fixedYaw').hidden=!fixed;headingExplanation.textContent=fixed?'Hold the chosen heading while moving. 0° keeps the launch reference direction.':'Yaw changes with the route direction. Vertical takeoff and landing hold their phase heading.';}
+ byId('yaw').addEventListener('change',headingSummary);headingSummary();
+
  document.querySelector('footer').textContent='Trajectory Studio · Planning checks a mathematical model. Gazebo has not run.';
  function syncSummary(){heightButton.innerHTML='<span>Height</span><strong>'+byId('altitude').value+' <small>m</small></strong>';speedButton.innerHTML='<span>Cruising speed</span><strong>'+byId('targetSpeed').value+' <small>m/s</small></strong>';}
  byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',syncSummary);syncSummary();

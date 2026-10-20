@@ -12,6 +12,7 @@ from .contracts import EnvironmentSnapshot, MissionIntent, VehicleModel, load_co
 from .plan_drawn_path import compile_drawn_path
 from .plan_interview import intent_from_interview
 from .aircraft import assess_profile, mission_budget
+from .lifecycle import build_mission
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_RESPONSE_BYTES = 24 * 1024 * 1024
@@ -104,6 +105,24 @@ def preview(payload: dict) -> dict:
             summary.update(aircraft_profile_sha256=setup["profile_sha256"],
                            mission_budget_sha256=canonical_sha256(budget),
                            path_error_budget_sha256=canonical_sha256(error_budget))
+        full_mission = build_mission(csv_text, contract,
+            load_contract(vehicle_path, VehicleModel.from_dict),
+            load_contract(environment_path, EnvironmentSnapshot.from_dict),
+            None if setup is None else setup['profile'])
+        if len(full_mission['trajectory_csv'].encode()) + len(csv_text.encode()) > MAX_RESPONSE_BYTES // 2:
+            raise ValueError('full mission exceeds the preview download budget')
+        if budget is not None:
+            p = setup['profile']
+            lifecycle_s = full_mission['total_duration_s'] - full_mission['route_duration_s']
+            required_s = (full_mission['route_duration_s'] * p['route_time_multiplier']
+                + max(lifecycle_s + p['settle_time_s'], p['lifecycle_time_upper_bound_s'])
+                + p['contingency_time_s'])
+            full_mission['energy_budget'] = dict(total_budgeted_s=required_s,
+                allowed_flight_s=budget['allowed_flight_s'],
+                upper_bound_energy_wh=required_s*p['power_upper_bound_w']/3600.,
+                reserve_fraction=p['reserve_fraction'], passed=required_s <= budget['allowed_flight_s'])
+            if not full_mission['energy_budget']['passed']:
+                raise ValueError('full mission energy budget exceeded after planned takeoff, return, landing and contingency')
         stride = max(1, math.ceil((len(rows) - 1) / 1000))
         indices = sorted({*range(0, len(rows), stride), len(rows) - 1})
         return {
@@ -128,6 +147,7 @@ def preview(payload: dict) -> dict:
             ],
             "display_samples_decimated": stride > 1,
             "trajectory_csv": csv_text,
+            "mission": full_mission,
             "preview_settings": {
                 "control_spacing_m": .5, "verification_resolution_m": .02,
                 "sample_period_s": .05, "limit_scale": .9,

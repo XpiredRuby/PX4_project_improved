@@ -193,11 +193,15 @@ def heading_error_bound(
     normalized, truth = walked_heading(
         curve, loops, count, heading_at=heading_at, slope=slope
     )
+    return _bounded_profile_error(normalized, truth, profile, slope * loops, count)
+
+
+def _bounded_profile_error(normalized, truth, profile, truth_slope, count):
     predicted = np.asarray([
         profile.evaluate(float(value))[0] for value in normalized
     ])
     point_error = float(np.max(np.abs(predicted - truth)))
-    slope = slope * loops + profile.derivative_norm_bound(1)
+    slope = truth_slope + profile.derivative_norm_bound(1)
     return point_error + 0.5 * slope / (count - 1)
 
 
@@ -225,18 +229,12 @@ def _plan_heading(
         raise ValueError("only a periodic path can be repeated")
     count = HEADING_SAMPLE_LADDER[-1]
     best_error = math.inf
+    normalized, heading = walked_heading(
+        curve, loops, count, heading_at=heading_at, slope=slope
+    )
     for intervals in HEADING_INTERVAL_LADDER:
-        normalized, heading = walked_heading(
-            curve, loops, count, heading_at=heading_at, slope=slope
-        )
         profile = _fit_heading(normalized, heading, intervals)
-        error = heading_error_bound(
-            curve,
-            profile,
-            loops=loops,
-            count=count,
-            target=getattr(heading_at, "target", None),
-        )
+        error = _bounded_profile_error(normalized, heading, profile, slope * loops, count)
         best_error = min(best_error, error)
         if error <= MAXIMUM_HEADING_ERROR_RAD:
             return YawTrack(
@@ -245,6 +243,14 @@ def _plan_heading(
                 bounds=PathBounds.of(profile),
                 loops=loops,
             )
+    # A steep corner can make the gap-between-samples remainder dominate.
+    # Refine the certificate rather than relaxing its two-degree threshold.
+    error = heading_error_bound(curve, profile, loops=loops, count=32_000,
+                                target=getattr(heading_at, "target", None))
+    best_error = min(best_error, error)
+    if error <= MAXIMUM_HEADING_ERROR_RAD:
+        return YawTrack(profile=profile, error_bound_rad=error,
+                        bounds=PathBounds.of(profile), loops=loops)
     raise PlanningError(
         f"{failure} cannot be followed within "
         f"{math.degrees(MAXIMUM_HEADING_ERROR_RAD):.1f} degrees; best certified "

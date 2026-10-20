@@ -495,6 +495,7 @@ def duration_requirements(
     acceleration_limit_m_s2: float,
     jerk_limit_m_s3: float,
     constraint_names: tuple[str, str, str] = CONSTRAINT_NAMES,
+    allow_stationary: bool = False,
 ) -> tuple[tuple[float, ...], tuple[str, ...]]:
     """Return the shortest duration each schedule span can be flown in.
 
@@ -513,7 +514,7 @@ def duration_requirements(
     # Exact ties resolve to the earliest name so reports stay reproducible.
     selected = np.argmax(stacked, axis=0)
     requirements = stacked[selected, np.arange(stacked.shape[1])]
-    if float(np.max(requirements)) <= 0.0:
+    if float(np.max(requirements)) <= 0.0 and not allow_stationary:
         raise ValueError("schedule admits no positive duration requirement")
     return (
         tuple(float(value) for value in requirements),
@@ -721,6 +722,7 @@ def plan_time_law(
                         yaw_requirements, yaw_names = duration_requirements(
                             yaw_bounds,
                             schedule,
+                            allow_stationary=True,
                             speed_limit_m_s=yaw_limits[0],
                             acceleration_limit_m_s2=yaw_limits[1],
                             jerk_limit_m_s3=yaw_limits[2],
