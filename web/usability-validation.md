@@ -19,3 +19,22 @@ Errors explain common timing, point count, boundary and planning failures, with 
 ## Publication status
 
 Source is prepared for the existing public Site. Publication of this pass is pending because the supported Site source helper could not run in the unavailable managed execution environment. The existing live Site is unchanged. The isolated Windows working folder and GitHub review branch hold these changes.
+
+## Manual test access prepared later on 20 October
+
+A temporary HTTPS preview of application commit 27b0dd4e2d382f2f481359b27b0e00457b2179b1 is running at:
+
+https://wellington-offerings-thu-brick.trycloudflare.com
+
+The preview serves only the built static studio directory. It can be opened from other devices while the connected laptop and preview processes stay online. This is not a deployment to the permanent Site; that Site remains unchanged. The current laptop also serves http://localhost:8765/.
+
+Public HTTPS checks passed for the page, all nine UI/runtime assets, and the SHA-256 of all 27 planner/configuration files. This verifies delivery, not real-browser rendering or a browser-executed planning run.
+
+Manual checklist:
+
+1. Choose a straight-line or turn example, select Plan and verify, and compare the amber drawing with the blue plan.
+2. Expand Flight stages and heading. Confirm planned height starts at 0, rises to the selected height and ends at 0. This is a reference trajectory, not a touchdown or Gazebo result.
+3. Change height. The old result must disappear. Refresh and check that the completed route and new setting return, with a fresh plan check required.
+4. Open Download. Check the full mission CSV, route image and plan report. The full mission CSV should have ground-zero height at both ends.
+
+Gazebo remains disconnected in this browser-local preview. Permanent publication and a visual real-browser check remain outstanding.
