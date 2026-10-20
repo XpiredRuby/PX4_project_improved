@@ -2,6 +2,8 @@
 
 Date: 2026-10-19. Status: implementation specification, not a new validation result.
 
+Implementation checkpoint: see [the usability delivery record](../validation/2026-10-19-studio-usability/README.md). Drawing tools, gesture history, explicit connectors, point annotations, endpoint preservation, zoom, readable review, structured deadline refusals and startup recovery are implemented. The original plan below also includes future work: geometric reduction and independent ordered-correspondence certification at crossings were not added in this UI increment. No reduction is performed; existing geometric/physics verification remains in use.
+
 ## Scope and reviewed baseline
 
 This increment covers drawing, mission interpretation, verified trajectory generation,
@@ -70,9 +72,10 @@ value; START on the map represents the top of takeoff at that height, not ground
   Show drawn length separately from verified trajectory sample count.
 
 Coordinates and hit testing must use the canvas display transform consistently on
-desktop and mobile. Device pixel ratio must not change metre coordinates. A proposed
-endpoint snap target is 12 CSS pixels, capped at 0.5 m in world space; display the
-actual snapped location before commit and cover scale changes in tests.
+desktop and mobile. Device pixel ratio must not change metre coordinates. The implemented endpoint target is the visible 16 CSS pixel marker, including on
+small screens. Only the gesture start snaps to the exact existing endpoint;
+committed points never move. This replaces the proposed 0.5 m cap, which made the
+touch target too small when viewing the whole reference area.
 
 ## 2. Raw input, normalization and tolerance
 
@@ -201,8 +204,9 @@ action submits the reviewed plan ID and digest, and the server checks the exact 
 | E | Update quickstart; inspect desktop/mobile and keyboard workflows. | The first drawing needs no explanation of where to begin or what flies next. |
 | F | Run focused logic checks, full repository checks, browser cases, then selected connected regressions. | New evidence is retained on the flash-drive-backed environment and pushed to GitHub. |
 
-Stages A-E precede execution. This document completes the planning pass only; production
-changes and all test/simulation runs remain pending.
+The original sequence separated planning from execution. The linked delivery record
+identifies the implemented subset and its evidence; the acceptance list below also
+contains future coverage and is not a claim that every listed case has passed.
 
 ## 8. Acceptance cases declared before implementation
 

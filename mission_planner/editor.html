@@ -30,7 +30,7 @@
 <section id="flightSettings" class="panel"><h2>Flight settings</h2>
 <div class="tabs" role="tablist" aria-label="Mission input"><button id="drawTab" role="tab" aria-selected="true">Draw</button><button id="interviewTab" role="tab" aria-selected="false">Choose a shape</button></div>
 <div id="drawingControls"><p class="muted">Draw on the map, or choose an example. The gold START marker is your launch position.</p><label for="closed">Route ending</label><select id="closed"><option value="open_stop">Finish at END, then return home</option><option value="periodic">Close the loop back to START</option></select></div>
-<div id="interviewControls" hidden><label for="pattern">Mission pattern</label><select id="pattern"><option value="circle">Circle through launch</option><option value="survey">Survey lawnmower</option><option value="waypoints">Waypoints</option></select><div id="circleFields"><label for="radius">Circle radius (m)</label><input id="radius" type="number" min="1" max="18" step="1" value="8"><label for="laps">Laps</label><input id="laps" type="number" min="1" max="20" step="1" value="1"></div><div id="surveyFields" hidden><label for="length">Length (m)</label><input id="length" type="number" min="1" max="25" value="15"><label for="width">Width (m)</label><input id="width" type="number" min="0" max="20" value="10"><label for="spacing">Lane spacing (m)</label><input id="spacing" type="number" min=".5" value="5" step=".5"></div><div id="waypointFields" hidden><label for="waypoints">Waypoints (north/east metres)</label><textarea id="waypoints" rows="7">[{"north_m":0,"east_m":0},
+<div id="interviewControls" hidden><label for="pattern">Choose a route shape</label><select id="pattern"><option value="circle">Circle from START</option><option value="survey">Sweep an area, back and forth</option><option value="waypoints">Coordinate list (advanced)</option></select><div id="circleFields"><label for="radius">Circle radius (m)</label><input id="radius" type="number" min="1" max="18" step="1" value="8"><label for="laps">Laps</label><input id="laps" type="number" min="1" max="20" step="1" value="1"></div><div id="surveyFields" hidden><label for="length">Length (m)</label><input id="length" type="number" min="1" max="25" value="15"><label for="width">Width (m)</label><input id="width" type="number" min="0" max="20" value="10"><label for="spacing">Distance between rows (m)</label><input id="spacing" type="number" min=".5" value="5" step=".5"></div><div id="waypointFields" hidden><label for="waypoints">Waypoints (north/east metres)</label><textarea id="waypoints" rows="7">[{"north_m":0,"east_m":0},
 {"north_m":10,"east_m":0,"hard":true},
 {"north_m":10,"east_m":8}]</textarea></div></div>
 <p class="muted">The defaults are ready to try. You can change the height and speed below.</p><div class="row"><div><label for="altitude">Flight height (metres)</label><input id="altitude" type="number" min=".1" max="30" step=".5" value="20"></div><div><label for="targetSpeed">Cruising speed (m/s)</label><input id="targetSpeed" type="number" min=".1" step=".1" value="1"></div></div>
@@ -117,7 +117,7 @@ function draw(){
   ctx.fillStyle='#101c29';ctx.fillRect(0,0,900,32*ui);ctx.font=`600 ${12*ui}px system-ui`;ctx.fillStyle='#afc1ce';ctx.fillText('NORTH ↑',24,23*ui);ctx.textAlign='right';ctx.fillText('EAST →',876,23*ui);ctx.textAlign='left';
   const map=p=>[origin[0]+p[0]*scale,origin[1]-p[1]*scale];
   ctx.save();ctx.setLineDash([5,6]);ctx.strokeStyle='#688391';ctx.beginPath();ctx.arc(...origin,draft.radius*scale,0,Math.PI*2);ctx.stroke();ctx.restore();
-  const stroke=lastResult?lastResult.intent.path.points.map(p=>[p.east_m,p.north_m]):points;
+  const stroke=lastResult?lastResult.intent.path.points.map(p=>[p.east_m,p.north_m]):mode==='drawing'?points:[];
   plotLine(ctx,stroke,'#a9bacb',map);
   if(mode==='drawing'&&tool==='points'&&hoverPoint&&!lastResult){ctx.setLineDash([5,5]);plotLine(ctx,[points.at(-1),hoverPoint],'#e2c28b',map);ctx.setLineDash([])}
   if(draft.gesture){const g=draft.gesture;ctx.setLineDash(g.attached?[]:[5,5]);plotLine(ctx,[points.at(-1),...g.points],'#f2c780',map);ctx.setLineDash([])}
@@ -153,7 +153,7 @@ function draw(){
     ctx.fillStyle='#9eb2c3';ctx.font=`${Math.max(16,12*ui)}px system-ui`;ctx.fillText('Draw from START, or try an example.',450,165+24*ui);ctx.textAlign='left';
   }
   const length=stroke.reduce((total,p,i)=>i?total+Math.hypot(p[0]-stroke[i-1][0],p[1]-stroke[i-1][1]):0,0);
-  $('pointCount').textContent=lastResult?`${lastResult.summary.point_count} verified samples`:points.length>1?`${points.length-1} added points · ${length.toFixed(1)} m drawn`:'Launch position · 0 m';
+  $('pointCount').textContent=lastResult?`${lastResult.summary.point_count} verified samples`:mode==='interview'?'Choose a shape, then plan to see its route':points.length>1?`${points.length-1} added points · ${length.toFixed(1)} m drawn`:'Launch position · 0 m';
   $('undo').disabled=mode!=='drawing'||!draft.past.length||!!draft.pending||!!draft.gesture;
   $('redo').disabled=mode!=='drawing'||!draft.future.length||!!draft.pending||!!draft.gesture;
   $('clear').disabled=mode!=='drawing'||(points.length<=1&&!draft.pending&&!draft.gesture);
@@ -296,12 +296,12 @@ $('cancelRehearsal').onclick=async()=>{
 };
 $('rehearse').onclick=async()=>{
   if(startingJob||activeJob||compiling||!lastResult?.plan_id||!$('confirmPlan').checked)return;
-  const plan=lastResult,id=plan.plan_id;let responseReceived=false;startingJob=true;updateRehearsalButton();
-  try{const response=await fetch('/api/rehearsal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:id,controller_trajectory_sha256:plan.summary.controller_trajectory_sha256,confirm_interpretation:true})});responseReceived=true;const state=await response.json();if(!response.ok)throw Error(state.error);
+  const plan=lastResult,id=plan.plan_id;let requestRefused=false;startingJob=true;updateRehearsalButton();
+  try{const response=await fetch('/api/rehearsal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:id,controller_trajectory_sha256:plan.summary.controller_trajectory_sha256,confirm_interpretation:true})});const state=await response.json();if(!response.ok){requestRefused=response.status>=400&&response.status<500;throw Error(state.error)}
     activeJob=id;activeJobDigest=state.controller_trajectory_sha256;cancelRequested=false;setStep('stepSimulate');try{localStorage.setItem('px4-studio-active-job',id)}catch(e){$('simulationStatus').textContent='Simulation started; this browser cannot save refresh recovery.'}
     if(lastResult?.plan_id===id)$('status').textContent='Your confirmed plan is now starting in Gazebo.';
     $('gazeboNotice').textContent='Simulation starting. It will take off, fly the reviewed route, return and land.';simulationAssessment=null;$('downloadAssessment').hidden=true;pollRehearsal(id);
-  }catch(e){if(responseReceived){$('simulationStatus').textContent='The simulator refused this request: '+e.message+'. Your verified plan has not been changed.'}else{activeJob=id;activeJobDigest=plan.summary.controller_trajectory_sha256;try{localStorage.setItem('px4-studio-active-job',id)}catch(storageError){/* Continue live recovery. */}$('simulationStatus').textContent='Could not confirm startup. Checking the server before allowing another simulation.';pollRehearsal(id)}}
+  }catch(e){if(requestRefused){$('simulationStatus').textContent='The simulator refused this request: '+e.message+'. Your verified plan has not been changed.'}else{activeJob=id;activeJobDigest=plan.summary.controller_trajectory_sha256;try{localStorage.setItem('px4-studio-active-job',id)}catch(storageError){/* Continue live recovery. */}$('simulationStatus').textContent='Could not confirm startup. Checking the server before allowing another simulation.';pollRehearsal(id)}}
   finally{startingJob=false;updateRehearsalButton()}
 };
 

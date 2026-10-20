@@ -1,0 +1,682 @@
+{
+  "recorded_at": "2026-10-20T02:40:40.681026+00:00",
+  "scope": "reference trajectory planning and Gazebo; sampled results",
+  "browser": {
+    "simulation_ran": false,
+    "results": [
+      {
+        "case": "empty_start_and_disabled_actions",
+        "passed": true
+      },
+      {
+        "case": "draw_connect_discard_and_gesture_history",
+        "passed": true
+      },
+      {
+        "case": "short_details_keyboard_points_stop_and_loop_refusal",
+        "passed": true
+      },
+      {
+        "case": "real_marked_stop_compilation",
+        "passed": true
+      },
+      {
+        "case": "real_compilation_review_and_csv_download",
+        "passed": true
+      },
+      {
+        "case": "real_deadline_refusal_with_actionable_explanation",
+        "passed": true
+      },
+      {
+        "case": "late_compile_cannot_restore_edited_plan",
+        "passed": true
+      },
+      {
+        "case": "mocked_lost_start_response_recovers_server_state",
+        "passed": true
+      },
+      {
+        "case": "mocked_start_race_and_ownership_not_a_simulator_run",
+        "passed": true
+      },
+      {
+        "case": "desktop_and_mobile_no_horizontal_overflow",
+        "passed": true
+      }
+    ],
+    "page_errors": [],
+    "passed": true
+  },
+  "cases": {
+    "nominal_initial": {
+      "browser_stage": "PASSED",
+      "plan_id": "0cf798fa8f70b9e7696bb9f4343aab07",
+      "page_errors": [],
+      "browser_checks": [
+        {
+          "case": "freehand_drawing_and_impossible_deadline_refusal",
+          "passed": true
+        },
+        {
+          "case": "exact_review_gate_and_modified_hash_refusal",
+          "passed": true,
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        {
+          "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
+          "passed": true
+        },
+        {
+          "case": "real_browser_to_gazebo_and_truth_overlay_and_download",
+          "passed": true,
+          "duration_s": 25.167786000580893
+        },
+        {
+          "case": "connected_desktop_and_mobile_layout",
+          "passed": true
+        }
+      ],
+      "job_stage": "COMPLETED",
+      "cancel_confirmed": null,
+      "sampled_rehearsal_passed": true,
+      "checks": [
+        {
+          "name": "Existing lifecycle/scenario audit",
+          "passed": true,
+          "detail": [
+            {
+              "name": "Nominal phase sequence",
+              "passed": true,
+              "detail": "TAKEOFF -> TRAJECTORY -> RETURN_HOME -> ALIGN -> HANDOFF -> PX4_LAND"
+            },
+            {
+              "name": "Automatic disarm confirmed",
+              "passed": true,
+              "detail": "final armed=False"
+            },
+            {
+              "name": "PX4 touchdown confirmed",
+              "passed": true,
+              "detail": "final landed_state=1"
+            },
+            {
+              "name": "Command envelope respected",
+              "passed": true,
+              "detail": "checked 1944/1944 commands"
+            },
+            {
+              "name": "Offboard stream continuity",
+              "passed": true,
+              "detail": "maximum gap=0.072s, limit=0.500s"
+            },
+            {
+              "name": "No telemetry time regression",
+              "passed": true,
+              "detail": "regression flags=0, unreadable=0"
+            },
+            {
+              "name": "No navigation loss",
+              "passed": true,
+              "detail": "LOST samples=0"
+            },
+            {
+              "name": "Touchdown dynamics within limits",
+              "passed": true,
+              "detail": "horizontal=0.008m/s (limit=0.500), vertical=0.012m/s (limit=0.500), tilt=0.31deg (limit=10.00)"
+            },
+            {
+              "name": "Touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.089m (limit=1.500)"
+            },
+            {
+              "name": "No post-touchdown bounce",
+              "passed": true,
+              "detail": "post-touchdown non-ground samples=0"
+            },
+            {
+              "name": "Automatic disarm timing",
+              "passed": true,
+              "detail": "delay=2.773s (limit=5.000)"
+            },
+            {
+              "name": "Propulsion outputs zero after disarm",
+              "passed": true,
+              "detail": "max_abs_output=0.0000, actuator_age=0.007s"
+            },
+            {
+              "name": "Nominal mission completed successfully",
+              "passed": true,
+              "detail": "SUCCESS"
+            },
+            {
+              "name": "Nominal cleanup has no error",
+              "passed": true,
+              "detail": null
+            },
+            {
+              "name": "Nominal manifest confirms shutdown",
+              "passed": true,
+              "detail": {
+                "armed": false,
+                "failure_action": "LAND",
+                "heartbeat_main_mode": 6,
+                "heartbeat_sub_mode": 0,
+                "landed_state": 1,
+                "mission_phase": "HANDOFF",
+                "native_landing_reference_xy": [
+                  0.05089136155623253,
+                  0.16620879344555076
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Telemetry gaps at most 0.25 s",
+          "passed": true,
+          "detail": {
+            "maximum_s": 0.07149112699994475
+          }
+        },
+        {
+          "name": "Entire planned mission clock covered",
+          "passed": true,
+          "detail": {
+            "planned_s": 25.167786000580893,
+            "first_s": 0.0,
+            "last_s": 25.20000650299994,
+            "endpoint_sampling_tolerance_s": 0.1
+          }
+        },
+        {
+          "name": "Runtime reference follows exact CSV with one translation",
+          "passed": true,
+          "detail": {
+            "launch_translation_ned_m": [
+              0.0508913615562325,
+              0.1662087934455507,
+              0.03616834363070964
+            ]
+          }
+        },
+        {
+          "name": "Runtime heading follows exact CSV with one launch offset",
+          "passed": true,
+          "detail": {
+            "launch_offset_rad": 0.0970304384827613
+          }
+        },
+        {
+          "name": "Truth covers every recorded mission sample through contact",
+          "passed": true,
+          "detail": {
+            "required_rows": 2486,
+            "covered_rows": 2486,
+            "post_contact_rows_excluded": 75
+          }
+        },
+        {
+          "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+          "passed": true,
+          "detail": {
+            "samples": 1933,
+            "rms": 0.12297137748680892,
+            "p95": 0.2575308214628333,
+            "max_abs": 0.4055259608084601
+          }
+        },
+        {
+          "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+          "passed": true,
+          "detail": {
+            "samples": 1933,
+            "rms": 1.824000883122674,
+            "p95": 2.6465438918760373,
+            "max_abs": 4.4206352799485416
+          }
+        },
+        {
+          "name": "Touchdown truth within predeclared position/speed targets",
+          "passed": true,
+          "detail": {
+            "position_error_m": 0.08917171398078562,
+            "horizontal_speed_m_s": 0.0,
+            "vertical_speed_m_s": 0.0,
+            "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+          }
+        },
+        {
+          "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+          "passed": true,
+          "detail": {
+            "actuators": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "landed_state": 1,
+            "armed": false,
+            "continuous_confirmation_s": 2.0000072329999057
+          }
+        },
+        {
+          "name": "Measured mean real-time factor in 0.95\u20131.05",
+          "passed": true,
+          "detail": {
+            "mean": 0.9991373278747209,
+            "one_second_windows": {
+              "samples": 2541,
+              "rms": 0.9993218262366101,
+              "p95": 1.0214067704665568,
+              "max_abs": 1.0340255699960428
+            },
+            "windows_below_0_9": 0,
+            "windows_above_1_1": 0
+          }
+        },
+        {
+          "name": "Independent Gazebo velocity/attitude/acceleration covers every trajectory sample",
+          "passed": true,
+          "detail": {
+            "route_samples": 505,
+            "all_finite": true
+          }
+        },
+        {
+          "name": "Simulated physical trajectory speed stays within vehicle hard speed limit",
+          "passed": true,
+          "detail": {
+            "maximum_speed_m_s": 3.0,
+            "measured_speed_m_s": {
+              "samples": 505,
+              "rms": 0.8437561732165555,
+              "p95": 0.975119982027482,
+              "max_abs": 1.0502217235360805
+            }
+          }
+        },
+        {
+          "name": "Simulated physical trajectory tilt stays within vehicle hard tilt limit",
+          "passed": true,
+          "detail": {
+            "maximum_tilt_deg": 25.0,
+            "measured_tilt_deg": {
+              "samples": 505,
+              "rms": 1.3838371412683488,
+              "p95": 3.769424721844123,
+              "max_abs": 4.95260474615279
+            }
+          }
+        },
+        {
+          "name": "Executed CSV digest matches retained plan and runner manifest",
+          "passed": true,
+          "detail": {
+            "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+          }
+        },
+        {
+          "name": "Sampled physical route stays inside user's geometric tolerance",
+          "passed": true,
+          "detail": {
+            "distance_m": {
+              "samples": 505,
+              "rms": 0.056005443633497125,
+              "p95": 0.09349234828843571,
+              "max_abs": 0.30563082551195675
+            },
+            "limit_m": 0.5,
+            "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+          }
+        }
+      ],
+      "raw_job_sha256": "1f68bd217f2ddc0db894bc0fe7ce71e0fa4f3a037ce70f2f64277ef00ba66aae",
+      "retained_source_sha256": "394f04c20850cec0d337e3f319ff607450ac2ddbda9864a4409be1dec647f2c0",
+      "controller_source_matches_delivery": true,
+      "mission_outcome": "SUCCESS",
+      "cleanup_error": null
+    },
+    "nominal_final_ui": {
+      "browser_stage": "PASSED",
+      "plan_id": "4a97e0f3f9dcdd5be4c254b7ff556dc0",
+      "page_errors": [],
+      "browser_checks": [
+        {
+          "case": "freehand_drawing_and_impossible_deadline_refusal",
+          "passed": true
+        },
+        {
+          "case": "exact_review_gate_and_modified_hash_refusal",
+          "passed": true,
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        {
+          "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
+          "passed": true
+        },
+        {
+          "case": "real_browser_to_gazebo_and_truth_overlay_and_download",
+          "passed": true,
+          "duration_s": 25.167786000580893
+        },
+        {
+          "case": "connected_desktop_and_mobile_layout",
+          "passed": true
+        }
+      ],
+      "job_stage": "COMPLETED",
+      "cancel_confirmed": null,
+      "sampled_rehearsal_passed": true,
+      "checks": [
+        {
+          "name": "Existing lifecycle/scenario audit",
+          "passed": true,
+          "detail": [
+            {
+              "name": "Nominal phase sequence",
+              "passed": true,
+              "detail": "TAKEOFF -> TRAJECTORY -> RETURN_HOME -> ALIGN -> HANDOFF -> PX4_LAND"
+            },
+            {
+              "name": "Automatic disarm confirmed",
+              "passed": true,
+              "detail": "final armed=False"
+            },
+            {
+              "name": "PX4 touchdown confirmed",
+              "passed": true,
+              "detail": "final landed_state=1"
+            },
+            {
+              "name": "Command envelope respected",
+              "passed": true,
+              "detail": "checked 1944/1944 commands"
+            },
+            {
+              "name": "Offboard stream continuity",
+              "passed": true,
+              "detail": "maximum gap=0.068s, limit=0.500s"
+            },
+            {
+              "name": "No telemetry time regression",
+              "passed": true,
+              "detail": "regression flags=0, unreadable=0"
+            },
+            {
+              "name": "No navigation loss",
+              "passed": true,
+              "detail": "LOST samples=0"
+            },
+            {
+              "name": "Touchdown dynamics within limits",
+              "passed": true,
+              "detail": "horizontal=0.012m/s (limit=0.500), vertical=0.015m/s (limit=0.500), tilt=0.22deg (limit=10.00)"
+            },
+            {
+              "name": "Touchdown position within limit",
+              "passed": true,
+              "detail": "error=0.008m (limit=1.500)"
+            },
+            {
+              "name": "No post-touchdown bounce",
+              "passed": true,
+              "detail": "post-touchdown non-ground samples=0"
+            },
+            {
+              "name": "Automatic disarm timing",
+              "passed": true,
+              "detail": "delay=2.821s (limit=5.000)"
+            },
+            {
+              "name": "Propulsion outputs zero after disarm",
+              "passed": true,
+              "detail": "max_abs_output=0.0000, actuator_age=0.022s"
+            },
+            {
+              "name": "Nominal mission completed successfully",
+              "passed": true,
+              "detail": "SUCCESS"
+            },
+            {
+              "name": "Nominal cleanup has no error",
+              "passed": true,
+              "detail": null
+            },
+            {
+              "name": "Nominal manifest confirms shutdown",
+              "passed": true,
+              "detail": {
+                "armed": false,
+                "failure_action": "LAND",
+                "heartbeat_main_mode": 6,
+                "heartbeat_sub_mode": 0,
+                "landed_state": 1,
+                "mission_phase": "HANDOFF",
+                "native_landing_reference_xy": [
+                  0.005911530259641685,
+                  0.15244793932982478
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Telemetry gaps at most 0.25 s",
+          "passed": true,
+          "detail": {
+            "maximum_s": 0.057204333000068885
+          }
+        },
+        {
+          "name": "Entire planned mission clock covered",
+          "passed": true,
+          "detail": {
+            "planned_s": 25.167786000580893,
+            "first_s": 0.0,
+            "last_s": 25.19998522999981,
+            "endpoint_sampling_tolerance_s": 0.1
+          }
+        },
+        {
+          "name": "Runtime reference follows exact CSV with one translation",
+          "passed": true,
+          "detail": {
+            "launch_translation_ned_m": [
+              0.0059115302596416,
+              0.1524479393298247,
+              0.08566154592687525
+            ]
+          }
+        },
+        {
+          "name": "Runtime heading follows exact CSV with one launch offset",
+          "passed": true,
+          "detail": {
+            "launch_offset_rad": 0.1711413562297821
+          }
+        },
+        {
+          "name": "Truth covers every recorded mission sample through contact",
+          "passed": true,
+          "detail": {
+            "required_rows": 2484,
+            "covered_rows": 2484,
+            "post_contact_rows_excluded": 76
+          }
+        },
+        {
+          "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+          "passed": true,
+          "detail": {
+            "samples": 1931,
+            "rms": 0.12864252454310668,
+            "p95": 0.2555358248185029,
+            "max_abs": 0.37680071634440215
+          }
+        },
+        {
+          "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+          "passed": true,
+          "detail": {
+            "samples": 1931,
+            "rms": 2.8158172685010183,
+            "p95": 4.342408850935243,
+            "max_abs": 5.234630603039461
+          }
+        },
+        {
+          "name": "Touchdown truth within predeclared position/speed targets",
+          "passed": true,
+          "detail": {
+            "position_error_m": 0.017327372716683866,
+            "horizontal_speed_m_s": 2.6760848125130165e-07,
+            "vertical_speed_m_s": 1.9517688997439105e-06,
+            "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+          }
+        },
+        {
+          "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+          "passed": true,
+          "detail": {
+            "actuators": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "landed_state": 1,
+            "armed": false,
+            "continuous_confirmation_s": 2.0000731899999664
+          }
+        },
+        {
+          "name": "Measured mean real-time factor in 0.95\u20131.05",
+          "passed": true,
+          "detail": {
+            "mean": 0.9997956902483063,
+            "one_second_windows": {
+              "samples": 2540,
+              "rms": 0.9997577228475085,
+              "p95": 1.0211621194102958,
+              "max_abs": 1.0339253278128608
+            },
+            "windows_below_0_9": 0,
+            "windows_above_1_1": 0
+          }
+        },
+        {
+          "name": "Independent Gazebo velocity/attitude/acceleration covers every trajectory sample",
+          "passed": true,
+          "detail": {
+            "route_samples": 505,
+            "all_finite": true
+          }
+        },
+        {
+          "name": "Simulated physical trajectory speed stays within vehicle hard speed limit",
+          "passed": true,
+          "detail": {
+            "maximum_speed_m_s": 3.0,
+            "measured_speed_m_s": {
+              "samples": 505,
+              "rms": 0.8404958031259308,
+              "p95": 0.9415262694128914,
+              "max_abs": 1.0215437116049093
+            }
+          }
+        },
+        {
+          "name": "Simulated physical trajectory tilt stays within vehicle hard tilt limit",
+          "passed": true,
+          "detail": {
+            "maximum_tilt_deg": 25.0,
+            "measured_tilt_deg": {
+              "samples": 505,
+              "rms": 1.3662892998932377,
+              "p95": 3.692169171011318,
+              "max_abs": 4.6544166866378305
+            }
+          }
+        },
+        {
+          "name": "Executed CSV digest matches retained plan and runner manifest",
+          "passed": true,
+          "detail": {
+            "sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+          }
+        },
+        {
+          "name": "Sampled physical route stays inside user's geometric tolerance",
+          "passed": true,
+          "detail": {
+            "distance_m": {
+              "samples": 505,
+              "rms": 0.06979887204803151,
+              "p95": 0.09319927425298868,
+              "max_abs": 0.34002429752212954
+            },
+            "limit_m": 0.5,
+            "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+          }
+        }
+      ],
+      "raw_job_sha256": "a689e921f6d3fc82044a29586a15a5263b7ad9c826362d7b1bed389a840a317a",
+      "retained_source_sha256": "bcffde961a264ee61ad07170d794de1cddedb15ff9aadaaa7a9e766d3c259936",
+      "controller_source_matches_delivery": true,
+      "mission_outcome": "SUCCESS",
+      "cleanup_error": null
+    },
+    "cancellation": {
+      "browser_stage": "PASSED",
+      "plan_id": "b53665c827305b19b441849bde4cae5b",
+      "page_errors": [],
+      "browser_checks": [
+        {
+          "case": "freehand_drawing_and_impossible_deadline_refusal",
+          "passed": true
+        },
+        {
+          "case": "exact_review_gate_and_modified_hash_refusal",
+          "passed": true,
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        {
+          "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
+          "passed": true
+        },
+        {
+          "case": "browser_cancel_during_route_and_native_shutdown",
+          "passed": true
+        }
+      ],
+      "job_stage": "CANCELLED",
+      "cancel_confirmed": true,
+      "sampled_rehearsal_passed": null,
+      "checks": null,
+      "raw_job_sha256": "0bb38e7ece05269bd3cae33a922e6a93092b04c1cca9cd6c8747b093907ddfc3",
+      "retained_source_sha256": "bcffde961a264ee61ad07170d794de1cddedb15ff9aadaaa7a9e766d3c259936",
+      "controller_source_matches_delivery": true,
+      "mission_outcome": "ABORTED_TO_LAND",
+      "cleanup_error": null
+    }
+  },
+  "regression": {
+    "tests": 384,
+    "ok": true,
+    "skipped": 1,
+    "log_sha256": "4c7f93481cf36f9cc21a34a38d77ad423dc3dd9e804aec065f5faaff83f4d79a",
+    "lint": "All checks passed!",
+    "javascript_checks": 11,
+    "javascript_checks_passed": true
+  },
+  "delivery_files_sha256": {
+    "mission_planner/editor.html": "c41d7a6350362dac168f35ccfd6768cf2aba4f4ed37945ecfae780c189ef3c5b",
+    "mission_planner/editor.py": "fc587ad11c79156746a0261242299af9f31df8c179ebe474eea538e7106507d3",
+    "mission_planner/draft.js": "175a8352525411a49f62a9a16bf9797cc5aeab448c2108fb76ac16a188f2a5b9",
+    "scripts/check_studio_usability.py": "c34fb1359e87ca037881ce5afc6e1249d6a5093fd15650026d067e453adfdcb6",
+    "scripts/check_studio_browser.py": "3e7e2610fdb1b3bcb91e4e38f601bdb2a2af0fe4ad1f21335bd917b0f73b763e"
+  }
+}

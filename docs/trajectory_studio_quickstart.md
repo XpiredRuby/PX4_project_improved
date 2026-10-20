@@ -33,6 +33,7 @@ trajectory; the controller generates that motion from its measured state.
   simplification of your committed input.
 - **Place points:** click each point in order. The next segment is previewed
   with the pointer. Each click intentionally connects that point to END.
+- **Zoom in / Zoom out / Fit area:** change the map view without changing the route. Labels and the START target adapt to screen size.
 - **Undo / Redo:** reverse or restore a complete drawing action.
 - **New drawing:** return to the empty START marker. Undo can restore the route.
 - **Enter points or add stops:** enter east/right and north/up coordinates;
@@ -76,7 +77,7 @@ promised. A missing old job does not permanently block a new plan.
 Select **Stop simulation and land**. Wait for explicit landing, disarm and stopped
 motor confirmation. A request to stop is not yet a completed stop. The controller
 uses the existing native landing/cleanup flow; the browser does not kill an
- airborne simulator or force-disarm it. An interrupted route is not nominal
+airborne simulator or force-disarm it. An interrupted route is not nominal
 mission completion. Status loss does not mean the simulator has stopped.
 
 ## Start the local application

@@ -38,7 +38,7 @@ def main():
             page = context.new_page()
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(args.url, wait_until="networkidle")
-            page.wait_for_function("settingsReady")
+            page.wait_for_function("() => settingsReady")
             assert page.evaluate("points") == [[0, 0]]
             assert page.locator("#planRoute").is_disabled()
             assert page.locator("#confirmPlan").is_disabled()
@@ -129,7 +129,7 @@ def main():
             pending = []
             page.route("**/api/preview", lambda route: pending.append(route))
             page.locator("#planRoute").click()
-            page.wait_for_function("compiling")
+            page.wait_for_function("() => compiling")
             page.locator("#altitude").fill("21")
             for _ in range(100):
                 if pending:
@@ -137,7 +137,7 @@ def main():
                 page.wait_for_timeout(20)
             assert pending, "compiler request was not intercepted"
             pending.pop().fulfill(json=result)
-            page.wait_for_function("!compiling")
+            page.wait_for_function("() => !compiling")
             assert page.locator("#results").is_hidden()
             assert "discarded" in page.locator("#status").inner_text()
             page.unroute("**/api/preview")
@@ -177,7 +177,7 @@ def main():
             assert starts, "simulation start request was not intercepted"
             assert len(starts) == 1
             starts[0].fulfill(status=202, json=fake_state)
-            page.wait_for_function("activeJob !== null && !startingJob")
+            page.wait_for_function("() => activeJob !== null && !startingJob")
             assert page.evaluate("activeJob") == "a" * 32
             assert page.locator("#results").is_hidden()
             assert "Earlier confirmed plan" in page.locator("#simulationStatus").inner_text()
