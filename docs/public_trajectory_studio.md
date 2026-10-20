@@ -21,3 +21,7 @@ Real PX4/Gazebo execution still needs a connected cloud Linux worker. Sites does
 - Bundle SHA-256 manifest matches the shared planner source. A null simulation-overlay guard was fixed for plans without a server-issued plan ID.
 
 Earlier native Gazebo validation remains documented in `validation/2026-10-19-studio-usability/`; it does not validate a future hosted Gazebo service. No Gazebo rerun was needed for the portable compiler extraction. Phone layout inherits the existing responsive drawing UI; a physical phone test of this public deployment remains for user acceptance.
+
+## Workspace layout update
+
+The public interface now prioritizes the route canvas with a compact plan review rail. It has one visible planning action, a native settings drawer for Flight / Points & stops / Model, on-demand charts and assumptions, compact example selection, and a persistent planning action on phones. See `web/workspace-validation.md` for the real compiler, deadline, keyboard, download and responsive viewport checks. Physical phone hardware testing remains separate from browser viewport testing.
