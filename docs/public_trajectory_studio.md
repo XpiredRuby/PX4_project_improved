@@ -25,3 +25,9 @@ Earlier native Gazebo validation remains documented in `validation/2026-10-19-st
 ## Workspace layout update
 
 The public interface now prioritizes the route canvas with a compact plan review rail. It has one visible planning action, a native settings drawer for Flight / Points & stops / Model, on-demand charts and assumptions, compact example selection, and a persistent planning action on phones. See `web/workspace-validation.md` for the real compiler, deadline, keyboard, download and responsive viewport checks. Physical phone hardware testing remains separate from browser viewport testing.
+
+## Compare the drawing with the planned route
+
+After verification, the original input remains visible as an amber shadow and dashed line under the blue plan. Overlay, Drawing only and Plan only alter the view, never the trajectory. Fit route includes both inputs and the planned samples, while a magnified close-up makes centimetre-scale rounding visible without exaggerating the main plot.
+
+Largest displayed gap is an approximate top-view nearest-segment distance among the display samples. Verified upper bound is derived from the independent INT-007 certificate and includes the controller interpolation allowance; it is not flight tracking error. The input rounding allowance is shown beside it. Exported PNGs identify the view and planning-only scope. See `web/comparison-validation.md` and the new geometry/rendering tests.

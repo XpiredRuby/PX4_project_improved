@@ -36,7 +36,7 @@ def build(destination):
         manifest['files'].append({'path': relative, 'sha256': hashlib.sha256(source.read_bytes()).hexdigest()})
     (dest / 'python-manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
     (dest / 'aircraft-catalog.json').write_text(json.dumps(catalog(), allow_nan=False)+'\n')
-    for name in ('planner-worker.js', 'browser-api.js', 'workspace.js', 'workspace.css'):
+    for name in ('planner-worker.js', 'browser-api.js', 'workspace.js', 'workspace.css', 'comparison.js'):
         shutil.copyfile(ROOT / 'web' / name, dest / name)
     shutil.copyfile(ROOT / 'mission_planner/draft.js', dest / 'draft.js')
     page = (ROOT / 'mission_planner/editor.html').read_text()
@@ -67,7 +67,7 @@ def build(destination):
     page = page.replace('<p class="muted">Stop asks the virtual drone to land. Keep this page open while it lands and turns its motors off. This can take a little while.</p>', '')
     page = page.replace("$('lifecycle').textContent='What happens: take off → follow '+(closed?'the closed loop':'your route')+' → return to START → land and stop. The faint dotted return is indicative; the controller generates it during the run.';", "$('lifecycle').textContent='This page checks your route. A future connected Gazebo run will add takeoff, return to START and landing.';")
     page = re.sub(r'<style>.*?</style>', '<link rel="stylesheet" href="/workspace.css">', page, flags=re.S)
-    page = page.replace('<script src="/browser-api.js"></script>', '<script src="/browser-api.js"></script>\n<script src="/workspace.js"></script>')
+    page = page.replace('<script src="/browser-api.js"></script>', '<script src="/browser-api.js"></script>\n<script src="/workspace.js"></script>\n<script src="/comparison.js"></script>')
     (dest / 'index.html').write_text(page)
     print(f'Built {len(sources)} portable planner files at {dest}')
 
