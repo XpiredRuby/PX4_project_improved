@@ -136,7 +136,7 @@ function draw(){
       for(const p of points.slice(1)){const [x,y]=map(p);ctx.fillStyle='#bac6d3';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill()}
     }
   }
-  if(lastResult&&simulationAssessment?.plan_id===lastResult.plan_id)plotLine(ctx,(simulationAssessment.track_samples||[]).map(p=>[p.y,p.x]),'#ca9de9',map);
+  if(lastResult&&simulationAssessment&&simulationAssessment.plan_id===lastResult.plan_id)plotLine(ctx,(simulationAssessment.track_samples||[]).map(p=>[p.y,p.x]),'#ca9de9',map);
   if(mode==='drawing'){points.forEach((p,i)=>{if(draft.kinds[i]!=='ordinary'){const [x,y]=map(p);ctx.fillStyle='#f2c780';ctx.fillRect(x-5,y-5,10,10);routeLabel(draft.kinds[i]==='stop'?'STOP '+i:'EXACT '+i,x,y-42*ui,'#f2c780')}})}
   const end=stroke.at(-1),returns=end&&stroke.length>1&&Math.hypot(...end)<.6;
   if(end&&stroke.length>1&&!returns){
