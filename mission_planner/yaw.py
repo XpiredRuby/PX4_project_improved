@@ -19,6 +19,7 @@ from .explain import PlanningError
 from .geometry import (
     BSplinePath,
     tangent_heading_slope_bound,
+    tangent_heading_slope_bounds,
 )
 from .timing import PathBounds, SCHEDULE_DEGREE
 
@@ -135,18 +136,22 @@ def walked_heading(
 
 def _clamped_knots(intervals: int) -> np.ndarray:
     internal = np.arange(1, intervals, dtype=float) / intervals
-    return np.concatenate((
-        np.zeros(SCHEDULE_DEGREE + 1),
-        internal,
-        np.ones(SCHEDULE_DEGREE + 1),
-    ))
+    return np.concatenate(
+        (
+            np.zeros(SCHEDULE_DEGREE + 1),
+            internal,
+            np.ones(SCHEDULE_DEGREE + 1),
+        )
+    )
 
 
 def _greville(knots: np.ndarray, count: int) -> np.ndarray:
-    return np.asarray([
-        float(np.mean(knots[index + 1 : index + SCHEDULE_DEGREE + 1]))
-        for index in range(count)
-    ])
+    return np.asarray(
+        [
+            float(np.mean(knots[index + 1 : index + SCHEDULE_DEGREE + 1]))
+            for index in range(count)
+        ]
+    )
 
 
 def _fit_heading(
@@ -197,12 +202,63 @@ def heading_error_bound(
 
 
 def _bounded_profile_error(normalized, truth, profile, truth_slope, count):
-    predicted = np.asarray([
-        profile.evaluate(float(value))[0] for value in normalized
-    ])
+    predicted = np.asarray([profile.evaluate(float(value))[0] for value in normalized])
     point_error = float(np.max(np.abs(predicted - truth)))
     slope = truth_slope + profile.derivative_norm_bound(1)
     return point_error + 0.5 * slope / (count - 1)
+
+
+def adaptive_heading_error_bound(curve, profile, *, loops, target=None):
+    """Refine steep spans locally; every gap retains a Lipschitz remainder."""
+    if target is None:
+        truth_breaks, truth_bounds = tangent_heading_slope_bounds(curve)
+        truth_breaks = np.asarray(
+            [
+                *((lap + b) / loops for lap in range(loops) for b in truth_breaks[:-1]),
+                1.0,
+            ]
+        )
+        truth_bounds = np.tile(np.asarray(truth_bounds) * loops, loops)
+    else:
+        truth_breaks = np.asarray([0.0, 1.0])
+        truth_bounds = np.asarray([look_at_slope_bound(curve, target) * loops])
+    profile_breaks, profile_bounds = profile.span_norm_bounds(1)
+    profile_breaks, profile_bounds = (
+        np.asarray(profile_breaks),
+        np.asarray(profile_bounds),
+    )
+    breaks = np.unique(np.concatenate((truth_breaks, profile_breaks)))
+    coordinates = [0.0]
+    remainder = 0.0
+    target_remainder = math.radians(0.25)
+    for a, b in zip(breaks, breaks[1:], strict=False):
+        middle = (a + b) / 2.0
+        ti = min(
+            len(truth_bounds) - 1,
+            np.searchsorted(truth_breaks, middle, side="right") - 1,
+        )
+        pi = min(
+            len(profile_bounds) - 1,
+            np.searchsorted(profile_breaks, middle, side="right") - 1,
+        )
+        slope = float(truth_bounds[ti] + profile_bounds[pi])
+        count = max(1, math.ceil(slope * (b - a) / (2 * target_remainder)))
+        if len(coordinates) + count > 32_000:
+            raise ValueError("heading certificate refinement budget exceeded")
+        coordinates.extend(a + (b - a) * i / count for i in range(1, count + 1))
+        remainder = max(remainder, slope * (b - a) / (2 * count))
+    previous, unwrapped, error = None, 0.0, 0.0
+    for coordinate in coordinates:
+        parameter = curve_parameter(curve, float(coordinate) * loops, loops)
+        raw = (
+            horizontal_heading(curve, parameter)
+            if target is None
+            else look_at_heading(curve, parameter, target)
+        )
+        unwrapped = raw if previous is None else unwrapped + _wrap(raw - previous)
+        previous = raw
+        error = max(error, abs(profile.evaluate(float(coordinate))[0] - unwrapped))
+    return error + remainder
 
 
 @dataclass(frozen=True)
@@ -234,7 +290,9 @@ def _plan_heading(
     )
     for intervals in HEADING_INTERVAL_LADDER:
         profile = _fit_heading(normalized, heading, intervals)
-        error = _bounded_profile_error(normalized, heading, profile, slope * loops, count)
+        error = _bounded_profile_error(
+            normalized, heading, profile, slope * loops, count
+        )
         best_error = min(best_error, error)
         if error <= MAXIMUM_HEADING_ERROR_RAD:
             return YawTrack(
@@ -245,12 +303,17 @@ def _plan_heading(
             )
     # A steep corner can make the gap-between-samples remainder dominate.
     # Refine the certificate rather than relaxing its two-degree threshold.
-    error = heading_error_bound(curve, profile, loops=loops, count=32_000,
-                                target=getattr(heading_at, "target", None))
+    error = adaptive_heading_error_bound(
+        curve, profile, loops=loops, target=getattr(heading_at, "target", None)
+    )
     best_error = min(best_error, error)
     if error <= MAXIMUM_HEADING_ERROR_RAD:
-        return YawTrack(profile=profile, error_bound_rad=error,
-                        bounds=PathBounds.of(profile), loops=loops)
+        return YawTrack(
+            profile=profile,
+            error_bound_rad=error,
+            bounds=PathBounds.of(profile),
+            loops=loops,
+        )
     raise PlanningError(
         f"{failure} cannot be followed within "
         f"{math.degrees(MAXIMUM_HEADING_ERROR_RAD):.1f} degrees; best certified "
@@ -282,13 +345,13 @@ def explicit_heading_error_bound(profile: BSplinePath, samples, *, count: int) -
     if isinstance(count, bool) or not isinstance(count, int) or count < 2:
         raise ValueError("heading sample count must be an integer of at least 2")
     parameters = np.asarray([sample.parameter for sample in samples], dtype=float)
-    heading = np.radians(np.asarray([sample.yaw_deg for sample in samples], dtype=float))
+    heading = np.radians(
+        np.asarray([sample.yaw_deg for sample in samples], dtype=float)
+    )
     slope = float(np.max(np.abs(np.diff(heading) / np.diff(parameters))))
     normalized = np.linspace(0.0, 1.0, count)
     truth = np.interp(normalized, parameters, heading)
-    predicted = np.asarray([
-        profile.evaluate(float(value))[0] for value in normalized
-    ])
+    predicted = np.asarray([profile.evaluate(float(value))[0] for value in normalized])
     point_error = float(np.max(np.abs(predicted - truth)))
     lipschitz = slope + profile.derivative_norm_bound(1)
     return point_error + 0.5 * lipschitz / (count - 1)
@@ -297,7 +360,9 @@ def explicit_heading_error_bound(profile: BSplinePath, samples, *, count: int) -
 def plan_explicit_yaw(samples) -> YawTrack:
     """Fit a heading to requested samples and accept it inside the 2 degree tube."""
     parameters = np.asarray([sample.parameter for sample in samples], dtype=float)
-    heading = np.radians(np.asarray([sample.yaw_deg for sample in samples], dtype=float))
+    heading = np.radians(
+        np.asarray([sample.yaw_deg for sample in samples], dtype=float)
+    )
     count = HEADING_SAMPLE_LADDER[-1]
     normalized = np.linspace(0.0, 1.0, count)
     requested = np.interp(normalized, parameters, heading)

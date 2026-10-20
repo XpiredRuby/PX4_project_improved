@@ -89,7 +89,7 @@ def preview(payload: dict) -> dict:
             sample_period_s=.05,
             limit_scale=.9,
             controller_cruise_height_m=altitude,
-            deviation_utilization=.75,
+            deviation_utilization=.25,
             loop_count=loops,
         )
         if trajectory.stat().st_size > MAX_RESPONSE_BYTES // 2:
@@ -151,7 +151,7 @@ def preview(payload: dict) -> dict:
             "preview_settings": {
                 "control_spacing_m": .5, "verification_resolution_m": .02,
                 "sample_period_s": .05, "limit_scale": .9,
-                "deviation_utilization": .75,
+                "deviation_utilization": .25,
             },
         }
 

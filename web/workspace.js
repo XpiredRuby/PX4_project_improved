@@ -70,6 +70,8 @@
  const headingExplanation=node('p','muted');headingExplanation.id='headingExplanation';headingGroup.append(headingExplanation);
  function headingSummary(){const fixed=byId('yaw').value==='fixed';fixedLabel.hidden=byId('fixedYaw').hidden=!fixed;headingExplanation.textContent=fixed?'Hold the chosen heading while moving. 0° keeps the launch reference direction.':'Yaw changes with the route direction. Vertical takeoff and landing hold their phase heading.';}
  byId('yaw').addEventListener('change',headingSummary);headingSummary();
+ const fidelityHint=node('p','muted');fidelityHint.textContent='Allowed rounding is the hard limit. We aim for one quarter of it, slow down for tighter turns, and show when that closer-fit goal cannot be reached. Mark a corner as a stop when you need it exact.';byId('deviation').after(fidelityHint);
+ const closureHint=node('p','muted');closureHint.textContent='Choosing Loop connects END back to START. Open routes stop at END before returning home.';byId('closed').after(closureHint);
 
  document.querySelector('footer').textContent='Trajectory Studio · Planning checks a mathematical model. Gazebo has not run.';
  function syncSummary(){heightButton.innerHTML='<span>Height</span><strong>'+byId('altitude').value+' <small>m</small></strong>';speedButton.innerHTML='<span>Cruising speed</span><strong>'+byId('targetSpeed').value+' <small>m/s</small></strong>';}

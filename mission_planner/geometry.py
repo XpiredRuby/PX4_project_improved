@@ -8,11 +8,14 @@ import math
 import numpy as np
 
 from .contracts import PathIntent
+from .ordered_fidelity import ordered_fidelity
 
 
 MAX_CONTROL_POINTS = 20_000
+MAX_EXACT_CONTROLS = 512
 MAX_VERIFICATION_SAMPLES = 250_000
 SMOOTHING_LADDER_STEPS = 6
+FIDELITY_REFINEMENT_STEPS = 4
 ARC_LENGTH_NODES = 8
 
 
@@ -136,9 +139,7 @@ def _de_boor(
     for level in range(1, degree + 1):
         for index in range(degree, level - 1, -1):
             left_index = span - degree + index
-            denominator = (
-                knots[left_index + degree - level + 1] - knots[left_index]
-            )
+            denominator = knots[left_index + degree - level + 1] - knots[left_index]
             alpha = (
                 0.0
                 if denominator <= 0.0
@@ -271,6 +272,11 @@ class SmoothingReport:
     source_length_m: float
     curve_length_m: float
     heading_slope_bound_rad: float | None
+    soft_target_met: bool = False
+    candidates_evaluated: int = 0
+    selection_policy: str = "soft-fidelity-target-then-smoothness"
+    fallback: str = "none"
+    ordered_curve_bound_m: float | None = None
 
 
 def _deduplicate_consecutive(
@@ -287,10 +293,7 @@ def _deduplicate_consecutive(
 def _densify_segment(start: np.ndarray, end: np.ndarray, spacing: float) -> list:
     distance = float(np.linalg.norm(end - start))
     intervals = max(1, math.ceil(distance / spacing))
-    return [
-        start + (end - start) * (index / intervals)
-        for index in range(intervals)
-    ]
+    return [start + (end - start) * (index / intervals) for index in range(intervals)]
 
 
 def _densify(
@@ -309,9 +312,7 @@ def _densify(
         dense.append(points[-1])
     result = np.asarray(dense, dtype=float)
     if len(result) > MAX_CONTROL_POINTS:
-        raise ValueError(
-            f"normalized path exceeds {MAX_CONTROL_POINTS} control points"
-        )
+        raise ValueError(f"normalized path exceeds {MAX_CONTROL_POINTS} control points")
     return result
 
 
@@ -328,30 +329,45 @@ def _build_spline(
         if parameters is not None:
             raise ValueError("periodic splines use intrinsic uniform parameters")
         original_count = len(control_points)
-        extended = np.vstack((control_points, control_points[:degree]))
+        # Center the periodic basis at the requested launch seam, then enforce
+        # its position while updating repeated controls together. This keeps
+        # all periodic derivatives continuous instead of shifting the launch.
+        unique = np.roll(control_points, degree // 2, axis=0)
+        extended = np.vstack((unique, unique[:degree]))
         knots = (
             np.arange(len(extended) + degree + 1, dtype=float) - degree
         ) / original_count
-        controls = extended
+        weights = _basis_row(knots, degree, len(extended), 0.0)
+        folded = np.array(weights[:original_count], copy=True)
+        folded[:degree] += weights[original_count:]
+        delta = control_points[0] - weights @ extended
+        unique = unique + folded[:, None] * delta / float(folded @ folded)
+        controls = np.vstack((unique, unique[:degree]))
     else:
         controls = control_points
         if parameters is None:
             chord_lengths = np.linalg.norm(np.diff(controls, axis=0), axis=1)
-            parameters = np.concatenate((
-                np.zeros(1),
-                np.cumsum(chord_lengths) / np.sum(chord_lengths),
-            ))
+            parameters = np.concatenate(
+                (
+                    np.zeros(1),
+                    np.cumsum(chord_lengths) / np.sum(chord_lengths),
+                )
+            )
         elif len(parameters) != len(controls):
             raise ValueError("parameter count must match the control count")
-        internal = np.asarray([
-            np.mean(parameters[index : index + degree])
-            for index in range(1, len(controls) - degree)
-        ])
-        knots = np.concatenate((
-            np.zeros(degree + 1),
-            internal,
-            np.ones(degree + 1),
-        ))
+        internal = np.asarray(
+            [
+                np.mean(parameters[index : index + degree])
+                for index in range(1, len(controls) - degree)
+            ]
+        )
+        knots = np.concatenate(
+            (
+                np.zeros(degree + 1),
+                internal,
+                np.ones(degree + 1),
+            )
+        )
     return BSplinePath(
         control_points=tuple(_as_tuple(point) for point in controls),
         knots=tuple(float(value) for value in knots),
@@ -420,9 +436,7 @@ def measure_path_fidelity(
         raise ValueError("curve fidelity check exceeds the sample safety limit")
     parameters = np.linspace(0.0, 1.0, intervals + 1)
     curve_samples = np.asarray([curve.evaluate(value) for value in parameters])
-    curve_measured = max(
-        _point_to_segments(point, source) for point in curve_samples
-    )
+    curve_measured = max(_point_to_segments(point, source) for point in curve_samples)
     curve_upper = curve_measured + speed_bound / (2.0 * intervals)
 
     source_samples = _sample_polyline(source, resolution)
@@ -459,9 +473,7 @@ def span_scalar_bounds(
     controls = np.asarray(curve.control_points, dtype=float)
     knots = np.asarray(curve.knots, dtype=float)
     breakpoints = _span_breakpoints(knots, curve.degree, len(controls))
-    local = _local_control_stack(controls, knots, curve.degree, breakpoints)[
-        :, :, 0
-    ]
+    local = _local_control_stack(controls, knots, curve.degree, breakpoints)[:, :, 0]
     return (
         tuple(float(value) for value in breakpoints),
         tuple(float(value) for value in np.min(local, axis=1)),
@@ -510,10 +522,9 @@ def curve_length(curve: BSplinePath, nodes: int = ARC_LENGTH_NODES) -> float:
     left = breakpoints[:-1, None]
     widths = np.diff(breakpoints)[:, None]
     samples = left + 0.5 * widths * (abscissae[None, :] + 1.0)
-    speeds = np.asarray([
-        np.linalg.norm(curve.evaluate(float(value), 1))
-        for value in samples.ravel()
-    ]).reshape(samples.shape)
+    speeds = np.asarray(
+        [np.linalg.norm(curve.evaluate(float(value), 1)) for value in samples.ravel()]
+    ).reshape(samples.shape)
     return float(np.sum(0.5 * widths * weights[None, :] * speeds))
 
 
@@ -552,8 +563,7 @@ def tangent_heading_slope_bounds(
                 f"parameter {middle:.6f}; tangent yaw is undefined there"
             )
         bounds.append(
-            _hull_norm_upper(tangent) * _hull_norm_upper(curvature)
-            / speed_lower**2
+            _hull_norm_upper(tangent) * _hull_norm_upper(curvature) / speed_lower**2
         )
     return (
         tuple(float(value) for value in breakpoints),
@@ -607,15 +617,16 @@ def _enforce_exact(
     controls = np.asarray(curve.control_points, dtype=float)
     knots = np.asarray(curve.knots, dtype=float)
     count, dimension = controls.shape
-    basis = np.vstack([
-        _basis_row(knots, curve.degree, count, parameter)
-        for parameter in parameters
-    ])
+    basis = np.vstack(
+        [_basis_row(knots, curve.degree, count, parameter) for parameter in parameters]
+    )
     constraints = len(parameters)
-    system = np.block([
-        [np.eye(count), basis.T],
-        [basis, np.zeros((constraints, constraints))],
-    ])
+    system = np.block(
+        [
+            [np.eye(count), basis.T],
+            [basis, np.zeros((constraints, constraints))],
+        ]
+    )
     updated = np.array(controls, copy=True)
     for axis in range(dimension):
         right_hand = np.concatenate((controls[:, axis], values[:, axis]))
@@ -655,9 +666,7 @@ def _densify_marked(
             marks.append(len(dense))
         dense.append(points[-1])
     if len(dense) > MAX_CONTROL_POINTS:
-        raise ValueError(
-            f"normalized path exceeds {MAX_CONTROL_POINTS} control points"
-        )
+        raise ValueError(f"normalized path exceeds {MAX_CONTROL_POINTS} control points")
     return np.asarray(dense, dtype=float), tuple(marks)
 
 
@@ -667,17 +676,14 @@ def build_smooth_path(
     control_spacing_m: float,
     verification_resolution_m: float | None = None,
     duplicate_tolerance_m: float = 1e-6,
-    deviation_utilization: float = 0.75,
+    deviation_utilization: float = 0.25,
 ) -> GeometryPlan:
     """Normalize a drawn polyline and fail if smoothing violates its tolerance.
 
-    Control spacing sets how closely the quintic hull follows the stroke, so
-    the coarsest spacing that still fits the intent tolerance also produces the
-    widest, lowest-curvature corners and therefore the cheapest motion. The
-    search walks a fixed geometric ladder from coarse to fine and keeps the
-    first spacing inside the utilized share of the declared deviation, which
-    leaves the remainder as headroom for independent verification and for
-    controller discretization.
+    Search a bounded family, including finer fits than the requested spacing.
+    Minimize excess above the soft fidelity goal before favoring a smoother
+    candidate. A missed soft goal is explicitly reported; the hard allowance
+    is never relaxed. Timing must subsequently verify the chosen geometry.
     """
     if path.kind != "polyline":
         raise ValueError("smooth-path baseline currently accepts polyline intent only")
@@ -734,18 +740,27 @@ def build_smooth_path(
     resolution = verification_resolution_m
     if resolution is None:
         if path.maximum_deviation_m <= 0.0:
-            raise ValueError(
-                "zero path deviation requires an exact geometry planner"
-            )
+            raise ValueError("zero path deviation requires an exact geometry planner")
         resolution = min(spacing / 20.0, path.maximum_deviation_m / 20.0)
     budget = path.maximum_deviation_m * utilization
     source = tuple(_as_tuple(point) for point in original_points)
     attempt = None
-    for step in range(SMOOTHING_LADDER_STEPS, -1, -1):
-        candidate_spacing = min(
-            spacing * 2.0 ** (step / 2.0), total_length / 5.0
-        )
-        if attempt is not None and candidate_spacing >= attempt[0]:
+    best = None
+    evaluated = 0
+    previous_spacing = math.inf
+    for step in range(SMOOTHING_LADDER_STEPS, -FIDELITY_REFINEMENT_STEPS - 1, -1):
+        candidate_spacing = min(spacing * 2.0 ** (step / 2.0), total_length / 5.0)
+        if candidate_spacing >= previous_spacing:
+            continue
+        previous_spacing = candidate_spacing
+        # Densification and the downstream checker have their own hard caps.
+        # Do not allocate a candidate that cannot fit the control budget.
+        if total_length / candidate_spacing + len(points) + 12 > MAX_CONTROL_POINTS:
+            continue
+        if (
+            interior_exact
+            and total_length / candidate_spacing + len(points) + 12 > MAX_EXACT_CONTROLS
+        ):
             continue
         dense, marks = _densify_marked(
             points,
@@ -754,9 +769,7 @@ def build_smooth_path(
             exact=exact_flags,
         )
         curve = _build_spline(dense, periodic=periodic)
-        interior = [
-            mark for mark in marks if mark not in (0, len(dense) - 1)
-        ]
+        interior = [mark for mark in marks if mark not in (0, len(dense) - 1)]
         if interior:
             knots = np.asarray(curve.knots, dtype=float)
             parameters = [0.0]
@@ -781,16 +794,34 @@ def build_smooth_path(
             verification_resolution_m=resolution,
         )
         attempt = (candidate_spacing, curve, fidelity)
-        if fidelity.accepted and fidelity.symmetric_upper_bound_m <= budget:
-            break
+        evaluated += 1
+        if fidelity.accepted:
+            try:
+                ordered = ordered_fidelity(
+                    curve,
+                    source,
+                    path.maximum_deviation_m,
+                    sampling_tolerance=max(budget, path.maximum_deviation_m * 0.25),
+                )
+            except ValueError:
+                continue
+            if not ordered["accepted"]:
+                continue
+            curve_bound = max(
+                fidelity.symmetric_upper_bound_m, ordered["upper_bound_m"]
+            )
+            excess = max(0.0, curve_bound - budget)
+            key = (excess, -candidate_spacing)
+            if best is None or key < best[0]:
+                best = (key, attempt, curve_bound)
     if attempt is None:
         raise ValueError("exact fly-through could not be satisfied")
-    candidate_spacing, curve, fidelity = attempt
-    if not fidelity.accepted:
+    candidate_spacing, curve, fidelity = best[1] if best is not None else attempt
+    if not fidelity.accepted or best is None:
         raise ValueError(
             "smoothed path exceeds maximum deviation: "
             f"{fidelity.symmetric_upper_bound_m:.6f} m > "
-            f"{path.maximum_deviation_m:.6f} m"
+            f"{path.maximum_deviation_m:.6f} m, or traversal order could not be certified within the bounded search"
         )
     return GeometryPlan(
         curve=curve,
@@ -805,5 +836,13 @@ def build_smooth_path(
             source_length_m=total_length,
             curve_length_m=curve_length(curve),
             heading_slope_bound_rad=_heading_slope_or_none(curve),
+            soft_target_met=best[2] <= budget,
+            candidates_evaluated=evaluated,
+            fallback=(
+                "none"
+                if best[2] <= budget
+                else "hard-bound-only; mark a corner stop or revise the route for a closer fit"
+            ),
+            ordered_curve_bound_m=best[2],
         ),
     )

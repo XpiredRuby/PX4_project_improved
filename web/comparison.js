@@ -19,7 +19,7 @@
   const tolerance=result.intent.path.maximum_deviation_m;
   const check=result.verification?.checks?.find(c=>c.requirement_id==='INT-007');
   const bound=result.verification?.accepted&&check?.status==='PASS'&&check.units==='m'&&Number.isFinite(check.margin)&&check.margin>=-1e-9&&check.margin<=tolerance+1e-9?Math.max(0,tolerance-check.margin):null;
-  return {input,planned,worst,tolerance,bound,decimated:!!result.display_samples_decimated};
+  return {input,planned,worst,tolerance,bound,fit:result.summary?.fidelity_policy,decimated:!!result.display_samples_decimated};
  }
  function line(ctx,data,map,colour,width,dashes=[]){if(data.length<2)return;ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.setLineDash(dashes);ctx.beginPath();data.forEach((p,i)=>{const q=map(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.stroke();}
  function drawOriginal(ctx,input,map,ui){
@@ -53,7 +53,9 @@
   boundText.textContent=data.bound===null?'See plan report':'≤ '+(data.bound*100).toFixed(1)+' cm';
   note.textContent=data.worst.distance<1e-7?'The displayed routes overlap. A straight route may need timing changes without changing its shape.':'Dashed amber is your input. Blue is the planned route. The dotted link marks the largest gap among displayed plan samples.';
   document.getElementById('comparisonAllowance').textContent='Allowed rounding: '+(data.tolerance*100).toFixed(1)+' cm';
-  document.getElementById('comparisonSampleNote').textContent='The close-up uses displayed samples'+(data.decimated?' (reduced for display)':'')+'. Its gap is an estimate, not flight error. The verified bound comes from the independent checker and covers both the curve and controller interpolation.';
+  const goal=document.getElementById('comparisonGoal'),pieces=data.fit?.pieces||[];
+  if(pieces.length){const met=pieces.every(p=>p.soft_target_met),target=Math.min(...pieces.map(p=>p.soft_target_m)),achieved=Math.max(...pieces.map(p=>p.curve_bound_m));goal.textContent=(met?'Curve goal met. ':'Closer-fit goal not reached. ')+`Curve bound ≤ ${(achieved*100).toFixed(1)} cm; target ${(target*100).toFixed(1)} cm. The route bound above also includes interpolation. `+(met?'Tighter corners can mean slower flight.':'Within the hard limit. Mark a corner stop or revise the route for a closer fit.');goal.dataset.met=String(met);goal.hidden=false;}else goal.hidden=true;
+  document.getElementById('comparisonSampleNote').textContent='The close-up uses displayed samples'+(data.decimated?' (reduced for display)':'')+'. Its gap is an estimate, not flight error. The proximity bound covers the curve and controller interpolation. A separate order-aware check rejects reordered paths, and a second spline evaluator checks emitted positions. Aircraft checks still share model primitives. The closer-fit goal applies to the continuous curve, including traversal order.';
   for(const button of bar.querySelectorAll('[data-view]'))button.setAttribute('aria-pressed',String(button.dataset.view===api.view));
   drawInset(inset,data);
  }
@@ -64,7 +66,7 @@
   document.getElementById('zoomFit').textContent='Fit route';document.getElementById('zoomFit').setAttribute('aria-label','Fit original and planned routes');
   map.before(bar);bar.querySelectorAll('[data-view]').forEach(button=>button.onclick=()=>{api.view=button.dataset.view;update();emit();});
   card=document.createElement('section');card.id='routeComparison';card.className='comparison-card';card.hidden=true;
-  card.innerHTML='<div class="section-heading"><h2>What changed?</h2><span class="comparison-zoom">Close-up</span></div><canvas id="comparisonInset" width="560" height="280" role="img" aria-label="Magnified input and planned route around the largest displayed gap"></canvas><div class="comparison-metrics"><div><strong id="comparisonGap">—</strong><span>Largest displayed gap</span></div><div><strong id="comparisonBound">—</strong><span>Verified upper bound</span></div></div><p id="comparisonAllowance"></p><p id="comparisonNote"></p><details><summary>How these numbers are measured</summary><p id="comparisonSampleNote"></p></details>';
+  card.innerHTML='<div class="section-heading"><h2>What changed?</h2><span class="comparison-zoom">Close-up</span></div><canvas id="comparisonInset" width="560" height="280" role="img" aria-label="Magnified input and planned route around the largest displayed gap"></canvas><div class="comparison-metrics"><div><strong id="comparisonGap">—</strong><span>Largest displayed gap</span></div><div><strong id="comparisonBound">—</strong><span>Verified route bound</span></div></div><p id="comparisonAllowance"></p><p id="comparisonGoal" class="fidelity-goal" role="status" hidden></p><p id="comparisonNote"></p><details><summary>How these numbers are measured</summary><p id="comparisonSampleNote"></p></details>';
   document.getElementById('planReview').before(card);inset=card.querySelector('canvas');gapText=document.getElementById('comparisonGap');boundText=document.getElementById('comparisonBound');note=document.getElementById('comparisonNote');
   const legend=document.querySelector('.legend');legend.innerHTML='<span class="input-shadow">Your drawing</span><span class="planned">Planned route</span>';
   sourceLabel=legend.querySelector('.input-shadow');

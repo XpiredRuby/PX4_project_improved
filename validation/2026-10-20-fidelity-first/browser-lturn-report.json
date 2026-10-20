@@ -1,0 +1,497 @@
+{
+  "accepted": true,
+  "release_class": "SITL_ONLY",
+  "campaign_ran": false,
+  "simulation_status": "NOT_RUN",
+  "flight_approval": false,
+  "intent": {
+    "schema_version": 1,
+    "mission_id": "studio-mission-v1",
+    "release_class": "SITL_ONLY",
+    "frame": {
+      "name": "LOCAL_NED",
+      "units": "m",
+      "origin_id": "launch-001",
+      "altitude_datum": "launch"
+    },
+    "path": {
+      "kind": "polyline",
+      "closure": "open_stop",
+      "maximum_deviation_m": 0.5,
+      "points": [
+        {
+          "point_id": "stroke-0",
+          "north_m": 0,
+          "east_m": 0,
+          "down_m": -20,
+          "hard": false,
+          "exact": false
+        },
+        {
+          "point_id": "stroke-1",
+          "north_m": 15,
+          "east_m": 0,
+          "down_m": -20,
+          "hard": false,
+          "exact": false
+        },
+        {
+          "point_id": "stroke-2",
+          "north_m": 15,
+          "east_m": 12,
+          "down_m": -20,
+          "hard": false,
+          "exact": false
+        }
+      ]
+    },
+    "motion": {
+      "target_speed_m_s": 1,
+      "maximum_speed_m_s": 1.25,
+      "yaw_mode": "tangent",
+      "fixed_yaw_deg": null,
+      "look_at_north_m": null,
+      "look_at_east_m": null,
+      "look_at_down_m": null,
+      "yaw_profile": null,
+      "time_mode": "minimize",
+      "requested_duration_s": null
+    },
+    "vehicle_model_id": "px4-x500-sitl-v1",
+    "environment_id": "empty-world-v1",
+    "objective_priority": [
+      "legal_and_safety",
+      "vehicle_and_environment",
+      "intent_fidelity",
+      "tracking_margin_and_energy",
+      "duration"
+    ]
+  },
+  "vehicle_model": {
+    "schema_version": 1,
+    "vehicle_model_id": "px4-x500-sitl-v1",
+    "configuration": "PX4 v1.17 Gazebo x500 SDF aggregate; simplified paired-rotor model; not physically identified",
+    "mass_kg": 2.0643076923076924,
+    "maximum_speed_m_s": 3,
+    "maximum_acceleration_m_s2": 1,
+    "maximum_jerk_m_s3": 1.5,
+    "maximum_yaw_rate_deg_s": 45,
+    "maximum_yaw_acceleration_deg_s2": 60,
+    "maximum_yaw_jerk_deg_s3": 120,
+    "maximum_tilt_deg": 25,
+    "maximum_body_rate_deg_s": 90,
+    "minimum_thrust_n": 0,
+    "maximum_thrust_n": 34.19432,
+    "rotor_thrust_minimum_n": 0,
+    "rotor_thrust_maximum_n": 8.54858,
+    "yaw_inertia_kg_m2": 0.04399995371400395,
+    "yaw_torque_per_thrust_m": 0.016,
+    "identified_for_physical_flight": false
+  },
+  "environment": {
+    "schema_version": 1,
+    "environment_id": "empty-world-v1",
+    "frame": {
+      "name": "LOCAL_NED",
+      "units": "m",
+      "origin_id": "launch-001",
+      "altitude_datum": "launch"
+    },
+    "max_radius_m": 40,
+    "max_height_above_launch_m": 30,
+    "max_drop_below_launch_m": 2,
+    "max_wind_m_s": 5,
+    "minimum_clearance_m": 5,
+    "obstacle_map_sha256": null,
+    "obstacle_map_verified": false
+  },
+  "aircraft_setup": null,
+  "mission_budget": null,
+  "path_error_budget": null,
+  "simulation_compatible": true,
+  "summary": {
+    "schema_version": 1,
+    "serialized_reference_audit": {
+      "accepted": true,
+      "rows": 1035,
+      "method": "re-read CSV; all reference fields and strict timestamps checked"
+    },
+    "fidelity_policy": {
+      "hard_limit_m": 0.5,
+      "soft_target_fraction": 0.25,
+      "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+      "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+      "automatic_stops_added": false,
+      "pieces": [
+        {
+          "soft_target_m": 0.125,
+          "curve_bound_m": 0.09249579113842955,
+          "soft_target_met": true,
+          "candidates_evaluated": 11,
+          "fallback": "none"
+        }
+      ]
+    },
+    "release_class": "SITL_ONLY",
+    "mission_intent_sha256": "69f4852b607f194546a3f8e351ca90f224d586a8d81e7db18669376deb9b5150",
+    "vehicle_model_sha256": "cb0dae701ad71b871497d309966d8bfa3eef2913fac74b59e1445ecbca42abe4",
+    "environment_sha256": "2ab3a45094ebdae6aae3f422cd727eb0471cc1754dd64845b4a253b86d5e9845",
+    "candidate_trajectory_sha256": "c1316d18b674775864f48eea795305862a8f3f1caf8831b5410039619ed93b86",
+    "controller_trajectory_sha256": "8cc030ffba9f9db9cad307118cccc424e7082308deb068d565d79dce6f5a319e",
+    "verification_report_sha256": "c6be3744ad2e490b490ba8a2b4f1e9d53124c65c53f565d0dee00298ce34433e",
+    "point_count": 1035,
+    "geometry": {
+      "accepted": true,
+      "maximum_allowed_deviation_m": 0.5,
+      "curve_to_stroke_upper_bound_m": 0.06833333333333179,
+      "stroke_to_curve_upper_bound_m": 0.09249579113842955,
+      "symmetric_upper_bound_m": 0.09249579113842955,
+      "curve_sample_count": 2251,
+      "stroke_sample_count": 1351,
+      "verification_resolution_m": 0.02
+    },
+    "smoothing": {
+      "requested_control_spacing_m": 0.5,
+      "selected_control_spacing_m": 0.25,
+      "deviation_utilization": 0.25,
+      "deviation_budget_m": 0.125,
+      "control_point_count": 109,
+      "source_length_m": 27,
+      "curve_length_m": 26.90862984358192,
+      "heading_slope_bound_rad": 2596.496100517017,
+      "soft_target_met": true,
+      "candidates_evaluated": 11,
+      "selection_policy": "soft-fidelity-target-then-smoothness",
+      "fallback": "none",
+      "ordered_curve_bound_m": 0.09249579113842955
+    },
+    "retiming": {
+      "minimum_feasible_duration_s": 51.650474105110774,
+      "selected_duration_s": 51.650474105110774,
+      "limiting_constraint": "jerk",
+      "limit_scale": 0.9,
+      "speed_limit_m_s": 0.9,
+      "acceleration_limit_m_s2": 0.9,
+      "jerk_limit_m_s3": 1.35,
+      "conservative_speed_bound_m_s": 0.8838799147753967,
+      "conservative_acceleration_bound_m_s2": 0.6425407536287011,
+      "conservative_jerk_bound_m_s3": 1.3499999959500002,
+      "time_law": {
+        "schedule_intervals": 512,
+        "control_point_count": 517,
+        "pace_window_spans": 3,
+        "cruise_acceleration_share": 0.3,
+        "ramp_fraction": 0.11148839674999438,
+        "equalization_passes": 12,
+        "candidates_evaluated": 324,
+        "minimum_requirement_s": 51.650474105110774,
+        "limiting_constraint": "jerk",
+        "limiting_normalized_time": 0.7001953125,
+        "speed_limit_m_s": 0.9,
+        "acceleration_limit_m_s2": 0.9,
+        "jerk_limit_m_s3": 1.35,
+        "straight_line_duration_s": 29.89847760397991
+      },
+      "loop_count": 1,
+      "yaw_mode": "tangent",
+      "heading_error_bound_rad": 0.021819347932559817,
+      "tilt_bound_deg": 3.7567635587642356,
+      "minimum_thrust_bound_n": 18.917541210432322,
+      "maximum_thrust_bound_n": 21.57034485110614,
+      "body_rate_bound_deg_s": 48.23567427733126,
+      "segment_count": 1
+    },
+    "duration_scope": "certified feasible candidate family; not a proven global minimum",
+    "controller_cruise_height_m": 20,
+    "limitations": [
+      "yaw commands are added to the heading measured at launch; tangent mode requires the aircraft to start pointed along the initial path tangent",
+      "a periodic path starts and stops at its seam; extra laps repeat that loop",
+      "a circle exit unrolls each lap into one open path, flies the launch seam through, and stops at the exit; seam speed is the certified schedule",
+      "a circle entry flies a lead-in from launch and meets the seam without stopping",
+      "an explicit yaw profile is a certified fit to requested heading samples on one rest-to-rest piece",
+      "interior hard points are full stops; exact points are flown through",
+      "look-at yaw tracks one fixed point and is refused if the path can reach it",
+      "open_depart is refused because the runner lands from a final stop",
+      "unconstrained yaw is refused",
+      "obstacle clearance is claimed only for a hashed map bound to the environment",
+      "rotor yaw torque uses the configured simplified paired-rotor model, not an identified aircraft",
+      "controller cruise height must match the compiled value",
+      "a SITL acknowledgement is not a clearance to fly",
+      "not a clearance to fly",
+      "SITL_ONLY"
+    ]
+  },
+  "verification": {
+    "accepted": true,
+    "candidate_trajectory_sha256": "c1316d18b674775864f48eea795305862a8f3f1caf8831b5410039619ed93b86",
+    "checks": [
+      {
+        "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+        "hard": true,
+        "margin": 0.33391810852286236,
+        "requirement_id": "INT-007",
+        "status": "PASS",
+        "units": "m"
+      },
+      {
+        "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+        "hard": true,
+        "margin": 0.33823159861164875,
+        "requirement_id": "INT-008",
+        "status": "PASS",
+        "units": "m"
+      },
+      {
+        "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+        "hard": true,
+        "margin": null,
+        "requirement_id": "VER-004",
+        "status": "PASS",
+        "units": null
+      },
+      {
+        "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+        "hard": true,
+        "margin": null,
+        "requirement_id": "PLN-001",
+        "status": "PASS",
+        "units": null
+      },
+      {
+        "detail": "Every emitted position binds to the independently supplied geometry.",
+        "hard": true,
+        "margin": null,
+        "requirement_id": "VER-003",
+        "status": "PASS",
+        "units": null
+      },
+      {
+        "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+        "hard": true,
+        "margin": 10,
+        "requirement_id": "ENV-001",
+        "status": "PASS",
+        "units": "m"
+      },
+      {
+        "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+        "hard": true,
+        "margin": 2.9999999192661424e-09,
+        "requirement_id": "PLN-004",
+        "status": "PASS",
+        "units": "fraction"
+      },
+      {
+        "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+        "hard": true,
+        "margin": 0,
+        "requirement_id": "PLN-007",
+        "status": "PASS",
+        "units": "s"
+      }
+    ],
+    "schema_version": 1,
+    "verifier_version": "baseline-verifier-v2-ordered"
+  },
+  "display_samples_decimated": true,
+  "mission": {
+    "schema_version": 1,
+    "accepted": true,
+    "release_class": "SITL_ONLY",
+    "execution_ready": false,
+    "simulation_status": "NOT_RUN",
+    "ground_plane_z_ned_m": 0,
+    "surface_assumption": "flat launch plane; no terrain/contact/ground-effect model",
+    "total_duration_s": 333.7004741051108,
+    "route_duration_s": 51.650474105110774,
+    "phases": [
+      {
+        "name": "TAKEOFF",
+        "start": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "end": [
+          0,
+          0,
+          -20,
+          0
+        ],
+        "duration_s": 62,
+        "speed_limit_m_s": 0.7200000000000001,
+        "verification": {
+          "accepted": true,
+          "checks": {
+            "speed": true,
+            "acceleration": true,
+            "jerk": true,
+            "yaw_rate": true,
+            "yaw_acceleration": true,
+            "yaw_jerk": true,
+            "tilt": true,
+            "thrust": true,
+            "body_rate": true,
+            "rotor_authority": true,
+            "ground_and_envelope": true
+          },
+          "speed_bound_m_s": 0.7056451613608871,
+          "acceleration_bound_m_s2": 0.03910289440039946,
+          "jerk_bound_m_s3": 0.0044056929949691185,
+          "yaw_rate_bound_rad_s": 0,
+          "method": "septic Bernstein interval hulls; monotone straight segment"
+        },
+        "start_time_s": 0,
+        "end_time_s": 62
+      },
+      {
+        "name": "ROUTE",
+        "start_time_s": 62,
+        "end_time_s": 113.65047410511077,
+        "duration_s": 51.650474105110774,
+        "verification_source": "original independently checked route and SHA-256"
+      },
+      {
+        "name": "TURN_HOME",
+        "start": [
+          15,
+          12,
+          -20,
+          1.5707963267948966
+        ],
+        "end": [
+          15,
+          12,
+          -20,
+          3.8163335958133455
+        ],
+        "duration_s": 7.1000000000000005,
+        "speed_limit_m_s": 0.9,
+        "verification": {
+          "accepted": true,
+          "checks": {
+            "speed": true,
+            "acceleration": true,
+            "jerk": true,
+            "yaw_rate": true,
+            "yaw_acceleration": true,
+            "yaw_jerk": true,
+            "tilt": true,
+            "thrust": true,
+            "body_rate": true,
+            "rotor_authority": true,
+            "ground_and_envelope": true
+          },
+          "speed_bound_m_s": 0,
+          "acceleration_bound_m_s2": 0,
+          "jerk_bound_m_s3": 0,
+          "yaw_rate_bound_rad_s": 0.6918468699252208,
+          "method": "septic Bernstein interval hulls; monotone straight segment"
+        },
+        "start_time_s": 113.65047410511077,
+        "end_time_s": 120.75047410511077
+      },
+      {
+        "name": "RETURN_HOME",
+        "start": [
+          15,
+          12,
+          -20,
+          3.8163335958133455
+        ],
+        "end": [
+          0,
+          0,
+          -20,
+          3.8163335958133455
+        ],
+        "duration_s": 47.650000000000006,
+        "speed_limit_m_s": 0.9,
+        "verification": {
+          "accepted": true,
+          "checks": {
+            "speed": true,
+            "acceleration": true,
+            "jerk": true,
+            "yaw_rate": true,
+            "yaw_acceleration": true,
+            "yaw_jerk": true,
+            "tilt": true,
+            "thrust": true,
+            "body_rate": true,
+            "rotor_authority": true,
+            "ground_and_envelope": true
+          },
+          "speed_bound_m_s": 0.8818573517807998,
+          "acceleration_bound_m_s2": 0.06358426589764381,
+          "jerk_bound_m_s3": 0.009321456379639133,
+          "yaw_rate_bound_rad_s": 0,
+          "method": "septic Bernstein interval hulls; monotone straight segment"
+        },
+        "start_time_s": 120.75047410511077,
+        "end_time_s": 168.4004741051108
+      },
+      {
+        "name": "LAND",
+        "start": [
+          0,
+          0,
+          -20,
+          3.8163335958133455
+        ],
+        "end": [
+          0,
+          0,
+          0,
+          3.8163335958133455
+        ],
+        "duration_s": 165.3,
+        "speed_limit_m_s": 0.27,
+        "verification": {
+          "accepted": true,
+          "checks": {
+            "speed": true,
+            "acceleration": true,
+            "jerk": true,
+            "yaw_rate": true,
+            "yaw_acceleration": true,
+            "yaw_jerk": true,
+            "tilt": true,
+            "thrust": true,
+            "body_rate": true,
+            "rotor_authority": true,
+            "ground_and_envelope": true
+          },
+          "speed_bound_m_s": 0.26467029645719903,
+          "acceleration_bound_m_s2": 0.005501062471801824,
+          "jerk_bound_m_s3": 0.00023247204627758057,
+          "yaw_rate_bound_rad_s": 0,
+          "method": "septic Bernstein interval hulls; monotone straight segment"
+        },
+        "start_time_s": 168.4004741051108,
+        "end_time_s": 333.7004741051108
+      }
+    ],
+    "controller_route_sha256": "8cc030ffba9f9db9cad307118cccc424e7082308deb068d565d79dce6f5a319e",
+    "trajectory_sha256": "d0665ee2292d9bfd86ca11d44f58664451c1405a2bc3b20b15fdc7c549227b38",
+    "verification": {
+      "accepted": true,
+      "phase_bounds": "independent continuous Bernstein bounds",
+      "route": "original independent route certificate",
+      "stationary_ground_endpoints": true,
+      "strictly_increasing_time": true,
+      "actual_landing_or_shutdown_proven": false
+    },
+    "sample_count": 6677
+  },
+  "preview_settings": {
+    "control_spacing_m": 0.5,
+    "verification_resolution_m": 0.02,
+    "sample_period_s": 0.05,
+    "limit_scale": 0.9,
+    "deviation_utilization": 0.25
+  },
+  "execution_location": "browser",
+  "validation_note": "Chart samples omitted from this archived report; checks, policy, phase metadata and artifact hashes retained."
+}

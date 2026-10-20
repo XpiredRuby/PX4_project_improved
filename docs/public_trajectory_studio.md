@@ -44,3 +44,8 @@ The existing `trajectory_csv`, route samples, summary and hashes remain the exac
 This is a flat empty-world reference with model checks, not evidence of ground contact, landing gear behavior, ground effect, disarm or motor shutdown. `simulation_status` remains `NOT_RUN`. Mapped-obstacle missions are refused until lifecycle clearance can be certified. The public site still has no hosted Gazebo worker. Existing native Gazebo orchestration is unchanged.
 
 Heading fixes accompanying the explicit policy: stationary yaw adds no duration constraint to a moving straight path; sharp curves may refine the continuous heading-error certificate from 8,000 to 32,000 samples while retaining the two-degree threshold. The independent route verifier repeats the refinement; rate, acceleration and jerk limits still apply. Truth samples are reused within profile fitting to avoid duplicate evaluations.
+
+
+## Fidelity-first update (2026-10-20)
+
+The fitter now targets one quarter of the hard rounding allowance, ranks a bounded candidate family by target excess before smoothness, and reports any hard-only fallback. Order-aware Fréchet acceptance, a separate Cox-basis evaluator, serialized-reference checks and an anchored periodic launch seam supplement the existing acceptance logic. See `docs/fidelity_first_phase1.md` for the exact scope, resource budgets, numerical methods and remaining research work. Hosted Gazebo remains Phase 2.
