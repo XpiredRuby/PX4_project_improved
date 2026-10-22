@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {parseCsv,measurementRows,sampleAt,attitude,eventsFrom,stateLabel,advance}=require('../web/motion.js');
+const {parseCsv,measurementRows,sampleAt,attitude,eventsFrom,stateLabel,advance,headingArrow}=require('../web/motion.js');
 const near=(a,b,tol=1e-8)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
 const base=t=>({time:t,x:0,y:0,z:-5,yaw:0,vx:0,vy:0,vz:0,ax:0,ay:0,az:0,jx:0,jy:0,jz:0,yaw_rate:0,yaw_acceleration:0,yaw_jerk:0,phase:'ROUTE'});
 test('CSV retains every exported sample and rejects ambiguous or corrupt clocks',()=>{
@@ -51,4 +51,11 @@ test('measurement with position only is interpolated without fabricating dynamic
 test('wrapped measured headings take the short turn across north',()=>{
  const rows=measurementRows('time,x,y,z,yaw\n0,0,0,0,3.13\n1,0,0,0,-3.13');
  assert.ok(Math.abs(rows[1].yaw-rows[0].yaw)<.03);near(sampleAt(rows,.5).yaw,Math.PI);
+});
+test('arrow nose faces north, east, south and west in NED yaw order',()=>{
+ for(const [yaw,x,y] of [[0,0,-20],[Math.PI/2,20,0],[Math.PI,0,20],[3*Math.PI/2,-20,0]]){const nose=headingArrow(yaw)[0];near(nose[0],x);near(nose[1],y);}
+});
+test('arrow rotates continuously through north and during a stationary turn',()=>{
+ const a=headingArrow(2*Math.PI-.001)[0],b=headingArrow(2*Math.PI+.001)[0];assert.ok(Math.hypot(a[0]-b[0],a[1]-b[1])<.05);
+ const r=sampleAt([{...base(0),yaw:0},{...base(2),yaw:Math.PI}],1),nose=headingArrow(r.yaw)[0];near(r.x,0);near(r.y,0);near(nose[0],20);near(nose[1],0);
 });

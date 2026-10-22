@@ -1,0 +1,17 @@
+{
+  "tests_passed": 41,
+  "cardinal_mapping": "LOCAL_NED yaw 0 north, pi/2 east, pi south, 3pi/2 west",
+  "north_wrap": "continuous geometry through 2pi",
+  "browser": "Vin playback arrow and compass changed from 180 degrees to 0 degrees during playback; stopped-turn slow-motion check also performed",
+  "motion_source": "unchanged full mission CSV yaw",
+  "stationary_browser_check": {
+    "start_heading_deg": 180,
+    "observed_heading_deg": 200.3,
+    "north_m": 1,
+    "east_m": -5,
+    "height_m": 20,
+    "speed_m_s": 0,
+    "yaw_rate_deg_s": 22.01,
+    "playback_rate": 0.25
+  }
+}

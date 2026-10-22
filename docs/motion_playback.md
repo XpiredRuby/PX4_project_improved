@@ -25,3 +25,9 @@ Editing the drawing clears playback, cancels animation and discards the previous
 ## Meaning of accuracy
 
 This is an accurate representation of the exported reference states at their timestamps. It is not a prediction that a physical drone will occupy those exact states. A matched PX4/Gazebo or aircraft recording is required to establish actual tracking, touchdown and disarm behavior. The current hosted page does not run Gazebo.
+
+## Visible heading rotation
+
+The map marker now uses a larger solid arrow with a longer nose, a fixed north tick and a contrasting background ring. A second north-referenced compass beside the playback controls rotates from the same full-resolution yaw state on every animation frame. Cardinal directions follow LOCAL_NED yaw: zero faces north, positive π/2 faces east. Heading remains distinct from velocity, so a stationary turn rotates without translating; a fixed-heading mission intentionally keeps facing its selected heading.
+
+Two added regressions check north/east/south/west geometry, continuity across a full turn and the arrow direction at the midpoint of a stopped 180-degree yaw turn. All 41 JavaScript tests passed. This changes visualization only; the mission and timing are unchanged.
