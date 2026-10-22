@@ -1,14 +1,17 @@
 """The browser can rehearse only a retained, exactly confirmed SITL plan."""
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import sys
 import tempfile
+import threading
+import time
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
 
 from mission_planner.editor import preview
-from mission_planner.studio_jobs import StudioJobs
+from mission_planner.studio_jobs import StudioJobs, recorded_phase
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -16,6 +19,17 @@ from planner_sitl_campaign import prepare_case  # noqa: E402
 
 
 class StudioJobTests(unittest.TestCase):
+    def test_live_phase_uses_a_complete_telemetry_row_only(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            run = Path(temporary)
+            folder = run / "reviewed-plan/batch/reviewed-plan"
+            folder.mkdir(parents=True)
+            path = folder / "research_log_TEST.csv"
+            path.write_text("time,phase,x\n0,TAKEOFF,0\n1,TRAJECTORY,1\n2,RETURN_")
+            self.assertEqual(recorded_phase(run), "TRAJECTORY")
+            path.write_text("time,phase,x\n")
+            self.assertIsNone(recorded_phase(run))
+
     @classmethod
     def setUpClass(cls):
         document = json.loads((ROOT / "missions/drawn_path_example.json").read_text())
@@ -54,6 +68,29 @@ class StudioJobTests(unittest.TestCase):
         case = prepare_case("reviewed-plan", output, self.jobs.folder(self.identifier))
         self.assertEqual(Path(case["trajectory"]).read_text(), self.result["trajectory_csv"])
         self.assertEqual(case["cruise_height_m"], self.result["summary"]["controller_cruise_height_m"])
+
+    def test_simultaneous_confirmations_can_start_only_one_worker(self):
+        other = dict(self.confirmation, plan_id=self.jobs.retain(self.result))
+        barrier = threading.Barrier(2)
+
+        def start(payload):
+            barrier.wait(timeout=2)
+            try:
+                self.jobs.start(payload)
+                return True
+            except ValueError:
+                return False
+
+        def spawn(*args, **kwargs):
+            time.sleep(.05)  # Expose the check-before-spawn race without the job lock.
+            return SimpleNamespace(poll=lambda: None, pid=123)
+
+        with patch("mission_planner.studio_jobs.subprocess.Popen", side_effect=spawn) as worker:
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                outcomes = list(pool.map(start, [self.confirmation, other]))
+        self.addCleanup(self.jobs.log.close)
+        self.assertEqual(sum(outcomes), 1)
+        self.assertEqual(worker.call_count, 1)
 
     def test_paths_commands_missing_confirmation_and_mismatched_hash_cannot_start(self):
         invalid = [dict(self.confirmation, plan_id="../outside"),

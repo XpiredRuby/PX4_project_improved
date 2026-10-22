@@ -8,151 +8,24 @@ Outputs remain SITL_ONLY. Downloaded files are not simulation evidence.
 from __future__ import annotations
 
 import argparse
-from copy import deepcopy
-import csv
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
-import math
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import threading
 
-from .contracts import EnvironmentSnapshot, MissionIntent, VehicleModel, load_contract
-from .plan_drawn_path import compile_drawn_path
-from .plan_interview import intent_from_interview
-from .aircraft import assess_profile, catalog, import_px4_parameters, mission_budget
-from .contracts import canonical_sha256
+from .aircraft import assess_profile, catalog, import_px4_parameters
+from .contracts import load_contract
+from .preview import preview, MAX_INPUT_POINTS, MAX_RESPONSE_BYTES
+from .explain import PlanningError
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAX_REQUEST_BYTES = 65_536
-MAX_RESPONSE_BYTES = 24 * 1024 * 1024
-MAX_INPUT_POINTS = 256
+MAX_REQUEST_BYTES = 2 * 1024 * 1024
 WORKER_TIMEOUT_S = 120
-
-
-def preview(payload: dict) -> dict:
-    """Compile one explicit document without importing the flight runner."""
-    if (not isinstance(payload, dict) or not {"source", "document"} <= set(payload)
-            or set(payload) - {"source", "document", "aircraft_profile"}):
-        raise ValueError("preview requires source, document and optionally aircraft_profile")
-    source = payload["source"]
-    raw = payload["document"]
-    if source == "drawing":
-        intent = deepcopy(raw)
-        loops = 1
-    elif source == "interview":
-        intent, loops = intent_from_interview(raw)
-    else:
-        raise ValueError("source must be drawing or interview")
-    setup, error_budget = None, None
-    if "aircraft_profile" in payload:
-        setup = assess_profile(payload["aircraft_profile"])
-        if not setup["ready"]:
-            return {"accepted": False, "release_class": "SITL_ONLY", "campaign_ran": False,
-                    "error": "Complete the aircraft setup questions and resolve compatibility errors.",
-                    "aircraft_setup": setup}
-        profile = setup["profile"]
-        total = _intent_deviation(intent)
-        geometric = total - profile["position_uncertainty_m"] - profile["tracking_error_m"]
-        if geometric <= 0:
-            raise ValueError("path tolerance is consumed by the position and tracking allowances; increase tolerance or improve navigation/tracking")
-        error_budget = dict(total_tolerance_m=total, planning_tolerance_m=geometric,
-                            position_uncertainty_m=profile["position_uncertainty_m"],
-                            tracking_error_m=profile["tracking_error_m"])
-        intent["path"]["maximum_deviation_m"] = geometric
-        if any(p["down_m"] != intent["path"]["points"][0]["down_m"] for p in intent["path"]["points"]):
-            cap = min(profile["maximum_climb_m_s"], profile["maximum_descent_m_s"])
-            intent["motion"]["maximum_speed_m_s"] = min(intent["motion"]["maximum_speed_m_s"], cap)
-            intent["motion"]["target_speed_m_s"] = min(intent["motion"]["target_speed_m_s"], cap)
-            error_budget["vertical_route_speed_cap_m_s"] = cap
-    contract = MissionIntent.from_dict(intent)
-    if len(contract.path.points) > MAX_INPUT_POINTS:
-        raise ValueError(f"preview accepts at most {MAX_INPUT_POINTS} input points")
-    altitude = -contract.path.points[0].down_m
-    if not math.isfinite(altitude) or altitude <= 0.:
-        raise ValueError("preview requires a positive launch-relative cruise height")
-    with tempfile.TemporaryDirectory(prefix="px4-preview-") as directory:
-        work = Path(directory)
-        vehicle_path = ROOT / "config/planner/x500_sitl_vehicle_model.json"
-        environment_path = ROOT / "config/planner/empty_world_environment.json"
-        if setup is not None:
-            vehicle_path, environment_path = work / "vehicle.json", work / "environment.json"
-            vehicle_path.write_text(json.dumps(setup["vehicle_model"], allow_nan=False))
-            environment = load_contract(ROOT / "config/planner/empty_world_environment.json", dict)
-            environment.update(environment_id="profile-env-" + setup["profile_sha256"][:16],
-                               max_radius_m=profile["max_radius_m"],
-                               max_height_above_launch_m=profile["max_height_m"],
-                               max_wind_m_s=profile["expected_wind_m_s"])
-            environment_path.write_text(json.dumps(environment, allow_nan=False))
-        intent_path = work / "intent.json"
-        intent_path.write_text(json.dumps(intent, allow_nan=False), encoding="utf-8")
-        trajectory = work / "trajectory.csv"
-        report = work / "verification.json"
-        summary = compile_drawn_path(
-            intent_path=intent_path,
-            vehicle_path=vehicle_path,
-            environment_path=environment_path,
-            trajectory_path=trajectory,
-            report_path=report,
-            summary_path=work / "summary.json",
-            control_spacing_m=.5,
-            verification_resolution_m=.02,
-            sample_period_s=.05,
-            limit_scale=.9,
-            controller_cruise_height_m=altitude,
-            deviation_utilization=.75,
-            loop_count=loops,
-        )
-        if trajectory.stat().st_size > MAX_RESPONSE_BYTES // 2:
-            raise ValueError("trajectory exceeds the preview download budget; use the CLI")
-        csv_text = trajectory.read_text(encoding="utf-8")
-        rows = list(csv.DictReader(csv_text.splitlines()))
-        budget = None
-        if setup is not None:
-            if any(abs(float(r["vz"])) > min(profile["maximum_climb_m_s"], profile["maximum_descent_m_s"]) + 1e-8 for r in rows):
-                raise ValueError("vertical route speed exceeds the aircraft climb/descent envelope")
-            budget = mission_budget(setup, summary["retiming"]["selected_duration_s"],
-                                    altitude, -float(rows[-1]["z"]))
-            summary.update(aircraft_profile_sha256=setup["profile_sha256"],
-                           mission_budget_sha256=canonical_sha256(budget),
-                           path_error_budget_sha256=canonical_sha256(error_budget))
-        stride = max(1, math.ceil((len(rows) - 1) / 1000))
-        indices = sorted({*range(0, len(rows), stride), len(rows) - 1})
-        return {
-            "accepted": True,
-            "release_class": "SITL_ONLY",
-            "campaign_ran": False,
-            "simulation_status": "NOT_RUN",
-            "flight_approval": False,
-            "intent": contract.to_dict(),
-            "vehicle_model": load_contract(vehicle_path, VehicleModel.from_dict).to_dict(),
-            "environment": load_contract(environment_path, EnvironmentSnapshot.from_dict).to_dict(),
-            "aircraft_setup": setup,
-            "mission_budget": budget,
-            "path_error_budget": error_budget,
-            "simulation_compatible": setup is None,
-            "summary": summary,
-            "verification": json.loads(report.read_text(encoding="utf-8")),
-            "samples": [
-                {key: float(rows[i][key]) for key in
-                 ("time", "x", "y", "z", "yaw", "vx", "vy", "vz", "ax", "ay", "az")}
-                for i in indices
-            ],
-            "display_samples_decimated": stride > 1,
-            "trajectory_csv": csv_text,
-            "preview_settings": {
-                "control_spacing_m": .5, "verification_resolution_m": .02,
-                "sample_period_s": .05, "limit_scale": .9,
-                "deviation_utilization": .75,
-            },
-        }
-
-
-def _intent_deviation(intent):
-    # Parse before arithmetic so strings, bools and non-finite input are refused.
-    return MissionIntent.from_dict(intent).path.maximum_deviation_m
+PREVIEW_SLOT = threading.BoundedSemaphore(1)
 
 
 class PreviewHandler(BaseHTTPRequestHandler):
@@ -188,6 +61,15 @@ class PreviewHandler(BaseHTTPRequestHandler):
         elif self.path == "/":
             self._reply(200, (ROOT / "mission_planner/editor.html").read_bytes(),
                         "text/html; charset=utf-8")
+        elif self.path == "/draft.js":
+            self._reply(200, (ROOT / "mission_planner/draft.js").read_bytes(),
+                        "text/javascript; charset=utf-8")
+        elif self.path == "/api/editor-settings":
+            environment = load_contract(ROOT / "config/planner/empty_world_environment.json", dict)
+            self._json(200, {"max_input_points": MAX_INPUT_POINTS, "max_drawing_points": 8192,
+                             "max_radius_m": environment["max_radius_m"],
+                             "max_height_m": environment["max_height_above_launch_m"],
+                             "connected_heading_modes": ["fixed"]})
         elif self.path == "/api/capabilities":
             self._json(200, {"sitl_enabled": getattr(self.server, "jobs", None) is not None,
                              "hardware_enabled": False})
@@ -217,7 +99,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if not 0 < length <= MAX_REQUEST_BYTES:
-                raise ValueError("request must contain 1–65536 bytes")
+                raise ValueError(f"request must contain 1–{MAX_REQUEST_BYTES} bytes")
             if self.headers.get_content_type() != "application/json":
                 raise ValueError("application/json required")
             self.connection.settimeout(10)
@@ -249,12 +131,21 @@ class PreviewHandler(BaseHTTPRequestHandler):
             with tempfile.TemporaryDirectory(prefix="px4-preview-request-") as directory:
                 request = Path(directory) / "request.json"
                 request.write_bytes(body)
-                result = subprocess.run(
-                    [sys.executable, "-m", "mission_planner.editor",
-                     "--compile-request", str(request)],
-                    cwd=ROOT, capture_output=True, timeout=WORKER_TIMEOUT_S,
-                    check=False,
-                )
+                # Planning must not block status polling or a cancellation.
+                # A second expensive compiler is refused rather than queued.
+                if not PREVIEW_SLOT.acquire(blocking=False):
+                    self._json(409, {"accepted": False,
+                                     "error": "Another plan is compiling; wait for it and retry."})
+                    return
+                try:
+                    result = subprocess.run(
+                        [sys.executable, "-m", "mission_planner.editor",
+                         "--compile-request", str(request)],
+                        cwd=ROOT, capture_output=True, timeout=WORKER_TIMEOUT_S,
+                        check=False,
+                    )
+                finally:
+                    PREVIEW_SLOT.release()
             if result.returncode:
                 raise ValueError("preview worker failed; no accepted output")
             if len(result.stdout) > MAX_RESPONSE_BYTES:
@@ -282,12 +173,14 @@ def main(argv=None):
     if args.compile_request is not None:
         try:
             result = preview(load_contract(args.compile_request, lambda value: value))
+        except PlanningError as exc:
+            result = {**exc.to_dict(), "campaign_ran": False, "error": str(exc)}
         except (ValueError, OSError, KeyError) as exc:
             result = {"accepted": False, "release_class": "SITL_ONLY",
                       "campaign_ran": False, "error": str(exc)}
         print(json.dumps(result, allow_nan=False))
         return
-    with HTTPServer(("127.0.0.1", args.port), PreviewHandler) as server:
+    with ThreadingHTTPServer(("127.0.0.1", args.port), PreviewHandler) as server:
         if args.sitl_autopilot:
             if args.runs is None:
                 parser.error("--sitl-autopilot requires --runs")

@@ -1,0 +1,47 @@
+{
+  "simulation_ran": false,
+  "results": [
+    {
+      "case": "empty_start_and_disabled_actions",
+      "passed": true
+    },
+    {
+      "case": "draw_connect_discard_and_gesture_history",
+      "passed": true
+    },
+    {
+      "case": "short_details_keyboard_points_stop_and_loop_refusal",
+      "passed": true
+    },
+    {
+      "case": "real_marked_stop_compilation",
+      "passed": true
+    },
+    {
+      "case": "real_compilation_review_and_csv_download",
+      "passed": true
+    },
+    {
+      "case": "real_deadline_refusal_with_actionable_explanation",
+      "passed": true
+    },
+    {
+      "case": "late_compile_cannot_restore_edited_plan",
+      "passed": true
+    },
+    {
+      "case": "mocked_lost_start_response_recovers_server_state",
+      "passed": true
+    },
+    {
+      "case": "mocked_start_race_and_ownership_not_a_simulator_run",
+      "passed": true
+    },
+    {
+      "case": "desktop_and_mobile_no_horizontal_overflow",
+      "passed": true
+    }
+  ],
+  "page_errors": [],
+  "passed": true
+}

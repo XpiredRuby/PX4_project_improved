@@ -22,9 +22,11 @@ from .geometry import GeometryPlan, measure_path_fidelity
 from .mapping import OccupancyMap, clearance_margin_m
 from .retiming import CandidateTrajectory
 from .rotors import yaw_torque_available_nm
+from .ordered_fidelity import ordered_fidelity, emitted_geometry_agrees
 from .timing import PathBounds, certified_dynamics, repeated_bounds, schedule_defects
 from .yaw import (
     MAXIMUM_HEADING_ERROR_RAD,
+    adaptive_heading_error_bound,
     curve_parameter,
     explicit_heading_error_bound,
     heading_error_bound,
@@ -147,6 +149,8 @@ def _trajectory_binds_to_curve(
                 count=8_000,
                 target=look_at,
             )
+            if error > MAXIMUM_HEADING_ERROR_RAD:
+                error = adaptive_heading_error_bound(geometry.curve, profile, loops=loops, target=look_at)
         except ValueError:
             return False
         if error > MAXIMUM_HEADING_ERROR_RAD + 1e-9:
@@ -469,7 +473,7 @@ def verify_candidate_trajectory(
     environment: EnvironmentSnapshot,
     *,
     maximum_deviation_m: float,
-    verifier_version: str = "baseline-verifier-v1",
+    verifier_version: str = "baseline-verifier-v2-ordered",
     maximum_limit_scale: float = 0.9,
     fidelity_resolution_m: float = 0.01,
     controller_cruise_height_m: float = 15.0,
@@ -527,6 +531,23 @@ def verify_candidate_trajectory(
         margin=maximum_deviation_m - controller_fidelity_bound,
         units="m",
     ))
+    interpolation = geometry.curve.derivative_norm_bound(1) * maximum_parameter_gap
+    try:
+        ordered = ordered_fidelity(geometry.curve, geometry.source_points,
+                                   maximum_deviation_m - interpolation, sampling_tolerance=maximum_deviation_m*.25)
+        ordered_bound = (ordered['upper_bound_m'] + interpolation
+                         if ordered['accepted'] else None)
+        ordered_detail = ("Order-aware Frechet bound covers the spline and controller interpolation; "
+                          "required stops and lap count remain separate structure checks.")
+    except ValueError as error:
+        ordered, ordered_bound = {'accepted': False}, None
+        ordered_detail = str(error)
+    checks.append(_check("INT-008", ordered['accepted'], ordered_detail,
+                         margin=(maximum_deviation_m-ordered_bound if ordered_bound is not None else None),
+                         units="m"))
+    checks.append(_check("VER-004", emitted_geometry_agrees(geometry.curve, candidate),
+                         "Every emitted position agrees with a separate Cox-basis spline evaluator; "
+                         "this is geometric diversity, not independent aircraft-model validation."))
     structure = _trajectory_structure(candidate, maximum_sample_period_s)
     defects = schedule_defects(candidate.schedule)
     checks.append(_check(

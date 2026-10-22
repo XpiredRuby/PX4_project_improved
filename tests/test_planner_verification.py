@@ -52,7 +52,7 @@ class PlannerVerificationTests(unittest.TestCase):
         self.assertTrue(report.accepted)
         self.assertEqual(
             set(by_requirement(report)),
-            {"INT-007", "PLN-001", "VER-003", "ENV-001", "PLN-004", "PLN-007"},
+            {"INT-007", "INT-008", "PLN-001", "VER-003", "VER-004", "ENV-001", "PLN-004", "PLN-007"},
         )
         self.assertTrue(all(check.status == "PASS" for check in report.checks))
         self.assertEqual(report.candidate_trajectory_sha256, candidate.sha256)

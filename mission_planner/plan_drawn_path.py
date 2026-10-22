@@ -24,6 +24,7 @@ from .explain import PlanningError
 from .export import save_controller_csv
 from .geometry import build_smooth_path
 from .mapping import OccupancyMap
+from .ordered_fidelity import audit_controller_csv
 from .retiming import concatenate_candidates, retime_stop_path
 from .review import write_review
 from .verification import merge_verification_reports, verify_candidate_trajectory
@@ -242,6 +243,9 @@ def compile_drawn_path(
         if len(reports) == 1
         else merge_verification_reports(tuple(reports), candidate.sha256)
     )
+    if not report.accepted:
+        failed = [c.requirement_id+": "+c.detail for c in report.checks if c.status != "PASS"]
+        raise ValueError("verification report did not accept the trajectory: "+"; ".join(failed))
     validate_contract_set(
         intent,
         vehicle,
@@ -272,12 +276,31 @@ def compile_drawn_path(
         stage.unlink(missing_ok=True)
     try:
         save_controller_csv(trajectory_stage, candidate)
+        serialized_audit = audit_controller_csv(trajectory_stage, candidate)
         trajectory_sha256 = hashlib.sha256(
             trajectory_stage.read_bytes()
         ).hexdigest()
         _write_json(report_stage, report.to_dict())
         summary = {
             "schema_version": 1,
+            "serialized_reference_audit": serialized_audit,
+            "fidelity_policy": {
+                "hard_limit_m": intent.path.maximum_deviation_m,
+                "soft_target_fraction": deviation_utilization,
+                "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+                "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+                "automatic_stops_added": False,
+                "pieces": [
+                    {
+                        "soft_target_m": g.smoothing.deviation_budget_m,
+                        "curve_bound_m": g.smoothing.ordered_curve_bound_m,
+                        "soft_target_met": g.smoothing.soft_target_met,
+                        "candidates_evaluated": g.smoothing.candidates_evaluated,
+                        "fallback": g.smoothing.fallback,
+                    }
+                    for g in geometries
+                ],
+            },
             "release_class": "SITL_ONLY",
             "mission_intent_sha256": canonical_sha256(intent),
             "vehicle_model_sha256": canonical_sha256(vehicle),
@@ -369,7 +392,7 @@ def parse_args(argv=None):
     parser.add_argument("--sample-period-s", type=float, default=0.05)
     parser.add_argument("--limit-scale", type=float, default=0.9)
     parser.add_argument("--controller-cruise-height-m", type=float, default=17.0)
-    parser.add_argument("--deviation-utilization", type=float, default=0.75)
+    parser.add_argument("--deviation-utilization", type=float, default=0.25)
     parser.add_argument("--loop-count", type=int, default=1)
     parser.add_argument("--review", type=Path)
     parser.add_argument("--obstacle-map", type=Path)

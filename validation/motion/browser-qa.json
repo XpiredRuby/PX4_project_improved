@@ -1,0 +1,25 @@
+{
+  "source": "Actual Chrome browser with real Pyodide compiler, Vin example",
+  "full_csv_samples": 10262,
+  "playback": "1x play/pause observed at a stationary turn: position remained N8 E-15 Up20 while heading changed from 298.1 to 159.5 degrees",
+  "controls": [
+    "event selection",
+    "next exact sample",
+    "1x play/pause",
+    "time slider end",
+    "height view",
+    "3D view",
+    "clear invalidates playback",
+    "undo restores drawing without restoring stale verification"
+  ],
+  "ground_endpoint": {
+    "time_s": 512.9,
+    "north_m": 0,
+    "east_m": 0,
+    "height_m": 0,
+    "speed_m_s": 0
+  },
+  "measurement_import": "Synthetic full mission shifted 0.1 m north: browser displayed separation 0.100 m; removed after QA",
+  "actual_gazebo_run": false,
+  "javascript_tests_passed": 39
+}

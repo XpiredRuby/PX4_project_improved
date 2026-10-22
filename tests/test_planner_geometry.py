@@ -20,25 +20,64 @@ def polyline(
     closure="open_stop",
     hard_indices=(),
 ):
-    return PathIntent.from_dict({
-        "kind": "polyline",
-        "closure": closure,
-        "maximum_deviation_m": maximum_deviation_m,
-        "points": [
-            {
-                "point_id": f"point-{index}",
-                "north_m": coordinate[0],
-                "east_m": coordinate[1],
-                "down_m": coordinate[2],
-                "hard": index in hard_indices,
-                "exact": False,
-            }
-            for index, coordinate in enumerate(coordinates)
-        ],
-    })
+    return PathIntent.from_dict(
+        {
+            "kind": "polyline",
+            "closure": closure,
+            "maximum_deviation_m": maximum_deviation_m,
+            "points": [
+                {
+                    "point_id": f"point-{index}",
+                    "north_m": coordinate[0],
+                    "east_m": coordinate[1],
+                    "down_m": coordinate[2],
+                    "hard": index in hard_indices,
+                    "exact": False,
+                }
+                for index, coordinate in enumerate(coordinates)
+            ],
+        }
+    )
 
 
 class PlannerGeometryTests(unittest.TestCase):
+    def test_default_targets_closer_fidelity_than_legacy_utilization(self):
+        path = polyline(
+            [(0.0, 0.0, -8.0), (15.0, 0.0, -8.0), (15.0, 12.0, -8.0)],
+            maximum_deviation_m=0.5,
+        )
+        close = build_smooth_path(
+            path, control_spacing_m=0.5, verification_resolution_m=0.02
+        )
+        legacy = build_smooth_path(
+            path,
+            control_spacing_m=0.5,
+            verification_resolution_m=0.02,
+            deviation_utilization=0.75,
+        )
+        self.assertTrue(close.smoothing.soft_target_met)
+        self.assertLessEqual(close.fidelity.symmetric_upper_bound_m, 0.125)
+        self.assertLess(
+            close.fidelity.symmetric_upper_bound_m,
+            legacy.fidelity.symmetric_upper_bound_m,
+        )
+        self.assertLessEqual(close.smoothing.candidates_evaluated, 11)
+
+    def test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound(self):
+        path = polyline(
+            [(0.0, 0.0, -8.0), (5.0, 0.0, -8.0), (5.0, 5.0, -8.0)],
+            maximum_deviation_m=0.5,
+        )
+        plan = build_smooth_path(
+            path,
+            control_spacing_m=0.5,
+            verification_resolution_m=0.02,
+            deviation_utilization=0.00001,
+        )
+        self.assertTrue(plan.fidelity.accepted)
+        self.assertFalse(plan.smoothing.soft_target_met)
+        self.assertIn("hard-bound-only", plan.smoothing.fallback)
+
     def test_straight_path_is_endpoint_exact_and_collinear(self):
         path = polyline(
             [(0.0, 0.0, -8.0), (10.0, 0.0, -8.0)],
@@ -100,13 +139,18 @@ class PlannerGeometryTests(unittest.TestCase):
             verification_resolution_m=0.01,
         )
         self.assertTrue(plan.curve.periodic)
+        self.assertTrue(
+            np.allclose(plan.curve.evaluate(0.0), coordinates[0], atol=1e-9)
+        )
         for derivative in range(4):
-            self.assertTrue(np.allclose(
-                plan.curve.evaluate(0.0, derivative),
-                plan.curve.evaluate(1.0, derivative),
-                atol=1e-9,
-                rtol=1e-9,
-            ))
+            self.assertTrue(
+                np.allclose(
+                    plan.curve.evaluate(0.0, derivative),
+                    plan.curve.evaluate(1.0, derivative),
+                    atol=1e-9,
+                    rtol=1e-9,
+                )
+            )
         radial_distances = [
             math.hypot(*plan.curve.evaluate(float(parameter))[:2])
             for parameter in np.linspace(0.0, 1.0, 201)
@@ -181,10 +225,12 @@ class PlannerGeometryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "open_depart"):
             build_smooth_path(open_depart, control_spacing_m=0.2)
 
-        duplicate = polyline([
-            (0.0, 0.0, -8.0),
-            (0.0, 0.0, -8.0),
-        ])
+        duplicate = polyline(
+            [
+                (0.0, 0.0, -8.0),
+                (0.0, 0.0, -8.0),
+            ]
+        )
         with self.assertRaisesRegex(ValueError, "fewer than two"):
             build_smooth_path(duplicate, control_spacing_m=0.2)
 
@@ -293,9 +339,9 @@ class PlannerGeometryTests(unittest.TestCase):
         )
         bound = tangent_heading_slope_bound(plan.curve)
         parameters = np.linspace(0.0, 1.0, 4001)
-        tangents = np.asarray([
-            plan.curve.evaluate(float(value), 1) for value in parameters
-        ])
+        tangents = np.asarray(
+            [plan.curve.evaluate(float(value), 1) for value in parameters]
+        )
         headings = np.unwrap(np.arctan2(tangents[:, 1], tangents[:, 0]))
         measured = float(np.max(np.abs(np.gradient(headings, parameters))))
         self.assertGreaterEqual(bound, measured)
@@ -324,9 +370,7 @@ class PlannerGeometryTests(unittest.TestCase):
             + [1.0] * (degree + 1)
         )
         ramp = BSplinePath(
-            control_points=tuple(
-                (index / (count - 1),) for index in range(count)
-            ),
+            control_points=tuple((index / (count - 1),) for index in range(count)),
             knots=tuple(knots),
             degree=degree,
             periodic=False,
@@ -335,9 +379,9 @@ class PlannerGeometryTests(unittest.TestCase):
         self.assertEqual(ramp.evaluate(0.0), (0.0,))
         self.assertEqual(ramp.evaluate(1.0), (1.0,))
         step = 1e-6
-        numerical = (
-            ramp.evaluate(0.4 + step)[0] - ramp.evaluate(0.4 - step)[0]
-        ) / (2.0 * step)
+        numerical = (ramp.evaluate(0.4 + step)[0] - ramp.evaluate(0.4 - step)[0]) / (
+            2.0 * step
+        )
         self.assertAlmostEqual(numerical, ramp.evaluate(0.4, 1)[0], places=5)
         self.assertGreater(ramp.derivative_norm_bound(1), 0.0)
         linear = BSplinePath(

@@ -1,0 +1,13 @@
+{
+  "accepted": true,
+  "original_points": 481,
+  "flight_points": 12,
+  "continuous_checks": true,
+  "ground_endpoints": true,
+  "csv_hash_matches": true,
+  "samples": 10262,
+  "max_height_m": 20.0,
+  "yaw_range_rad": 10.315053062897062,
+  "duration_s": 512.9,
+  "original_curve_bound_m": 4.636291350834654e-13
+}

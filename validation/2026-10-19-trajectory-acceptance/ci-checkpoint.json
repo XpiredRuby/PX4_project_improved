@@ -1,0 +1,34 @@
+{
+  "implementation_commit": "34cb0dc76c58217baaea16f6732f4458a7b692ff",
+  "workflows": [
+    {
+      "name": "Controller validation",
+      "run_id": 39320644482,
+      "conclusion": "success"
+    },
+    {
+      "name": "Validation",
+      "run_id": 39320644468,
+      "conclusion": "success"
+    }
+  ],
+  "test_runs": [
+    {
+      "tests": 381,
+      "seconds": 214.553
+    },
+    {
+      "tests": 5,
+      "seconds": 1.068
+    },
+    {
+      "tests": 381,
+      "seconds": 280.546
+    },
+    {
+      "tests": 16,
+      "seconds": 0.888
+    }
+  ],
+  "source": "GitHub Actions job 118293476974"
+}

@@ -54,6 +54,14 @@ automatic disarm.
 | `reference/original_baseline/` | Original implementation |
 | `session_2_robust_landing/` | Earlier validated implementation and evidence |
 
+## Trajectory and simulation acceptance
+
+The default studio uses the configured reference simulator so you can draw and
+rehearse without completing an aircraft questionnaire. Advanced profiles remain
+optional. The [acceptance record](validation/2026-10-19-trajectory-acceptance/README.md)
+contains the expanded offline/Gazebo/browser results; follow the
+[manual trial](docs/trajectory_simulation_acceptance.md#manual-trial) to test your own drawings.
+
 ## Configuration
 
 Motion, navigation, and terrain bounds are in `controller/mission_config.py`.

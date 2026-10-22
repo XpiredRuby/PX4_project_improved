@@ -69,6 +69,10 @@ class PlannerMissionTests(unittest.TestCase):
             loop_count=2,
         )
         self.assertEqual(plan.points[-1].path_parameter, 2.0)
+        self.assertAlmostEqual(plan.points[0].north_m, coordinates[0][0], places=8)
+        self.assertAlmostEqual(plan.points[0].east_m, coordinates[0][1], places=8)
+        seam = min(plan.points, key=lambda point: abs(point.path_parameter-1.))
+        self.assertGreater(math.hypot(seam.north_velocity_m_s,seam.east_velocity_m_s), .05)
         self.assertAlmostEqual(plan.points[0].north_m, plan.points[-1].north_m, places=5)
         self.assertAlmostEqual(
             plan.points[-1].yaw_rad - plan.points[0].yaw_rad,

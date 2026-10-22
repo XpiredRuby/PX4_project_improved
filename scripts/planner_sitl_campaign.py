@@ -28,6 +28,7 @@ from mission_planner.acknowledgement import issue_sitl_acknowledgement, load_sit
 from mission_planner.contracts import canonical_sha256, load_contract
 from mission_planner.plan_drawn_path import compile_drawn_path
 from mission_planner.plan_interview import compile_interview
+from mission_planner.acceptance_cases import acceptance_cases
 from mission_planner.simulation_binding import validate_binding
 from mission_planner.aircraft import assess_profile, controller_overrides
 from mission_planner.flight_release import source_digest
@@ -168,7 +169,19 @@ def prepare_case(name, output, reviewed_plan=None):
         sample_period_s=.05, limit_scale=.9, controller_cruise_height_m=20.,
         deviation_utilization=.75,
     )
-    if name.startswith("circle"):
+    reference_cases = {"turn-nominal": "l-turn", "hard-stop-nominal": "hard-stop",
+                       "survey-nominal": "survey"}
+    if name in reference_cases:
+        payload = next(payload for label, payload, accepted in acceptance_cases()
+                       if label == reference_cases[name] and accepted)
+        if payload["source"] == "drawing":
+            write_json(common["intent_path"], payload["document"])
+            result = compile_drawn_path(**common)
+        else:
+            source = artifacts / "interview.json"
+            write_json(source, payload["document"])
+            result = compile_interview(interview_path=source, **common)
+    elif name.startswith("circle"):
         interview = json.loads((ROOT / "missions/interview_circle_example.json").read_text())
         # Fixed heading isolates circle tracking from launch-heading alignment.
         interview.update(yaw_mode="fixed", fixed_yaw_deg=0., altitude_m=20.)
@@ -375,7 +388,7 @@ def main():
     parser.add_argument("--world", default="afvl_validation")
     parser.add_argument("--gui", action="store_true")
     parser.add_argument("--reviewed-plan", type=Path)
-    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "drawn-gps-outage-4s", "drawn-control-stall", "reviewed-plan"], default=["five-stop-baseline"])
+    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "turn-nominal", "hard-stop-nominal", "survey-nominal", "drawn-gps-outage-4s", "drawn-control-stall", "reviewed-plan"], default=["five-stop-baseline"])
     args = parser.parse_args()
     if (args.reviewed_plan is not None) != (args.cases == ["reviewed-plan"]):
         parser.error("--reviewed-plan requires exactly --cases reviewed-plan")
@@ -408,7 +421,7 @@ def main():
             assessment = assess_case(args.output / name)
             results[-1]["sampled_rehearsal_passed"] = assessment["sampled_rehearsal_passed"]
             write_json(args.output / "results.json", results)
-            if name in ("drawn-nominal", "circle-nominal", "reviewed-plan") and not assessment["sampled_rehearsal_passed"]:
+            if name in ("drawn-nominal", "circle-nominal", "turn-nominal", "hard-stop-nominal", "survey-nominal", "reviewed-plan") and not assessment["sampled_rehearsal_passed"]:
                 raise RuntimeError("Sampled rehearsal targets failed; inspect assessment.json")
             if name in ("drawn-gps-outage-4s", "drawn-control-stall") and not assessment["fault_response_passed"]:
                 raise RuntimeError("Fault response targets failed; inspect assessment.json")

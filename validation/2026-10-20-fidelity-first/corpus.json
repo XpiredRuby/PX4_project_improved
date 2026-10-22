@@ -1,0 +1,1200 @@
+{
+  "schema_version": 1,
+  "baseline": {
+    "speed_cap_m_s": 0.9,
+    "acceleration_cap_m_s2": 0.9,
+    "jerk_cap_m_s3": 1.35,
+    "height_m": 20.0,
+    "radius_m": 40.0,
+    "tilt_deg": 25.0,
+    "soft_target_fraction": 0.25
+  },
+  "scope": "native deterministic planning only; no Gazebo; no cross-runtime equality claim",
+  "cases": [
+    {
+      "name": "straight20",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 25.167786000585945,
+      "full_duration_s": 302.06778600058595,
+      "timing_relaxation_lower_bound_s": 23.888888888888886,
+      "duration_above_relaxation_fraction": 0.05353522793150489,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.4450575250438733,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.4230612928142425,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.0000002060984847e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 5.700198361999355,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "rounded_L",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 44.09437075433425,
+      "full_duration_s": 319.0443707543343,
+      "timing_relaxation_lower_bound_s": 29.89847760397992,
+      "duration_above_relaxation_fraction": 0.47480321033016915,
+      "binding_constraint": "jerk",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.09249579113842955,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.3327023277715013,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.33726277332540794,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 2.9999990968787168e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 9.881266700999731,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "stopped_L",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 36.549782350244655,
+      "full_duration_s": 311.4997823502447,
+      "timing_relaxation_lower_bound_s": 30.0,
+      "duration_above_relaxation_fraction": 0.21832607834148843,
+      "binding_constraint": "jerk",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          },
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 10,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.43510359092962325,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.42308865068239987,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.000000082740371e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 14.452213016999849,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "zigzag",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 45.41292979323071,
+      "full_duration_s": 312.4129297932307,
+      "timing_relaxation_lower_bound_s": 22.27703782542398,
+      "duration_above_relaxation_fraction": 1.0385533368086564,
+      "binding_constraint": "jerk",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.09133895584451797,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.33417249782563385,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.33878200615632204,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 2.999999425833687e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 7.819625158000235,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "figure_eight",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 114.49370474012026,
+      "full_duration_s": 341.7937047401203,
+      "timing_relaxation_lower_bound_s": 74.8166437293764,
+      "duration_above_relaxation_fraction": 0.5303239898632992,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.09245260473437715,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.3325515188732379,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.33949068012321126,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.000000082740371e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 26.57049288500002,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "lawnmower",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 70.56194740599676,
+      "full_duration_s": 331.1619474059968,
+      "timing_relaxation_lower_bound_s": 46.109583540014754,
+      "duration_above_relaxation_fraction": 0.5303097965472143,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.12317255760182308,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.30186786661688647,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.306299332675186,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.0000002060984847e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 13.896003952999308,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "repeated_visits",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 48.006339725883294,
+      "full_duration_s": 300.10633972588334,
+      "timing_relaxation_lower_bound_s": 24.078967472567218,
+      "duration_above_relaxation_fraction": 0.9937042475170976,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.09845137950008637,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.40740995639545596,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.32712561593592954,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.000000082740371e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 8.535634615000163,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "many_stops",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 36.36841710167264,
+      "full_duration_s": 303.36841710167266,
+      "timing_relaxation_lower_bound_s": 22.508867121093243,
+      "duration_above_relaxation_fraction": 0.615737340578616,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 7,
+            "fallback": "none"
+          },
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 8,
+            "fallback": "none"
+          },
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 8,
+            "fallback": "none"
+          },
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.03125,
+            "soft_target_met": true,
+            "candidates_evaluated": 7,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.4451459510537925,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.4231435013703396,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 9.99999959382257e-10,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 22.742056836999836,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "near_boundary",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 64.32876683313754,
+      "full_duration_s": 378.72876683313757,
+      "timing_relaxation_lower_bound_s": 48.675893233767894,
+      "duration_above_relaxation_fraction": 0.3215734228891518,
+      "binding_constraint": "jerk",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.12071718707546138,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.30468883610725095,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.3039935728272185,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 1.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 2.9999997547886572e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 17.24133825700028,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "tiny_feature",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 26.085342213778233,
+      "full_duration_s": 278.18534221377826,
+      "timing_relaxation_lower_bound_s": 12.777777777777779,
+      "duration_above_relaxation_fraction": 1.041461564556557,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.045354942026812325,
+            "soft_target_met": true,
+            "candidates_evaluated": 10,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.4079466994224322,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.39888530842743375,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.0000002060984847e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 4.35394825900039,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "circle_1_laps",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 59.42566658950927,
+      "full_duration_s": 286.7256665895093,
+      "timing_relaxation_lower_bound_s": 55.069239255458704,
+      "duration_above_relaxation_fraction": 0.07910818077296633,
+      "binding_constraint": "jerk",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.122910572949152,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.33157082871121646,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.33723339233561167,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 2.999999425833687e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 13.593243280999559,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "circle_2_laps",
+      "expected_accept": true,
+      "accepted": true,
+      "route_duration_s": 116.8061061082441,
+      "full_duration_s": 344.1061061082441,
+      "timing_relaxation_lower_bound_s": 110.13847851091741,
+      "duration_above_relaxation_fraction": 0.06053858458436712,
+      "binding_constraint": "speed",
+      "fidelity_policy": {
+        "hard_limit_m": 0.5,
+        "soft_target_fraction": 0.25,
+        "soft_target_scope": "order-aware continuous curve bound; controller interpolation is a separate hard gate",
+        "search": "bounded candidate family; minimize excess above target, then favor smoother geometry",
+        "automatic_stops_added": false,
+        "pieces": [
+          {
+            "soft_target_m": 0.125,
+            "curve_bound_m": 0.122910572949152,
+            "soft_target_met": true,
+            "candidates_evaluated": 11,
+            "fallback": "none"
+          }
+        ]
+      },
+      "checks": [
+        {
+          "detail": "Spline and piecewise-linear controller path fit the declared tolerance.",
+          "hard": true,
+          "margin": 0.33147428906806464,
+          "requirement_id": "INT-007",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Order-aware Frechet bound covers the spline and controller interpolation; required stops and lap count remain separate structure checks.",
+          "hard": true,
+          "margin": 0.33716174181921,
+          "requirement_id": "INT-008",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Every emitted position agrees with a separate Cox-basis spline evaluator; this is geometric diversity, not independent aircraft-model validation.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-004",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Trajectory is finite, ordered, endpoint-inclusive, and stationary through jerk, and its time law is a monotone clamped quintic.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "PLN-001",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "Every emitted position binds to the independently supplied geometry.",
+          "hard": true,
+          "margin": null,
+          "requirement_id": "VER-003",
+          "status": "PASS",
+          "units": null
+        },
+        {
+          "detail": "B-spline control hull stays inside launch-relative environment bounds.",
+          "hard": true,
+          "margin": 10.0,
+          "requirement_id": "ENV-001",
+          "status": "PASS",
+          "units": "m"
+        },
+        {
+          "detail": "Independent continuous derivative bounds fit the reserved vehicle limits.",
+          "hard": true,
+          "margin": 1.000000082740371e-09,
+          "requirement_id": "PLN-004",
+          "status": "PASS",
+          "units": "fraction"
+        },
+        {
+          "detail": "Selected duration satisfies minimum-feasible and requested-time semantics.",
+          "hard": true,
+          "margin": 0.0,
+          "requirement_id": "PLN-007",
+          "status": "PASS",
+          "units": "s"
+        }
+      ],
+      "note": "gap to a relaxation; not measured suboptimality against a matched path solver",
+      "compute_s": 15.329912876999515,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "oversized",
+      "expected_accept": false,
+      "accepted": false,
+      "error": "preview accepts at most 256 input points",
+      "compute_s": 0.002821806999236287,
+      "expected_outcome_matched": true
+    },
+    {
+      "name": "invalid",
+      "expected_accept": false,
+      "accepted": false,
+      "error": "mission_intent missing fields: environment_id, frame, mission_id, motion, objective_priority, path, release_class, schema_version, vehicle_model_id",
+      "compute_s": 2.3175000023911707e-05,
+      "expected_outcome_matched": true
+    }
+  ],
+  "passed": true
+}

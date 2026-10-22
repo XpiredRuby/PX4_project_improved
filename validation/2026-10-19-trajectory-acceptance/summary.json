@@ -1,0 +1,732 @@
+{
+  "date": "2026-10-19",
+  "release_class": "SITL_ONLY",
+  "scope": "Reference x500, fixed-heading trajectory planning and Gazebo simulation; manual user acceptance remains.",
+  "implementation_commit": "34cb0dc76c58217baaea16f6732f4458a7b692ff",
+  "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+  "ui_html_sha256": "bc1d67de204207a55ef46c2ec5aa7976f6e51317cf30195e27206823739daa4e",
+  "browser_check_sha256": "7e59c66cd176522d52c75f28f977ed8ac34ed80313346fa4663fd7fee19b6772",
+  "executed_windows_browser_check_sha256": "7e59c66cd176522d52c75f28f977ed8ac34ed80313346fa4663fd7fee19b6772",
+  "software_checks": {
+    "stage": "PASSED",
+    "results": [
+      {
+        "step": "ruff",
+        "exit_code": 0,
+        "elapsed_s": 0.06209271200000188
+      },
+      {
+        "step": "focused",
+        "exit_code": 0,
+        "elapsed_s": 1.4202521879999992
+      },
+      {
+        "step": "physics",
+        "exit_code": 0,
+        "elapsed_s": 1.3359639230000013
+      },
+      {
+        "step": "full",
+        "exit_code": 0,
+        "elapsed_s": 210.258690678
+      },
+      {
+        "step": "acceptance",
+        "exit_code": 0,
+        "elapsed_s": 41.85206914600002
+      },
+      {
+        "step": "final-job-concurrency",
+        "exit_code": 0,
+        "elapsed_s": 9.770576826000024
+      },
+      {
+        "step": "final-lint",
+        "exit_code": 0,
+        "elapsed_s": 0.40440429699998504
+      },
+      {
+        "step": "final-offline",
+        "exit_code": 0,
+        "elapsed_s": 45.13515847299999
+      }
+    ]
+  },
+  "regression_tests_unique": 381,
+  "offline_matrix": {
+    "release_class": "SITL_ONLY",
+    "campaign_ran": false,
+    "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+    "cases": [
+      {
+        "case": "straight",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 2.5108332799999857,
+        "samples": 332,
+        "maximum_sampled_speed_m_s": 0.8999999990999981,
+        "trajectory_sha256": "a3a7a1bd4c7aa2b267dffbd5a19f92c6d1b782674af219a2cfb1b240513cb8d0",
+        "duration_s": 16.518021005202478,
+        "limiting_constraint": "speed"
+      },
+      {
+        "case": "l-turn",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 4.528010055999971,
+        "samples": 580,
+        "maximum_sampled_speed_m_s": 0.7475448968401599,
+        "trajectory_sha256": "68a7292b5e7682a55088e7d7c053fbc28a3c8b1579176d4dff719b043d66e536",
+        "duration_s": 28.92309948248533,
+        "limiting_constraint": "jerk"
+      },
+      {
+        "case": "tight-turn",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 3.501701966999974,
+        "samples": 475,
+        "maximum_sampled_speed_m_s": 0.71771970465701,
+        "trajectory_sha256": "f74c57fccf3f5059a5df7fa7ca429b8f1ee18ca63975169bbd711f1111684754",
+        "duration_s": 23.65655097263082,
+        "limiting_constraint": "acceleration"
+      },
+      {
+        "case": "s-curve",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 4.547815166999953,
+        "samples": 604,
+        "maximum_sampled_speed_m_s": 0.8985310534477593,
+        "trajectory_sha256": "0961d5b646c37dea3879f0aa72fe25faae4a6dece034b9ca630babe40c70bac1",
+        "duration_s": 30.131385213237266,
+        "limiting_constraint": "jerk"
+      },
+      {
+        "case": "circle",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 3.965433775000008,
+        "samples": 771,
+        "maximum_sampled_speed_m_s": 0.8816686502089542,
+        "trajectory_sha256": "c9ade8412854be1ff171f45e71223c32d987b5b5c9b5cb8392a70571ed88bca4",
+        "duration_s": 38.466467572767044,
+        "limiting_constraint": "speed"
+      },
+      {
+        "case": "hard-stop",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 8.440045666000003,
+        "samples": 391,
+        "maximum_sampled_speed_m_s": 0.8988168098492737,
+        "trajectory_sha256": "86c6f6df53b6ce33bf2d54d20b0c646fc3baed86076a3f2711bfc218e72662d8",
+        "duration_s": 19.467319159206966,
+        "limiting_constraint": "speed"
+      },
+      {
+        "case": "fly-through",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 3.1775687960000027,
+        "samples": 478,
+        "maximum_sampled_speed_m_s": 0.6813200448907342,
+        "trajectory_sha256": "7fc79c3ed104717dad6916080c1cd14f609d0127b5798a10b41cc6a773df8f99",
+        "duration_s": 23.84307587532204,
+        "limiting_constraint": "speed"
+      },
+      {
+        "case": "slow-route",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 3.0453528950000077,
+        "samples": 591,
+        "maximum_sampled_speed_m_s": 0.44999999954999315,
+        "trajectory_sha256": "b883670da3e49334ffcf5bdc2826761ac1615e279eb9551e47268ef32f8d700d",
+        "duration_s": 29.476209265039387,
+        "limiting_constraint": "speed"
+      },
+      {
+        "case": "interview-circle",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 4.822562789000017,
+        "samples": 1176,
+        "maximum_sampled_speed_m_s": 0.877418828601037,
+        "trajectory_sha256": "a384721bf08424d765beb9444fef8f3b89d5315f616672b0f3a592d86e50c6d2",
+        "duration_s": 58.71604443855752,
+        "limiting_constraint": "speed"
+      },
+      {
+        "case": "survey",
+        "expected_accepted": true,
+        "accepted": true,
+        "passed": true,
+        "elapsed_s": 4.221847889999992,
+        "samples": 714,
+        "maximum_sampled_speed_m_s": 0.7969669859061445,
+        "trajectory_sha256": "b64fcb792e34d68b0390bc45541dfe452fa9420f1ba7b227d4dd2ae2a5006824",
+        "duration_s": 35.6007006304302,
+        "limiting_constraint": "acceleration"
+      },
+      {
+        "case": "refuse-deadline",
+        "expected_accepted": false,
+        "accepted": false,
+        "passed": true,
+        "elapsed_s": 1.8969677949999664,
+        "reason": "requested maximum duration is not certified by this planner; minimum feasible duration found for this candidate family is 16.518021 s; global optimality is not established"
+      },
+      {
+        "case": "refuse-overspeed",
+        "expected_accepted": false,
+        "accepted": false,
+        "passed": true,
+        "elapsed_s": 0.000846400000000358,
+        "reason": "mission speed exceeds the vehicle model envelope"
+      },
+      {
+        "case": "refuse-outside-volume",
+        "expected_accepted": false,
+        "accepted": false,
+        "passed": true,
+        "elapsed_s": 0.0008720999999809464,
+        "reason": "path.points[1] exceeds environment radius"
+      },
+      {
+        "case": "refuse-zero-length",
+        "expected_accepted": false,
+        "accepted": false,
+        "passed": true,
+        "elapsed_s": 0.00105270000000246,
+        "reason": "path has fewer than two distinct points"
+      },
+      {
+        "case": "refuse-conflicting-stop",
+        "expected_accepted": false,
+        "accepted": false,
+        "passed": true,
+        "elapsed_s": 6.369999999833453e-05,
+        "reason": "path.points[0] cannot both stop and be flown through"
+      },
+      {
+        "case": "refuse-nonfinite",
+        "expected_accepted": false,
+        "accepted": false,
+        "passed": true,
+        "elapsed_s": 8.080000003474197e-05,
+        "reason": "motion.maximum_speed_m_s must be finite"
+      }
+    ],
+    "passed": true,
+    "scope": "Offline input/geometry/timing/export acceptance; Gazebo evidence is separate."
+  },
+  "gazebo": [
+    {
+      "case": "turn-nominal",
+      "passed": true,
+      "checks_passed": 16,
+      "position_error_m": {
+        "samples": 1783,
+        "rms": 0.12170786415121913,
+        "p95": 0.2861256846687844,
+        "max_abs": 0.44572885564845777
+      },
+      "heading_error_deg": {
+        "samples": 1783,
+        "rms": 1.4345944469696843,
+        "p95": 2.3406926688899694,
+        "max_abs": 4.055985050233695
+      },
+      "route_error_m": {
+        "distance_m": {
+          "samples": 580,
+          "rms": 0.05642433133939072,
+          "p95": 0.15144853406582232,
+          "max_abs": 0.22303839931418976
+        },
+        "limit_m": 0.5,
+        "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+      },
+      "real_time_factor": {
+        "mean": 0.9998981210484966,
+        "one_second_windows": {
+          "samples": 2381,
+          "rms": 1.0001467370703938,
+          "p95": 1.0221151521405618,
+          "max_abs": 1.033488557666571
+        },
+        "windows_below_0_9": 0,
+        "windows_above_1_1": 0
+      },
+      "simulator_kinematics": {
+        "observations": {
+          "simulator_truth_speed_m_s": {
+            "samples": 580,
+            "rms": 0.5963823615757032,
+            "p95": 0.8426624877778728,
+            "max_abs": 0.9101328926085737
+          },
+          "simulator_truth_acceleration_m_s2": {
+            "samples": 580,
+            "rms": 0.25566884943476686,
+            "p95": 0.6435024644721955,
+            "max_abs": 0.7259286727855115
+          },
+          "simulator_truth_tilt_deg": {
+            "samples": 580,
+            "rms": 1.4767428586465765,
+            "p95": 3.6135841525189147,
+            "max_abs": 4.1759005857992815
+          }
+        },
+        "scope": "Gazebo ground-truth trajectory-phase samples only; no physical flight authority, between-sample guarantee or observed jerk certificate"
+      },
+      "assessment_sha256": "f757b541c342b6f7c379026e1814147356bd900aa6970ca1ab85ba37d06404e0",
+      "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+      "evidence_sha256": {
+        "batch/turn-nominal/research_log_20261019T203543402107Z.csv": "7c5e56fa194e8a49136743b6fd5a6949a85febfb1fc046f89a487a2204c1d393",
+        "runtime/log/2026-10-19/20_35_36.ulg": "d32dbb69dee93cac6466184c594b53c0af69e72232a78182c20dea177a524a78",
+        "plan/trajectory.csv": "68a7292b5e7682a55088e7d7c053fbc28a3c8b1579176d4dff719b043d66e536",
+        "batch/turn-nominal/audit.json": "45961543ce2826b2ed226a397ac316eeeec18bfd0e801f57df33dde5bec35230",
+        "final_ground.json": "d378a6498861e889f3bbf18c6abc1e9c72416e46c071d2de627286e7cbc906ce",
+        "batch/turn-nominal/run_manifest_20261019T203543402107Z.json": "4e8f2d71c1f1e6f09f0764d7d36a115ce848b2be577ad2e48a1396fcfe2fdab5",
+        "batch/turn-nominal/scenario.json": "13751921db05695ad0ae27a28f69feb9c1e7e2342446b59aaa1382501c5d96a1"
+      },
+      "assessment_implementation_sha256": {
+        "planner_rehearsal.py": "3835536148aadd3daf77c3691ac8f8267a6ce9617649acbbee5f378a1f49b427",
+        "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+        "simulation_physics.py": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a"
+      }
+    },
+    {
+      "case": "hard-stop-nominal",
+      "passed": true,
+      "checks_passed": 16,
+      "position_error_m": {
+        "samples": 1556,
+        "rms": 0.1502625696180575,
+        "p95": 0.35752013630827434,
+        "max_abs": 0.45600628768364304
+      },
+      "heading_error_deg": {
+        "samples": 1556,
+        "rms": 2.366754014913433,
+        "p95": 3.2425970619950286,
+        "max_abs": 4.494320586838571
+      },
+      "route_error_m": {
+        "distance_m": {
+          "samples": 391,
+          "rms": 0.10197968301553612,
+          "p95": 0.2878808768457778,
+          "max_abs": 0.33581253258860116
+        },
+        "limit_m": 0.5,
+        "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+      },
+      "real_time_factor": {
+        "mean": 0.999858288999701,
+        "one_second_windows": {
+          "samples": 2161,
+          "rms": 0.9998726906309144,
+          "p95": 1.0241480349635133,
+          "max_abs": 1.0341819768130982
+        },
+        "windows_below_0_9": 0,
+        "windows_above_1_1": 0
+      },
+      "simulator_kinematics": {
+        "observations": {
+          "simulator_truth_speed_m_s": {
+            "samples": 391,
+            "rms": 0.7316278418264045,
+            "p95": 1.0725353468231904,
+            "max_abs": 1.1190083258862311
+          },
+          "simulator_truth_acceleration_m_s2": {
+            "samples": 391,
+            "rms": 0.41207309041822865,
+            "p95": 0.8645138505177423,
+            "max_abs": 0.9646958037555071
+          },
+          "simulator_truth_tilt_deg": {
+            "samples": 391,
+            "rms": 2.3220148337203357,
+            "p95": 4.870575162327898,
+            "max_abs": 5.233396830149075
+          }
+        },
+        "scope": "Gazebo ground-truth trajectory-phase samples only; no physical flight authority, between-sample guarantee or observed jerk certificate"
+      },
+      "assessment_sha256": "0d2793876535fede5bbecbc3d09f7846921be87ce189ad9e39ce01b9902217ca",
+      "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+      "evidence_sha256": {
+        "batch/hard-stop-nominal/research_log_20261019T203828570173Z.csv": "7f7e48da86c27cba4f18cd2d03e57474fa72837986175cd50cdb1387854a3477",
+        "runtime/log/2026-10-19/20_38_21.ulg": "fec7b18921be3fcedff66df5645a3de08b8931d7e2b49d1d922f557f9d8dd179",
+        "plan/trajectory.csv": "86c6f6df53b6ce33bf2d54d20b0c646fc3baed86076a3f2711bfc218e72662d8",
+        "batch/hard-stop-nominal/audit.json": "0174f5c4d5ecf5696d0148af7de99827acc6eb86a2a3e73e9cd71daeb96f36b3",
+        "final_ground.json": "c1391ae69705d0386f47bdfaf001976fcc7b71d18e488caae3740d578b176f17",
+        "batch/hard-stop-nominal/run_manifest_20261019T203828570173Z.json": "09b6467ae7560468128ba0408923113e629a3c20cafc433c53c9ab40fd996bf8",
+        "batch/hard-stop-nominal/scenario.json": "0d59702167b6ff74a0bccc27a66984c9f018654753ce54f6daa982243fed6dc9"
+      },
+      "assessment_implementation_sha256": {
+        "planner_rehearsal.py": "3835536148aadd3daf77c3691ac8f8267a6ce9617649acbbee5f378a1f49b427",
+        "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+        "simulation_physics.py": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a"
+      }
+    },
+    {
+      "case": "circle-nominal",
+      "passed": true,
+      "checks_passed": 16,
+      "position_error_m": {
+        "samples": 2139,
+        "rms": 0.11387397285456682,
+        "p95": 0.14748304159520026,
+        "max_abs": 0.355601659417007
+      },
+      "heading_error_deg": {
+        "samples": 2139,
+        "rms": 1.8734814059327838,
+        "p95": 2.7110339552591975,
+        "max_abs": 3.856694259492354
+      },
+      "route_error_m": {
+        "distance_m": {
+          "samples": 1176,
+          "rms": 0.12351868624202929,
+          "p95": 0.20788148032888035,
+          "max_abs": 0.24916951616232588
+        },
+        "limit_m": 0.5,
+        "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+      },
+      "real_time_factor": {
+        "mean": 1.0000607793844984,
+        "one_second_windows": {
+          "samples": 2740,
+          "rms": 0.99987788017963,
+          "p95": 1.02150345461588,
+          "max_abs": 1.0338606341327718
+        },
+        "windows_below_0_9": 0,
+        "windows_above_1_1": 0
+      },
+      "simulator_kinematics": {
+        "observations": {
+          "simulator_truth_speed_m_s": {
+            "samples": 1176,
+            "rms": 0.8592081050338238,
+            "p95": 0.9209265645645126,
+            "max_abs": 1.0151612921006967
+          },
+          "simulator_truth_acceleration_m_s2": {
+            "samples": 1176,
+            "rms": 0.17463236137780705,
+            "p95": 0.313515779622013,
+            "max_abs": 0.7503554810829624
+          },
+          "simulator_truth_tilt_deg": {
+            "samples": 1176,
+            "rms": 1.1458267943769402,
+            "p95": 2.0455843813671097,
+            "max_abs": 4.185755930712205
+          }
+        },
+        "scope": "Gazebo ground-truth trajectory-phase samples only; no physical flight authority, between-sample guarantee or observed jerk certificate"
+      },
+      "assessment_sha256": "0cde2934166166678da782b22e094b94ef15f8fdb90e2c0e1ade81c89d1afa85",
+      "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+      "evidence_sha256": {
+        "batch/circle-nominal/research_log_20261019T204100056359Z.csv": "93ab7e1170deab949f5ac5a72a10273dbd17a22bcc97c5526916c59d98e7c508",
+        "runtime/log/2026-10-19/20_40_53.ulg": "7b2670b8f3b058a47708923156917eef88ba73b43ac23d63aae18d0852df961a",
+        "plan/trajectory.csv": "a384721bf08424d765beb9444fef8f3b89d5315f616672b0f3a592d86e50c6d2",
+        "batch/circle-nominal/audit.json": "94abf539d4a6e64e22042c512212355abf9b3c53a9ef07ae3795a6dc7911e650",
+        "final_ground.json": "c44ffe936fc5dbcb5429d69663235bc54ea9d34791d77df0965d05bf9152863f",
+        "batch/circle-nominal/run_manifest_20261019T204100056359Z.json": "25bccdaf080fde3552eec6c043952c9060453e0795c24cb7d1f8c0de62a50ae2",
+        "batch/circle-nominal/scenario.json": "dd4c1137186e833866f0cc6b9cbee403644f0467905a669c58661e34eb9921a3"
+      },
+      "assessment_implementation_sha256": {
+        "planner_rehearsal.py": "3835536148aadd3daf77c3691ac8f8267a6ce9617649acbbee5f378a1f49b427",
+        "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+        "simulation_physics.py": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a"
+      }
+    },
+    {
+      "case": "drawn-nominal",
+      "passed": true,
+      "checks_passed": 16,
+      "position_error_m": {
+        "samples": 2171,
+        "rms": 0.12967132948960416,
+        "p95": 0.2865092627202762,
+        "max_abs": 0.37999161077397525
+      },
+      "heading_error_deg": {
+        "samples": 2171,
+        "rms": 1.4098904950167719,
+        "p95": 2.0434298590548714,
+        "max_abs": 3.294363668183407
+      },
+      "route_error_m": {
+        "distance_m": {
+          "samples": 796,
+          "rms": 0.0752777676941312,
+          "p95": 0.20735858738537555,
+          "max_abs": 0.24611898905102425
+        },
+        "limit_m": 0.5,
+        "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+      },
+      "real_time_factor": {
+        "mean": 0.999929761242588,
+        "one_second_windows": {
+          "samples": 2781,
+          "rms": 1.0002029866818225,
+          "p95": 1.0212153821869028,
+          "max_abs": 1.0335203904658026
+        },
+        "windows_below_0_9": 0,
+        "windows_above_1_1": 0
+      },
+      "simulator_kinematics": {
+        "observations": {
+          "simulator_truth_speed_m_s": {
+            "samples": 796,
+            "rms": 0.6324264992125928,
+            "p95": 0.9345553148284311,
+            "max_abs": 0.9762181360464943
+          },
+          "simulator_truth_acceleration_m_s2": {
+            "samples": 796,
+            "rms": 0.25545187801272534,
+            "p95": 0.6197570280152069,
+            "max_abs": 0.7420320963216739
+          },
+          "simulator_truth_tilt_deg": {
+            "samples": 796,
+            "rms": 1.4848859885268777,
+            "p95": 3.470071958783891,
+            "max_abs": 4.15886834939117
+          }
+        },
+        "scope": "Gazebo ground-truth trajectory-phase samples only; no physical flight authority, between-sample guarantee or observed jerk certificate"
+      },
+      "assessment_sha256": "9a3681dbafacdc50a9f9e546fed1b6b41b73d8d90eac71b2cf6147d2d6ffa62e",
+      "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+      "evidence_sha256": {
+        "batch/drawn-nominal/research_log_20261019T204359467069Z.csv": "36c865ff67fd9779409ae1fb0c6e14f35da2e6cbf792517e92d09258e7dbcf90",
+        "runtime/log/2026-10-19/20_43_52.ulg": "7ad49a1b9b1add510d0a578c405e81293e241765cc3aab77e953419dafd38c53",
+        "plan/trajectory.csv": "24e41e1fa2cce34251e5b33aae1eac16a7b31d9f49c20c3143853dbdb10e3eb1",
+        "batch/drawn-nominal/audit.json": "9d94506098206aa00835a29e8faf6dd1ec3f90aefc1858060217c2341dd57ff7",
+        "final_ground.json": "21aa5587b8b653003e141fecf954964977cfa0358445daec4439f38b847fe2bf",
+        "batch/drawn-nominal/run_manifest_20261019T204359467069Z.json": "d085bf2e55a8d530f0e6563484ec996544a68873091085d9f5dd4db2f6dd54bf",
+        "batch/drawn-nominal/scenario.json": "7aa14975ec843b022ba88920233865764b56f320bcccc758471f82431a696232"
+      },
+      "assessment_implementation_sha256": {
+        "planner_rehearsal.py": "3835536148aadd3daf77c3691ac8f8267a6ce9617649acbbee5f378a1f49b427",
+        "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+        "simulation_physics.py": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a"
+      }
+    },
+    {
+      "case": "survey-nominal",
+      "passed": true,
+      "checks_passed": 16,
+      "position_error_m": {
+        "samples": 1781,
+        "rms": 0.14862666903923247,
+        "p95": 0.3474548587784011,
+        "max_abs": 0.5270365114725759
+      },
+      "heading_error_deg": {
+        "samples": 1781,
+        "rms": 1.6317883694841926,
+        "p95": 2.532927765609309,
+        "max_abs": 3.292609248131467
+      },
+      "route_error_m": {
+        "distance_m": {
+          "samples": 714,
+          "rms": 0.08290887620767878,
+          "p95": 0.20474461545964737,
+          "max_abs": 0.2496852971108613
+        },
+        "limit_m": 0.5,
+        "scope": "point-to-polyline distance; ordering relies on separate mission-clock tracking checks, not a continuous Frechet certificate"
+      },
+      "real_time_factor": {
+        "mean": 1.000053745563221,
+        "one_second_windows": {
+          "samples": 2380,
+          "rms": 1.0000439228914644,
+          "p95": 1.0226531557981289,
+          "max_abs": 1.0348007130084245
+        },
+        "windows_below_0_9": 0,
+        "windows_above_1_1": 0
+      },
+      "simulator_kinematics": {
+        "observations": {
+          "simulator_truth_speed_m_s": {
+            "samples": 714,
+            "rms": 0.6062514063693818,
+            "p95": 0.8746566059071801,
+            "max_abs": 0.9324663631015926
+          },
+          "simulator_truth_acceleration_m_s2": {
+            "samples": 714,
+            "rms": 0.24413940005692736,
+            "p95": 0.6038413933122244,
+            "max_abs": 0.7064976823670414
+          },
+          "simulator_truth_tilt_deg": {
+            "samples": 714,
+            "rms": 1.4377714139608764,
+            "p95": 3.5134154618787052,
+            "max_abs": 4.065556168789948
+          }
+        },
+        "scope": "Gazebo ground-truth trajectory-phase samples only; no physical flight authority, between-sample guarantee or observed jerk certificate"
+      },
+      "assessment_sha256": "e030b39a7ae5e7d40fe9cc086b199c81b6f489077d58290d76c6eb438025857b",
+      "source_digest_sha256": "fa48bec24a9debab7d34ca93fc66b71344f9e3f6f857abcdd3fbb8f87eee6b19",
+      "evidence_sha256": {
+        "batch/survey-nominal/research_log_20261019T204701978851Z.csv": "45f7f7d6b6b27617528f35ece8e95e7f99672c6cb02f286a21e66b91fa818ba4",
+        "runtime/log/2026-10-19/20_46_55.ulg": "5f0a7d0e6618b2937ddf748058bc29788d20e2748f54a55664ef2db61891df2a",
+        "plan/trajectory.csv": "b64fcb792e34d68b0390bc45541dfe452fa9420f1ba7b227d4dd2ae2a5006824",
+        "batch/survey-nominal/audit.json": "3888e1f419540c9f4523fbff5357df46ca804f7accb7077ef61ef6ac2682004c",
+        "final_ground.json": "2cba678e6f6a4d1d4bd97d11b86ac4119596e95728e905ff19afe3601761b8ca",
+        "batch/survey-nominal/run_manifest_20261019T204701978851Z.json": "63ef7705f85247747c2e72b2b97b4a0c3afb5c5a57be05a7f29fee93a717e6c8",
+        "batch/survey-nominal/scenario.json": "614985531da302d69dd227e24d1c1d81a07edd9617b80d7333dfcdc6471a6662"
+      },
+      "assessment_implementation_sha256": {
+        "planner_rehearsal.py": "3835536148aadd3daf77c3691ac8f8267a6ce9617649acbbee5f378a1f49b427",
+        "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+        "simulation_physics.py": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a"
+      }
+    }
+  ],
+  "hard_stop_quality": {
+    "passed": true,
+    "release_class": "SITL_ONLY",
+    "stops": [
+      {
+        "point_id": "p1",
+        "planned_stop_s": 9.733659579603485,
+        "passed": true,
+        "clock_mismatch_s": 0.01572712139656396,
+        "position_error_m": 0.31048767429298774,
+        "actual_speed_m_s": 0.04447927524087495
+      }
+    ],
+    "thresholds": {
+      "position_m": 0.5,
+      "speed_m_s": 0.2,
+      "clock_s": 0.1
+    },
+    "scope": "sampled near-rest at interior hard points, not continuous stopping proof",
+    "implementation_sha256": "b02ef049014771658d1b9151e3e696fdcece51901f0cc8df62cc8fe848c945cb",
+    "evidence_sha256": {
+      "plan/trajectory.csv": "86c6f6df53b6ce33bf2d54d20b0c646fc3baed86076a3f2711bfc218e72662d8",
+      "plan/intent.json": "d9fd13a36770e121bdf49660ef7586c8b09db4d2833beb49b6e553c26baadcf6",
+      "assessment.json": "0d2793876535fede5bbecbc3d09f7846921be87ce189ad9e39ce01b9902217ca",
+      "batch/hard-stop-nominal/research_log_20261019T203828570173Z.csv": "7f7e48da86c27cba4f18cd2d03e57474fa72837986175cd50cdb1387854a3477",
+      "runtime/log/2026-10-19/20_38_21.ulg": "fec7b18921be3fcedff66df5645a3de08b8931d7e2b49d1d922f557f9d8dd179"
+    }
+  },
+  "browser": [
+    {
+      "case": "nominal",
+      "passed": true,
+      "checks": [
+        {
+          "case": "freehand_drawing_and_impossible_deadline_refusal",
+          "passed": true
+        },
+        {
+          "case": "exact_review_gate_and_modified_hash_refusal",
+          "passed": true,
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        {
+          "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
+          "passed": true
+        },
+        {
+          "case": "real_browser_to_gazebo_and_truth_overlay_and_download",
+          "passed": true,
+          "duration_s": 25.167786000580893
+        },
+        {
+          "case": "connected_desktop_and_mobile_layout",
+          "passed": true
+        }
+      ],
+      "final_stage": "COMPLETED",
+      "cancel_confirmed": null,
+      "final_job_sha256": "5da4acd0775e6c35588820aa42afc88f7131db866d7e832dbe5b0885b8c8f18f",
+      "html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af"
+    },
+    {
+      "case": "cancel",
+      "passed": true,
+      "checks": [
+        {
+          "case": "freehand_drawing_and_impossible_deadline_refusal",
+          "passed": true
+        },
+        {
+          "case": "exact_review_gate_and_modified_hash_refusal",
+          "passed": true,
+          "trajectory_sha256": "59c385dc1fd42603319baad5927c12318359b33696ed9d05bb1e4e06de59b334"
+        },
+        {
+          "case": "edit_does_not_cancel_or_rebind_job_and_refresh_resumes",
+          "passed": true
+        },
+        {
+          "case": "browser_cancel_during_route_and_native_shutdown",
+          "passed": true
+        }
+      ],
+      "final_stage": "CANCELLED",
+      "cancel_confirmed": true,
+      "final_job_sha256": "0272baae763a09646b816a08f1e5709d6c90ce026769567131a5cdb0ffb84503",
+      "html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af"
+    }
+  ],
+  "raw_evidence": {
+    "linux": "/home/xpire/PX4-runs/readiness-acceptance-oct19",
+    "windows": "F:\\PX4\\readiness-browser-oct19"
+  },
+  "limitations": [
+    "Named tested cases do not cover every possible drawing or disturbance.",
+    "Connected rehearsal requires fixed heading; other heading policies retain offline scope.",
+    "Actual speed/tilt and stop quality are sampled checks; no continuous actual jerk/rotor certificate.",
+    "Known-clear simulator environment; no unexpected-obstacle sensing or online replanning."
+  ],
+  "full_browser_workflow_html_sha256": "f4197f8f6dd547474ff473011189e33d8f832cc1125e8438077b87e2587829af",
+  "final_ui_recovery": {
+    "stage": "PASSED",
+    "checks": [
+      "unavailable_saved_rehearsal_clears_monitoring_state",
+      "reference_model_visible_without_questionnaire",
+      "new_plan_and_exact_confirmation_available_after_recovery"
+    ],
+    "page_errors": [],
+    "html_sha256": "bc1d67de204207a55ef46c2ec5aa7976f6e51317cf30195e27206823739daa4e",
+    "simulation_started": false,
+    "implementation_sha256": "678c43af22c8e6f7333f8e2f80cfbc616907e428f0fec7f2b999482de2c1aacf"
+  }
+}
