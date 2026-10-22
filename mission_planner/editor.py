@@ -23,7 +23,7 @@ from .explain import PlanningError
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MAX_REQUEST_BYTES = 65_536
+MAX_REQUEST_BYTES = 2 * 1024 * 1024
 WORKER_TIMEOUT_S = 120
 PREVIEW_SLOT = threading.BoundedSemaphore(1)
 
@@ -66,7 +66,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
                         "text/javascript; charset=utf-8")
         elif self.path == "/api/editor-settings":
             environment = load_contract(ROOT / "config/planner/empty_world_environment.json", dict)
-            self._json(200, {"max_input_points": MAX_INPUT_POINTS,
+            self._json(200, {"max_input_points": MAX_INPUT_POINTS, "max_drawing_points": 8192,
                              "max_radius_m": environment["max_radius_m"],
                              "max_height_m": environment["max_height_above_launch_m"],
                              "connected_heading_modes": ["fixed"]})
@@ -99,7 +99,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", "0"))
             if not 0 < length <= MAX_REQUEST_BYTES:
-                raise ValueError("request must contain 1–65536 bytes")
+                raise ValueError(f"request must contain 1–{MAX_REQUEST_BYTES} bytes")
             if self.headers.get_content_type() != "application/json":
                 raise ValueError("application/json required")
             self.connection.settimeout(10)

@@ -152,7 +152,7 @@ class HTTPBoundaryTests(unittest.TestCase):
     def test_invalid_content_and_oversize_requests_fail_before_worker(self):
         for body, headers in (
             ("{}", {"Content-Type": "text/plain"}),
-            ("x" * 65537, {"Content-Type": "application/json"}),
+            ("{}", {"Content-Type": "application/json", "Content-Length": str(2*1024*1024+1)}),
         ):
             with self.subTest(headers=headers), patch("mission_planner.editor.subprocess.run") as worker:
                 status, _ = self.request("POST", "/api/preview", body, headers)

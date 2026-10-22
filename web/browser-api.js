@@ -27,14 +27,14 @@
     if(url.origin!==location.origin||!url.pathname.startsWith('/api/'))return originalFetch(input,options);
     const path=url.pathname;
     if(path==='/api/capabilities')return json({sitl_enabled:false,hardware_enabled:false,execution_location:'browser'});
-    if(path==='/api/editor-settings')return json({max_input_points:256,max_radius_m:40,max_height_m:30,connected_heading_modes:[]});
+    if(path==='/api/editor-settings')return json({max_input_points:8192,max_radius_m:40,max_height_m:30,connected_heading_modes:[]});
     if(path==='/api/aircraft/binding')return json({profile:null});
     if(path==='/api/aircraft/catalog')return originalFetch('/aircraft-catalog.json');
     if(/^\/api\/aircraft\/example\/(quad|hex|octo|x500)$/.test(path))return originalFetch('/python/config/planner/aircraft/'+path.split('/').pop()+'.json');
     if(path.startsWith('/api/rehearsal'))return json({error:'Cloud Gazebo is not connected. No simulation has started.'},404);
     const operation={'/api/preview':'preview','/api/aircraft/assess':'assess','/api/aircraft/parameters':'parameters'}[path];
     if(!operation)return json({error:'Unknown request'},404);
-    if(typeof options.body!=='string'||new TextEncoder().encode(options.body).length>65536)return json({error:'The drawing is too large. Use fewer points.'},400);
+    if(typeof options.body!=='string'||new TextEncoder().encode(options.body).length>2*1024*1024)return json({error:'The request could not be read. Your drawing is still saved.'},400);
     try{const result=await run(operation,JSON.parse(options.body));return json(result,result.error?400:200);}
     catch(error){return json({accepted:false,error:error.message},503);}
   };

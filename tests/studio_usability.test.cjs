@@ -27,7 +27,7 @@ test('corrupt and incompatible drafts cannot overwrite the route',()=>{
   assert.throws(()=>ui.decode(JSON.stringify(value),draft));assert.deepEqual(draft.snapshot(),before);
  }
  assert.throws(()=>ui.decode('{',new RouteDraft()));
- assert.throws(()=>ui.decode(' '.repeat(32769),new RouteDraft()));
+ assert.throws(()=>ui.decode(' '.repeat(2*1024*1024+1),new RouteDraft()));
 });
 test('saved certificates and simulator state are never restored',()=>{
  const value=valid();value.accepted=true;value.plan_id='old';value.route.past=['unsafe'];

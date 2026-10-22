@@ -27,5 +27,11 @@ test('timeout destroys computation and permits a fresh retry',async()=>{
 });
 test('unknown and oversized requests cannot reach a worker or server',async()=>{
  const s=setup();assert.equal((await s.window.fetch('/api/arm')).status,404);
- assert.equal((await s.window.fetch('/api/preview',{body:' '.repeat(65537)})).status,400);assert.equal(s.workers.length,0);assert.equal(s.requests.length,0);
+ assert.equal((await s.window.fetch('/api/preview',{body:' '.repeat(2*1024*1024+1)})).status,400);assert.equal(s.workers.length,0);assert.equal(s.requests.length,0);
+});
+test('dense handwriting payload reaches the worker instead of the old 64 KiB limit',async()=>{
+ const s=setup(),body=JSON.stringify({source:'drawing',planning_mode:'closest',document:{samples:'x'.repeat(100000)}});
+ const result=s.window.fetch('/api/preview',{body});assert.equal(s.workers.length,1);
+ const worker=s.workers[0];worker.onmessage({data:{id:worker.request.id,result:{accepted:true}}});
+ assert.equal((await result).status,200);assert.equal(s.requests.length,0);
 });

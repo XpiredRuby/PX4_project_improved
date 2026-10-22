@@ -12,19 +12,39 @@ The original request and effective intent stay separate in the JSON report. The 
 
 ## Validation completed
 
-- 15 closest-preview tests passed: actual reversal and impossible-deadline compilation; exact corners; duplicate-point hover; envelope projection; launch legs; non-positive preferences; two laps; tiny circles; resource-scale refinement; declared energy/uncertainty; invalid data; strict-mode behavior; and compatibility refusal.
+- 16 closest-preview tests passed (including the persisted-plan startup guard): actual reversal and impossible-deadline compilation; exact corners; duplicate-point hover; envelope projection; launch legs; non-positive preferences; two laps; tiny circles; resource-scale refinement; declared energy/uncertainty; invalid data; strict-mode behavior; and compatibility refusal.
 - 11 existing editor/API tests and five existing lifecycle tests passed.
 - All 26 JavaScript tests passed, including preservation of the original shadow and rejection of an uncertified adjustment bound.
-- A generated-page jsdom integration check passed using real reversal and projected-route responses. It checked closest-mode requests, adjustment summaries, original shadow, warning when the requested allowance is exceeded, finite canvas coordinates, draft recovery and stale-result invalidation. Canvas and transport were mocked; no real-browser visual or browser-Pyodide run is claimed.
+- A generated-page jsdom integration check passed using real reversal and projected-route responses. It checked closest-mode requests, adjustment summaries, original shadow, warning when the requested allowance is exceeded, finite canvas coordinates, draft recovery and stale-result invalidation. Canvas and transport were mocked in that integration check. The subsequent recovery validation below also exercised the real browser and Pyodide worker.
 - The portable build includes 28 planner/configuration files. Public HTTPS delivery and every manifest hash passed.
+
+## Recovery validation — 20 October 2026
+
+The current source from GitHub commit `23b79618fb9579070a03aeacfd98baa940b85308` was restored into the permanent Site checkout. The portable build was rebuilt successfully with 28 planner/configuration files, including the closest-feasible planner and simplified interface.
+
+All 58 selected regression tests passed in the managed environment: 16 closest-preview, 11 editor/API, five lifecycle, and 26 JavaScript tests. The persisted-plan startup guard is now exercised by a passing regression. The complete native simulator/runner campaign was not run.
+
+Actual Chrome browser validation used the compiled static app with its real Pyodide/NumPy worker, without mocked transport or canvas. An L-shaped example completed successfully. An ordered reversal `(0,0) → (0,3) → (0,0)` completed through the stop-and-turn fallback, displayed the changes and original/plan overlay, and offered working CSV and JSON downloads. Downloaded artifacts and a browser screenshot are in `validation/2026-10-20-recovery/`.
+
+The downloaded reversal report and CSV were cross-checked: acceptance passed; all continuous phase checks passed; the CSV hash matched the report; 5,144 samples had strictly increasing timestamps; both endpoints were stationary at the origin with ground height zero; maximum height was 20 m; yaw range was π radians; full mission duration was 257.15 s.
+
+The temporary laptop/tunnel link is superseded by the permanent Site:
+https://trajectory-studio.dainty-bell-1590.chatgpt.site
+
+This browser-only planner does not require the PX4 laptop or tunnel. The first run downloads the Python runtime and may take noticeably longer; planning requires network access for those runtime dependencies. These checks validate planning and downloadable mission data, not executed flight tracking.
 
 ## Execution scope and remaining checks
 
-Constructive plans have a different certificate from the existing spline runner. They remain offline previews/downloads; Gazebo playback has not been connected or qualified. A persisted-plan guard also refuses stop/turn startup before issuing an acknowledgement. That final startup guard and its additional regression were prepared after the last successful test run and could not be re-run locally because the F: project drive began rejecting writes. The broader native runner suite also did not complete because of local dependency/WSL errors. No Gazebo or physical-aircraft run is claimed.
+Constructive plans have a different certificate from the existing spline runner. They remain offline previews/downloads; Gazebo playback has not been connected or qualified. A persisted-plan guard refuses stop/turn startup before issuing an acknowledgement. No Gazebo or physical-aircraft run is claimed.
 
-The tested browser bundle was rebuilt and checked before the drive lost write access. Source on the review branch additionally contains the final native startup guard. Permanent Site publication remains blocked by the unavailable managed source-helper environment; the existing permanent Site is unchanged.
+Manual checks: draw a reversal or tiny zigzag; use a very short route deadline; set rounding to zero; enter an out-of-bounds point. Confirm a feasible adjusted plan is shown with amber/blue comparison, disclosed changes, changing yaw when turns are required, and ground-zero endpoints in the full mission CSV.
 
-Temporary test URL (requires the laptop and tunnel to remain online):
-https://wellington-offerings-thu-brick.trycloudflare.com/?v=closest
+## Handwriting and scribble repair
 
-Manual checks: draw a reversal or tiny zigzag; use a very short route deadline; set rounding to zero; enter an out-of-bounds point. Confirm a feasible adjusted plan is shown with amber/blue comparison, disclosed changes, changing yaw when turns are required, and ground-zero endpoints in the full mission CSV. Refresh before testing to load the new browser worker.
+Freehand capture now accepts separate strokes anywhere on the map and connects them in drawing order, with an explanatory hint. The UI no longer treats raw mouse events as a 256-waypoint flight contract. It retains up to 8,192 samples for comparison and automatically thins exceptionally long gestures in order, with a visible notice. Undo/redo retains complete strokes. Single-point drawings can produce a hover reference. Loop annotations are accepted in best-effort capture.
+
+Closest planning parses the full drawing contract (up to its existing 10,000-point schema limit), then selects significant bends within a 48-vertex working budget for dense drawings. Explicit marked points are retained when they fit that budget. The original request stays separate. A conservative continuous monotone arc-length coupling bounds changes even when the two polylines have different vertex counts. This replaces the old refusal at 256 raw input points. Complex sketches use the checked stop/turn construction directly. The existing time, heading and scale fallback remains available. Shape simplification and changes beyond the requested allowance are disclosed. A global closest-trajectory optimum is not claimed.
+
+Browser and local transport/draft recovery limits accommodate the captured samples. The studio includes Examples → Vin, using 481 samples; the actual Chrome/Pyodide run produced a verified 12-vertex route with its shadow retained, a changing heading and stationary ground-zero endpoints. CSV hash, clocks and full mission endpoints were cross-checked against the downloaded JSON report. Metrics and screenshot are in `validation/handwriting/`.
+
+Validation for this change: 19 closest-preview tests, 29 JavaScript tests and 11 editor/API tests passed (59 total). Cases include dense Vin handwriting, self-crossing out-of-area scribbles, continuous order-aware repair bounds, disconnected-letter capture, 10,000-event capture, undo/redo, and larger worker payloads. The browser example and JSON/CSV downloads also passed. Malformed data, missing physical model evidence, runtime/network failures and genuinely impossible model limits still produce truthful errors; no invalid plan is relabeled as verified.

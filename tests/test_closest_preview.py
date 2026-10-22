@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from mission_planner.closest import closest_preview
+from mission_planner.closest import closest_preview, _repair_bound, _simplify_sketch
 from mission_planner.lifecycle_verification import verify_phase
 from mission_planner.preview import preview
 from mission_planner.studio_jobs import StudioJobs
@@ -38,6 +38,40 @@ def rows(result):
 
 
 class ClosestPreviewTests(unittest.TestCase):
+    def test_dense_vin_handwriting_keeps_original_shadow_and_produces_checked_mission(self):
+        corners = [(0,0),(8,0),(0,3),(8,6),(1,8),(7,8),(8,8),(1,8),
+                   (1,11),(7,11),(7,14),(1,14)]
+        dense = [corners[0]]
+        for a,b in zip(corners,corners[1:]):
+            dense.extend((a[0]+(b[0]-a[0])*i/80,a[1]+(b[1]-a[1])*i/80) for i in range(1,81))
+        request = drawing(dense)
+        result = preview(dict(request,planning_mode="closest"))
+        self.assertTrue(result["accepted"])
+        self.assertEqual(len(result["requested_intent"]["path"]["points"]),len(dense))
+        self.assertLessEqual(len(result["intent"]["path"]["points"]),48)
+        self.assertIn("sketch_simplification",[c["code"] for c in result["planning_adjustments"]["adjustments"]])
+        self.assertTrue(all(result["verification"]["continuous_phase_checks"].values()))
+        self.assertLess(result["planning_adjustments"]["curve_error_bound_from_requested_m"],.5)
+        full=list(csv.DictReader(io.StringIO(result["mission"]["trajectory_csv"])))
+        self.assertEqual(float(full[0]["z"]),0.)
+        self.assertEqual(float(full[-1]["z"]),0.)
+
+    def test_scribble_oversized_input_repairs_instead_of_256_point_refusal(self):
+        points=[(0,0)]+[(60*math.sin(i*.73),70*math.sin(i*1.07)) for i in range(1,401)]
+        result=preview(dict(drawing(points),planning_mode="closest"))
+        self.assertTrue(result["accepted"])
+        self.assertEqual(len(result["requested_intent"]["path"]["points"]),401)
+        self.assertTrue(all(math.hypot(p["north_m"],p["east_m"])<=40. for p in result["intent"]["path"]["points"]))
+        self.assertFalse(result["planning_adjustments"]["original_rounding_met"])
+        self.assertGreater(result["planning_adjustments"]["curve_error_bound_from_requested_m"],.5)
+
+    def test_continuous_repair_bound_detects_order_and_simplified_away_loop(self):
+        original=drawing([(0,0),(0,5),(5,5),(0,5),(0,0)])["document"]
+        simple=_simplify_sketch(original,2)
+        self.assertGreaterEqual(_repair_bound(original,simple),math.sqrt(50))
+        same=drawing([(0,0),(0,1),(0,2),(0,3)])["document"]
+        self.assertLess(_repair_bound(same,_simplify_sketch(same,2)),1e-9)
+
     def test_real_reversal_falls_back_with_continuous_turns_and_ground_endpoints(self):
         request=drawing([(0,0),(0,3),(0,0)])
         result=preview(dict(request,planning_mode="closest"))

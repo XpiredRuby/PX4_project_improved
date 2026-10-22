@@ -63,3 +63,32 @@ test('duplicate clicks and invalid coordinates do not mutate history', () => {
   const d = new RouteDraft();assert.equal(d.add([0,0]),false);
   assert.throws(()=>d.add([NaN,1]),/valid numbers/);assert.equal(d.past.length,0);
 });
+
+test('best-effort handwriting connects separate letters and retains a dense stroke', () => {
+  const d = new RouteDraft({bestEffort:true,maxPoints:8192,radius:Infinity});
+  for (const [id,shape] of [
+    [1,[[0,8],[2,0],[4,8]]],
+    [2,[[6,8],[6,1]]],
+    [3,[[8,1],[8,5],[10,5],[10,1]]]
+  ]) {
+    d.begin(shape[0],id,.1);
+    for (const p of shape.slice(1)) d.move(p,id);
+    d.finish(shape.at(-1),id);
+    assert.equal(d.pending,null);
+  }
+  assert.ok(d.points.length>8);assert.deepEqual(d.points.at(-1),[10,1]);
+  const before=d.points.length;
+  d.begin([10,1],4,.1);
+  for(let i=1;i<=1200;i++)d.move([10+i/100,1+Math.sin(i/30)],4);
+  d.finish([23,2],4);
+  assert.ok(d.points.length>before+1000);assert.equal(d.pending,null);
+  d.undo();assert.equal(d.points.length,before);d.redo();assert.deepEqual(d.points.at(-1),[23,2]);
+});
+test('best-effort capture stays bounded without throwing away a long gesture', () => {
+  const d = new RouteDraft({bestEffort:true,maxPoints:64,radius:Infinity});
+  d.begin([0,0],1,.1);
+  for(let i=1;i<=10000;i++)d.move([i/100,Math.sin(i/20)],1);
+  d.finish([100,0],1);
+  assert.ok(d.points.length<=64);assert.deepEqual(d.points.at(-1),[100,0]);
+  assert.match(d.samplingNotice,/thinned in order/);
+});

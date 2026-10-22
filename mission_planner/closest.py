@@ -27,6 +27,7 @@ from .plan_interview import intent_from_interview
 ROOT = Path(__file__).resolve().parents[1]
 MAX_ROUTE_ROWS = 20_000
 MAX_CSV_BYTES = 12 * 1024 * 1024
+MAX_SKETCH_VERTICES = 48
 
 
 class PreviewBudgetError(ValueError):
@@ -182,8 +183,6 @@ def _prepare(payload, vehicle, environment, changes):
     if source == "interview" and height != bounded:
         for p in requested["path"]["points"]:
             p["down_m"] = -height
-    if len(requested["path"]["points"]) > 256:
-        raise ValueError("Use at most 256 input points per browser plan.")
     intent = deepcopy(requested)
     intent["path"]["maximum_deviation_m"] = conversion_deviation
     if source == "interview" and payload["document"].get("pattern") == "circle" and not any(k in payload["document"] for k in ("entry","exit")):
@@ -222,10 +221,86 @@ def _repair_bound(original, effective):
     else:
         prefix = 0.
     if len(new) != len(old):
-        raise ValueError("Missing monotone correspondence for route repair")
+        # Walk both polylines monotonically by normalized arc length. Between
+        # the union of their vertex parameters, both curves are affine, so the
+        # convex norm reaches its maximum at one of these breakpoints. This is
+        # a conservative continuous, order-aware coupling, not nearest-point
+        # sampling (which can miss a reordered self-crossing).
+        def parameterize(points):
+            poses = [[p[k] for k in ("north_m", "east_m", "down_m")] for p in points]
+            lengths = [0.]
+            for a, b in zip(poses, poses[1:]):
+                lengths.append(lengths[-1] + math.dist(a, b))
+            total = lengths[-1]
+            return poses, [v / total if total else i / (len(poses)-1)
+                           for i, v in enumerate(lengths)]
+        a, ta = parameterize(old)
+        b, tb = parameterize(new)
+        def at(poses, times, t, cursor):
+            while cursor < len(times)-2 and times[cursor+1] <= t:
+                cursor += 1
+            span = times[cursor+1] - times[cursor]
+            u = (t-times[cursor])/span if span else 0.
+            return [x + u*(y-x) for x, y in zip(poses[cursor], poses[cursor+1])], cursor
+        bound, ia, ib = prefix, 0, 0
+        for t in sorted(set(ta + tb)):
+            pa, ia = at(a, ta, t, ia)
+            pb, ib = at(b, tb, t, ib)
+            bound = max(bound, math.dist(pa, pb))
+        return bound
     return max(prefix, *(math.dist([p[k] for k in ("north_m","east_m","down_m")],
                                   [q[k] for k in ("north_m","east_m","down_m")])
                          for p, q in zip(old, new)))
+
+
+def _simplify_sketch(intent, limit=MAX_SKETCH_VERTICES):
+    """Keep ordered endpoints and the most significant bends, within a budget.
+
+    Dense pointer events are not flight waypoints. Use arc-length coupling to
+    select bends; retain explicit marks when they fit the budget. The untouched
+    request remains the shadow, and _repair_bound certifies the actual change.
+    """
+    points = intent["path"]["points"]
+    if len(points) <= 2:
+        return deepcopy(intent)
+    poses = [[p[k] for k in ("north_m", "east_m", "down_m")] for p in points]
+    arc = [0.]
+    for a, b in zip(poses, poses[1:]):
+        arc.append(arc[-1] + math.dist(a, b))
+    marked = {i for i, p in enumerate(points) if p["hard"] or p["exact"]}
+    keep = {0, len(points)-1}
+    if len(marked | keep) <= limit:
+        keep |= marked
+    target = max(.005, .25*intent["path"]["maximum_deviation_m"])
+    def worst(left, right):
+        span = arc[right]-arc[left]
+        best = (0., None)
+        for i in range(left+1, right):
+            u = (arc[i]-arc[left])/span if span else 0.
+            chord = [x+u*(y-x) for x, y in zip(poses[left], poses[right])]
+            error = math.dist(poses[i], chord)
+            if error > best[0]:
+                best = error, i
+        return best
+    import heapq
+    queue = []
+    def push(left, right):
+        error, index = worst(left, right)
+        if index is not None:
+            heapq.heappush(queue, (-error, left, right, index))
+    ordered = sorted(keep)
+    for left, right in zip(ordered, ordered[1:]):
+        push(left, right)
+    while queue and len(keep) < limit:
+        negative, left, right, index = heapq.heappop(queue)
+        if -negative <= target:
+            break
+        keep.add(index)
+        push(left, index)
+        push(index, right)
+    result = deepcopy(intent)
+    result["path"]["points"] = [deepcopy(points[i]) for i in sorted(keep)]
+    return result
 
 
 def _attach(result, requested, effective, changes, method, reason=None):
@@ -417,6 +492,14 @@ def closest_preview(payload, strict_preview):
     vehicle, environment, setup = _models(payload)
     changes = []
     requested, effective, loops = _prepare(payload,vehicle,environment,changes)
+    if len(effective["path"]["points"]) > 32:
+        before = len(effective["path"]["points"])
+        effective = _simplify_sketch(effective)
+        after = len(effective["path"]["points"])
+        if after < before:
+            _change(changes, "sketch_simplification",
+                    f"Kept the main shape using {after} flight points from {before} drawing samples. The original drawing remains visible for comparison.",
+                    original_point_count=before, effective_point_count=after)
     base = dict(source="drawing",document=effective)
     if setup:
         base["aircraft_profile"] = payload["aircraft_profile"]
@@ -428,7 +511,9 @@ def closest_preview(payload, strict_preview):
         magnitude = math.hypot(*left)*math.hypot(*right)
         if magnitude > 1e-16 and sum(x*y for x,y in zip(left,right))/magnitude < -.95:
             reversal = True
-    quick = len(coordinates)>32 or length>120 or reversal or effective["path"]["maximum_deviation_m"] == 0
+    quick = (len(coordinates)>8 or length>120 or reversal
+             or any(c["code"] == "sketch_simplification" for c in changes)
+             or effective["path"]["maximum_deviation_m"] == 0)
     reason = "Direct stop/turn construction preserves this difficult drawing without an expensive spline search." if quick else None
     try:
         if quick:

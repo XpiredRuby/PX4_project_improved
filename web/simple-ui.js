@@ -10,7 +10,7 @@
   return minutes+' min'+(rest?' '+rest+' sec':'');
  }
  function decode(raw,draft){
-  if(typeof raw!=='string'||raw.length>32768)throw Error('Draft is too large');
+  if(typeof raw!=='string'||raw.length>2*1024*1024)throw Error('Draft is too large');
   const value=JSON.parse(raw),route=value?.route;
   if(value?.version!==1||!['drawing','interview'].includes(value.mode)||!['stroke','points'].includes(value.tool)||
    !route||!Array.isArray(route.points)||!Array.isArray(route.kinds)||route.points.length!==route.kinds.length||

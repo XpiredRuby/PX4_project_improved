@@ -15,14 +15,14 @@
  headerRight.append(scope,settingsButton);header.append(brand,headerRight);
  const main=node('main','studio-layout');const editor=node('section','map-card');editor.setAttribute('aria-label','Route workspace');
  const heading=node('div','workspace-heading');
- const headingText=node('div');headingText.append(node('p','overline','ROUTE BUILDER'),node('h1','','Plan your route'),node('p','workspace-description','Draw from START. We’ll smooth the turns and check the motion.'));
+ const headingText=node('div');headingText.append(node('p','overline','ROUTE BUILDER'),node('h1','','Plan your route'),node('p','workspace-description','Draw anything, even your name. We’ll find a feasible route and show what changed.'));
  const exampleMenu=node('details','example-menu');exampleMenu.append(node('summary','','Examples'));
  const exampleContent=node('div','example-list');const examples=byId('quickExamples');for(const b of [...examples.querySelectorAll('button')]){exampleContent.append(b);b.addEventListener('click',()=>exampleMenu.open=false);}exampleMenu.append(exampleContent);heading.append(headingText,exampleMenu);
  const toolbar=byId('routeToolbar');toolbar.className='editor-toolbar';
  byId('strokeTool').textContent='Draw';byId('pointTool').textContent='Place points';byId('clear').textContent='Clear';byId('clear').title='Clear the route (can be undone)';
  const pointButton=node('button','subtle-button','Points & stops');pointButton.id='openPoints';
  toolbar.append(pointButton);
- const canvasWrap=node('div','map-surface');const guide=byId('drawingGuide');guide.className='map-hint';guide.querySelector('.launch-icon')?.remove();guide.querySelector('strong').textContent='Start at the gold marker';
+ const canvasWrap=node('div','map-surface');const guide=byId('drawingGuide');guide.className='map-hint';guide.querySelector('.launch-icon')?.remove();guide.querySelector('strong').textContent='Draw anywhere';
  const canvasFrame=byId('route').parentElement;canvasFrame.className='canvas-frame';
  const mapControls=workspace.querySelector('.map-view');mapControls.className='map-controls';mapControls.querySelector('span')?.remove();byId('zoomIn').textContent='+';byId('zoomOut').textContent='−';byId('zoomFit').textContent='Fit';
  canvasWrap.append(canvasFrame,guide,mapControls);
