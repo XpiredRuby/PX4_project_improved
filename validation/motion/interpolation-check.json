@@ -1,0 +1,7 @@
+{
+  "full_csv_samples": 10262,
+  "route_phases_checked": 22,
+  "max_position_error_m": 5.950795411990839e-14,
+  "max_yaw_error_rad": 3.197442310920451e-14,
+  "source": "Previously downloaded real browser Vin CSV versus separately evaluated seventh-order route phases"
+}
