@@ -71,3 +71,14 @@ is made for the whole app.
 
 Final evidence is in `validation/2026-10-25-app-audit/README.md`. No new simulation
 or physical flight was attempted. No plotting of synthetic measurements as truth.
+
+### Final settings review follow-up (APP-13)
+
+An unchecked custom model can make `selectedAircraftSetup` throw. The new speed
+refresh originally accessed it outside its error boundary, and completed profile
+checks did not immediately refresh the displayed automatic cap. Moved the entire
+lookup inside the controlled refresh, clear unavailable automatic caps, and
+refresh on editor invalidation. Browser verified the incomplete-model message
+and default-model recovery; DOM regression covers a model changing its ceiling.
+No physical limit or planner equation changed. This finding was discovered and
+resolved during final review, after the initial audit table.

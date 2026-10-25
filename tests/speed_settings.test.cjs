@@ -30,7 +30,9 @@ test('browser initialization and legacy restoration resolve the actual DOM polic
  const window={PX4Editor:{aircraftSpeedLimit:()=>3}},document={getElementById:id=>elements[id],addEventListener:(event,fn)=>callbacks[event]=fn,querySelector:()=>null};
  vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../web/speed-settings.js'),'utf8'),{window,document,Number,Error,Event});
  callbacks.DOMContentLoaded();assert.equal(elements.maxSpeed.value,'3');assert.match(elements.speedInputHint.textContent,/planning cap 1.80/);assert.equal(elements.maxSpeed.readOnly,true);
- elements.maxSpeed.value='1.25';window.PX4SpeedSettings.restore({version:1});assert.equal(elements.speedCapMode.value,'custom');assert.equal(elements.legacySpeedNotice.hidden,false);assert.throws(()=>window.PX4SpeedSettings.validate(),/custom Never exceed/);
+ window.PX4Editor.aircraftSpeedLimit=()=>{throw Error('Complete Aircraft setup');};assert.doesNotThrow(()=>window.PX4SpeedSettings.refresh());assert.match(elements.speedInputHint.textContent,/Complete Aircraft setup/);assert.equal(elements.maxSpeed.value,'');
+ window.PX4Editor.aircraftSpeedLimit=()=>2.5;window.PX4SpeedSettings.refresh();assert.equal(elements.maxSpeed.value,'2.5');
+ window.PX4Editor.aircraftSpeedLimit=()=>3;elements.maxSpeed.value='1.25';window.PX4SpeedSettings.restore({version:1});assert.equal(elements.speedCapMode.value,'custom');assert.equal(elements.legacySpeedNotice.hidden,false);assert.throws(()=>window.PX4SpeedSettings.validate(),/custom Never exceed/);
 });
 test('malformed dense commits fail before thinning without hanging or changing history',()=>{
  const d=new RouteDraft({bestEffort:true,maxPoints:3}),before=d.snapshot();

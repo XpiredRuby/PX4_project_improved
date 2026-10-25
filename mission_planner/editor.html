@@ -69,6 +69,7 @@ let scale=7,drawingEnvelopeRadius=40; const origin=[450,315];
 const number=id=>{const raw=$(id).value.trim(),value=Number(raw);if(!raw||!Number.isFinite(value))throw Error(`Enter a finite number for ${window.document.querySelector('label[for="'+id+'"]')?.textContent||id}`);return value};
 function setStep(id){for(const key of ['stepDraw','stepReview','stepSimulate','stepCompare']){if(key===id)$(key).setAttribute('aria-current','step');else $(key).removeAttribute('aria-current')}}
 function invalidate(){
+  window.PX4SpeedSettings?.refresh();
   revision++; planningState(compiling?'stale':'draft');lastResult=null; window.PX4Motion?.clear(); window.PX4Simple?.clear();window.PX4Simple?.saveSoon(); window.PX4Compare?.clear();window.PX4MissionView?.clear(); $('confirmPlan').checked=false; $('confirmPlan').disabled=true;
   $('results').hidden=true; $('errorDetails').hidden=true;
   $('status').className='notice'; $('status').textContent='Draft. Plan and verify to see the smooth route. Simulation has not run.';

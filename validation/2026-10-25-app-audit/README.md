@@ -1,7 +1,7 @@
 # App audit and offline release candidate — 25 October 2026
 
 Baseline Git commit: `7459067894ccfe1a3a7a19ef3a8c7bc45fee4021`.
-Final portable build ID: `227aedf03cd89957`.
+Final portable build ID: `df15b1363bd45ece`.
 Audit before implementation: `docs/app_release_audit.md` and
 `source-inventory-before.json` (188 active source/config/test files).
 
@@ -34,7 +34,7 @@ Final browser observations, retained in `browser-final-record.json`:
 - Exact sample 1271 at 63.50 s: N=0, E=0, Up=20 m, speed=0;
   heading 337.7 degrees, yaw rate -37.30 degrees/s. Stationary yaw is visible.
 - Height and 3D view controls operated. `final-app-summary.jpg` shows route,
-  speed explanation and paused turn; `final-app.jpg` shows height/phase evidence.
+  speed explanation and paused turn; `final-app.jpg` shows height/phase evidence from the preceding build.
 - No genuine measured track was loaded. No new tracking error or simulated
   landing/disarm claim is made.
 
@@ -84,3 +84,13 @@ explicit lower cap; heights 0.1, 1, 30, 50; five stops, reversal, hover, tiny de
 figure-eight, 10,000-point input, handwriting, envelope repair, impossible deadline,
 and one/two-lap circles. Full generated CSVs remain reproducible intermediates;
 tracked JSON results retain every reported metric and deterministic hash.
+
+Final UI-only follow-up: incomplete custom-aircraft setup no longer throws during
+speed-cap refresh. The hint shows the missing setup, clears an unavailable
+automatic ceiling, and updates after profile checking/recovery. Browser verified
+custom-unchecked → default-model recovery and handwriting again. The existing DOM
+initialization regression now tests the missing-model and changed-ceiling paths;
+all 56 JavaScript tests and six release boundary tests were rerun and passed.
+The complete 432-test Python result above precedes this UI-only follow-up; no
+Python planner/controller source changed afterward. Latest CI must be read from
+the final commit, not inferred from the preceding green or pending runs.

@@ -6,8 +6,8 @@ test_portable_build_is_deterministic_clean_and_bound_to_all_assets (tests.test_a
 test_positive_small_caps_are_never_increased (tests.test_app_release.AppReleaseTests.test_positive_small_caps_are_never_increased) ... ok
 
 ----------------------------------------------------------------------
-Ran 6 tests in 0.310s
+Ran 6 tests in 0.294s
 
 OK
-Built 28 portable planner files at /tmp/tmpiward5dk/app; build 227aedf03cd89957
-Built 28 portable planner files at /tmp/tmpiward5dk/app; build 227aedf03cd89957
+Built 28 portable planner files at /tmp/tmpgyz08baj/app; build df15b1363bd45ece
+Built 28 portable planner files at /tmp/tmpgyz08baj/app; build df15b1363bd45ece

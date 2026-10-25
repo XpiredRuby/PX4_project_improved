@@ -13,11 +13,11 @@
  const $=id=>document.getElementById(id);let legacy=false;
  function state(){return policy(Number($('targetSpeed').value),Number($('maxSpeed').value),root.PX4Editor?.aircraftSpeedLimit()||3,$('speedCapMode').value);}
  api.refresh=()=>{
-  const mode=$('speedCapMode').value,automatic=mode==='aircraft';
-  $('maxSpeed').readOnly=automatic;
-  if(automatic)$('maxSpeed').value=String(root.PX4Editor?.aircraftSpeedLimit()||3);
-  try{const s=state();$('speedInputHint').textContent=s.message+(s.conflict?' Resolve the custom cap conflict in Advanced settings before planning.':'');$('speedInputHint').classList.toggle('speed-warning',s.conflict);}
-  catch(error){$('speedInputHint').textContent=error.message;$('speedInputHint').classList.add('speed-warning');}
+  const automatic=$('speedCapMode').value==='aircraft';$('maxSpeed').readOnly=automatic;
+  try{
+   if(automatic)$('maxSpeed').value=String(root.PX4Editor?.aircraftSpeedLimit()||3);
+   const s=state();$('speedInputHint').textContent=s.message+(s.conflict?' Resolve the custom cap conflict in Advanced settings before planning.':'');$('speedInputHint').classList.toggle('speed-warning',s.conflict);
+  }catch(error){if(automatic)$('maxSpeed').value='';$('speedInputHint').textContent=error.message;$('speedInputHint').classList.add('speed-warning');}
   $('legacySpeedNotice').hidden=!legacy;
  };
  api.validate=()=>{api.refresh();const s=state();if(s.conflict)throw Error(`Requested cruise exceeds your custom Never exceed setting (${s.cap} m/s). Open Advanced settings: select Aircraft model cap, raise your custom cap, or lower requested cruise.`);return s;};

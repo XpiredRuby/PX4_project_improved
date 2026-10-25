@@ -10,8 +10,8 @@
   },
   "app_build": {
     "schema_version": 1,
-    "build_id": "227aedf03cd89957",
-    "source_tree_sha256": "227aedf03cd899571fa4f9402181868ff67818e6cf2e283bea93a3388d7fa874",
+    "build_id": "df15b1363bd45ece",
+    "source_tree_sha256": "df15b1363bd45ece13ca8e88e2b4b6990e702f899ac3a614312b4a02f00f895d",
     "runtime": "pyodide-0.27.7",
     "planner_files": 28,
     "scope": "Planned reference only; Gazebo has not run; no physical-flight approval",
@@ -20,7 +20,7 @@
       "browser-api.js": "c4c223a236ad687adb49c05d58b6afd8dc08429b70d6ad3396fbd25a267295e0",
       "comparison.js": "01b27917c53fe3c887737c174e4e2c73f4373b6ecf83de26a478685c7f7043a7",
       "draft.js": "e2b935bcd354c0dde090d8bdd4c247a9ab1aa9ec03e6c950c0ae1f52ab5ba9d0",
-      "index.html": "a7f1b5feb1632f870e0c0bf0af05fd36df24667c3ddcfd1e95b4981d42e0b32f",
+      "index.html": "1f33a24e8f1a661145f12b3991f041871b2fa9a06c476578711cc9588c48f536",
       "lifecycle-ui.js": "e3b078ea1a03b342db65bd84c9134e159be6c7d30f682e55fdce7ec578c6d4ff",
       "motion.js": "da385e20e6d0da47a472d54865157e540078d906843605ab8e9e9f958d9b27dd",
       "planner-worker.js": "f61928ae0944815a3017c5e1af135ce00268d120c893bbddf44a686e4ccfdb5f",
@@ -52,10 +52,10 @@
       "python/mission_planner/timing.py": "fbc8b725e48215b40b383101ca2d3002db692ef3eee5fc99cf0a137300108026",
       "python/mission_planner/verification.py": "54674f79391f45bc6781bc4f596a60168fcfd712473c5d634dce856b932a0077",
       "python/mission_planner/yaw.py": "92bc3cc1275bc0c1f14a296c38b9105872aff2578fe4aedfbd62ffcc2e618400",
-      "python-manifest.json": "76a02da9404966b87572e16ff3633a6eaf7f4791b280e06eda2cb982fce5f793",
+      "python-manifest.json": "fba82577af535d180f5a8b1837a06874c9b4a3dfa4a7f7bd40b1dd6cf47a12a8",
       "run-state.js": "4404b0eb7241484a42933efb68161cc83880e1f646ba3ce9c4b07d1ee53bd220",
       "simple-ui.js": "29334fa59adcacdc384147928afce7b31aaf24d4f224db0c4ccfc16c086ecfa0",
-      "speed-settings.js": "7af64b0e23b4b1a33d2ef09925f41d6820543b0dab8f6da6b23eed5550fff016",
+      "speed-settings.js": "79924ff8b6a6764bb31cb79677b1124ec95caa8e679a2b2ba50b4d53b76654b0",
       "workspace.css": "03f6ac85f2828140d2cbb74b1b3b2ba45e885c9f239e8ed5cadb180e4cbf6791",
       "workspace.js": "5761c757ad426d785a60941808c9eaf4179d8a39e3d8caa8cad71717afdfe159"
     }
