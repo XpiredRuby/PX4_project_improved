@@ -26,7 +26,7 @@ test('marked-point overflow leaves the previous drawing and undo history intact'
 });
 test('browser initialization and legacy restoration resolve the actual DOM policy',()=>{
  const vm=require('node:vm'),fs=require('node:fs'),elements={},callbacks={};
- for(const id of ['targetSpeed','maxSpeed','speedCapMode','speedInputHint','legacySpeedNotice','useAircraftSpeed'])elements[id]={value:id==='targetSpeed'?'2':id==='maxSpeed'?'1.25':'aircraft',classList:{toggle(){}},addEventListener(){},hidden:false};
+ for(const id of ['targetSpeed','maxSpeed','speedCapMode','speedInputHint','legacySpeedNotice','useAircraftSpeed'])elements[id]={value:id==='targetSpeed'?'2':id==='maxSpeed'?'1.25':'aircraft',classList:{toggle(){},add(){}},addEventListener(){},hidden:false};
  const window={PX4Editor:{aircraftSpeedLimit:()=>3}},document={getElementById:id=>elements[id],addEventListener:(event,fn)=>callbacks[event]=fn,querySelector:()=>null};
  vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../web/speed-settings.js'),'utf8'),{window,document,Number,Error,Event});
  callbacks.DOMContentLoaded();assert.equal(elements.maxSpeed.value,'3');assert.match(elements.speedInputHint.textContent,/planning cap 1.80/);assert.equal(elements.maxSpeed.readOnly,true);

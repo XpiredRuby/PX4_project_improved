@@ -90,7 +90,22 @@ speed-cap refresh. The hint shows the missing setup, clears an unavailable
 automatic ceiling, and updates after profile checking/recovery. Browser verified
 custom-unchecked → default-model recovery and handwriting again. The existing DOM
 initialization regression now tests the missing-model and changed-ceiling paths;
-all 56 JavaScript tests and six release boundary tests were rerun and passed.
+the six release boundary tests passed. The extended JavaScript fixture initially failed; see the correction below.
 The complete 432-test Python result above precedes this UI-only follow-up; no
 Python planner/controller source changed afterward. Latest CI must be read from
 the final commit, not inferred from the preceding green or pending runs.
+
+### Final CI fixture correction
+
+At production-source commit `98c1a33f8fb874eaeffacb97d423e6e9cc1900d6`, the
+Controller validation workflow and the Validation workflow's full Python,
+connector and both coverage jobs passed. Its public-app job caught a test-fixture
+error: the mock classList implemented toggle but omitted add, which the new
+incomplete-profile error path calls. 55/56 JS tests passed. The combined local
+shell invocation had masked that nonzero test exit with a later successful
+command; the prior local claim for that follow-up was inaccurate.
+
+Retained failing output: javascript-dom-fixture-failure.txt. Corrected only the
+mock DOM interface (no production-source or build change) and reran the complete
+JS command separately: exit 0, all 56 passed. Final production build remains
+`df15b1363bd45ece`. The new commit's app CI must independently confirm the fix.

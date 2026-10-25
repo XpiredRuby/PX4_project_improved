@@ -1,0 +1,95 @@
+✔ CSV retains every exported sample and rejects ambiguous or corrupt clocks (2.135378ms)
+✔ sample stepping is exact at knots, clamps endpoints and uses physical timestamps (0.43349ms)
+✔ septic interpolation reconstructs known position and derivative polynomial (0.747142ms)
+✔ a stopped turn changes yaw while holding position (0.18979ms)
+✔ ideal attitude follows acceleration, with an orthonormal frame (0.351518ms)
+✔ events retain separate repeated visits and route-relative stop times (0.530202ms)
+✔ 1x is wall-clock time and fast playback does not alter mission times (0.195618ms)
+✔ a turn at the first route timestamp takes priority over the route phase (0.140617ms)
+✔ measurement with position only is interpolated without fabricating dynamics (0.200365ms)
+✔ wrapped measured headings take the short turn across north (0.310368ms)
+✔ arrow nose faces north, east, south and west in NED yaw order (0.2983ms)
+✔ arrow rotates continuously through north and during a stationary turn (1.130577ms)
+✔ measurement outages remain blank and missing derivatives remain absent (0.261295ms)
+✔ display decimation keeps the last exported endpoint without changing playback rows (20.524162ms)
+✔ public capabilities do not enable flight or fabricate simulator status (5.529663ms)
+✔ one worker returns its result, with concurrent and stale responses rejected (1.431841ms)
+✔ timeout destroys computation and permits a fresh retry (1.065931ms)
+✔ unknown and oversized requests cannot reach a worker or server (4.435931ms)
+✔ dense handwriting payload reaches the worker instead of the old 64 KiB limit (2.883873ms)
+✔ cancellation terminates only the active worker and stale errors cannot kill a retry (1.248421ms)
+✔ already aborted request does not allocate a worker (1.09229ms)
+✔ a messageerror fully cleans up and stale messageerror cannot affect retry (1.021406ms)
+✔ a synchronous postMessage failure fully cleans up and permits a real retry (0.964522ms)
+✔ gap is the nearest segment distance, not distance to a drawn vertex (1.262031ms)
+✔ overlapping paths have zero displayed change and repeated vertices stay finite (0.228477ms)
+✔ verified bound is unavailable when certificate is absent, failed or invalid (0.377978ms)
+✔ layer rendering isolates state and uses visible widths at phone scale (0.39355ms)
+✔ adjusted routes keep the original shadow and its certified displacement (0.950672ms)
+✔ a failed verification cannot turn an adjustment estimate into a certified bound (0.194537ms)
+✔ planner states distinguish adjusted references, cancellation and errors (0.910213ms)
+✔ editing cannot be overwritten by late progress; stale result needs a new check (0.288065ms)
+✔ aircraft mode ignores a stale 1.25 draft cap while preserving declared model ceiling (0.960726ms)
+✔ intentional custom caps are binding and a higher cruise is a conflict (0.664009ms)
+✔ version 2 drafts persist explicit speed policy and do not restore certificates (0.87459ms)
+✔ dense draft thinning retains every stop and exact point in original order (1.076156ms)
+✔ marked-point overflow leaves the previous drawing and undo history intact (0.536561ms)
+✖ browser initialization and legacy restoration resolve the actual DOM policy (3.278885ms)
+✔ malformed dense commits fail before thinning without hanging or changing history (0.220325ms)
+✔ fresh route starts only at launch; explicit points preserve short details (3.187329ms)
+✔ release endpoint is saved even without a movement event (0.446749ms)
+✔ disconnected stroke requires explicit connection; discard leaves old route (0.768603ms)
+✔ cancelled gesture and unrelated pointer cannot change route (0.187727ms)
+✔ a boundary excursion rejects the entire gesture even after reentry (0.265321ms)
+✔ point cap includes generated loop closure, rejects without clipping (0.489642ms)
+✔ undo and redo restore entire stroke, annotation and ending (0.430525ms)
+✔ new edits clear redo; clear is undoable (0.382023ms)
+✔ unsupported loop annotations and conflicting types are refused (0.425677ms)
+✔ repeated visits and point order are preserved (0.418487ms)
+✔ duplicate clicks and invalid coordinates do not mutate history (0.363026ms)
+✔ best-effort handwriting connects separate letters and retains a dense stroke (5.258974ms)
+✔ best-effort capture stays bounded without throwing away a long gesture (8.453149ms)
+✔ draft recovery preserves route order, marked stops and settings (1.823158ms)
+✔ recovery applies the current backend radius and point limit (0.437906ms)
+✔ corrupt and incompatible drafts cannot overwrite the route (0.940887ms)
+✔ saved certificates and simulator state are never restored (0.167307ms)
+✔ duration labels and error recovery use everyday language (0.492016ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 55
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 178.213305
+
+✖ failing tests:
+
+test at tests/speed_settings.test.cjs:27:1
+✖ browser initialization and legacy restoration resolve the actual DOM policy (3.278885ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception.
+  Actual message: "$(...).classList.add is not a function"
+      at TestContext.<anonymous> (/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/speed_settings.test.cjs:33:91)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: TypeError: $(...).classList.add is not a function
+        at api.refresh (evalmachine.<anonymous>:20:129)
+        at /workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/speed_settings.test.cjs:33:132
+        at getActual (node:assert:611:5)
+        at strict.doesNotThrow (node:assert:779:32)
+        at TestContext.<anonymous> (/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/speed_settings.test.cjs:33:91)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1402:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+        at Test.postRun (node:internal/test_runner/test:1542:19)
+        at Test.run (node:internal/test_runner/test:1467:12),
+    expected: undefined,
+    operator: 'doesNotThrow',
+    diff: 'simple'
+  }

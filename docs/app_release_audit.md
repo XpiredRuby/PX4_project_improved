@@ -82,3 +82,10 @@ refresh on editor invalidation. Browser verified the incomplete-model message
 and default-model recovery; DOM regression covers a model changing its ceiling.
 No physical limit or planner equation changed. This finding was discovered and
 resolved during final review, after the initial audit table.
+
+Final CI caught an incomplete mock DOM interface in the APP-13 regression
+(classList.add missing). The test fixture was corrected; the application error
+boundary was unchanged. A combined local shell command had hidden the failed
+JavaScript exit status behind a later build success. Final JS validation is now
+run as a separate command with its own exit status. The failed output and
+correction are retained, rather than treating the earlier 55/56 run as a pass.
