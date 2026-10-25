@@ -1,0 +1,159 @@
+{
+  "source": "validation/2026-10-03/cases/offset-yaw-final/telemetry_and_truth.csv.gz",
+  "source_sha256": "9831bcc5eac74a0a49ec3d5e8889c086705cf161f07d42d879ab2cb8eba2b559",
+  "scope": "Reanalysis of Archived PX4/Gazebo recording, 3 October 2026; does not validate new planner code",
+  "new_simulator_run": false,
+  "physical_flight": false,
+  "samples": 4093,
+  "largest_telemetry_gap_s": 0.5169520000000034,
+  "per_phase": {
+    "TAKEOFF": {
+      "position_3d_m": {
+        "samples": 878,
+        "finite_samples": 878,
+        "rms": 0.0845969808069555,
+        "p95": 0.12118989523625169,
+        "maximum": 0.12662574111797048
+      },
+      "horizontal_m": {
+        "samples": 878,
+        "finite_samples": 878,
+        "rms": 0.052882439234151236,
+        "p95": 0.11469792684352534,
+        "maximum": 0.12260830887381255
+      },
+      "vertical_m": {
+        "samples": 878,
+        "finite_samples": 878,
+        "rms": 0.06603102893563526,
+        "p95": 0.09732226049999966,
+        "maximum": 0.11022726000000027
+      }
+    },
+    "TRAJECTORY": {
+      "position_3d_m": {
+        "samples": 2536,
+        "finite_samples": 2536,
+        "rms": 0.1509260791542037,
+        "p95": 0.29998802586036993,
+        "maximum": 0.5170626218808885
+      },
+      "horizontal_m": {
+        "samples": 2536,
+        "finite_samples": 2536,
+        "rms": 0.14810081323778418,
+        "p95": 0.296229522727267,
+        "maximum": 0.5170435232371919
+      },
+      "vertical_m": {
+        "samples": 2536,
+        "finite_samples": 2536,
+        "rms": 0.029065967851904226,
+        "p95": 0.05330374999999954,
+        "maximum": 0.0744593000000009
+      }
+    },
+    "RETURN_HOME": {
+      "position_3d_m": {
+        "samples": 41,
+        "finite_samples": 41,
+        "rms": 0.036331928374190366,
+        "p95": 0.048128259241058235,
+        "maximum": 0.048538117055613623
+      },
+      "horizontal_m": {
+        "samples": 41,
+        "finite_samples": 41,
+        "rms": 0.026292832172193182,
+        "p95": 0.03815453837100392,
+        "maximum": 0.03826490734928309
+      },
+      "vertical_m": {
+        "samples": 41,
+        "finite_samples": 41,
+        "rms": 0.02507381095390531,
+        "p95": 0.030003000000000668,
+        "maximum": 0.03129339999999914
+      }
+    },
+    "ALIGN": {
+      "position_3d_m": {
+        "samples": 38,
+        "finite_samples": 38,
+        "rms": 0.061501881164919295,
+        "p95": 0.0794092660622334,
+        "maximum": 0.07986207287785577
+      },
+      "horizontal_m": {
+        "samples": 38,
+        "finite_samples": 38,
+        "rms": 0.049999443829516196,
+        "p95": 0.07003685596573027,
+        "maximum": 0.07057524851240697
+      },
+      "vertical_m": {
+        "samples": 38,
+        "finite_samples": 38,
+        "rms": 0.03581252579144495,
+        "p95": 0.04346616499999882,
+        "maximum": 0.043498299999999546
+      }
+    },
+    "HANDOFF": {
+      "position_3d_m": {
+        "samples": 19,
+        "finite_samples": 19,
+        "rms": 0.21429641131983712,
+        "p95": 0.4206545981965734,
+        "maximum": 0.5028204955777168
+      },
+      "horizontal_m": {
+        "samples": 19,
+        "finite_samples": 19,
+        "rms": 0.021458190568436543,
+        "p95": 0.03347217553721365,
+        "maximum": 0.036461080109878946
+      },
+      "vertical_m": {
+        "samples": 19,
+        "finite_samples": 19,
+        "rms": 0.21321936582329823,
+        "p95": 0.4193193300000002,
+        "maximum": 0.5014968000000017
+      }
+    },
+    "PX4_LAND": {
+      "position_3d_m": {
+        "samples": 581,
+        "finite_samples": 0,
+        "rms": null,
+        "p95": null,
+        "maximum": null
+      },
+      "horizontal_m": {
+        "samples": 581,
+        "finite_samples": 0,
+        "rms": null,
+        "p95": null,
+        "maximum": null
+      },
+      "vertical_m": {
+        "samples": 581,
+        "finite_samples": 0,
+        "rms": null,
+        "p95": null,
+        "maximum": null
+      }
+    }
+  },
+  "missing_channels": [
+    "simulator truth velocity and acceleration",
+    "desired acceleration and jerk",
+    "desired yaw and yaw rate",
+    "simulator truth quaternion",
+    "desired roll and pitch",
+    "continuous actuator authority"
+  ],
+  "plot_annotation": "Shading separates recorded phases; red dotted lines mark telemetry gaps over 0.25 s",
+  "velocity_comparison": "PX4 estimate vs logged plan; not independent velocity truth"
+}

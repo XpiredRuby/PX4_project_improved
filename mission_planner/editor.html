@@ -34,10 +34,10 @@
 {"north_m":10,"east_m":0,"hard":true},
 {"north_m":10,"east_m":8}]</textarea></div></div>
 <p class="muted">The defaults are ready to try. You can change the height and speed below.</p><div class="row"><div><label for="altitude">Flight height (metres)</label><input id="altitude" type="number" min=".1" max="30" step=".5" value="20"></div><div><label for="targetSpeed">Cruising speed (m/s)</label><input id="targetSpeed" type="number" min=".1" step=".1" value="1"></div></div>
-<p class="muted">1 m/s is about walking pace. The drone slows down for turns and stops.</p>
+<label for="maxSpeed">Never exceed (m/s)</label><input id="maxSpeed" type="number" min=".1" step=".1" value="3">
+<p id="speedInputHint" class="muted" role="status">Cruise is a preferred upper speed. The aircraft ceiling, 10% planning margin, turns and stops can reduce it.</p>
 <details id="motionOptions"><summary>More flight options</summary>
 <label for="deviation">Allowed rounding (metres)</label><input id="deviation" type="number" min=".05" max="5" step=".05" value=".5"><p class="muted">How far the smooth planned route may move from your line. This is a planning limit, not guaranteed flight accuracy.</p>
-<label for="maxSpeed">Never exceed (m/s)</label><input id="maxSpeed" type="number" min=".1" step=".1" value="1.25">
 <label for="yaw">Which way should it face?</label><select id="yaw"><option value="fixed">Keep facing the starting direction</option><option value="tangent">Face along the route (preview only)</option></select>
 <label for="fixedYaw">Fixed heading (degrees from launch reference)</label><input id="fixedYaw" type="number" step="1" value="0"><label for="deadline">Optional route time limit (seconds)</label><input id="deadline" type="number" min=".1" step="1" placeholder="Leave blank for automatic timing"><p class="muted">This covers the drawn route only. Takeoff, return and landing take extra time. The planner keeps a 10% margin below the speed caps.</p>
 </details>
@@ -61,12 +61,14 @@ const completedPlanIds=new Set();
 let sitlEnabled=false, activeJob=null, activeJobDigest=null, cancelRequested=false, simulationAssessment=null, startingJob=false, compiling=false;
 const draft=new PX4Draft.RouteDraft({bestEffort:true,maxPoints:8192,radius:Infinity});
 let tool='stroke', hoverPoint=null, pointRowsKey='', settingsReady=false;
+let planningAbort=null;
+const planningState=(state,message)=>window.dispatchEvent(new CustomEvent('planner-state',{detail:{state,message}}));
 let mode='drawing', points=draft.points, lastResult=null, revision=0;
 let scale=7,drawingEnvelopeRadius=40; const origin=[450,315];
-const number=id=>{const raw=$(id).value.trim(),value=Number(raw);if(!raw||!Number.isFinite(value))throw Error(`Enter a finite value for ${id}`);return value};
+const number=id=>{const raw=$(id).value.trim(),value=Number(raw);if(!raw||!Number.isFinite(value))throw Error(`Enter a finite number for ${window.document.querySelector('label[for="'+id+'"]')?.textContent||id}`);return value};
 function setStep(id){for(const key of ['stepDraw','stepReview','stepSimulate','stepCompare']){if(key===id)$(key).setAttribute('aria-current','step');else $(key).removeAttribute('aria-current')}}
 function invalidate(){
-  revision++; lastResult=null; window.PX4Motion?.clear(); window.PX4Simple?.clear();window.PX4Simple?.saveSoon(); window.PX4Compare?.clear();window.PX4MissionView?.clear(); $('confirmPlan').checked=false; $('confirmPlan').disabled=true;
+  revision++; planningState(compiling?'stale':'draft');lastResult=null; window.PX4Motion?.clear(); window.PX4Simple?.clear();window.PX4Simple?.saveSoon(); window.PX4Compare?.clear();window.PX4MissionView?.clear(); $('confirmPlan').checked=false; $('confirmPlan').disabled=true;
   $('results').hidden=true; $('errorDetails').hidden=true;
   $('status').className='notice'; $('status').textContent='Draft. Plan and verify to see the smooth route. Simulation has not run.';
   if(activeJob||simulationAssessment)$('status').textContent+=' The simulation shown below belongs to your earlier confirmed plan.';
@@ -221,12 +223,12 @@ function friendlyError(result){
 }
 $('compile').onclick=async()=>{
   if(compiling||!settingsReady)return;
-  invalidate();const submitted=revision;compiling=true;draw();$('busy').style.display='block';$('status').className='notice';$('status').textContent='Smoothing your line and checking motion limits. You can keep editing; changed drawings need a new plan.';
-  try{const document=documentInput();const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:mode,document,planning_mode:'closest',...($('aircraftMode').value==='custom'?{aircraft_profile:aircraftSetup.profile}:{})})});const result=await response.json();
-    if(submitted!==revision){$('status').textContent='Your drawing changed while planning. The older result was discarded. Select Plan and verify for this drawing.';return}
-    if(!response.ok||!result.accepted){$('errorDetails').hidden=false;$('errorText').textContent=JSON.stringify(result,null,2);throw Error(friendlyError(result))}show(result);(window.PX4Simple?$('planReview'):window.PX4Compare?(window.matchMedia('(min-width:901px)').matches?window.document.querySelector('header'):($('fullMissionView')||$('routeComparison'))):$('planReview')).scrollIntoView({behavior:'smooth',block:'start'});
-  }catch(e){if(submitted===revision){$('status').className='notice error';$('status').textContent='Could not check this route. '+(window.PX4Simple?.errorMessage({error:e.message})||e.message);window.PX4Simple?.showError(e.message)}}
-  finally{compiling=false;$('busy').style.display='none';draw()}
+  invalidate();const submitted=revision;compiling=true;planningAbort=new AbortController();planningState('starting');draw();$('busy').style.display='block';$('status').className='notice';$('status').textContent='Smoothing your line and checking motion limits. You can keep editing; changed drawings need a new plan.';
+  try{const document=documentInput();const response=await fetch('/api/preview',{signal:planningAbort.signal,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:mode,document,planning_mode:'closest',...($('aircraftMode').value==='custom'?{aircraft_profile:aircraftSetup.profile}:{})})});const result=await response.json();
+    if(submitted!==revision){planningState('stale');$('status').textContent='Your drawing changed while planning. The older result was discarded. Select Plan and verify for this drawing.';return}
+    if(!response.ok||!result.accepted){$('errorDetails').hidden=false;$('errorText').textContent=JSON.stringify(result,null,2);throw Error(friendlyError(result))}show(result);planningState(result.planning_adjustments?.adjusted?'adjusted':'verified');(window.PX4Simple?$('planReview'):window.PX4Compare?(window.matchMedia('(min-width:901px)').matches?window.document.querySelector('header'):($('fullMissionView')||$('routeComparison'))):$('planReview')).scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){if(submitted===revision){if(planningAbort.signal.aborted){$('errorDetails').hidden=true;planningState('cancelled');$('status').className='notice';$('status').textContent='Planning cancelled. Your drawing is kept. Plan again when ready.';return;}planningState('error');$('status').className='notice error';$('status').textContent='Could not check this route. '+(window.PX4Simple?.errorMessage({error:e.message})||e.message);window.PX4Simple?.showError(e.message)}}
+  finally{compiling=false;planningAbort=null;$('busy').style.display='none';draw()}
 };
 
 function download(name,text,type){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
@@ -338,6 +340,7 @@ $('applyParameters').onclick=()=>{if(!parameterSuggestions)return;for(const [key
 fetch('/api/aircraft/catalog').then(r=>r.json()).then(c=>{aircraftCatalog=c;const groups={};for(const name of ['Aircraft and navigation','Rotor geometry and authority','Motion limits','Energy and timing','Operating envelope and evidence']){const group=document.createElement('details'),heading=document.createElement('summary');heading.textContent=name;group.open=name==='Aircraft and navigation';group.style.marginTop='14px';group.append(heading);$('aircraftQuestions').append(group);groups[name]=group}for(const q of c.questions){const wrapper=document.createElement('div'),label=document.createElement('label');label.htmlFor='aircraft-'+q.key;label.textContent=q.label+(q.unit?' ('+q.unit+')':'');wrapper.append(label);const el=document.createElement(q.kind==='choice'?'select':q.key==='evidence_notes'?'textarea':'input');el.id=label.htmlFor;if(q.kind==='choice'){const empty=document.createElement('option');empty.value='';empty.textContent='Choose…';el.append(empty);for(const choice of q.choices){const option=document.createElement('option');option.value=choice;option.textContent=choice;el.append(option)}}else if(q.kind==='number'){el.type='number';el.step='any';if(q.minimum!==undefined)el.min=q.minimum;if(q.maximum!==undefined)el.max=q.maximum}else if(q.key!=='evidence_notes')el.type='text';el.addEventListener('input',aircraftChanged);wrapper.append(el);if(q.help){const help=document.createElement('p');help.className='muted';help.textContent=q.help;wrapper.append(help)}const group=['profile_id','name','vehicle_type','autopilot','mass_kg','layout','navigation'].includes(q.key)?'Aircraft and navigation':q.key.startsWith('rotor_')||['arm_length_m','yaw_torque_per_thrust_m','yaw_inertia_kg_m2','roll_pitch_torque_reserve_nm'].includes(q.key)?'Rotor geometry and authority':['maximum_speed_m_s','maximum_acceleration_m_s2','maximum_jerk_m_s3','maximum_tilt_deg','maximum_body_rate_deg_s','maximum_yaw_rate_deg_s','maximum_yaw_acceleration_deg_s2','maximum_yaw_jerk_deg_s3','maximum_climb_m_s','maximum_descent_m_s'].includes(q.key)?'Motion limits':['usable_battery_wh','power_upper_bound_w','reserve_fraction','settle_time_s','lifecycle_time_upper_bound_s','route_time_multiplier','contingency_time_s'].includes(q.key)?'Energy and timing':'Operating envelope and evidence';groups[group].append(wrapper)}$('aircraftStatus').textContent='Select the aircraft type and enter the loaded configuration. Check setup to see everything still missing.';try{const saved=localStorage.getItem('px4-studio-aircraft-profile');if(saved){const button=document.createElement('button');button.textContent='Load saved simulator profile';button.onclick=()=>loadAircraft(JSON.parse(saved));$('aircraftControls').before(button)}}catch(e){$('aircraftStatus').textContent='Saved profile could not be loaded: '+e.message}return fetch('/api/aircraft/binding')}).then(r=>r.json()).then(b=>{registeredProfile=b.profile;$('useRegisteredAircraft').hidden=!registeredProfile}).catch(e=>{$('aircraftStatus').textContent='Aircraft setup unavailable: '+e.message});
 
 window.PX4Editor={
+ cancelPlanning(){planningAbort?.abort();},
  draft,
  canRestore:()=>revision===0&&!draft.gesture&&!draft.pending,
  snapshot:()=>({route:draft.snapshot(),mode,tool}),

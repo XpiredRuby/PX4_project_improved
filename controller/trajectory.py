@@ -31,6 +31,7 @@ class Trajectory:
         self.points = []
         self.index = 0
         self.finished = False
+        self.septic_interpolation = False
 
         with open(filename, "r", newline="") as file:
             reader = csv.DictReader(file)
@@ -90,6 +91,39 @@ class Trajectory:
             raise ValueError("trajectory must start at time zero")
         self.duration = self.points[-1].time
 
+    def enable_septic_interpolation(self):
+        """Use only after the exact constructive artifact has been audited.
+
+        Complete p/v/a/j endpoint data defines a C3 seventh-order interpolant.
+        The legacy trajectory families keep their existing interpolation.
+        """
+        for point in self.points:
+            if not all(math.isfinite(getattr(point, key)) for key in (
+                    'jx', 'jy', 'jz', 'yaw_acceleration', 'yaw_jerk')):
+                raise ValueError('Septic interpolation requires all C3 derivatives')
+        self.septic_interpolation = True
+
+    @staticmethod
+    def _septic_axis(a, b, fields, u, dt):
+        p, v, acc, jerk = fields
+        c = [getattr(a, p), dt*getattr(a, v), dt**2*getattr(a, acc)/2,
+             dt**3*getattr(a, jerk)/6]
+        position = getattr(b, p)-sum(c)
+        velocity = dt*getattr(b, v)-c[1]-2*c[2]-3*c[3]
+        acceleration = dt**2*getattr(b, acc)-2*c[2]-6*c[3]
+        j = dt**3*getattr(b, jerk)-6*c[3]
+        c.extend((35*position-15*velocity+2.5*acceleration-j/6,
+                  -84*position+39*velocity-7*acceleration+j/2,
+                  70*position-34*velocity+6.5*acceleration-j/2,
+                  -20*position+10*velocity-2*acceleration+j/6))
+        values = []
+        for order in range(4):
+            value = 0.
+            for k in range(7, order-1, -1):
+                value = value*u+c[k]*math.factorial(k)/math.factorial(k-order)
+            values.append(value/dt**order)
+        return values
+
     def reset(self):
         self.index = 0
         self.finished = False
@@ -128,6 +162,17 @@ class Trajectory:
         p1 = self.points[self.index]
         p2 = self.points[self.index + 1]
         ratio = (t - p1.time) / (p2.time - p1.time)
+
+        if t == p1.time:
+            return p1
+        if self.septic_interpolation:
+            values = {'time': t}
+            for fields in (('x', 'vx', 'ax', 'jx'), ('y', 'vy', 'ay', 'jy'),
+                           ('z', 'vz', 'az', 'jz'),
+                           ('yaw', 'yaw_rate', 'yaw_acceleration', 'yaw_jerk')):
+                values.update(zip(fields, self._septic_axis(p1, p2, fields, ratio,
+                                                            p2.time-p1.time), strict=True))
+            return TrajectoryPoint(**values)
 
         dyaw = p2.yaw - p1.yaw
         # Repeated subtraction can never converge for very large finite

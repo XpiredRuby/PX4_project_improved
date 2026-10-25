@@ -1,0 +1,4 @@
+PASS: 2 m/s request exceeds old 1.25 m/s reference threshold.
+PASS: 3 m/s request exceeds 1.5 m/s sampled peak.
+PASS: explicit 1.25 m/s cap remains binding and disclosed.
+PASS: 5 m/s cruise request is adjusted to the 3 m/s aircraft model, never certified at 5 m/s.

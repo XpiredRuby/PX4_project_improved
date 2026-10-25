@@ -82,6 +82,14 @@
   $('reviewSummary').textContent=mission?'Ground → '+(-result.intent.path.points[0].down_m).toFixed(1)+' m → your route → home → ground.':'Follow the checked route shown in blue.';
   const label={speed:'speed limit',acceleration:'acceleration limit',jerk:'limit on sudden changes',tilt:'tilt limit',thrust:'motor thrust limit',duration:'route time limit',stop_and_turn:'stop-and-turn motion'}[rt.limiting_constraint]||'motion limits';
   $('paceExplanation').textContent='The '+label+' sets the pace for this plan. Slowing at turns helps keep the route close to your drawing. '+(mission?'The route itself takes '+duration(mission.route_duration_s)+'. Takeoff, return and landing make up the rest.':'');
+  const pace=result.summary.speed_preferences;
+  if(pace){$('speedBound').textContent=pace.planned_route_peak_sampled_m_s.toFixed(2)+' m/s';
+   $('speedBound').nextElementSibling.textContent='Planned route peak · sampled';
+   const requested=pace.requested_cruise_m_s===null?'automatic':pace.requested_cruise_m_s.toFixed(2)+' m/s';
+   $('paceExplanation').textContent='Requested cruise '+requested+' · effective cap '+pace.planning_cap_m_s.toFixed(2)+' m/s · planned mean '+pace.planned_route_mean_sampled_m_s.toFixed(2)+' m/s. '+pace.semantics+' A 10% planning margin applies. This is reference motion; no measured flight is loaded.';
+   if(pace.reasons.includes('requested_speed_cap'))$('paceExplanation').textContent+=' Your Never exceed setting limits the requested cruise. Change it in Flight settings if intended.';
+   if(pace.reasons.includes('aircraft_speed_cap'))$('paceExplanation').textContent+=' The selected aircraft ceiling is '+pace.aircraft_maximum_m_s.toFixed(2)+' m/s.';
+  }
   $('status').textContent='Plan checks passed. Gazebo has not run.'+(met===false?' For a closer fit, mark a sharp corner as a stop or revise the route.':'');
   if(mission){[...$('missionPhases').children].forEach((item,i)=>{const phase=mission.phases[i];item.textContent=item.textContent.split(' · ')[0]+' · '+duration(phase.duration_s);});}
   actions.hidden=true;

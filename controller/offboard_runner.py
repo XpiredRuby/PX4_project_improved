@@ -39,9 +39,11 @@ ACTUATOR_MAX_AGE_SECONDS = 1.5
 PROPULSION_STOP_THRESHOLD = 0.01
 
 
-def load_planner_summary(path, trajectory_path, *, required=False):
+def load_planner_summary(path, trajectory_path, *, required=False, experimental_stop_turn=False):
     """Bind an optional planner summary to the exact CSV before transport."""
     if path is None:
+        if experimental_stop_turn:
+            raise ValueError("Experimental stop/turn requires its retained planner summary")
         try:
             with Path(trajectory_path).open(encoding="utf-8", newline="") as stream:
                 fields = csv.DictReader(stream).fieldnames or []
@@ -71,6 +73,8 @@ def load_planner_summary(path, trajectory_path, *, required=False):
     if summary.get("schema_version") != 1:
         raise ValueError("planner summary schema_version must be 1")
     drawn_path = summary.get("release_class") == "SITL_ONLY"
+    if experimental_stop_turn and (not drawn_path or summary.get("retiming", {}).get("limiting_constraint") != "stop_and_turn"):
+        raise ValueError("Experimental stop/turn requires a constructive SITL certificate")
     expected_digest = summary.get(
         "controller_trajectory_sha256" if drawn_path else "trajectory_sha256"
     )
@@ -85,6 +89,14 @@ def load_planner_summary(path, trajectory_path, *, required=False):
         raise ValueError("planner summary does not match the selected trajectory")
     if not drawn_path:
         return None
+    if summary.get('retiming', {}).get('limiting_constraint') == 'stop_and_turn':
+        if not experimental_stop_turn:
+            raise ValueError('Stop/turn execution requires explicit experimental SITL opt-in')
+        repository = Path(__file__).resolve().parents[1]
+        if str(repository) not in sys.path:
+            sys.path.append(str(repository))
+        from mission_planner.stop_turn_execution import audit_stop_turn_artifacts
+        audit_stop_turn_artifacts(source.parent, trajectory_path, summary_path=source)
     cruise_height = summary.get("controller_cruise_height_m")
     if (
         isinstance(cruise_height, bool)
@@ -582,6 +594,8 @@ def parse_args(argv=None):
         type=Path,
         help="Unexpired SITL review record bound to the planner summary",
     )
+    parser.add_argument('--experimental-stop-turn', action='store_true',
+                        help='SITL research only: independently audit constructive route artifacts before transport')
     return parser.parse_args(argv)
 
 
@@ -594,7 +608,11 @@ def main(
     release_authority=None,
     connection_string=None,
     rotor_count=4,
+    experimental_stop_turn=False,
 ):
+    if (experimental_stop_turn and release_authority is not None
+            and release_authority.release.get('release_class') != 'SITL_ONLY'):
+        raise ValueError("Experimental stop/turn execution is SITL-only")
     run_record = RunRecord()
     summary_required = trajectory_path is not None
     try:
@@ -607,6 +625,8 @@ def main(
         c.rotor_count = rotor_count
         if connection_string is not None:
             c.connection_string = connection_string
+        if experimental_stop_turn and c.connection_string != "udp:127.0.0.1:14540":
+            raise ValueError("Experimental stop/turn execution requires loopback SITL")
         if release_authority is not None:
             release_authority.bind_controller(c)
             run_record.data["execution_authority"] = dict(
@@ -616,7 +636,10 @@ def main(
             planner_summary_path,
             c.trajectory_path,
             required=summary_required,
+            experimental_stop_turn=experimental_stop_turn,
         )
+        if experimental_stop_turn:
+            c.trajectory.enable_septic_interpolation()
         if release_authority is not None:
             if planner_cruise_height != release_authority.release["expected_cruise_height_m"]:
                 raise ValueError("physical release cruise height mismatch")
@@ -896,4 +919,5 @@ if __name__ == "__main__":
         trajectory_path=arguments.trajectory,
         planner_summary_path=arguments.planner_summary,
         acknowledgement_path=arguments.sitl_acknowledgement,
+        experimental_stop_turn=arguments.experimental_stop_turn,
     )

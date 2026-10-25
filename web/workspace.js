@@ -75,8 +75,25 @@
 
  document.querySelector('footer').textContent='Trajectory Studio · Planning checks a mathematical model. Gazebo has not run.';
  function syncSummary(){heightButton.innerHTML='<span>Height</span><strong>'+byId('altitude').value+' <small>m</small></strong>';speedButton.innerHTML='<span>Cruising speed</span><strong>'+byId('targetSpeed').value+' <small>m/s</small></strong>';}
- byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',syncSummary);syncSummary();
- function syncState(){const busy=byId('busy').style.display==='block',ready=!results.hidden,error=byId('status').classList.contains('error');empty.hidden=busy||ready||error;const state=busy?'Checking':error?'Needs attention':ready?'Verified':'Draft';if(stateLabel.textContent!==state)stateLabel.textContent=state;stateLabel.dataset.state=state;review.dataset.state=state;byId('compile').setAttribute('aria-busy',String(busy));const text=busy?'Checking your route…':ready?'Verify again':'Plan and verify';if(byId('compile').textContent!==text)byId('compile').textContent=text;}
+ function speedHint(){const target=Number(byId('targetSpeed').value),cap=Number(byId('maxSpeed').value);const clipped=Number.isFinite(target)&&Number.isFinite(cap)&&target>cap;byId('speedInputHint').textContent=clipped?'Requested cruise exceeds Never exceed ('+cap+' m/s). Raise that cap if intended; aircraft and motion limits still apply.':'Cruise is a preferred upper speed. The aircraft ceiling, 10% planning margin, turns and stops can reduce it.';byId('speedInputHint').classList.toggle('speed-warning',clipped);}
+ byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',()=>{syncSummary();speedHint();});byId('maxSpeed').addEventListener('input',speedHint);syncSummary();speedHint();
+ let runState='draft',startedAt=null,elapsedTimer=null;
+ const runInfo=node('div','run-info');runInfo.hidden=true;runInfo.setAttribute('role','status');
+ const pulse=node('span','run-pulse'),runText=node('span'),elapsed=node('span','run-elapsed');elapsed.id='runElapsed';
+ const cancel=node('button','text-button','Cancel check');cancel.id='cancelPlanning';cancel.onclick=()=>window.PX4Editor?.cancelPlanning();
+ runInfo.append(pulse,runText,elapsed,cancel);byId('busy').before(runInfo);
+ const messages={starting:'Starting the planning engine',loading:'Preparing the engine',checking:'Checking geometry and motion',stale:'Edits kept · previous check will be discarded'};
+ function syncState(){const busy=byId('busy').style.display==='block',ready=!results.hidden,error=byId('status').classList.contains('error');
+  if(!busy&&error)runState='error';
+  empty.hidden=busy||ready||error;const label=window.PX4RunState.labels[runState];
+  stateLabel.textContent=label;stateLabel.dataset.state=label;review.dataset.state=label;
+  byId('compile').setAttribute('aria-busy',String(busy));byId('compile').textContent=busy?'Checking your route…':ready?'Verify again':'Plan and verify';
+  runInfo.hidden=!busy;cancel.disabled=!busy;runText.textContent=messages[runState]||'Finishing checks';
+  if(busy&&startedAt===null){startedAt=performance.now();elapsedTimer=setInterval(()=>{elapsed.textContent=Math.floor((performance.now()-startedAt)/1000)+' s';},1000);}
+  if(!busy){clearInterval(elapsedTimer);startedAt=null;elapsed.textContent='';}
+ }
+ window.addEventListener('planner-state',e=>{runState=window.PX4RunState.next(runState,e.detail.state);syncState();});
+ window.addEventListener('planner-progress',e=>{if(byId('busy').style.display!=='block')return;const stage=/Loading|Preparing/.test(e.detail)?'loading':'checking';runState=window.PX4RunState.next(runState,stage);syncState();});
  new MutationObserver(syncState).observe(byId('status'),{childList:true,attributes:true});new MutationObserver(syncState).observe(results,{attributes:true,attributeFilter:['hidden']});new MutationObserver(syncState).observe(byId('busy'),{attributes:true,attributeFilter:['style']});syncState();
  // The core hides this details element in shape mode; only show its tab contents when drawing.
  window.addEventListener('DOMContentLoaded',()=>{const modeHint=node('p','muted','Point editing is available in Draw mode. Choose Draw in Flight settings.');pointEditor.parentElement.append(modeHint);new MutationObserver(()=>modeHint.hidden=!pointEditor.hidden).observe(pointEditor,{attributes:true,attributeFilter:['hidden']});modeHint.hidden=!pointEditor.hidden;});

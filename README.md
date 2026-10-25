@@ -1,12 +1,15 @@
 # PX4 Trajectory Studio and Research Controller
 
-Draw a route or answer the mission interview, complete a reusable aircraft
-profile, independently verify the trajectory, inspect its interpretation and
-confirm an exact-artifact Gazebo rehearsal, with a controlled simulator-only cancellation request if needed. Start with the
-[studio quickstart](docs/trajectory_studio_quickstart.md) and
-[aircraft setup](docs/aircraft_profiles.md). The separate
-[physical release guide](docs/physical_flight_release.md) documents the local
-qualification, prepared bundle, supervised launch and abort CLI.
+Draw an arbitrary path or use named waypoint missions, verify the reference,
+and compare it with retained simulator measurements. Browser planning and CSV
+playback are available without PX4. Connected execution requires a separately
+configured local simulator; the public page does not run Gazebo.
+
+Start with the [studio quickstart](docs/trajectory_studio_quickstart.md).
+The [25 October engineering audit](docs/conference_engineering_audit.md) records
+the speed-cap fix, independent constructive-artifact adapter, test evidence and
+remaining connected-SITL qualification. The experimental adapter is opt-in;
+the ordinary studio guard remains closed for stop/turn plans pending real tests.
 
 Planning supports 4–16 parallel rotors; the current PX4 execution adapter
 supports 4–12. Fixed-wing, VTOL and other autopilots are explicitly unsupported.

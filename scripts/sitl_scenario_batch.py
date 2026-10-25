@@ -79,6 +79,14 @@ def stage_case_artifacts(case, folder):
             raise ValueError(f"waypoint summary does not exist: {source}")
         summary = (folder / "waypoint_plan_summary.json").resolve()
         shutil.copy2(source, summary)
+    if case.get('experimental_stop_turn') is True:
+        if summary is None or case.get('planner_summary') is None:
+            raise ValueError('Experimental constructive staging requires its planner summary')
+        source = source_path(summary_value).parent
+        for filename in ('verification.json', 'intent.json', 'vehicle_model.json', 'environment.json'):
+            shutil.copy2(source / filename, folder / filename)
+        from mission_planner.stop_turn_execution import audit_stop_turn_artifacts
+        audit_stop_turn_artifacts(folder, trajectory, summary_path=summary)
     return trajectory, summary
 
 
@@ -151,6 +159,7 @@ def run_case(case, output, world, master):
             f"**{case.get('controller_overrides', {})!r}), "
             f"trajectory_path={str(trajectory_path) if trajectory_path else None!r}, "
             f"planner_summary_path={str(waypoint_summary_path) if waypoint_summary_path else None!r}, "
+            f"experimental_stop_turn={case.get('experimental_stop_turn') is True!r}, "
             f"acknowledgement_path={str(acknowledgement_path) if acknowledgement_path else None!r}"
             + release_argument + ")")
     events = []

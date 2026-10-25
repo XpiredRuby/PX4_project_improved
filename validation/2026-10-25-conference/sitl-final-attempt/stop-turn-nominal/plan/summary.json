@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "release_class": "SITL_ONLY",
+  "retiming": {
+    "selected_duration_s": 95.30000000000001,
+    "minimum_feasible_duration_s": null,
+    "limiting_constraint": "stop_and_turn",
+    "speed_limit_m_s": 0.9,
+    "conservative_speed_bound_m_s": 0.8816120907682619,
+    "conservative_acceleration_bound_m_s2": 0.19035310624129184,
+    "conservative_jerk_bound_m_s3": 0.08362956905236486,
+    "tilt_bound_deg": 1.11221615881087,
+    "minimum_thrust_bound_n": 19.85099564930067,
+    "maximum_thrust_bound_n": 20.63689041223779,
+    "loop_count": 1,
+    "segment_count": 5,
+    "yaw_mode": "fixed",
+    "limit_scale": 0.9,
+    "minimum_duration_scope": "chosen polynomial family; not a time lower bound"
+  },
+  "fidelity_policy": {
+    "hard_limit_m": 0.5,
+    "soft_target_fraction": 0.25,
+    "automatic_stops_added": true,
+    "pieces": [
+      {
+        "soft_target_m": 0.125,
+        "curve_bound_m": 0.0,
+        "soft_target_met": true,
+        "candidates_evaluated": 1,
+        "fallback": "stop_and_turn"
+      }
+    ]
+  },
+  "controller_trajectory_sha256": "6d7b18ea0b816671f2509ff74a39e7625f3160fce5459d9b65000c7885f8e29f",
+  "candidate_trajectory_sha256": "bd9ea516b155dfe1853bd8312c4240e8ca00ff957ffe55fc4edfd419c4f206eb",
+  "mission_intent_sha256": "cfd8cba8d185bb997fec7b8f45a4df046bf835708bc04db72d6dc52a8d84b57a",
+  "vehicle_model_sha256": "cb0dae701ad71b871497d309966d8bfa3eef2913fac74b59e1445ecbca42abe4",
+  "environment_sha256": "2ab3a45094ebdae6aae3f422cd727eb0471cc1754dd64845b4a253b86d5e9845",
+  "verification_report_sha256": "d59609514957fbc0830412b8def5771ffbe58353ef66f6df0154752791eb7eed",
+  "point_count": 1907,
+  "controller_cruise_height_m": 20.0,
+  "route_phases": [
+    {
+      "name": "LEG",
+      "start_time_s": 0.0,
+      "end_time_s": 19.85
+    },
+    {
+      "name": "LEG",
+      "start_time_s": 19.85,
+      "end_time_s": 39.7
+    },
+    {
+      "name": "LEG",
+      "start_time_s": 39.7,
+      "end_time_s": 59.550000000000004
+    },
+    {
+      "name": "LEG",
+      "start_time_s": 59.550000000000004,
+      "end_time_s": 79.4
+    },
+    {
+      "name": "LEG",
+      "start_time_s": 79.4,
+      "end_time_s": 95.30000000000001
+    }
+  ],
+  "duration_scope": "verified constructive trajectory; global optimality not established",
+  "planning_adjustments": {
+    "source_shape_error_bound_m": 0.0,
+    "method": "stop_and_turn",
+    "adjusted": true,
+    "adjustments": [
+      {
+        "code": "stop_and_turn",
+        "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+        "point_ids": []
+      }
+    ],
+    "requested_path_displacement_bound_m": 0.0,
+    "curve_error_bound_from_requested_m": 0.0,
+    "requested_rounding_m": 0.5,
+    "original_rounding_met": true,
+    "verification_scope": "effective intent; original request remains separate",
+    "optimality": "closest found in a bounded deterministic family; no global optimality claim",
+    "fallback_reason": "Direct stop/turn construction preserves this difficult drawing without an expensive spline search."
+  },
+  "speed_preferences": {
+    "requested_cruise_m_s": 1.0,
+    "requested_never_exceed_m_s": 1.25,
+    "effective_cruise_m_s": 1.0,
+    "effective_never_exceed_m_s": 1.25,
+    "aircraft_maximum_m_s": 3.0,
+    "planning_cap_m_s": 0.9,
+    "planned_route_peak_sampled_m_s": 0.8815953097888384,
+    "planned_route_mean_sampled_m_s": 0.4029708734721893,
+    "reasons": [
+      "planning_margin"
+    ],
+    "scope": "planned route reference; no measured flight",
+    "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+  }
+}

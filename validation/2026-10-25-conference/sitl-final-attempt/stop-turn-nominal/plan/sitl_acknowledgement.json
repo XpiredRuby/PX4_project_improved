@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "release_class": "SITL_ONLY",
+  "statement": "not a clearance to fly",
+  "acknowledged_by": "automated-sitl-regression-harness",
+  "expires_at": "2026-10-25T08:34:54.610819+00:00",
+  "controller_trajectory_sha256": "6d7b18ea0b816671f2509ff74a39e7625f3160fce5459d9b65000c7885f8e29f",
+  "candidate_trajectory_sha256": "bd9ea516b155dfe1853bd8312c4240e8ca00ff957ffe55fc4edfd419c4f206eb",
+  "verification_report_sha256": "d59609514957fbc0830412b8def5771ffbe58353ef66f6df0154752791eb7eed"
+}

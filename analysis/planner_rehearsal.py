@@ -19,7 +19,7 @@ from trajectory_quality import distribution
 from simulation_physics import assess_simulation_physics, interpolate_quaternions, quaternion_tilt_deg
 
 
-def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4):
+def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4, constructive_phases=None):
     checks = []
 
     def add(name, passed, detail):
@@ -45,14 +45,22 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=
          "last_s": float(query[-1]) if len(query) else None,
          "endpoint_sampling_tolerance_s": .1})
     reference = df.loc[mission, ["desired_x", "desired_y", "desired_z"]].to_numpy(dtype=float)
-    planned = np.column_stack([np.interp(query, times, plan[c]) for c in ("x", "y", "z")])
+    phase_states = None
+    if constructive_phases is not None:
+        project_root = str(Path(__file__).resolve().parents[1])
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+        from mission_planner.stop_turn_execution import sample_stop_turn_reference
+        phase_states = sample_stop_turn_reference(constructive_phases, np.clip(query, times[0], times[-1]))
+    planned = (phase_states[:, :3] if phase_states is not None else
+               np.column_stack([np.interp(query, times, plan[c]) for c in ("x", "y", "z")]))
     offsets = reference - planned
     bound = (len(offsets) > 0 and np.isfinite(offsets).all()
              and np.max(np.abs(offsets - offsets[0])) <= 1e-5)
     add("Runtime reference follows exact CSV with one translation", bound,
         {"launch_translation_ned_m": offsets[0].tolist() if len(offsets) else None})
     yaw_ref = df.loc[mission, "target_yaw_unwrapped"].to_numpy(dtype=float)
-    yaw_plan = np.interp(query, times, plan.yaw)
+    yaw_plan = phase_states[:, 3] if phase_states is not None else np.interp(query, times, plan.yaw)
     yaw_offsets = np.unwrap(yaw_ref - yaw_plan)
     add("Runtime heading follows exact CSV with one launch offset",
         len(yaw_offsets) > 0 and np.isfinite(yaw_offsets).all()
@@ -144,6 +152,10 @@ def assess_aircraft_envelope(df, physical, profile, budget):
     return checks
 
 
+def load_json_stop_turn(path):
+    return json.loads(Path(path).read_text()).get('retiming', {}).get('limiting_constraint') == 'stop_and_turn'
+
+
 def assess_case(folder):
     from pyulog import ULog
     folder = Path(folder)
@@ -179,9 +191,22 @@ def assess_case(folder):
     configuration = json.loads((folder / "simulation_configuration.json").read_text())
     binding = configuration.get("simulation_binding")
     rotor_count = len(binding["rotors"]) if binding else 4
+    constructive_phases = None
+    constructive_audit = None
+    summary_path = folder / 'plan/summary.json'
+    if summary_path.is_file() and load_json_stop_turn(summary_path):
+        project_root = str(Path(__file__).resolve().parents[1])
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+        from mission_planner.stop_turn_execution import audit_stop_turn_artifacts
+        constructive_audit = audit_stop_turn_artifacts(folder / 'plan')
+        constructive_phases = json.loads((folder / 'plan/verification.json').read_text())['phases']
     result = assess_frames(df, pd.read_csv(plan_path), physical, yaw, velocity,
                            json.loads((run / "audit.json").read_text()),
-                           json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count)
+                           json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count,
+                           constructive_phases=constructive_phases)
+    if constructive_audit is not None:
+        result["constructive_reference_audit"] = constructive_audit
     model_file = folder / "plan/vehicle_model.json"
     if not model_file.exists() and folder.name == "five-stop-baseline":
         # The legacy five-stop regression uses the same x500 SITL model.
@@ -271,6 +296,12 @@ def assess_case(folder):
         "sitl_ground_truth.py": hashlib.sha256(Path(sitl_ground_truth.__file__).read_bytes()).hexdigest(),
         "simulation_physics.py": hashlib.sha256((Path(__file__).parent / "simulation_physics.py").read_bytes()).hexdigest(),
     }
+    if constructive_phases is not None:
+        adapter_path = Path(__file__).resolve().parents[1] / 'mission_planner/stop_turn_execution.py'
+        result['assessment_implementation_sha256']['stop_turn_execution.py'] = hashlib.sha256(adapter_path.read_bytes()).hexdigest()
+        for filename in ('summary.json', 'verification.json', 'intent.json', 'vehicle_model.json', 'environment.json'):
+            path = folder / 'plan' / filename
+            result['evidence_sha256']['plan/'+filename] = hashlib.sha256(path.read_bytes()).hexdigest()
     (folder / "assessment.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
     return result
 

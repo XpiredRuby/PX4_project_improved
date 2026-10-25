@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import csv
+import io
 import json
 import math
 from pathlib import Path
@@ -27,8 +28,49 @@ def preview(payload: dict) -> dict:
         clean.pop("planning_mode")
         result = closest_preview(clean, _preview_strict)
         result['requested_document'] = deepcopy(clean['document'])
-        return result
-    return _preview_strict(payload)
+    else:
+        result = _preview_strict(payload)
+    if result.get('accepted'):
+        result['summary']['speed_preferences'] = speed_preferences(payload, result)
+    return result
+
+
+def speed_preferences(payload, result):
+    """Explain reference speed using every route sample, never display decimation.
+
+    A requested cruise is an upper preference in the current conservative timer,
+    not a constant-speed tracking guarantee. Aircraft limits remain unchanged.
+    """
+    document = payload['document']
+    requested = document['motion'] if payload['source'] == 'drawing' else document
+    effective = result['intent']['motion']
+    rows = list(csv.DictReader(io.StringIO(result['trajectory_csv'])))
+    speeds = [math.sqrt(sum(float(r[k])**2 for k in ('vx', 'vy', 'vz'))) for r in rows]
+    times = [float(r['time']) for r in rows]
+    duration = times[-1] - times[0]
+    distance = sum((b-a)*(u+v)/2 for a,b,u,v in zip(times, times[1:], speeds, speeds[1:], strict=False))
+    aircraft = result['vehicle_model']['maximum_speed_m_s']
+    cap = effective['maximum_speed_m_s']
+    target = effective.get('target_speed_m_s')
+    reasons = []
+    original_target = requested.get('target_speed_m_s')
+    if original_target is not None and original_target > requested['maximum_speed_m_s']:
+        reasons.append('requested_speed_cap')
+    if max(requested['maximum_speed_m_s'], original_target or 0.) > aircraft:
+        reasons.append('aircraft_speed_cap')
+    reasons.append('planning_margin')
+    peak = max(speeds)
+    planned_cap = result['summary']['retiming']['speed_limit_m_s']
+    if peak < .95 * planned_cap:
+        reasons.append('route_dynamics_and_stops')
+    return dict(requested_cruise_m_s=original_target,
+                requested_never_exceed_m_s=requested['maximum_speed_m_s'],
+                effective_cruise_m_s=target, effective_never_exceed_m_s=cap,
+                aircraft_maximum_m_s=aircraft, planning_cap_m_s=planned_cap,
+                planned_route_peak_sampled_m_s=peak,
+                planned_route_mean_sampled_m_s=distance/duration if duration else 0.,
+                reasons=reasons, scope='planned route reference; no measured flight',
+                semantics='Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion.')
 
 
 def _preview_strict(payload: dict, *, loops_override=None) -> dict:

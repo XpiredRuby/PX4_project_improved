@@ -64,10 +64,11 @@
  const $=id=>document.getElementById(id),make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
  let panel,transport,overlay,scene,rows=[],routeRows=[],events=[],result,measured=null,current=0,playing=false,frame=0,lastWall=null,mapState=null,sceneView='3d',fit=null,generation=0;
  const clock=t=>{const m=Math.floor(t/60),s=(t-m*60).toFixed(2).padStart(5,'0');return m+':'+s;};
- function pause(){playing=false;cancelAnimationFrame(frame);lastWall=null;if($('motionPlay'))$('motionPlay').textContent='Play';}
+ function playbackState(){if(!transport)return;const state=playing?'playing':rows.length&&current>=rows.at(-1).time?'complete':current>0?'paused':'ready';transport.dataset.state=state;$('motionPlaybackState').textContent={playing:'Playing reference',complete:'Reference complete',paused:'Paused',ready:'Ready to play'}[state];$('motionPlay').setAttribute('aria-pressed',String(playing));}
+ function pause(){playing=false;cancelAnimationFrame(frame);lastWall=null;if($('motionPlay'))$('motionPlay').textContent='Play';playbackState();}
  function seek(t){if(!rows.length)return;current=Math.max(rows[0].time,Math.min(rows.at(-1).time,t));render();}
  function tick(wall){if(!playing)return;if(lastWall!==null)current=advance(current,(wall-lastWall)/1000,Number($('motionRate').value),rows.at(-1).time);lastWall=wall;render();if(current>=rows.at(-1).time){pause();return;}frame=requestAnimationFrame(tick);}
- function togglePlay(){if(playing){pause();return;}if(current>=rows.at(-1).time)current=rows[0].time;playing=true;lastWall=null;$('motionPlay').textContent='Pause';frame=requestAnimationFrame(tick);}
+ function togglePlay(){if(playing){pause();return;}if(current>=rows.at(-1).time)current=rows[0].time;playing=true;lastWall=null;$('motionPlay').textContent='Pause';playbackState();frame=requestAnimationFrame(tick);}
  function step(direction){pause();const i=indexAt(rows,current),next=direction>0?i+1:(Math.abs(rows[i].time-current)<1e-8?i-1:i);seek(rows[Math.max(0,Math.min(rows.length-1,next))].time);}
  function line(ctx,data,project,color,width=2){if(!data.length)return;ctx.beginPath();for(const [i,row] of data.entries()){const q=project(row);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
  function marker(ctx,point,row,ui,color='#f2cf86'){
@@ -116,7 +117,7 @@
   c.fillStyle='#d8e4e6';c.fillText((-row.z).toFixed(2)+' m',Math.min(690,pose[0]+26),Math.max(40,pose[1]-10));c.fillStyle='#9cb3c0';c.fillText('Equal axes · drone symbol enlarged',24,360);
  }
  function render(){
-  if(!api.ready)return;const row=sampleAt(rows,current),att=attitude(row),speed=Math.hypot(row.vx||0,row.vy||0,row.vz||0);
+  if(!api.ready)return;playbackState();const row=sampleAt(rows,current),att=attitude(row),speed=Math.hypot(row.vx||0,row.vy||0,row.vz||0);
   $('motionTime').textContent=clock(current)+' / '+clock(rows.at(-1).time);$('motionSeek').value=String(current);$('motionSeek').setAttribute('aria-valuetext',clock(current)+' · '+stateLabel(row,events));
   $('motionPhase').textContent=stateLabel(row,events);$('motionHeight').textContent=(-row.z).toFixed(2)+' m';$('motionSpeed').textContent=speed.toFixed(2)+' m/s';$('motionHeading').textContent=((row.yaw*DEG%360+360)%360).toFixed(1)+'°';
   $('motionLive').textContent=`${stateLabel(row,events)} · Height ${(-row.z).toFixed(2)} m · Speed ${speed.toFixed(2)} m/s · Heading ${((row.yaw*DEG%360+360)%360).toFixed(1)}°`;
@@ -148,7 +149,7 @@
   const legend=make('div','motion-legend');legend.innerHTML='<span class="motion-key-current">Drone now + recent motion</span><span class="motion-key-return">Return home</span><span class="motion-key-measured">Imported measurement</span>';panel.insertBefore(legend,panel.querySelector('#motionEvents'));
   transport=make('div','motion-transport');transport.hidden=true;transport.setAttribute('aria-label','Playback controls');transport.append(make('p','motion-live',''));transport.firstChild.id='motionLive';transport.append(panel.querySelector('.motion-controls'),panel.querySelector('label[for="motionSeek"]'),panel.querySelector('#motionSeek'));document.querySelector('.map-surface').before(transport);
   const facing=make('div','motion-facing'),compass=make('div','motion-compass');compass.id='motionCompass';compass.setAttribute('role','img');compass.innerHTML='<span>N</span><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="#68828d"/><g id="motionCompassArrow"><path d="M24 6 L34 36 L24 30 L14 36 Z" fill="#f2cf86" stroke="#13232a" stroke-width="2"/><path d="M24 4 V9" stroke="#f2cf86" stroke-width="2"/></g></svg>';
-  facing.append(compass,$('motionLive'));transport.prepend(facing);
+  const playbackBadge=make('span','playback-state');playbackBadge.id='motionPlaybackState';playbackBadge.setAttribute('role','status');facing.append(compass,$('motionLive'),playbackBadge);transport.prepend(facing);
   editor.append(panel);scene=$('motionScene');$('motionPlay').onclick=togglePlay;$('motionPrevious').onclick=()=>step(-1);$('motionNext').onclick=()=>step(1);$('motionSeek').oninput=()=>{pause();seek(Number($('motionSeek').value));};
   $('motionEvents').onchange=()=>{if($('motionEvents').value!==''){pause();seek(Number($('motionEvents').value));}};
   for(const [id,view] of [['motion3d','3d'],['motionHeightView','height']])$(id).onclick=()=>{sceneView=view;$('motion3d').setAttribute('aria-pressed',String(view==='3d'));$('motionHeightView').setAttribute('aria-pressed',String(view==='height'));render();};

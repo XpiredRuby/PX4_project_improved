@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "vehicle_model_id": "px4-x500-sitl-v1",
+  "configuration": "PX4 v1.17 Gazebo x500 SDF aggregate; simplified paired-rotor model; not physically identified",
+  "mass_kg": 2.0643076923076924,
+  "maximum_speed_m_s": 3.0,
+  "maximum_acceleration_m_s2": 1.0,
+  "maximum_jerk_m_s3": 1.5,
+  "maximum_yaw_rate_deg_s": 45.0,
+  "maximum_yaw_acceleration_deg_s2": 60.0,
+  "maximum_yaw_jerk_deg_s3": 120.0,
+  "maximum_tilt_deg": 25.0,
+  "maximum_body_rate_deg_s": 90.0,
+  "minimum_thrust_n": 0.0,
+  "maximum_thrust_n": 34.19432,
+  "rotor_thrust_minimum_n": 0.0,
+  "rotor_thrust_maximum_n": 8.54858,
+  "yaw_inertia_kg_m2": 0.04399995371400395,
+  "yaw_torque_per_thrust_m": 0.016,
+  "identified_for_physical_flight": false
+}

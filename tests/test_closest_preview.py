@@ -42,7 +42,7 @@ class ClosestPreviewTests(unittest.TestCase):
         corners = [(0,0),(8,0),(0,3),(8,6),(1,8),(7,8),(8,8),(1,8),
                    (1,11),(7,11),(7,14),(1,14)]
         dense = [corners[0]]
-        for a,b in zip(corners,corners[1:]):
+        for a,b in zip(corners,corners[1:], strict=False):
             dense.extend((a[0]+(b[0]-a[0])*i/80,a[1]+(b[1]-a[1])*i/80) for i in range(1,81))
         request = drawing(dense)
         result = preview(dict(request,planning_mode="closest"))
@@ -143,7 +143,6 @@ class ClosestPreviewTests(unittest.TestCase):
         self.assertLess(result["intent"]["path"]["points"][0]["down_m"],0.)
 
     def test_periodic_two_lap_visit_count_is_preserved(self):
-        request=drawing([(0,0),(0,2),(2,0),(0,0)])
         # Interview converter supplies loop count; exercise its full preparation.
         doc=dict(schema_version=1,mission_id="circle-test",vehicle_model_id="px4-x500-sitl-v1",
                  environment_id="empty-world-v1",pattern="circle",altitude_m=5.,maximum_deviation_m=.5,

@@ -35,3 +35,19 @@ test('dense handwriting payload reaches the worker instead of the old 64 KiB lim
  const worker=s.workers[0];worker.onmessage({data:{id:worker.request.id,result:{accepted:true}}});
  assert.equal((await result).status,200);assert.equal(s.requests.length,0);
 });
+test('cancellation terminates only the active worker and stale errors cannot kill a retry',async()=>{
+ const s=setup(),controller=new AbortController();
+ const first=s.window.fetch('/api/preview',{body:'{}',signal:controller.signal});
+ const old=s.workers[0];controller.abort();
+ assert.equal((await first).status,503);assert.equal(old.stopped,true);assert.equal(s.timers.size,0);
+ const retry=s.window.fetch('/api/preview',{body:'{}'}),current=s.workers[1];
+ old.onmessage({data:{id:old.request.id,result:{accepted:true}}});old.onerror();
+ assert.equal(current.stopped,undefined);assert.equal(s.timers.size,1);
+ current.onmessage({data:{id:current.request.id,result:{accepted:true}}});
+ assert.equal((await retry).status,200);
+});
+test('already aborted request does not allocate a worker',async()=>{
+ const s=setup(),controller=new AbortController();controller.abort();
+ assert.equal((await s.window.fetch('/api/preview',{body:'{}',signal:controller.signal})).status,503);
+ assert.equal(s.workers.length,0);
+});
