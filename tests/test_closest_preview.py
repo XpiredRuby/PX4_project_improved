@@ -133,14 +133,12 @@ class ClosestPreviewTests(unittest.TestCase):
         self.assertEqual(result["intent"]["path"]["points"][0]["north_m"],0.)
         self.assertGreaterEqual(result["planning_adjustments"]["requested_path_displacement_bound_m"],5.)
 
-    def test_non_positive_preferences_are_adjusted_without_rejecting_geometry(self):
+    def test_non_positive_speed_is_refused_without_mutating_the_drawing(self):
         request=drawing([(0,0),(0,1)],maximum_speed_m_s=0.,target_speed_m_s=-1.)
-        for p in request["document"]["path"]["points"]:
-            p["down_m"]=1.
-        result=closest_preview(request,refused)
-        self.assertTrue(result["accepted"])
-        self.assertGreater(result["intent"]["motion"]["maximum_speed_m_s"],0.)
-        self.assertLess(result["intent"]["path"]["points"][0]["down_m"],0.)
+        original=deepcopy(request)
+        with self.assertRaisesRegex(ValueError,"Maximum speed must be greater than zero"):
+            closest_preview(request,refused)
+        self.assertEqual(request,original)
 
     def test_periodic_two_lap_visit_count_is_preserved(self):
         # Interview converter supplies loop count; exercise its full preparation.

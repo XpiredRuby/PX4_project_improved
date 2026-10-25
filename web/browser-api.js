@@ -3,27 +3,32 @@
   const originalFetch=window.fetch.bind(window);
   let worker,sequence=0,pending;
   function reset(){worker?.terminate();worker=undefined;}
+  function fail(message){if(pending){const item=pending;pending=undefined;clearTimeout(item.timer);item.cleanup?.();item.reject(Error(message));}reset();}
   function run(operation,payload,signal){
     if(signal?.aborted)return Promise.reject(Error('Planning cancelled. Your drawing is kept.'));
     if(pending)return Promise.reject(Error('A planning check is already running. Please wait.'));
     if(!worker){
-      worker=new Worker('/planner-worker.js',{type:'module'});
+      const build=document.querySelector?.('meta[name="px4-build"]')?.content||'';
+      worker=new Worker('/planner-worker.js'+(build?'?build='+encodeURIComponent(build):''),{type:'module'});
       const activeWorker=worker;
       worker.onmessage=({data})=>{
         if(worker!==activeWorker)return;
+        if(!data||typeof data!=='object'){fail('The planning engine sent an unreadable result. Try again.');return;}
         if(data.progress){window.dispatchEvent(new CustomEvent('planner-progress',{detail:data.progress}));return;}
         if(!pending||data.id!==pending.id)return;
         const item=pending;pending=undefined;clearTimeout(item.timer);item.cleanup?.();
         if(data.error){reset();item.reject(Error(data.error));}else item.resolve(data.result);
       };
-      worker.onerror=()=>{if(worker!==activeWorker)return;if(pending){const item=pending;pending=undefined;clearTimeout(item.timer);item.cleanup?.();item.reject(Error('The planning engine could not load. Check your internet connection, then try again.'));}reset();};
+      worker.onerror=()=>{if(worker!==activeWorker)return;fail('The planning engine could not load. Check your internet connection, then try again.');};
+      worker.onmessageerror=()=>{if(worker!==activeWorker)return;fail('The planning engine result could not be read. Try again.');};
     }
     return new Promise((resolve,reject)=>{
       const id=++sequence;
       const timer=setTimeout(()=>{pending=undefined;signal?.removeEventListener('abort',abort);reset();reject(Error('This route took too long on this device. Try fewer points or a simpler route, then plan again.'));},120000);
       const abort=()=>{if(pending?.id!==id)return;pending=undefined;clearTimeout(timer);signal?.removeEventListener('abort',abort);reset();reject(Error('Planning cancelled. Your drawing is kept.'));};
       const cleanup=()=>signal?.removeEventListener('abort',abort);
-      pending={id,timer,resolve,reject,cleanup};signal?.addEventListener('abort',abort,{once:true});worker.postMessage({id,operation,payload});
+      pending={id,timer,resolve,reject,cleanup};signal?.addEventListener('abort',abort,{once:true});
+      try{worker.postMessage({id,operation,payload});}catch(error){fail('The planning engine could not receive this request. Try again.');}
     });
   }
   function json(value,status=200){return new Response(JSON.stringify(value),{status,headers:{'Content-Type':'application/json'}});}

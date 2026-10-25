@@ -69,3 +69,18 @@ Qualify higher-speed native tracking with new evidence before changing them.
 Cancellation of a simulator flight requests native landing and must finish with
 fresh landed/disarmed/stopped-propulsion evidence. Cancelling a browser planning
 check only stops computation. Physical flight is not qualified or authorized.
+
+### Explicit speed policy and editable projects
+
+Flight shows requested cruise and the conservative planning cap. Advanced →
+Speed limits defaults to Aircraft model cap; Custom Never exceed is an optional
+stricter preference. A custom cap below cruise must be resolved before planning.
+Old drafts preserve their cap with a legacy notice; Use aircraft model cap
+replaces it without losing the drawing. A 2 m/s cruise preference under the 3 m/s
+model still has a 1.8 m/s planning cap due to the retained 10% margin, and turns or
+stops can lower the achieved speed further. These are planned references.
+
+Advanced also exports/imports editable route projects. Imported projects require
+new planning checks and carry no simulation authority. Saved version-2 projects
+retain the explicit speed policy. The footer build ID identifies the portable
+source bundle. See the app audit for remaining live file-picker validation.

@@ -17,3 +17,15 @@ No Gazebo/PX4 process runs in Sites or in this browser. No simulator endpoint or
 - Add secure result storage and browser status polling. An animation or a downloaded CSV must never be reported as a Gazebo run.
 
 Nothing here controls physical aircraft. All output remains SITL_ONLY. Existing native Gazebo functionality remains on the project branch; the public site does not pretend to provide it.
+
+The current portable build exposes a deterministic build ID in its footer and
+`build-info.json`. Worker manifest mismatches refuse compilation and request a
+refresh. Rebuilds stage all files first, then replace recognized build outputs
+so deleted compiler files cannot linger. Restart a running static preview after
+rebuilding because its server may hold the old output directory open.
+
+Speed policy is explicit: Aircraft model cap by default, optional Custom Never
+exceed in Advanced. Legacy draft caps are retained and flagged for review;
+conflicting custom caps cannot silently rewrite cruise in the browser. Editable
+projects carry geometry/preferences only. See `docs/app_release_audit.md` and
+`validation/2026-10-25-app-audit/README.md` for verification and known limits.

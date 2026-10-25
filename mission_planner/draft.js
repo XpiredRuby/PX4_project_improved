@@ -13,6 +13,7 @@
     snapshot() { return copy({points: this.points, kinds: this.kinds, closure: this.closure}); }
     restore(state) { Object.assign(this, copy(state)); this.gesture = this.pending = null; }
     validate(points, kinds, closure) {
+      if (!Array.isArray(points)||!Array.isArray(kinds)||points.length!==kinds.length||kinds.some(k=>!['ordinary','stop','exact'].includes(k))||!['open_stop','periodic'].includes(closure)) throw Error('Invalid route points, marks or ending.');
       if (!points.length || distance(points[0], [0, 0]) > 1e-9) throw Error('The route must start at START.');
       for (const p of points) {
         if (p.length !== 2 || !p.every(Number.isFinite)) throw Error('Use valid numbers for each point.');
@@ -23,10 +24,14 @@
       if (!this.bestEffort && closure === 'periodic' && kinds.slice(1, -1).some(k => k !== 'ordinary')) throw Error('Loops cannot contain marked stops or exact points yet. Use an open route or remove those marks.');
     }
     commit(points, kinds, closure = this.closure) {
+      if(!Array.isArray(points)||!Array.isArray(kinds)||points.length!==kinds.length||kinds.some(k=>!['ordinary','stop','exact'].includes(k)))throw Error('Invalid route points or marks. Your previous drawing is preserved.');
       if (this.bestEffort) {
         const limit = this.maxPoints - (closure === 'periodic' ? 1 : 0);
+        const mandatory = kinds.filter((k,i)=>i===0||i===points.length-1||k!=='ordinary').length;
+        if(mandatory>limit)throw Error('Too many marked points for this device budget. Split the route; your marked stops and previous drawing are preserved.');
         while (points.length > limit) {
-          const indices = points.map((_, i) => i).filter(i => i === 0 || i === points.length-1 || i % 2 === 0);
+          let ordinary=0;
+          const indices = points.map((_, i) => i).filter(i => i === 0 || i === points.length-1 || kinds[i]!=='ordinary' || ordinary++ % 2 === 1);
           points = indices.map(i => points[i]); kinds = indices.map(i => kinds[i]);
           this.samplingNotice = 'Dense mouse samples were thinned in order to keep drawing responsive. Review the displayed drawing before planning.';
         }

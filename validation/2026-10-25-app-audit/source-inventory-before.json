@@ -1,0 +1,1088 @@
+{
+  "baseline": "7459067894ccfe1a3a7a19ef3a8c7bc45fee4021",
+  "scope": "Tracked active source, config, tests and CI; archives inventoried separately by Git, not edited. Syntax/import/safety-pattern scan across active source; focused review of exposed interfaces, geometry/timing/verification boundaries, UI and build. This is not proof of defect absence or connected flight qualification.",
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "876f01c10db9ad5ce5ef7a06db221fe3dd69af23589e6ba0866e01948605a225",
+      "lines": 36
+    },
+    {
+      "path": ".github/workflows/validation.yml",
+      "sha256": "219c38b6365381c72562c07640b9851733f49a13294d8cfb22e41bb2bfe47820",
+      "lines": 56
+    },
+    {
+      "path": "analysis/analyze_fault_run.py",
+      "sha256": "51381b6ffaa894c87df008395067b2e46ba516fbbc73b7a19e0455336e837498",
+      "lines": 429,
+      "functions": 15
+    },
+    {
+      "path": "analysis/analyze_run.py",
+      "sha256": "4fc6ca958384436f1390a85afc8d9388ade5e4729698e0b7336e10a71f72de2d",
+      "lines": 1711,
+      "functions": 31
+    },
+    {
+      "path": "analysis/inertial_outage_replay.py",
+      "sha256": "cf624e989f81b6eedcb7188f2dcb8ab42a6f3b7d9791e75bd21dd3107f42de4d",
+      "lines": 115,
+      "functions": 5
+    },
+    {
+      "path": "analysis/planner_rehearsal.py",
+      "sha256": "96bbaeb6cc7080a6edb299dbcf39cd1aaad52bf9641a604e9e754facdcc896a3",
+      "lines": 313,
+      "functions": 7
+    },
+    {
+      "path": "analysis/plot_sitl_comparison.py",
+      "sha256": "cd111e32b82d4098b8a6a48f3c5b0cf9fbfd83e1f672936bbd066a6cc5d84fe6",
+      "lines": 50,
+      "functions": 1
+    },
+    {
+      "path": "analysis/presentation_plots.py",
+      "sha256": "907593e4012eb9f7ebc03797c3368d6aa46f74d3f33038bf13f04c0899af3afe",
+      "lines": 417,
+      "functions": 15
+    },
+    {
+      "path": "analysis/retained_tracking_report.py",
+      "sha256": "fcb27b64192ecaace194a7301f335c51636ee3c862ac81ec2e1c28edfaffdf58",
+      "lines": 233,
+      "functions": 3
+    },
+    {
+      "path": "analysis/simulation_physics.py",
+      "sha256": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a",
+      "lines": 106,
+      "functions": 3
+    },
+    {
+      "path": "analysis/sitl_ground_truth.py",
+      "sha256": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+      "lines": 199,
+      "functions": 9
+    },
+    {
+      "path": "analysis/trajectory_quality.py",
+      "sha256": "8f4f137fd37330aae67cfd7b1dcf64684ee29711f16ea58ca6c19d3433ddf22a",
+      "lines": 82,
+      "functions": 3
+    },
+    {
+      "path": "analysis/waypoint_mission_audit.py",
+      "sha256": "89d2d5d3498f80ef32611cdace29f189dcf6940ff7c3e07942d4da5661bac608",
+      "lines": 231,
+      "functions": 5
+    },
+    {
+      "path": "config/planner/aircraft/hex.json",
+      "sha256": "df8e2cda37aad9d0633dc585d0d2a00cec2cffd34da06adeced39fb32a50b5dc",
+      "lines": 42
+    },
+    {
+      "path": "config/planner/aircraft/octo.json",
+      "sha256": "93871e338858960f98fc47a4c0d2834433a4ae950a55c974865a7e0cc96f544e",
+      "lines": 42
+    },
+    {
+      "path": "config/planner/aircraft/quad.json",
+      "sha256": "98b0f6f29b5d6319b62bec872de1cc7a4d3d3f9f8066352d5e460b514171f998",
+      "lines": 42
+    },
+    {
+      "path": "config/planner/aircraft/x500.json",
+      "sha256": "ef7ed4a629520bbb82f57b0c52a460069c3a85b17d4d6c4460cf990e04eaaf5f",
+      "lines": 68
+    },
+    {
+      "path": "config/planner/empty_world_environment.json",
+      "sha256": "3e8e46797794ee4058040c6afee67ededefb41aab79ac08db5a2dd3ce977cc23",
+      "lines": 17
+    },
+    {
+      "path": "config/planner/x500_sitl_vehicle_model.json",
+      "sha256": "b2882fc03dedd718184d083127fafff754b9ccbb673e0d47c49441ced0069e2c",
+      "lines": 21
+    },
+    {
+      "path": "controller/PID_Controller.py",
+      "sha256": "a62984b70bfe4212cd0e25fa7a540fa8ddb5a6ddbe203330a228702c8aca9400",
+      "lines": 132,
+      "functions": 3
+    },
+    {
+      "path": "controller/PID_position_new.py",
+      "sha256": "e8580f47cd01a034da5cb1e15074891dd0c5206c8d9c0ba68c35a52423f9a212",
+      "lines": 2752,
+      "functions": 74
+    },
+    {
+      "path": "controller/VehicleState.py",
+      "sha256": "135c432ed65f377a4df2680b2d0f93112af12a67f14c7545bf68a758c852b2fe",
+      "lines": 365,
+      "functions": 19
+    },
+    {
+      "path": "controller/flight_logger.py",
+      "sha256": "f1420180a5a8b9b8979d301be7ede3b6f6aca80cf363518ede6223dffa680b1d",
+      "lines": 97,
+      "functions": 9
+    },
+    {
+      "path": "controller/magless_bootstrap.py",
+      "sha256": "80a6904988a84892aa07dbcf812589a780e3ae00f07e1dd15e34b8ff86bf9dd7",
+      "lines": 459,
+      "functions": 10
+    },
+    {
+      "path": "controller/minimum_jerk.py",
+      "sha256": "8bdb71e9790ed5d342222a3d8c0f9875f209d53e4d290b4fce0f5a3c82766400",
+      "lines": 264,
+      "functions": 9
+    },
+    {
+      "path": "controller/mission_config.py",
+      "sha256": "e1fa6642e5e5e2a84f338a0f03b4850f753cd2df4c148a6147458c4b9e389e99",
+      "lines": 293,
+      "functions": 1
+    },
+    {
+      "path": "controller/mission_state.py",
+      "sha256": "42589304ddd951eba6bf3708c00b443cd2b027954d24200fb89d658d49babd05",
+      "lines": 74,
+      "functions": 2
+    },
+    {
+      "path": "controller/offboard_runner.py",
+      "sha256": "8e315429e5c565579e1eb2a02ee1bf8e2066f8dfdaa9afaf67a53fc84226c413",
+      "lines": 923,
+      "functions": 28
+    },
+    {
+      "path": "controller/position_prediction.py",
+      "sha256": "06d308aefa8fffe76e83bca16a672ea6e0c52512e4074d550044b931db68bea9",
+      "lines": 17,
+      "functions": 1
+    },
+    {
+      "path": "controller/px4_policy.py",
+      "sha256": "74c4d7d131b2734d823e4504bc875a2e3b08dc4c3ef195194c9503b3f6b0eed6",
+      "lines": 273,
+      "functions": 5
+    },
+    {
+      "path": "controller/run_record.py",
+      "sha256": "34726b3dcfc01f8101f7756c0d9ebea1287163efb9b709a6ba75ce349ae28074",
+      "lines": 150,
+      "functions": 8
+    },
+    {
+      "path": "controller/touchdown_quality.py",
+      "sha256": "d7bf62a66b8e6a5c6d5590bfd71b16fa60600b9e8f77c3a31b12e262e738b07b",
+      "lines": 39,
+      "functions": 1
+    },
+    {
+      "path": "controller/tracking_governor.py",
+      "sha256": "5390c1bbf11a3710cef73c249eeaff1137528923405c1605748baea2d3c28a3e",
+      "lines": 31,
+      "functions": 2
+    },
+    {
+      "path": "controller/trajectory.py",
+      "sha256": "d57cb3e5f9964dec076a196f6700b21ce7bf39f1f253459242563a7756dbaa1a",
+      "lines": 208,
+      "functions": 8
+    },
+    {
+      "path": "docs/physical_aircraft_intake.template.json",
+      "sha256": "b293c869314526300eb4d32cfad66cdd78b7199b9c1bcc9d25d6add5fa7a7a4f",
+      "lines": 50
+    },
+    {
+      "path": "evidence/planner/2026-10-19/aircraft_profiles/qualification.json",
+      "sha256": "a0c882b00271362192a01a5089bb522c504de62cfc9cf8ae01bf19267fb268fa",
+      "lines": 3401
+    },
+    {
+      "path": "evidence/planner/2026-10-19/nominal_tracks.json",
+      "sha256": "ec8ccd683ec10c4e2b2268899808bd9fb7070378e782dc71706196f4e54149e2",
+      "lines": 4074
+    },
+    {
+      "path": "evidence/planner/2026-10-19/physical_release_software/qualification.json",
+      "sha256": "8a7cdd72ea67fb23e7064a4407f3c087c3c19854955fbeca8f4619e419b407fa",
+      "lines": 1051
+    },
+    {
+      "path": "evidence/planner/2026-10-19/qualification.json",
+      "sha256": "95a6a1e5a204fcdf060604c8ae30768f2bc05b2c0aa0d8a004c91dc976c1e695",
+      "lines": 4323
+    },
+    {
+      "path": "mission_planner/__init__.py",
+      "sha256": "7dbc0e4ce5365ab5a03440d050860928866dd9b15bc25e11b5140e2e98778530",
+      "lines": 53,
+      "functions": 0
+    },
+    {
+      "path": "mission_planner/acceptance_cases.py",
+      "sha256": "ef17294abd0f4a4318cf6e5beb24318301c978f88532c99064830f3454055442",
+      "lines": 62,
+      "functions": 2
+    },
+    {
+      "path": "mission_planner/acknowledgement.py",
+      "sha256": "f2d05edf9ebb71bd9cd6f813979866aa49261ce888063e1140e58a64630e4c6c",
+      "lines": 168,
+      "functions": 8
+    },
+    {
+      "path": "mission_planner/aircraft.py",
+      "sha256": "bbcc73b2c1b6279718ce47a4eabb1ac8f373082b6ce594990dca9b47ce4ef805",
+      "lines": 295,
+      "functions": 8
+    },
+    {
+      "path": "mission_planner/allocation.py",
+      "sha256": "397c1558c103d6ae6b0e852e43b9cac6005963f9b543785a0cb25e3b2c902cc0",
+      "lines": 116,
+      "functions": 6
+    },
+    {
+      "path": "mission_planner/closest.py",
+      "sha256": "98b87d129d8d427727cb2b09b2d22433db2b2942900c8700b31b90bb14d0e344",
+      "lines": 625,
+      "functions": 16
+    },
+    {
+      "path": "mission_planner/contracts.py",
+      "sha256": "ec683b6f402c18d52f9f0f800c7dcbd3f02c8487e4e82b981e61793485b30c77",
+      "lines": 917,
+      "functions": 35
+    },
+    {
+      "path": "mission_planner/draft.js",
+      "sha256": "f8d4b3808bde7fe9177ac303c08c2c7906dea72a1ddbd497b2add2be89bb4a25",
+      "lines": 98
+    },
+    {
+      "path": "mission_planner/editor.html",
+      "sha256": "fafb3dc1a431d3b00c0a10627e9677219055cea56a6f51faceeaf50c6ce65822",
+      "lines": 365
+    },
+    {
+      "path": "mission_planner/editor.py",
+      "sha256": "5a9559dc7cdb099f59297832421fbe1f3d6286adf73f3427d1827baf7bc088d7",
+      "lines": 201,
+      "functions": 6
+    },
+    {
+      "path": "mission_planner/explain.py",
+      "sha256": "7ed644c58b2db3c8353946ed0c4a831876426ad2f25f793095d8dd916ed846e0",
+      "lines": 33,
+      "functions": 2
+    },
+    {
+      "path": "mission_planner/export.py",
+      "sha256": "40d63942e22fcc3370375b9f8fe34ea8eb4a1aa131261948c1e0c96bc29b85f1",
+      "lines": 69,
+      "functions": 1
+    },
+    {
+      "path": "mission_planner/flatness.py",
+      "sha256": "11aed0ec59e91f428219e573ff9eeae832c293806de57ea685ad95e8bf12fb6a",
+      "lines": 145,
+      "functions": 6
+    },
+    {
+      "path": "mission_planner/flight_preflight.py",
+      "sha256": "53c5d70f98faf865a16b3bf7abedd54c0f84924dd71ca16b3fa90b39ded19ff6",
+      "lines": 202,
+      "functions": 8
+    },
+    {
+      "path": "mission_planner/flight_release.py",
+      "sha256": "284e98ce8755a514013c928f4b4e9a218a29c90d18af491f848a425ddf02e3fd",
+      "lines": 365,
+      "functions": 12
+    },
+    {
+      "path": "mission_planner/geometry.py",
+      "sha256": "fc97a6190ce8c5c773b70deb49301b129fe6e6348210aae660bf373ca749faed",
+      "lines": 848,
+      "functions": 34
+    },
+    {
+      "path": "mission_planner/json_schemas.py",
+      "sha256": "8bcb31e058a0d567a8269ccd6694ccb3aa13369be5eadd0461f9ca18ee71bb42",
+      "lines": 328,
+      "functions": 15
+    },
+    {
+      "path": "mission_planner/lifecycle.py",
+      "sha256": "6e178a94648cdbfde4c31dfccbcb99f75e53321d121e037975093eefa74a6543",
+      "lines": 303,
+      "functions": 5
+    },
+    {
+      "path": "mission_planner/lifecycle_verification.py",
+      "sha256": "d6c05df8cf0f8af0bbe0f28a66bf5432402d0fc348f7a9ff7f8df54073790672",
+      "lines": 112,
+      "functions": 2
+    },
+    {
+      "path": "mission_planner/mapping.py",
+      "sha256": "d001555eb01a96a321da1986be3a70fa8596573da6a9bf630046d22c56409d70",
+      "lines": 312,
+      "functions": 13
+    },
+    {
+      "path": "mission_planner/ordered_fidelity.py",
+      "sha256": "35385a35a84cec61038bbee7d77914383af4ec9132ae4f453a608bf7e30bc0d7",
+      "lines": 236,
+      "functions": 9
+    },
+    {
+      "path": "mission_planner/plan_drawn_path.py",
+      "sha256": "bb6d2e93268275d3ccc4e8aed73212926419f70c06ebdc7e2ca4154fb2fe3e4b",
+      "lines": 425,
+      "functions": 7
+    },
+    {
+      "path": "mission_planner/plan_interview.py",
+      "sha256": "33a712292fe8946e7a3da7e9f576d9ca606b7313b7cf18d427f774a5990220a4",
+      "lines": 609,
+      "functions": 15
+    },
+    {
+      "path": "mission_planner/preview.py",
+      "sha256": "08e45b1c210dbf9c75a188d4049021dd21058d6196ad1001581c317373b383d8",
+      "lines": 217,
+      "functions": 4
+    },
+    {
+      "path": "mission_planner/retiming.py",
+      "sha256": "286572845580ff2c29d00ef76588798db65044b7e11c94b19130b0f4c10c06f8",
+      "lines": 462,
+      "functions": 6
+    },
+    {
+      "path": "mission_planner/review.py",
+      "sha256": "e3e97991c790c82ecd96c7760f04616df0a19de28b6e9f98901c63a13557b440",
+      "lines": 127,
+      "functions": 4
+    },
+    {
+      "path": "mission_planner/rotors.py",
+      "sha256": "4a33015237fc5cc4d781a5ec539da0e84cb58a227652554e51d0ef924572ffb9",
+      "lines": 98,
+      "functions": 3
+    },
+    {
+      "path": "mission_planner/simulation_binding.py",
+      "sha256": "fb8487c65caa0386b6cc3954ea350f99d1a215119c290df17ee06b120ec37d55",
+      "lines": 181,
+      "functions": 6
+    },
+    {
+      "path": "mission_planner/sitl_campaign.py",
+      "sha256": "19dd311ba72b1215399ce950eb1c0589e2d287508b7fa5811730a03cfe8e171c",
+      "lines": 195,
+      "functions": 5
+    },
+    {
+      "path": "mission_planner/stop_turn_execution.py",
+      "sha256": "dd201e93d2c2a71765d235a6871bf54a866ef0ab05035ad6af0bd6c2c62f4843",
+      "lines": 291,
+      "functions": 4
+    },
+    {
+      "path": "mission_planner/studio_jobs.py",
+      "sha256": "8ffdd5422f8bfef43fedc264af059d33fa0a626e299851d7b5c8d6861cc572ea",
+      "lines": 234,
+      "functions": 11
+    },
+    {
+      "path": "mission_planner/timing.py",
+      "sha256": "fbc8b725e48215b40b383101ca2d3002db692ef3eee5fc99cf0a137300108026",
+      "lines": 776,
+      "functions": 26
+    },
+    {
+      "path": "mission_planner/verification.py",
+      "sha256": "54674f79391f45bc6781bc4f596a60168fcfd712473c5d634dce856b932a0077",
+      "lines": 625,
+      "functions": 10
+    },
+    {
+      "path": "mission_planner/yaw.py",
+      "sha256": "92bc3cc1275bc0c1f14a296c38b9105872aff2578fe4aedfbd62ffcc2e618400",
+      "lines": 408,
+      "functions": 19
+    },
+    {
+      "path": "missions/drawn_path_example.json",
+      "sha256": "e54fff2a3eb4e949d7d1a1a6d7c5bb30562adbb254446e5e3975f4eaeee97cac",
+      "lines": 71
+    },
+    {
+      "path": "missions/five_stop_example.json",
+      "sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+      "lines": 63
+    },
+    {
+      "path": "missions/interview_circle_example.json",
+      "sha256": "56a914358e160c742fc315733c52905fb9b57fccaddbf9f3b02e054a3064e962",
+      "lines": 19
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "d774c114307ddc7f29695828a6a382ff53e022bbf17636b5d58d5f126ffec9ba",
+      "lines": 13
+    },
+    {
+      "path": "schemas/planner/environment-snapshot-v1.schema.json",
+      "sha256": "dd30e076cacdb6fc1828aa0c864ec02d674720f878d1cb79d74041d86f89b2ee",
+      "lines": 92
+    },
+    {
+      "path": "schemas/planner/five-stop-baseline-v1.json",
+      "sha256": "815cea215131bc0986f59a05252a40ef5780f4b47cf832688eab56df9df441ca",
+      "lines": 9
+    },
+    {
+      "path": "schemas/planner/mission-intent-v1.schema.json",
+      "sha256": "7cb7e2b9a6d4814282b0d8ed65e875cf87a1705adc3d32e56a85bea0e2357686",
+      "lines": 290
+    },
+    {
+      "path": "schemas/planner/occupancy-map-v1.schema.json",
+      "sha256": "ec203f70963211eae11f6c80c08347a84ae869dfacd7230831726e904fbc75b2",
+      "lines": 83
+    },
+    {
+      "path": "schemas/planner/plan-artifact-v1.schema.json",
+      "sha256": "45e9cba99e7347987e2f27a16491b63593d10d20af4408141a3d8fe67128ba7f",
+      "lines": 62
+    },
+    {
+      "path": "schemas/planner/vehicle-model-v1.schema.json",
+      "sha256": "fa0077427bcdb426b568c6b6825b29cb52ac4c867e8d262bebbf664dedc10dca",
+      "lines": 120
+    },
+    {
+      "path": "schemas/planner/vehicle-model-v2.schema.json",
+      "sha256": "2da0855f00c11ff02f6251471b30c3fc59346918e6a9262c2a7be9eb60f2c20f",
+      "lines": 161
+    },
+    {
+      "path": "schemas/planner/verification-report-v1.schema.json",
+      "sha256": "7800e60251dc1b9a9e4d6262487515538856fe33b8f2c871a747400595e0195f",
+      "lines": 88
+    },
+    {
+      "path": "scripts/audit_fidelity_baseline.py",
+      "sha256": "eaee9b9130ac4bf4f40a50665cdb755e67ee043a8fb66f3847737fadb31765b4",
+      "lines": 195,
+      "functions": 3
+    },
+    {
+      "path": "scripts/check_aircraft_faults.py",
+      "sha256": "324670d96f88d9e37e082460f7f9beac25ed362fbf4beacdd9521a411cfe953b",
+      "lines": 86,
+      "functions": 2
+    },
+    {
+      "path": "scripts/check_conference_planner.py",
+      "sha256": "e9c4a29dd7b24e0ce20058b969471ba56c980029b1a674a91717f9f66ed48e03",
+      "lines": 226,
+      "functions": 3
+    },
+    {
+      "path": "scripts/check_release_workflow.py",
+      "sha256": "6d03bf4e1c1977fc368a8a9867f5f4a65b6165b279ada27df2b89e9c0286e852",
+      "lines": 77,
+      "functions": 2
+    },
+    {
+      "path": "scripts/check_studio_browser.py",
+      "sha256": "3e7e2610fdb1b3bcb91e4e38f601bdb2a2af0fe4ad1f21335bd917b0f73b763e",
+      "lines": 260,
+      "functions": 3
+    },
+    {
+      "path": "scripts/check_studio_usability.py",
+      "sha256": "c34fb1359e87ca037881ce5afc6e1249d6a5093fd15650026d067e453adfdcb6",
+      "lines": 211,
+      "functions": 4
+    },
+    {
+      "path": "scripts/check_trajectory_acceptance.py",
+      "sha256": "d6c2b5ecb688ca7442f97d734fa7b461c350e1d9b213e62579bc9643748ac50d",
+      "lines": 79,
+      "functions": 3
+    },
+    {
+      "path": "scripts/compare_browser_reference.py",
+      "sha256": "5c81bae1675926749ba8cf1625e0c2883aacfdea8437a84a444020602da5e6df",
+      "lines": 109,
+      "functions": 2
+    },
+    {
+      "path": "scripts/planner_sitl_campaign.py",
+      "sha256": "f4f77d9ae0fd2e1e3546b3b0f3d84704e893eaab2de5b995f53f8731055316d7",
+      "lines": 476,
+      "functions": 9
+    },
+    {
+      "path": "scripts/plot_planner_evidence.py",
+      "sha256": "f4b9baf60c62ac49e56cb96f462540fbf4bb9cbaef494f0baf7d64e9d2c7c467",
+      "lines": 56,
+      "functions": 1
+    },
+    {
+      "path": "scripts/sitl_control_faults.py",
+      "sha256": "b3b539dbac7c62db069bf6e43a6f2e2956661fedff0e1c9e1bf1dd722680d3b0",
+      "lines": 67,
+      "functions": 8
+    },
+    {
+      "path": "scripts/sitl_expanded_cases.json",
+      "sha256": "69b3e2b132b4b154fbff6ec68ded247695f58c7da8fc6051338fe8620d001526",
+      "lines": 15
+    },
+    {
+      "path": "scripts/sitl_fault_injector.py",
+      "sha256": "3e9b4c2d34a4c028d53bedbf5f74df60d8534d4eefb9a5435a6883eef5d39240",
+      "lines": 325,
+      "functions": 15
+    },
+    {
+      "path": "scripts/sitl_followup_cases.json",
+      "sha256": "7c6d0c4a2ca2d45e0ce8bb486203085539a223d3194415708454a8168cd0853c",
+      "lines": 14
+    },
+    {
+      "path": "scripts/sitl_monitor.py",
+      "sha256": "ed8b52d09253209a6f41f912b09f70f299a472b33ac7110685139659725c88e7",
+      "lines": 78,
+      "functions": 4
+    },
+    {
+      "path": "scripts/sitl_release_probe.py",
+      "sha256": "8ffad83d03302ea0fd52fbc501d638d5bd23c5cdcfe40bd8e5854468ac354967",
+      "lines": 96,
+      "functions": 6
+    },
+    {
+      "path": "scripts/sitl_scenario_batch.py",
+      "sha256": "02457fade2dbfc08d511844b45fba7c694eaa02014dc2d242957cd473d58a9d2",
+      "lines": 418,
+      "functions": 11
+    },
+    {
+      "path": "scripts/sitl_studio_cancel.py",
+      "sha256": "08ecbac49f21699e98cd0cc5cf6249a9c0f922ca1f240903f03fa19af16b77ee",
+      "lines": 71,
+      "functions": 6
+    },
+    {
+      "path": "scripts/sitl_wind.py",
+      "sha256": "6aee3e49ad3e9b3635915971cc5d8efea1dd115f0c8620d91462387108275272",
+      "lines": 59,
+      "functions": 3
+    },
+    {
+      "path": "scripts/validate.py",
+      "sha256": "0cac85e153fc02f03219c0b9e20d7b8e978677f8fc50f16842146cb752b28f72",
+      "lines": 73,
+      "functions": 2
+    },
+    {
+      "path": "tests/fixtures/captured_sitl_packets.json",
+      "sha256": "944db6ba31b42ea9ceca478ea28baa98c9a6dc8a1647433198e204675228c7c1",
+      "lines": 1774
+    },
+    {
+      "path": "tests/fixtures/telemetry_sequence.json",
+      "sha256": "4d86355b21f346afd056bb1df355cbf5a6ecb31d6feefb7a156311d13fee3758",
+      "lines": 100
+    },
+    {
+      "path": "tests/motion.test.cjs",
+      "sha256": "f96a000daed1d5b5feef221ca28210377babf74db17bb647778238a9ff871678",
+      "lines": 61
+    },
+    {
+      "path": "tests/public_browser_adapter.test.cjs",
+      "sha256": "d55cf2d47636c1172f81d59be3ee0e6e97be39116e0b783e61a3262b3870847b",
+      "lines": 53
+    },
+    {
+      "path": "tests/route_comparison.test.cjs",
+      "sha256": "f996e72624cb3fa0455c89dc3379b3e18b968ab3401e93680ae1caee1341eeef",
+      "lines": 35
+    },
+    {
+      "path": "tests/run_state.test.cjs",
+      "sha256": "6f4d47504a99bc4ec6e213883bbaa1e45209b23677420e368fc6f8c2630438a2",
+      "lines": 14
+    },
+    {
+      "path": "tests/studio_drawing.test.cjs",
+      "sha256": "6d2460e8720dd6dd89795034ea1c5a3bf368a59ce9097cbaf1573eeee5107493",
+      "lines": 94
+    },
+    {
+      "path": "tests/studio_usability.test.cjs",
+      "sha256": "2909e1dc2f0418b19d2ed3c6d0f5d3d512a4b3bd824570a2b37e3158f1cd7aa3",
+      "lines": 43
+    },
+    {
+      "path": "tests/test_aircraft_profiles.py",
+      "sha256": "340ba44e66026a46a8b1c36857c7d4d1966d37c8f6d862a771461b6f05c104ad",
+      "lines": 218,
+      "functions": 18
+    },
+    {
+      "path": "tests/test_analysis_pipeline.py",
+      "sha256": "83f7285a63a3be919fc395bf8e2f1e0dff84baf0ee1deb4a90f6e0b1caea8d18",
+      "lines": 272,
+      "functions": 15
+    },
+    {
+      "path": "tests/test_captured_replay.py",
+      "sha256": "3c38cf6e2ea9032573178875d7545d6d88b3e10adea32ab0bd205a0b616f1366",
+      "lines": 73,
+      "functions": 6
+    },
+    {
+      "path": "tests/test_closest_preview.py",
+      "sha256": "fe9efd18c3ab386a177dad3016a8272c47bd37f26155a207546e4ef7febbffc8",
+      "lines": 228,
+      "functions": 22
+    },
+    {
+      "path": "tests/test_control_lifecycle.py",
+      "sha256": "da8dc1d89c09a88890ebf54075f84c5caaeb72586da93ee8e6042a0012881a34",
+      "lines": 556,
+      "functions": 45
+    },
+    {
+      "path": "tests/test_drawn_path_cli.py",
+      "sha256": "5c70a3601f6f5ec518914d20ac97b78181f8ad4c121d879c94b843a16804cbd7",
+      "lines": 246,
+      "functions": 8
+    },
+    {
+      "path": "tests/test_fault_injection.py",
+      "sha256": "44191bb8121a8d2fca3f4d1edc061001304b18cfba512aaf0c712f62d3ec565c",
+      "lines": 260,
+      "functions": 9
+    },
+    {
+      "path": "tests/test_fault_run_analysis.py",
+      "sha256": "72b8bb3a629faf14a34d4b9cdd1af6ad94387c47adc9d94491224fbfb9940e8a",
+      "lines": 131,
+      "functions": 6
+    },
+    {
+      "path": "tests/test_fixed_overlay.py",
+      "sha256": "9afe05653642678dad20c84240181e529256136827979b6fc56c73636f03ea89",
+      "lines": 295,
+      "functions": 22
+    },
+    {
+      "path": "tests/test_flight_logger.py",
+      "sha256": "0e5aab1b57f7b15690a74c4f821c3a6f2f676b287bcb4970c0d27b9a9659bfce",
+      "lines": 118,
+      "functions": 11
+    },
+    {
+      "path": "tests/test_flight_release.py",
+      "sha256": "63e7291f422ca62a4eea1938a46f0ce6d78487496069ff38ae0817a41944a767",
+      "lines": 339,
+      "functions": 20
+    },
+    {
+      "path": "tests/test_inertial_outage_replay.py",
+      "sha256": "e60fe1543ee0a58402f83ad16aa94ac9afe425fcd05a48dac0b869efa91043ae",
+      "lines": 35,
+      "functions": 3
+    },
+    {
+      "path": "tests/test_lifecycle.py",
+      "sha256": "3d78d8dcdae81d7347cad9004555a476d5c2e2957c19c3c5dc1823a1564bf932",
+      "lines": 212,
+      "functions": 7
+    },
+    {
+      "path": "tests/test_magless_bootstrap.py",
+      "sha256": "b26dabd3b2846e72ef938ecb7c35adc00e0a5b2ebfce99d549629806de60ea76",
+      "lines": 211,
+      "functions": 9
+    },
+    {
+      "path": "tests/test_mission_plan_contract.py",
+      "sha256": "3bd47bfd29b824c8155112bed3e5bb04cfd05f1b1024feebbd5eb396650cd989",
+      "lines": 272,
+      "functions": 18
+    },
+    {
+      "path": "tests/test_navigation_hold_braking.py",
+      "sha256": "d5ffa80b03c6a6eef1e609f96d4e64e282a535367356367bf1e0fd873e1ba759",
+      "lines": 141,
+      "functions": 7
+    },
+    {
+      "path": "tests/test_ordered_fidelity.py",
+      "sha256": "60a0480b580965546a06dfff971f8062da97418cd565844eaedf490544b6f7e5",
+      "lines": 129,
+      "functions": 7
+    },
+    {
+      "path": "tests/test_planner_contracts.py",
+      "sha256": "57ce0b17049e8a9b5a52aa19dc72ae874c322df85c69b8f47c18d28864b7b64b",
+      "lines": 386,
+      "functions": 16
+    },
+    {
+      "path": "tests/test_planner_editor.py",
+      "sha256": "c3e055476243e1bf9e3b629b06f0cf6d23a385bca9fb5c533a9a87630b7a089b",
+      "lines": 187,
+      "functions": 13
+    },
+    {
+      "path": "tests/test_planner_finish.py",
+      "sha256": "8b311880401754b3e3d7dcb112d6b0e0714f0e3369db48bbe897ea1df54b720b",
+      "lines": 631,
+      "functions": 15
+    },
+    {
+      "path": "tests/test_planner_geometry.py",
+      "sha256": "3b5605429bda565fac55487c272b26f54c8d282e0d5be1ef17dcc3a09c94ea7e",
+      "lines": 420,
+      "functions": 14
+    },
+    {
+      "path": "tests/test_planner_input_and_evidence.py",
+      "sha256": "135991680b383d39c19588984fa3f5ced7fbcf2955f5dfce4bc33e972c85d216",
+      "lines": 170,
+      "functions": 17
+    },
+    {
+      "path": "tests/test_planner_mission.py",
+      "sha256": "4e7328181ef633ddccd1ba09a936e329902a3dee10d8e4f68383eea7c3ce87e2",
+      "lines": 259,
+      "functions": 9
+    },
+    {
+      "path": "tests/test_planner_rehearsal.py",
+      "sha256": "c2ca194c93989c9ccb8a4f56227899a9a4ea168bcad37f296e9e7ac17791e431",
+      "lines": 109,
+      "functions": 7
+    },
+    {
+      "path": "tests/test_planner_retiming.py",
+      "sha256": "38b82fd32992b59c66796fba389d268df641db52a3b5dd5a247f75ec93030585",
+      "lines": 283,
+      "functions": 11
+    },
+    {
+      "path": "tests/test_planner_sitl_campaign.py",
+      "sha256": "3ad35267cc047a4420adc130b9461bcc63579724273668a2caa3f9ea2f6b51cb",
+      "lines": 52,
+      "functions": 6
+    },
+    {
+      "path": "tests/test_planner_timing.py",
+      "sha256": "2f70df7c7b70d0e591eefff118bfb9632830195775c4408abd470fb5a9f765a6",
+      "lines": 301,
+      "functions": 12
+    },
+    {
+      "path": "tests/test_planner_verification.py",
+      "sha256": "0c0f6ba78becffa4561fa6139798e4d0fdda3d3414845b488a0f5124f9c73280",
+      "lines": 284,
+      "functions": 12
+    },
+    {
+      "path": "tests/test_position_prediction.py",
+      "sha256": "a3de5612976fba66dd47b3463532823368ff9dae6d3c563de595eefbabec8afb",
+      "lines": 43,
+      "functions": 5
+    },
+    {
+      "path": "tests/test_presentation_plots.py",
+      "sha256": "98503e2096eb6f73c01be8fc1c12884f6f4944d0aadcca3bc3c1a71ba6b0e8bf",
+      "lines": 44,
+      "functions": 3
+    },
+    {
+      "path": "tests/test_run_record.py",
+      "sha256": "1d359519ec3eb2567e24ad27688c6a2a210c9bf02b1bcfdb363bdbafd4818db8",
+      "lines": 60,
+      "functions": 1
+    },
+    {
+      "path": "tests/test_runner_protocol.py",
+      "sha256": "62bb31dc56d8d817af1e33fae1776e4f4c33203d29672766b4b691fcd3f48134",
+      "lines": 505,
+      "functions": 34
+    },
+    {
+      "path": "tests/test_safety_supervisor.py",
+      "sha256": "331bcca1f3c41b404fc3b5273f56e9a275401c056817ff7899c571eef95f98ce",
+      "lines": 152,
+      "functions": 8
+    },
+    {
+      "path": "tests/test_simulation_physics.py",
+      "sha256": "ef164c672be4a4127a32262ae09e72860dda968eccf82db2486785120e7a3d23",
+      "lines": 109,
+      "functions": 9
+    },
+    {
+      "path": "tests/test_sitl_control_stall.py",
+      "sha256": "59fe3c1ce506d2caa1f854cbaeff99131f1ed14846f5debcb32227651a2c7ddb",
+      "lines": 127,
+      "functions": 12
+    },
+    {
+      "path": "tests/test_sitl_fault_injector.py",
+      "sha256": "f3a861c66963188f5200a41fe885fe877b2ff9f655d9d078feca689d9773b141",
+      "lines": 128,
+      "functions": 10
+    },
+    {
+      "path": "tests/test_sitl_ground_truth.py",
+      "sha256": "75e72f31066d3aed70d17034af2efe63d87dc470acbe9441cf34e82390a699a9",
+      "lines": 146,
+      "functions": 11
+    },
+    {
+      "path": "tests/test_sitl_monitor.py",
+      "sha256": "18380d97d8534ea14def6e0aee626248649b90465c9c2071c389358461b050f9",
+      "lines": 122,
+      "functions": 8
+    },
+    {
+      "path": "tests/test_sitl_parameter_reads.py",
+      "sha256": "a30dded05d791ecf7de367cf3329237dc7555247a853a4c405cef77c2b85afcf",
+      "lines": 73,
+      "functions": 8
+    },
+    {
+      "path": "tests/test_sitl_wind.py",
+      "sha256": "0e35c9167f6f15ac0af289b9ad011f5e4008c460ed5967fc4b1a49fe3f41bacd",
+      "lines": 66,
+      "functions": 8
+    },
+    {
+      "path": "tests/test_stop_turn_execution.py",
+      "sha256": "6e049ff8c231b676f399cf14b721b90591b0db7b3aca32d028a39fd777519e8b",
+      "lines": 236,
+      "functions": 11
+    },
+    {
+      "path": "tests/test_studio_cancellation.py",
+      "sha256": "bf2834fceee949a82cd80d090c741a4b16bea376511ec8f898dd18efce19a32a",
+      "lines": 76,
+      "functions": 3
+    },
+    {
+      "path": "tests/test_studio_drawing.py",
+      "sha256": "075cb2fb39d9ebbfb50745267ba01b427029c531a2e8c8872a2f4024769eba80",
+      "lines": 41,
+      "functions": 2
+    },
+    {
+      "path": "tests/test_studio_jobs.py",
+      "sha256": "d22da35284194e6e7c897b87074e9d90ce4765969879c7f2312de6b78f89c7d9",
+      "lines": 189,
+      "functions": 13
+    },
+    {
+      "path": "tests/test_studio_responsiveness.py",
+      "sha256": "cf61459263409337a3dc44bc3f3de5ad3b7c83122fe269336f04ca4f5067a00d",
+      "lines": 65,
+      "functions": 3
+    },
+    {
+      "path": "tests/test_telemetry_replay.py",
+      "sha256": "fcdd5a390f7e2e72584d8b7499dcd4d1532f99d113b64aa94b694ca8e9849a69",
+      "lines": 68,
+      "functions": 4
+    },
+    {
+      "path": "tests/test_touchdown_quality.py",
+      "sha256": "b362b3c1cfc22366a69beba7398cde15a34658aae9063afbf5c8e7d012a91ca9",
+      "lines": 41,
+      "functions": 5
+    },
+    {
+      "path": "tests/test_tracking_governor.py",
+      "sha256": "ea0742fe30b11d4ce987905cb382dff60e0cefd2f5b37ca776195e9b797250fc",
+      "lines": 70,
+      "functions": 5
+    },
+    {
+      "path": "tests/test_trajectory_generator.py",
+      "sha256": "5dce0f3098da95e99c511de278ae412a6d3a06ae1f16c3dda08d254f9f8406aa",
+      "lines": 315,
+      "functions": 7
+    },
+    {
+      "path": "tests/test_trajectory_quality.py",
+      "sha256": "56b0512cbe5e466bec03d7b65496ffbbf045a67451738bfb60557a6313f1cf62",
+      "lines": 47,
+      "functions": 4
+    },
+    {
+      "path": "tests/test_waypoint_mission.py",
+      "sha256": "50f0243a60724ecbfd5ffc9eef58bad9d74c67c3602dc7c7ce04f59f29998f69",
+      "lines": 326,
+      "functions": 13
+    },
+    {
+      "path": "tests/test_waypoint_mission_audit.py",
+      "sha256": "40062475449d5916742b472dac2f84ee61ac96fc833a7c978470bcaddd7ea305",
+      "lines": 113,
+      "functions": 5
+    },
+    {
+      "path": "tools/powershell_connector/px4_connector_server.py",
+      "sha256": "9d0b4d27e77c9adb0ac474515c9592bbcd0b743e0b9015e390805632909e7a71",
+      "lines": 156,
+      "functions": 9
+    },
+    {
+      "path": "tools/powershell_connector/test_server.py",
+      "sha256": "794ed036781f99b7a29eca0af2df069eb1c8d2f2accacc05f5831ed9c4b5094c",
+      "lines": 72,
+      "functions": 5
+    },
+    {
+      "path": "trajectory_generator/commands.py",
+      "sha256": "6ff06e873a9f1d7e096af80ca807618a8d730e5cbb8d3aacefada430943810af",
+      "lines": 32,
+      "functions": 0
+    },
+    {
+      "path": "trajectory_generator/export.py",
+      "sha256": "04333834334abb145877163496f99090356cd01fcf995dfc7d107edde43a2305",
+      "lines": 36,
+      "functions": 1
+    },
+    {
+      "path": "trajectory_generator/main.py",
+      "sha256": "9b755f52b17e0e42628045ebf55f555ca4be5ff0b3d5ef15286f0a0952cba8e5",
+      "lines": 107,
+      "functions": 0
+    },
+    {
+      "path": "trajectory_generator/plan_waypoint_mission.py",
+      "sha256": "11fecee978da3bcffb87b0405d4b827016d69afa56f00bf268060f2d42d66793",
+      "lines": 66,
+      "functions": 3
+    },
+    {
+      "path": "trajectory_generator/planner.py",
+      "sha256": "c834d45c3e650bd62d9d6079ffdd342420a3ab8b81a42f3c2b565a1dfc8daf7f",
+      "lines": 193,
+      "functions": 8
+    },
+    {
+      "path": "trajectory_generator/plot.py",
+      "sha256": "99c269d4dc63b63c43acca2ad0c1ce1307e39eda996773cede96871003ce4154",
+      "lines": 169,
+      "functions": 1
+    },
+    {
+      "path": "trajectory_generator/pose.py",
+      "sha256": "2b0c617e60e6042b0408041be19199c86899feb971f890b246481068071ffe54",
+      "lines": 39,
+      "functions": 0
+    },
+    {
+      "path": "trajectory_generator/profiles.py",
+      "sha256": "7ab6e4f7165162455551d500ed416e2f9f91cfd399daf43a8bc512271b2dcd7f",
+      "lines": 325,
+      "functions": 11
+    },
+    {
+      "path": "trajectory_generator/segments.py",
+      "sha256": "356e3cd09e15632c77e3455983304c7e5e63d70a7de396e1d629ee511a4bfb91",
+      "lines": 53,
+      "functions": 0
+    },
+    {
+      "path": "trajectory_generator/trajectory.py",
+      "sha256": "16b2f33b118c36c2b275ea7a0fbbd29dd1e2471a9f658cc7f95dc44daad47d64",
+      "lines": 682,
+      "functions": 20
+    },
+    {
+      "path": "trajectory_generator/waypoint_mission.py",
+      "sha256": "8de3bf4115931cba5fa16a7f3b8f6f7969fc1c0219386970befc5801cefbd656",
+      "lines": 494,
+      "functions": 21
+    },
+    {
+      "path": "web/browser-api.js",
+      "sha256": "963a096ef000e9ca8c14b0f19ef6215f4d5f3acdc8c552941849864babae65d0",
+      "lines": 50
+    },
+    {
+      "path": "web/build_public_studio.py",
+      "sha256": "20bd7a8858f8a081407d589d9e43fa12a6d80860779284f4d61d5f5c8d09a033",
+      "lines": 77,
+      "functions": 1
+    },
+    {
+      "path": "web/comparison.js",
+      "sha256": "01b27917c53fe3c887737c174e4e2c73f4373b6ecf83de26a478685c7f7043a7",
+      "lines": 89
+    },
+    {
+      "path": "web/lifecycle-ui.js",
+      "sha256": "e3b078ea1a03b342db65bd84c9134e159be6c7d30f682e55fdce7ec578c6d4ff",
+      "lines": 32
+    },
+    {
+      "path": "web/motion.js",
+      "sha256": "08899a0b1fa723d5129cf7bde32f4606db46e1001bdbf0d715763d4794411d85",
+      "lines": 161
+    },
+    {
+      "path": "web/planner-worker.js",
+      "sha256": "8d2cc132cb4ddda5ed07298a657cadeac2e3a9e125dfdb2f28d64be3d8c5f68f",
+      "lines": 62
+    },
+    {
+      "path": "web/run-state.js",
+      "sha256": "46afd024c5cb70be2fa9be194d9aa42ff9663b7947c64c7a7f1e59f0908516c3",
+      "lines": 13
+    },
+    {
+      "path": "web/simple-ui.js",
+      "sha256": "da52ecee10fa73818cde8259b86fcd132b40ced11c9d7b0f8558dbd5138ef292",
+      "lines": 127
+    },
+    {
+      "path": "web/workspace.css",
+      "sha256": "fa6e0ee1da1dcf367ad717ecffe462c7ea5d50bcb8c4fec15a568696885935d7",
+      "lines": 62
+    },
+    {
+      "path": "web/workspace.js",
+      "sha256": "b44abe7ec95762d011832bd44bec590e6ed73511e70b1611cb963226cf4c7f75",
+      "lines": 100
+    }
+  ]
+}

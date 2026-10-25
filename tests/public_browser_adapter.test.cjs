@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-function setup(){
+function setup({throwSend=false}={}){
  const requests=[],workers=[],timers=new Map();let clock=0;
- class FakeWorker{constructor(){workers.push(this);}postMessage(value){this.request=value;}terminate(){this.stopped=true;}}
+ class FakeWorker{constructor(){workers.push(this);}postMessage(value){if(throwSend){throwSend=false;throw Error("send failed");}this.request=value;}terminate(){this.stopped=true;}}
  const window={fetch:async(...args)=>{requests.push(args);return new Response('{}');},addEventListener(){},dispatchEvent(){}};
  vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../web/browser-api.js'),'utf8'),{window,location:{href:'https://studio.example/',origin:'https://studio.example'},URL,Response,TextEncoder,Worker:FakeWorker,CustomEvent:class{},document:{getElementById(){return null;}},setTimeout(fn){const key=++clock;timers.set(key,fn);return key;},clearTimeout(key){timers.delete(key);}});
  return {window,requests,workers,timers};
@@ -50,4 +50,15 @@ test('already aborted request does not allocate a worker',async()=>{
  const s=setup(),controller=new AbortController();controller.abort();
  assert.equal((await s.window.fetch('/api/preview',{body:'{}',signal:controller.signal})).status,503);
  assert.equal(s.workers.length,0);
+});
+test('a messageerror fully cleans up and stale messageerror cannot affect retry',async()=>{
+ const s=setup(),first=s.window.fetch('/api/preview',{body:'{}'}),worker=s.workers[0];
+ worker.onmessageerror();assert.equal((await first).status,503);assert.equal(s.timers.size,0);assert.equal(worker.stopped,true);
+ const retry=s.window.fetch('/api/preview',{body:'{}'}),current=s.workers[1];worker.onmessageerror();assert.equal(current.stopped,undefined);
+ current.onmessage({data:{id:current.request.id,result:{accepted:true}}});assert.equal((await retry).status,200);
+});
+
+test('a synchronous postMessage failure fully cleans up and permits a real retry',async()=>{
+ const s=setup({throwSend:true});assert.equal((await s.window.fetch('/api/preview',{body:'{}'})).status,503);assert.equal(s.timers.size,0);assert.equal(s.workers[0].stopped,true);
+ const retry=s.window.fetch('/api/preview',{body:'{}'}),worker=s.workers[1];worker.onmessage({data:{id:worker.request.id,result:{accepted:true}}});assert.equal((await retry).status,200);
 });

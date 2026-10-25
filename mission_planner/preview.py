@@ -22,6 +22,7 @@ MAX_INPUT_POINTS = 256
 
 def preview(payload: dict) -> dict:
     """Keep strict API behavior; the studio opts into closest-feasible planning."""
+    validate_preview_request(payload)
     if isinstance(payload, dict) and payload.get("planning_mode") == "closest":
         from .closest import closest_preview
         clean = dict(payload)
@@ -29,10 +30,47 @@ def preview(payload: dict) -> dict:
         result = closest_preview(clean, _preview_strict)
         result['requested_document'] = deepcopy(clean['document'])
     else:
-        result = _preview_strict(payload)
+        result = _preview_strict({k: v for k, v in payload.items() if k != "planning_mode"})
     if result.get('accepted'):
         result['summary']['speed_preferences'] = speed_preferences(payload, result)
     return result
+
+
+def validate_preview_request(payload):
+    """Validate container shape before best-effort geometry accesses members."""
+    if not isinstance(payload, dict):
+        raise ValueError("Preview request must be an object")
+    if (not {"source", "document"} <= payload.keys()
+            or payload.keys() - {"source", "document", "aircraft_profile", "planning_mode"}):
+        raise ValueError("Preview requires source and document, with no unknown fields")
+    if payload["source"] not in ("drawing", "interview"):
+        raise ValueError("source must be drawing or interview")
+    document = payload["document"]
+    if not isinstance(document, dict):
+        raise ValueError("Route document must be an object")
+    if payload.get("planning_mode", "strict") not in ("strict", "closest"):
+        raise ValueError("planning_mode must be strict or closest")
+    if ("aircraft_profile" in payload and payload.get("planning_mode") != "closest"
+            and not assess_profile(payload["aircraft_profile"])["ready"]):
+        # Preserve the aircraft intake response before requesting route fields.
+        return
+    if payload["source"] == "drawing":
+        if not isinstance(document.get("motion"), dict) or not isinstance(document.get("path"), dict):
+            raise ValueError("Drawing requires path and motion objects")
+        points = document["path"].get("points")
+        if not isinstance(points, list) or not points or any(not isinstance(p, dict) for p in points):
+            raise ValueError("Drawing points must be a nonempty array of objects")
+        if len(points) > 20_000:
+            raise ValueError("Preview accepts at most 20000 source points; split this drawing into missions")
+    motion = document["motion"] if payload["source"] == "drawing" else document
+    if "maximum_speed_m_s" not in motion:
+        raise ValueError("Maximum speed is required")
+    for key in ("maximum_speed_m_s", "target_speed_m_s"):
+        value = motion.get(key)
+        if key == "target_speed_m_s" and value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(key + " must be a finite number greater than zero")
 
 
 def speed_preferences(payload, result):

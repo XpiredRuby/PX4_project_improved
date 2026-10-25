@@ -61,18 +61,24 @@ def _models(payload):
 
 def _motion(value, vehicle, changes):
     maximum = _finite(value["maximum_speed_m_s"], "Maximum speed")
+    if maximum <= 0:
+        raise ValueError("Maximum speed must be greater than zero")
     target = value.get("target_speed_m_s")
-    chosen = min(max(maximum, .1), vehicle.maximum_speed_m_s)
+    chosen = min(maximum, vehicle.maximum_speed_m_s)
     if chosen != maximum:
         _change(changes, "speed_limit", f"Speed limit adjusted to {chosen:g} m/s for this aircraft.",
                 requested=maximum, effective=chosen)
     value["maximum_speed_m_s"] = chosen
     if target is not None:
         target = _finite(target, "Cruising speed")
-        effective = min(max(target, .1), chosen)
+        if target <= 0:
+            raise ValueError("Cruising speed must be greater than zero")
+        effective = min(target, chosen)
         if effective != target:
-            _change(changes, "cruise_speed", f"Cruising speed adjusted to {effective:g} m/s.",
-                    requested=target, effective=effective)
+            reason = "your Never exceed setting" if maximum < target and maximum <= vehicle.maximum_speed_m_s else "the aircraft model ceiling"
+            _change(changes, "cruise_speed", f"Requested cruise {target:g} m/s is limited to {effective:g} m/s by {reason}, before the 10% planning margin.",
+                    requested=target, effective=effective, reason=reason,
+                    requested_cap_m_s=maximum, aircraft_cap_m_s=vehicle.maximum_speed_m_s)
         value["target_speed_m_s"] = effective
     if value.get("requested_duration_s") is not None:
         duration = _finite(value["requested_duration_s"], "Route time")
@@ -178,12 +184,19 @@ def _prepare(payload, vehicle, environment, changes):
         raise ValueError("source must be drawing or interview")
     # Parse the complete strict schema before changing geometry or trying solvers.
     conversion_deviation = intent["path"]["maximum_deviation_m"]
+    effective_motion = deepcopy(intent["motion"])
     requested = json.loads(json.dumps(MissionIntent.from_dict(intent).to_dict()))
+    original_motion = payload["document"]["motion"] if source == "drawing" else payload["document"]
+    # Keep original preferences separate from the effective, verified contract.
+    # Repaired malformed values (e.g. wrapped heading) remain disclosed above.
+    for key in ("maximum_speed_m_s", "target_speed_m_s"):
+        requested["motion"][key] = original_motion.get(key)
     requested["path"]["maximum_deviation_m"] = max(0.,_finite(payload["document"].get("maximum_deviation_m", payload["document"].get("path",{}).get("maximum_deviation_m")),"Rounding"))
     if source == "interview" and height != bounded:
         for p in requested["path"]["points"]:
             p["down_m"] = -height
     intent = deepcopy(requested)
+    intent["motion"] = effective_motion
     intent["path"]["maximum_deviation_m"] = conversion_deviation
     if source == "interview" and payload["document"].get("pattern") == "circle" and not any(k in payload["document"] for k in ("entry","exit")):
         circle = payload["document"]["circle"]
@@ -268,9 +281,8 @@ def _simplify_sketch(intent, limit=MAX_SKETCH_VERTICES):
     for a, b in zip(poses, poses[1:], strict=False):
         arc.append(arc[-1] + math.dist(a, b))
     marked = {i for i, p in enumerate(points) if p["hard"] or p["exact"]}
-    keep = {0, len(points)-1}
-    if len(marked | keep) <= limit:
-        keep |= marked
+    keep = {0, len(points)-1} | marked
+    limit = max(limit, len(keep))
     target = max(.005, .25*intent["path"]["maximum_deviation_m"])
     def worst(left, right):
         span = arc[right]-arc[left]

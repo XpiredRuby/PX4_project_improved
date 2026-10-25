@@ -1,5 +1,5 @@
 /* The same Python/NumPy compiler as the local studio, isolated off the UI thread. */
-let runtime;
+let runtime,verifiedBuild;
 const announce=message=>postMessage({progress:message});
 async function boot(){
   announce('Loading the planning engine. The first visit needs a download; keep this page open…');
@@ -7,11 +7,14 @@ async function boot(){
   const py=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.27.7/full/'});
   announce('Preparing the motion checks…');
   await py.loadPackage('numpy');
-  const response=await fetch('/python-manifest.json');
+  const expected=new URL(location.href).searchParams.get('build');
+  const response=await fetch('/python-manifest.json'+(expected?'?v='+encodeURIComponent(expected):''),{cache:'no-store'});
   if(!response.ok)throw Error('Planner files could not be loaded. Refresh and try again.');
   const manifest=await response.json();
+  verifiedBuild=manifest.build_id;
+  if(expected&&manifest.build_id!==expected)throw Error('The app updated while this page was open. Refresh to use one consistent version.');
   for(const file of manifest.files){
-    const r=await fetch('/python/'+file.path);
+    const r=await fetch('/python/'+file.path+'?v='+file.sha256);
     if(!r.ok)throw Error('A planner file is missing. Refresh and try again.');
     const bytes=new Uint8Array(await r.arrayBuffer());
     const path='/project/'+file.path;
@@ -55,6 +58,7 @@ except (ValueError, TypeError, KeyError) as exc:
 json.dumps(_result, allow_nan=False)
 `));
     result.execution_location='browser';
+    result.app_build_id=verifiedBuild;
     result.simulation_status='NOT_RUN';
     postMessage({id,result});
   }catch(error){runtime=undefined;postMessage({id,error:'The planning engine could not finish. '+error.message});}

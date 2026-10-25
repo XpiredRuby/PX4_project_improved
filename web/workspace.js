@@ -51,7 +51,8 @@
  const dialogHeader=node('div','dialog-header');const dialogTitle=node('h2','','Workspace settings');dialogTitle.id='settingsTitle';const close=node('button','close-button','×');close.setAttribute('aria-label','Close settings');dialogHeader.append(dialogTitle,close);
  const tabbar=node('div','settings-tabs');tabbar.setAttribute('role','tablist');tabbar.setAttribute('aria-label','Settings categories');
  const panels=node('div','settings-content');const pointEditor=byId('pointEditor');pointEditor.open=true;pointEditor.querySelector('summary').hidden=true;
- const entries=[['flight','Flight',flight],['points','Points & stops',pointEditor],['model','Model',model]];
+ const advanced=node('div');advanced.append(byId('speedCapControls'),byId('motionOptions'));
+ const entries=[['flight','Flight',flight],['advanced','Advanced',advanced],['points','Points & stops',pointEditor],['model','Model',model]];
  let lastTrigger=settingsButton;
  function selectTab(key){for(const [id,,panel] of entries){byId('panel-'+id).hidden=id!==key;const tab=byId('settings-'+id);tab.setAttribute('aria-selected',String(id===key));tab.tabIndex=id===key?0:-1;}}
  for(const [id,title,panel] of entries){const b=node('button','',title);b.id='settings-'+id;b.setAttribute('role','tab');b.setAttribute('aria-controls','panel-'+id);panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',b.id);panel.id==='flightSettings'||panel.id==='pointEditor'?panel.setAttribute('data-panel',id):null;const wrapper=node('div','settings-panel');wrapper.id='panel-'+id;wrapper.append(panel);panels.append(wrapper);b.onclick=()=>{selectTab(id);};b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const index=entries.findIndex(x=>x[0]===id),next=e.key==='Home'?0:e.key==='End'?entries.length-1:(index+(e.key==='ArrowRight'?1:-1)+entries.length)%entries.length;selectTab(entries[next][0]);byId('settings-'+entries[next][0]).focus();};tabbar.append(b);}
@@ -65,7 +66,7 @@
  originalMain.replaceWith(main);document.body.append(dialog,retained);
  const yawLabel=document.querySelector('label[for="yaw"]'),fixedLabel=document.querySelector('label[for="fixedYaw"]');
  const headingGroup=node('div','heading-settings');headingGroup.append(yawLabel,byId('yaw'),fixedLabel,byId('fixedYaw'));
- flight.insertBefore(headingGroup,byId('motionOptions'));byId('yaw').value='tangent';
+ flight.append(headingGroup);byId('yaw').value='tangent';
  byId('yaw').querySelector('[value="tangent"]').textContent='Face along the route';
  const headingExplanation=node('p','muted');headingExplanation.id='headingExplanation';headingGroup.append(headingExplanation);
  function headingSummary(){const fixed=byId('yaw').value==='fixed';fixedLabel.hidden=byId('fixedYaw').hidden=!fixed;headingExplanation.textContent=fixed?'Hold the chosen heading while moving. 0° keeps the launch reference direction.':'Yaw changes with the route direction. Vertical takeoff and landing hold their phase heading.';}
@@ -75,8 +76,7 @@
 
  document.querySelector('footer').textContent='Trajectory Studio · Planning checks a mathematical model. Gazebo has not run.';
  function syncSummary(){heightButton.innerHTML='<span>Height</span><strong>'+byId('altitude').value+' <small>m</small></strong>';speedButton.innerHTML='<span>Cruising speed</span><strong>'+byId('targetSpeed').value+' <small>m/s</small></strong>';}
- function speedHint(){const target=Number(byId('targetSpeed').value),cap=Number(byId('maxSpeed').value);const clipped=Number.isFinite(target)&&Number.isFinite(cap)&&target>cap;byId('speedInputHint').textContent=clipped?'Requested cruise exceeds Never exceed ('+cap+' m/s). Raise that cap if intended; aircraft and motion limits still apply.':'Cruise is a preferred upper speed. The aircraft ceiling, 10% planning margin, turns and stops can reduce it.';byId('speedInputHint').classList.toggle('speed-warning',clipped);}
- byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',()=>{syncSummary();speedHint();});byId('maxSpeed').addEventListener('input',speedHint);syncSummary();speedHint();
+ byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',syncSummary);syncSummary();
  let runState='draft',startedAt=null,elapsedTimer=null;
  const runInfo=node('div','run-info');runInfo.hidden=true;runInfo.setAttribute('role','status');
  const pulse=node('span','run-pulse'),runText=node('span'),elapsed=node('span','run-elapsed');elapsed.id='runElapsed';

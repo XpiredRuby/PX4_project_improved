@@ -1,0 +1,14 @@
+{
+  "attitude": "Roll 0.00° · Pitch 0.00° · Yaw rate -37.30°/s",
+  "build_id": "227aedf03cd89957",
+  "full_resolution_sample": "Sample 1271 / 8255 · exact exported sample",
+  "never_exceed": "3",
+  "plan_adjustments": "Kept the main shape using 12 flight points from 481 drawing samples. The original drawing remains visible for comparison. Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+  "plan_state": "Adjusted reference",
+  "playback_source": "Planned reference · 8,255 full-resolution CSV samples · Gazebo has not run",
+  "playback_time": "1:03.50 / 6:52.60",
+  "position": "N 0.000 · E 0.000 · Up 20.000 m",
+  "requested_speed": "2",
+  "speed_cap_mode": "aircraft",
+  "speed_summary": "Requested 2 m/s · planned peak 1.76 m/s (sampled). Planning cap 1.80 m/s, including the 10% margin. Turns and stops can reduce speed."
+}

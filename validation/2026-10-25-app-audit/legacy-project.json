@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "mode": "drawing",
+  "tool": "points",
+  "route": {
+    "points": [
+      [
+        0,
+        0
+      ],
+      [
+        0,
+        20
+      ]
+    ],
+    "kinds": [
+      "ordinary",
+      "ordinary"
+    ],
+    "closure": "open_stop"
+  },
+  "fields": {
+    "altitude": "20",
+    "deviation": ".5",
+    "targetSpeed": "2",
+    "maxSpeed": "1.25",
+    "yaw": "tangent",
+    "fixedYaw": "0",
+    "deadline": "",
+    "pattern": "circle",
+    "radius": "8",
+    "laps": "1",
+    "length": "15",
+    "width": "10",
+    "spacing": "5",
+    "waypoints": "[{\"north_m\":0,\"east_m\":0},{\"north_m\":20,\"east_m\":0}]"
+  }
+}

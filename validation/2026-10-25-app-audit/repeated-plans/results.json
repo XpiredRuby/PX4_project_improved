@@ -1,0 +1,2241 @@
+{
+  "scope": "offline references only",
+  "simulator_ran": false,
+  "source_base": "72f7b03c26e4ca20e2d45a19f272e5b1d9c4961b",
+  "cases": [
+    {
+      "case": "straight-speed-0.5",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "f766ec97c7ce9076f00dbc12ddcba8a0cbbfe59ccf8c82f0ba0b5ddccaabda9a",
+      "route_rows": 2507,
+      "mission_rows": 10723,
+      "speed": {
+        "requested_cruise_m_s": 0.5,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 0.5,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.45,
+        "planned_route_peak_sampled_m_s": 0.419479744748163,
+        "planned_route_mean_sampled_m_s": 0.2793562680915866,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 125.28804258303262,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 16.894233515999986
+    },
+    {
+      "case": "straight-speed-0.5",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "f766ec97c7ce9076f00dbc12ddcba8a0cbbfe59ccf8c82f0ba0b5ddccaabda9a",
+      "route_rows": 2507,
+      "mission_rows": 10723,
+      "speed": {
+        "requested_cruise_m_s": 0.5,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 0.5,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.45,
+        "planned_route_peak_sampled_m_s": 0.419479744748163,
+        "planned_route_mean_sampled_m_s": 0.2793562680915866,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 125.28804258303262,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 13.840349062999962
+    },
+    {
+      "case": "straight-speed-1",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "9ae5e181e14807f2bae170618135a02990d4f20164dd0b31c0994b8c4d813e31",
+      "route_rows": 1265,
+      "mission_rows": 7747,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8428330408516913,
+        "planned_route_mean_sampled_m_s": 0.5540714482499046,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 63.16874867784151,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 11.774810631000037
+    },
+    {
+      "case": "straight-speed-1",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "9ae5e181e14807f2bae170618135a02990d4f20164dd0b31c0994b8c4d813e31",
+      "route_rows": 1265,
+      "mission_rows": 7747,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8428330408516913,
+        "planned_route_mean_sampled_m_s": 0.5540714482499046,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 63.16874867784151,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 11.77056224799992
+    },
+    {
+      "case": "straight-speed-1.25",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "028fdac5be0c54eef345f7023255699f0ea016e0e6e445d97210e262f4d96aa2",
+      "route_rows": 1035,
+      "mission_rows": 7517,
+      "speed": {
+        "requested_cruise_m_s": 1.25,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.25,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.125,
+        "planned_route_peak_sampled_m_s": 1.0275448725286984,
+        "planned_route_mean_sampled_m_s": 0.6774077945955292,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 51.66754845130708,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 13.188020701000028
+    },
+    {
+      "case": "straight-speed-1.25",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "028fdac5be0c54eef345f7023255699f0ea016e0e6e445d97210e262f4d96aa2",
+      "route_rows": 1035,
+      "mission_rows": 7517,
+      "speed": {
+        "requested_cruise_m_s": 1.25,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.25,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.125,
+        "planned_route_peak_sampled_m_s": 1.0275448725286984,
+        "planned_route_mean_sampled_m_s": 0.6774077945955292,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 51.66754845130708,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 11.79280806199995
+    },
+    {
+      "case": "straight-speed-1.5",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "80553811750d4cbe0e3bf52fb5c976c1608ebd3d72d97f354746a0674e29f781",
+      "route_rows": 907,
+      "mission_rows": 7389,
+      "speed": {
+        "requested_cruise_m_s": 1.5,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.5,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.35,
+        "planned_route_peak_sampled_m_s": 1.1146548275754813,
+        "planned_route_mean_sampled_m_s": 0.7726676802650518,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 45.29761105541252,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 11.538443097000027
+    },
+    {
+      "case": "straight-speed-1.5",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "80553811750d4cbe0e3bf52fb5c976c1608ebd3d72d97f354746a0674e29f781",
+      "route_rows": 907,
+      "mission_rows": 7389,
+      "speed": {
+        "requested_cruise_m_s": 1.5,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.5,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.35,
+        "planned_route_peak_sampled_m_s": 1.1146548275754813,
+        "planned_route_mean_sampled_m_s": 0.7726676802650518,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 45.29761105541252,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 12.134207680999907
+    },
+    {
+      "case": "straight-speed-2",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "b3c57296e5ee33b763b9fd73c92aa7afa560813d2cad841d551b24496c873d36",
+      "route_rows": 730,
+      "mission_rows": 7212,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.4512908523235357,
+        "planned_route_mean_sampled_m_s": 0.9605621498364949,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 36.43699714642259,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 10.980892540000013
+    },
+    {
+      "case": "straight-speed-2",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "b3c57296e5ee33b763b9fd73c92aa7afa560813d2cad841d551b24496c873d36",
+      "route_rows": 730,
+      "mission_rows": 7212,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.4512908523235357,
+        "planned_route_mean_sampled_m_s": 0.9605621498364949,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 36.43699714642259,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 10.215029991999927
+    },
+    {
+      "case": "straight-speed-3",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "33f5ea234e6d5a7391c4b3eb605e520e69c2dedc66ddff66a54b2afd9a97c489",
+      "route_rows": 603,
+      "mission_rows": 7085,
+      "speed": {
+        "requested_cruise_m_s": 3.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 3.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 2.7,
+        "planned_route_peak_sampled_m_s": 1.7486826751402358,
+        "planned_route_mean_sampled_m_s": 1.1631415202714281,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 30.090921355343525,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 10.075570536999976
+    },
+    {
+      "case": "straight-speed-3",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "33f5ea234e6d5a7391c4b3eb605e520e69c2dedc66ddff66a54b2afd9a97c489",
+      "route_rows": 603,
+      "mission_rows": 7085,
+      "speed": {
+        "requested_cruise_m_s": 3.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 3.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 2.7,
+        "planned_route_peak_sampled_m_s": 1.7486826751402358,
+        "planned_route_mean_sampled_m_s": 1.1631415202714281,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 30.090921355343525,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 10.310830935000013
+    },
+    {
+      "case": "straight-speed-5",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "33f5ea234e6d5a7391c4b3eb605e520e69c2dedc66ddff66a54b2afd9a97c489",
+      "route_rows": 603,
+      "mission_rows": 7085,
+      "speed": {
+        "requested_cruise_m_s": 5.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 3.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 2.7,
+        "planned_route_peak_sampled_m_s": 1.7486826751402358,
+        "planned_route_mean_sampled_m_s": 1.1631415202714281,
+        "reasons": [
+          "requested_speed_cap",
+          "aircraft_speed_cap",
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 30.090921355343525,
+      "method": "smooth_spline",
+      "adjustments": [
+        {
+          "code": "cruise_speed",
+          "message": "Requested cruise 5 m/s is limited to 3 m/s by your Never exceed setting, before the 10% planning margin.",
+          "requested": 5.0,
+          "effective": 3.0,
+          "reason": "your Never exceed setting",
+          "requested_cap_m_s": 3.0,
+          "aircraft_cap_m_s": 3.0
+        }
+      ],
+      "original_rounding_met": true,
+      "elapsed_s": 9.520815163999941
+    },
+    {
+      "case": "straight-speed-5",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "33f5ea234e6d5a7391c4b3eb605e520e69c2dedc66ddff66a54b2afd9a97c489",
+      "route_rows": 603,
+      "mission_rows": 7085,
+      "speed": {
+        "requested_cruise_m_s": 5.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 3.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 2.7,
+        "planned_route_peak_sampled_m_s": 1.7486826751402358,
+        "planned_route_mean_sampled_m_s": 1.1631415202714281,
+        "reasons": [
+          "requested_speed_cap",
+          "aircraft_speed_cap",
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 30.090921355343525,
+      "method": "smooth_spline",
+      "adjustments": [
+        {
+          "code": "cruise_speed",
+          "message": "Requested cruise 5 m/s is limited to 3 m/s by your Never exceed setting, before the 10% planning margin.",
+          "requested": 5.0,
+          "effective": 3.0,
+          "reason": "your Never exceed setting",
+          "requested_cap_m_s": 3.0,
+          "aircraft_cap_m_s": 3.0
+        }
+      ],
+      "original_rounding_met": true,
+      "elapsed_s": 9.936611431000074
+    },
+    {
+      "case": "explicit-low-cap",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "028fdac5be0c54eef345f7023255699f0ea016e0e6e445d97210e262f4d96aa2",
+      "route_rows": 1035,
+      "mission_rows": 7517,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 1.25,
+        "effective_cruise_m_s": 1.25,
+        "effective_never_exceed_m_s": 1.25,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.125,
+        "planned_route_peak_sampled_m_s": 1.0275448725286984,
+        "planned_route_mean_sampled_m_s": 0.6774077945955292,
+        "reasons": [
+          "requested_speed_cap",
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 51.66754845130708,
+      "method": "smooth_spline",
+      "adjustments": [
+        {
+          "code": "cruise_speed",
+          "message": "Requested cruise 2 m/s is limited to 1.25 m/s by your Never exceed setting, before the 10% planning margin.",
+          "requested": 2.0,
+          "effective": 1.25,
+          "reason": "your Never exceed setting",
+          "requested_cap_m_s": 1.25,
+          "aircraft_cap_m_s": 3.0
+        }
+      ],
+      "original_rounding_met": true,
+      "elapsed_s": 11.492277928000021
+    },
+    {
+      "case": "explicit-low-cap",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "028fdac5be0c54eef345f7023255699f0ea016e0e6e445d97210e262f4d96aa2",
+      "route_rows": 1035,
+      "mission_rows": 7517,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 1.25,
+        "effective_cruise_m_s": 1.25,
+        "effective_never_exceed_m_s": 1.25,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.125,
+        "planned_route_peak_sampled_m_s": 1.0275448725286984,
+        "planned_route_mean_sampled_m_s": 0.6774077945955292,
+        "reasons": [
+          "requested_speed_cap",
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 51.66754845130708,
+      "method": "smooth_spline",
+      "adjustments": [
+        {
+          "code": "cruise_speed",
+          "message": "Requested cruise 2 m/s is limited to 1.25 m/s by your Never exceed setting, before the 10% planning margin.",
+          "requested": 2.0,
+          "effective": 1.25,
+          "reason": "your Never exceed setting",
+          "requested_cap_m_s": 1.25,
+          "aircraft_cap_m_s": 3.0
+        }
+      ],
+      "original_rounding_met": true,
+      "elapsed_s": 10.970217509999884
+    },
+    {
+      "case": "height-0.1",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "99e4db2fa6fb6d46753b4961d55fa60eeb2d6ed6cd68d612a16e20eb5101f7dd",
+      "route_rows": 398,
+      "mission_rows": 1060,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8815953097888384,
+        "planned_route_mean_sampled_m_s": 0.40302267006304515,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 19.85,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "rounding",
+          "message": "Used a tighter rounding allowance to keep the route above ground."
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": []
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "99e4db2fa6fb6d46753b4961d55fa60eeb2d6ed6cd68d612a16e20eb5101f7dd",
+        "samples": 398,
+        "phases": 1,
+        "maximum_serialized_state_error": 4.4497738826976274e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          0.88161209068008,
+          0.15254333758908126,
+          0.05369919275250042
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 4.203420926000035
+    },
+    {
+      "case": "height-0.1",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "99e4db2fa6fb6d46753b4961d55fa60eeb2d6ed6cd68d612a16e20eb5101f7dd",
+      "route_rows": 398,
+      "mission_rows": 1060,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8815953097888384,
+        "planned_route_mean_sampled_m_s": 0.40302267006304515,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 19.85,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "rounding",
+          "message": "Used a tighter rounding allowance to keep the route above ground."
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": []
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "99e4db2fa6fb6d46753b4961d55fa60eeb2d6ed6cd68d612a16e20eb5101f7dd",
+        "samples": 398,
+        "phases": 1,
+        "maximum_serialized_state_error": 4.4497738826976274e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          0.88161209068008,
+          0.15254333758908126,
+          0.05369919275250042
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 4.319871085000159
+    },
+    {
+      "case": "height-1",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "aff3ca399bcf061dd8c7b223c9e45cdd6e30b28a247e0ddd471c90a99aed3f32",
+      "route_rows": 238,
+      "mission_rows": 1070,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8999991878746975,
+        "planned_route_mean_sampled_m_s": 0.6768104316022641,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 11.820148917089906,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 5.007402302999935
+    },
+    {
+      "case": "height-1",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "aff3ca399bcf061dd8c7b223c9e45cdd6e30b28a247e0ddd471c90a99aed3f32",
+      "route_rows": 238,
+      "mission_rows": 1070,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8999991878746975,
+        "planned_route_mean_sampled_m_s": 0.6768104316022641,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 11.820148917089906,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 4.962630131999958
+    },
+    {
+      "case": "height-30",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "389cee60c50195b984c77b14789982c338c43520775cd3cb7a86253c6613d763",
+      "route_rows": 238,
+      "mission_rows": 7653,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8999991878746975,
+        "planned_route_mean_sampled_m_s": 0.6768104316022641,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 11.820148917089906,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 5.442123590999927
+    },
+    {
+      "case": "height-30",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "389cee60c50195b984c77b14789982c338c43520775cd3cb7a86253c6613d763",
+      "route_rows": 238,
+      "mission_rows": 7653,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8999991878746975,
+        "planned_route_mean_sampled_m_s": 0.6768104316022641,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 11.820148917089906,
+      "method": "smooth_spline",
+      "adjustments": [],
+      "original_rounding_met": true,
+      "elapsed_s": 4.771904033000055
+    },
+    {
+      "case": "height-50",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "389cee60c50195b984c77b14789982c338c43520775cd3cb7a86253c6613d763",
+      "route_rows": 238,
+      "mission_rows": 7653,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8999991878746975,
+        "planned_route_mean_sampled_m_s": 0.6768104316022641,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 11.820148917089906,
+      "method": "smooth_spline",
+      "adjustments": [
+        {
+          "code": "envelope_projection",
+          "message": "Moved 2 point(s) into the permitted height and area.",
+          "point_count": 2
+        }
+      ],
+      "original_rounding_met": false,
+      "elapsed_s": 4.824598803000072
+    },
+    {
+      "case": "height-50",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "389cee60c50195b984c77b14789982c338c43520775cd3cb7a86253c6613d763",
+      "route_rows": 238,
+      "mission_rows": 7653,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.8999991878746975,
+        "planned_route_mean_sampled_m_s": 0.6768104316022641,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 11.820148917089906,
+      "method": "smooth_spline",
+      "adjustments": [
+        {
+          "code": "envelope_projection",
+          "message": "Moved 2 point(s) into the permitted height and area.",
+          "point_count": 2
+        }
+      ],
+      "original_rounding_met": false,
+      "elapsed_s": 4.675615796000102
+    },
+    {
+      "case": "reversal",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "935876301c00ea575aa8fafff88e0a42f27b28869fcb504ce292efc1255e4615",
+      "route_rows": 696,
+      "mission_rows": 5242,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7641129032258063,
+        "planned_route_mean_sampled_m_s": 0.5755395687003285,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 34.75,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "935876301c00ea575aa8fafff88e0a42f27b28869fcb504ce292efc1255e4615",
+        "samples": 696,
+        "phases": 3,
+        "maximum_serialized_state_error": 5.222489107836736e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7641129032257648,
+          0.4886308795785133,
+          0.2753558121580302
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.14093300000013187
+    },
+    {
+      "case": "reversal",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "935876301c00ea575aa8fafff88e0a42f27b28869fcb504ce292efc1255e4615",
+      "route_rows": 696,
+      "mission_rows": 5242,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7641129032258063,
+        "planned_route_mean_sampled_m_s": 0.5755395687003285,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 34.75,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "935876301c00ea575aa8fafff88e0a42f27b28869fcb504ce292efc1255e4615",
+        "samples": 696,
+        "phases": 3,
+        "maximum_serialized_state_error": 5.222489107836736e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7641129032257648,
+          0.4886308795785133,
+          0.2753558121580302
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.13278738899998643
+    },
+    {
+      "case": "five-stops",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "2d929c435315fbdd85276751c7e6d0004efa100d8e6e1872fa5ede402c17357f",
+      "route_rows": 1348,
+      "mission_rows": 6300,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7586607346109433,
+        "planned_route_mean_sampled_m_s": 0.4899777301004907,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 67.35000000000001,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": []
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "2d929c435315fbdd85276751c7e6d0004efa100d8e6e1872fa5ede402c17357f",
+        "samples": 1348,
+        "phases": 10,
+        "maximum_serialized_state_error": 3.907985046680551e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7587939698492046,
+          0.8633367887847425,
+          1.0224998661011926
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.18596261800007596
+    },
+    {
+      "case": "five-stops",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "2d929c435315fbdd85276751c7e6d0004efa100d8e6e1872fa5ede402c17357f",
+      "route_rows": 1348,
+      "mission_rows": 6300,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7586607346109433,
+        "planned_route_mean_sampled_m_s": 0.4899777301004907,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 67.35000000000001,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": []
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "2d929c435315fbdd85276751c7e6d0004efa100d8e6e1872fa5ede402c17357f",
+        "samples": 1348,
+        "phases": 10,
+        "maximum_serialized_state_error": 3.907985046680551e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7587939698492046,
+          0.8633367887847425,
+          1.0224998661011926
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.1911246150000352
+    },
+    {
+      "case": "duplicate-hover",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "8fab5837c68a9aa20e65f84f0b20389075511a7e914b916acf961f514ba2de1c",
+      "route_rows": 22,
+      "mission_rows": 4568,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 0.0,
+        "planned_route_mean_sampled_m_s": 0.0,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 1.05,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "8fab5837c68a9aa20e65f84f0b20389075511a7e914b916acf961f514ba2de1c",
+        "samples": 22,
+        "phases": 1,
+        "maximum_serialized_state_error": 0.0,
+        "root_extrema_speed_acceleration_jerk": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.0931932329999654
+    },
+    {
+      "case": "duplicate-hover",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "8fab5837c68a9aa20e65f84f0b20389075511a7e914b916acf961f514ba2de1c",
+      "route_rows": 22,
+      "mission_rows": 4568,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 0.0,
+        "planned_route_mean_sampled_m_s": 0.0,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 1.05,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "8fab5837c68a9aa20e65f84f0b20389075511a7e914b916acf961f514ba2de1c",
+        "samples": 22,
+        "phases": 1,
+        "maximum_serialized_state_error": 0.0,
+        "root_extrema_speed_acceleration_jerk": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.11441354700014017
+    },
+    {
+      "case": "tiny-detail",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "958dbfe743010e8ec507cd47b0c109753511779c4592cbccac179fd68a7a2acd",
+      "route_rows": 192,
+      "mission_rows": 4908,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 2.9262809596943903e-06,
+        "planned_route_mean_sampled_m_s": 2.528002548336185e-07,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 9.55,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "958dbfe743010e8ec507cd47b0c109753511779c4592cbccac179fd68a7a2acd",
+        "samples": 192,
+        "phases": 3,
+        "maximum_serialized_state_error": 1.176836406102666e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          2.946278254943878e-06,
+          9.637417630989254e-06,
+          6.41366694953775e-05
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.10545470300007764
+    },
+    {
+      "case": "tiny-detail",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "958dbfe743010e8ec507cd47b0c109753511779c4592cbccac179fd68a7a2acd",
+      "route_rows": 192,
+      "mission_rows": 4908,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 2.9262809596943903e-06,
+        "planned_route_mean_sampled_m_s": 2.528002548336185e-07,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 9.55,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "958dbfe743010e8ec507cd47b0c109753511779c4592cbccac179fd68a7a2acd",
+        "samples": 192,
+        "phases": 3,
+        "maximum_serialized_state_error": 1.176836406102666e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          2.946278254943878e-06,
+          9.637417630989254e-06,
+          6.41366694953775e-05
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.10480060500003674
+    },
+    {
+      "case": "figure-eight",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "58e8f5668009ac0935d59a02808523936707ffe005bd8e5c6798b8172502de98",
+      "route_rows": 4053,
+      "mission_rows": 8599,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.764475304799342,
+        "planned_route_mean_sampled_m_s": 0.3598192484930496,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 202.55,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "sketch_simplification",
+          "message": "Kept the main shape using 30 flight points from 65 drawing samples. The original drawing remains visible for comparison.",
+          "original_point_count": 65,
+          "effective_point_count": 30
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p4",
+            "p6",
+            "p8",
+            "p10",
+            "p12",
+            "p14",
+            "p16",
+            "p18",
+            "p20",
+            "p22",
+            "p24",
+            "p26",
+            "p28",
+            "p35",
+            "p38",
+            "p40",
+            "p41",
+            "p42",
+            "p44",
+            "p45",
+            "p47",
+            "p50",
+            "p52",
+            "p53",
+            "p55",
+            "p57",
+            "p59",
+            "p61"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "58e8f5668009ac0935d59a02808523936707ffe005bd8e5c6798b8172502de98",
+        "samples": 4053,
+        "phases": 58,
+        "maximum_serialized_state_error": 3.730349362740526e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7646956530450757,
+          0.8620784529759006,
+          1.271357862937972
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.4517893740001
+    },
+    {
+      "case": "figure-eight",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "58e8f5668009ac0935d59a02808523936707ffe005bd8e5c6798b8172502de98",
+      "route_rows": 4053,
+      "mission_rows": 8599,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.764475304799342,
+        "planned_route_mean_sampled_m_s": 0.3598192484930496,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 202.55,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "sketch_simplification",
+          "message": "Kept the main shape using 30 flight points from 65 drawing samples. The original drawing remains visible for comparison.",
+          "original_point_count": 65,
+          "effective_point_count": 30
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p4",
+            "p6",
+            "p8",
+            "p10",
+            "p12",
+            "p14",
+            "p16",
+            "p18",
+            "p20",
+            "p22",
+            "p24",
+            "p26",
+            "p28",
+            "p35",
+            "p38",
+            "p40",
+            "p41",
+            "p42",
+            "p44",
+            "p45",
+            "p47",
+            "p50",
+            "p52",
+            "p53",
+            "p55",
+            "p57",
+            "p59",
+            "p61"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "58e8f5668009ac0935d59a02808523936707ffe005bd8e5c6798b8172502de98",
+        "samples": 4053,
+        "phases": 58,
+        "maximum_serialized_state_error": 3.730349362740526e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7646956530450757,
+          0.8620784529759006,
+          1.271357862937972
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.46066144600013104
+    },
+    {
+      "case": "dense-10000",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "be9899ccab60a0579b430e2509b211eac6dfd3100ce05459bd0ec1a8ec3afb86",
+      "route_rows": 7174,
+      "mission_rows": 12456,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7639598112423136,
+        "planned_route_mean_sampled_m_s": 0.42472788289403524,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 358.3999999999999,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "sketch_simplification",
+          "message": "Kept the main shape using 48 flight points from 10000 drawing samples. The original drawing remains visible for comparison.",
+          "original_point_count": 10000,
+          "effective_point_count": 48
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p292",
+            "p513",
+            "p719",
+            "p920",
+            "p1044",
+            "p1172",
+            "p1443",
+            "p1733",
+            "p1874",
+            "p2011",
+            "p2156",
+            "p2298",
+            "p2439",
+            "p2583",
+            "p2862",
+            "p3511",
+            "p3693",
+            "p3864",
+            "p4029",
+            "p4197",
+            "p4378",
+            "p4567",
+            "p4824",
+            "p5073",
+            "p5294",
+            "p5400",
+            "p5506",
+            "p5699",
+            "p5902",
+            "p6532",
+            "p6759",
+            "p6978",
+            "p7189",
+            "p7318",
+            "p7451",
+            "p7590",
+            "p7733",
+            "p8037",
+            "p8183",
+            "p8325",
+            "p8468",
+            "p8607",
+            "p8747",
+            "p8890",
+            "p9160",
+            "p9740"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "be9899ccab60a0579b430e2509b211eac6dfd3100ce05459bd0ec1a8ec3afb86",
+        "samples": 7174,
+        "phases": 94,
+        "maximum_serialized_state_error": 4.760636329592671e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.763959811242272,
+          0.8639438063309289,
+          1.270842106691802
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 1.0563361480001277
+    },
+    {
+      "case": "dense-10000",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "be9899ccab60a0579b430e2509b211eac6dfd3100ce05459bd0ec1a8ec3afb86",
+      "route_rows": 7174,
+      "mission_rows": 12456,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7639598112423136,
+        "planned_route_mean_sampled_m_s": 0.42472788289403524,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 358.3999999999999,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "sketch_simplification",
+          "message": "Kept the main shape using 48 flight points from 10000 drawing samples. The original drawing remains visible for comparison.",
+          "original_point_count": 10000,
+          "effective_point_count": 48
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p292",
+            "p513",
+            "p719",
+            "p920",
+            "p1044",
+            "p1172",
+            "p1443",
+            "p1733",
+            "p1874",
+            "p2011",
+            "p2156",
+            "p2298",
+            "p2439",
+            "p2583",
+            "p2862",
+            "p3511",
+            "p3693",
+            "p3864",
+            "p4029",
+            "p4197",
+            "p4378",
+            "p4567",
+            "p4824",
+            "p5073",
+            "p5294",
+            "p5400",
+            "p5506",
+            "p5699",
+            "p5902",
+            "p6532",
+            "p6759",
+            "p6978",
+            "p7189",
+            "p7318",
+            "p7451",
+            "p7590",
+            "p7733",
+            "p8037",
+            "p8183",
+            "p8325",
+            "p8468",
+            "p8607",
+            "p8747",
+            "p8890",
+            "p9160",
+            "p9740"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "be9899ccab60a0579b430e2509b211eac6dfd3100ce05459bd0ec1a8ec3afb86",
+        "samples": 7174,
+        "phases": 94,
+        "maximum_serialized_state_error": 4.760636329592671e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.763959811242272,
+          0.8639438063309289,
+          1.270842106691802
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 1.068055250000043
+    },
+    {
+      "case": "outside-boundary",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "b50e77c499669c54f85d14964c4344d56ac993dec78409afd209f365fecc3ede",
+      "route_rows": 4421,
+      "mission_rows": 8967,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7641129032240421,
+        "planned_route_mean_sampled_m_s": 0.7239672137318167,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 221.0,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "envelope_projection",
+          "message": "Moved 2 point(s) into the permitted height and area.",
+          "point_count": 2
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1",
+            "p2"
+          ]
+        }
+      ],
+      "original_rounding_met": false,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "b50e77c499669c54f85d14964c4344d56ac993dec78409afd209f365fecc3ede",
+        "samples": 4421,
+        "phases": 6,
+        "maximum_serialized_state_error": 3.318234575999668e-12,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7641129032240008,
+          0.12215771989450619,
+          0.017209738259859678
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.4136715770000592
+    },
+    {
+      "case": "outside-boundary",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "b50e77c499669c54f85d14964c4344d56ac993dec78409afd209f365fecc3ede",
+      "route_rows": 4421,
+      "mission_rows": 8967,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.7641129032240421,
+        "planned_route_mean_sampled_m_s": 0.7239672137318167,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 221.0,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "envelope_projection",
+          "message": "Moved 2 point(s) into the permitted height and area.",
+          "point_count": 2
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1",
+            "p2"
+          ]
+        }
+      ],
+      "original_rounding_met": false,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "b50e77c499669c54f85d14964c4344d56ac993dec78409afd209f365fecc3ede",
+        "samples": 4421,
+        "phases": 6,
+        "maximum_serialized_state_error": 3.318234575999668e-12,
+        "root_extrema_speed_acceleration_jerk": [
+          1.7641129032240008,
+          0.12215771989450619,
+          0.017209738259859678
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.40542349500015007
+    },
+    {
+      "case": "vin",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "7152c7cd3d10f9e5d6a9ce1c4bdee19af7d41d3e28df1db222aff94565676296",
+      "route_rows": 2973,
+      "mission_rows": 8310,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.763091731479329,
+        "planned_route_mean_sampled_m_s": 0.43345533839437517,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 148.50000000000003,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9",
+            "p10"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "7152c7cd3d10f9e5d6a9ce1c4bdee19af7d41d3e28df1db222aff94565676296",
+        "samples": 2973,
+        "phases": 20,
+        "maximum_serialized_state_error": 3.9612757518625585e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.763208320083175,
+          0.8498280785445438,
+          1.2244897959183492
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.3185660359999929
+    },
+    {
+      "case": "vin",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "7152c7cd3d10f9e5d6a9ce1c4bdee19af7d41d3e28df1db222aff94565676296",
+      "route_rows": 2973,
+      "mission_rows": 8310,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.763091731479329,
+        "planned_route_mean_sampled_m_s": 0.43345533839437517,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 148.50000000000003,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "p1",
+            "p2",
+            "p3",
+            "p4",
+            "p5",
+            "p6",
+            "p7",
+            "p8",
+            "p9",
+            "p10"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "7152c7cd3d10f9e5d6a9ce1c4bdee19af7d41d3e28df1db222aff94565676296",
+        "samples": 2973,
+        "phases": 20,
+        "maximum_serialized_state_error": 3.9612757518625585e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.763208320083175,
+          0.8498280785445438,
+          1.2244897959183492
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.3207628459999796
+    },
+    {
+      "case": "impossible-deadline-adjusted",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "aff9a9a49d6686b52f8568b846bcb517b27f8aa44357014cf831e44e10aba2ae",
+      "route_rows": 332,
+      "mission_rows": 5672,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.899999999099994,
+        "planned_route_mean_sampled_m_s": 0.7264792847707447,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 16.51802100520191,
+      "method": "retimed_spline",
+      "adjustments": [
+        {
+          "code": "route_time",
+          "message": "Allowed more route time to stay within physical limits."
+        }
+      ],
+      "original_rounding_met": true,
+      "elapsed_s": 8.70815800000014
+    },
+    {
+      "case": "impossible-deadline-adjusted",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "aff9a9a49d6686b52f8568b846bcb517b27f8aa44357014cf831e44e10aba2ae",
+      "route_rows": 332,
+      "mission_rows": 5672,
+      "speed": {
+        "requested_cruise_m_s": 1.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 1.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 0.9,
+        "planned_route_peak_sampled_m_s": 0.899999999099994,
+        "planned_route_mean_sampled_m_s": 0.7264792847707447,
+        "reasons": [
+          "planning_margin"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 16.51802100520191,
+      "method": "retimed_spline",
+      "adjustments": [
+        {
+          "code": "route_time",
+          "message": "Allowed more route time to stay within physical limits."
+        }
+      ],
+      "original_rounding_met": true,
+      "elapsed_s": 10.17640799899982
+    },
+    {
+      "case": "circle-1-lap",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "02f42e229f38323be41253b33800756210df1195a2a9d30439510e33eea00b1b",
+      "route_rows": 2620,
+      "mission_rows": 7166,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.2274396124820026,
+        "planned_route_mean_sampled_m_s": 0.3819066543160126,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 130.95000000000007,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "circle_approximation",
+          "message": "Circle approximation is within 12.15 cm of the requested shape.",
+          "source_shape_error_bound_m": 0.12153797590233584
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "circle-1",
+            "circle-2",
+            "circle-3",
+            "circle-4",
+            "circle-5",
+            "circle-6",
+            "circle-7",
+            "circle-8",
+            "circle-9",
+            "circle-10",
+            "circle-11",
+            "circle-12",
+            "circle-13",
+            "circle-14",
+            "circle-15",
+            "circle-16",
+            "circle-17"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "02f42e229f38323be41253b33800756210df1195a2a9d30439510e33eea00b1b",
+        "samples": 2620,
+        "phases": 36,
+        "maximum_serialized_state_error": 1.1901590823981678e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.227815397644935,
+          0.8519303580563544,
+          1.2026352226702863
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.3034916539997994
+    },
+    {
+      "case": "circle-1-lap",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "02f42e229f38323be41253b33800756210df1195a2a9d30439510e33eea00b1b",
+      "route_rows": 2620,
+      "mission_rows": 7166,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.2274396124820026,
+        "planned_route_mean_sampled_m_s": 0.3819066543160126,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 130.95000000000007,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "circle_approximation",
+          "message": "Circle approximation is within 12.15 cm of the requested shape.",
+          "source_shape_error_bound_m": 0.12153797590233584
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "circle-1",
+            "circle-2",
+            "circle-3",
+            "circle-4",
+            "circle-5",
+            "circle-6",
+            "circle-7",
+            "circle-8",
+            "circle-9",
+            "circle-10",
+            "circle-11",
+            "circle-12",
+            "circle-13",
+            "circle-14",
+            "circle-15",
+            "circle-16",
+            "circle-17"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "02f42e229f38323be41253b33800756210df1195a2a9d30439510e33eea00b1b",
+        "samples": 2620,
+        "phases": 36,
+        "maximum_serialized_state_error": 1.1901590823981678e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.227815397644935,
+          0.8519303580563544,
+          1.2026352226702863
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.30568180499994924
+    },
+    {
+      "case": "circle-2-lap",
+      "repeat": 1,
+      "passed": true,
+      "trajectory_sha256": "90631d1bf69d2e36cc11460a100e16db8f54f059a103db28e87ce43a27594c4c",
+      "route_rows": 5194,
+      "mission_rows": 9740,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.2274396124820026,
+        "planned_route_mean_sampled_m_s": 0.3852160707312301,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 259.6499999999997,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "circle_approximation",
+          "message": "Circle approximation is within 12.15 cm of the requested shape.",
+          "source_shape_error_bound_m": 0.12153797590233584
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "circle-1",
+            "circle-2",
+            "circle-3",
+            "circle-4",
+            "circle-5",
+            "circle-6",
+            "circle-7",
+            "circle-8",
+            "circle-9",
+            "circle-10",
+            "circle-11",
+            "circle-12",
+            "circle-13",
+            "circle-14",
+            "circle-15",
+            "circle-16",
+            "circle-17"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "90631d1bf69d2e36cc11460a100e16db8f54f059a103db28e87ce43a27594c4c",
+        "samples": 5194,
+        "phases": 72,
+        "maximum_serialized_state_error": 1.4534969147724403e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.227815397644935,
+          0.8519303580563544,
+          1.2026352226702863
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.5408863410000322
+    },
+    {
+      "case": "circle-2-lap",
+      "repeat": 2,
+      "passed": true,
+      "trajectory_sha256": "90631d1bf69d2e36cc11460a100e16db8f54f059a103db28e87ce43a27594c4c",
+      "route_rows": 5194,
+      "mission_rows": 9740,
+      "speed": {
+        "requested_cruise_m_s": 2.0,
+        "requested_never_exceed_m_s": 3.0,
+        "effective_cruise_m_s": 2.0,
+        "effective_never_exceed_m_s": 3.0,
+        "aircraft_maximum_m_s": 3.0,
+        "planning_cap_m_s": 1.8,
+        "planned_route_peak_sampled_m_s": 1.2274396124820026,
+        "planned_route_mean_sampled_m_s": 0.3852160707312301,
+        "reasons": [
+          "planning_margin",
+          "route_dynamics_and_stops"
+        ],
+        "scope": "planned route reference; no measured flight",
+        "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+      },
+      "route_duration_s": 259.6499999999997,
+      "method": "stop_and_turn",
+      "adjustments": [
+        {
+          "code": "circle_approximation",
+          "message": "Circle approximation is within 12.15 cm of the requested shape.",
+          "source_shape_error_bound_m": 0.12153797590233584
+        },
+        {
+          "code": "stop_and_turn",
+          "message": "Added full stops at corners and smooth turns before continuing; your point order is preserved.",
+          "point_ids": [
+            "circle-1",
+            "circle-2",
+            "circle-3",
+            "circle-4",
+            "circle-5",
+            "circle-6",
+            "circle-7",
+            "circle-8",
+            "circle-9",
+            "circle-10",
+            "circle-11",
+            "circle-12",
+            "circle-13",
+            "circle-14",
+            "circle-15",
+            "circle-16",
+            "circle-17"
+          ]
+        }
+      ],
+      "original_rounding_met": true,
+      "diverse_audit": {
+        "accepted": true,
+        "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+        "route_only": true,
+        "execution_adapter_eligible": false,
+        "native_lifecycle_owner": "offboard_runner",
+        "controller_trajectory_sha256": "90631d1bf69d2e36cc11460a100e16db8f54f059a103db28e87ce43a27594c4c",
+        "samples": 5194,
+        "phases": 72,
+        "maximum_serialized_state_error": 1.4534969147724403e-13,
+        "root_extrema_speed_acceleration_jerk": [
+          1.227815397644935,
+          0.8519303580563544,
+          1.2026352226702863
+        ],
+        "simulator_ran": false,
+        "physical_flight_approved": false
+      },
+      "elapsed_s": 0.5919575240000086
+    }
+  ]
+}
