@@ -84,7 +84,7 @@
     "scripts/check_aircraft_faults.py": "324670d96f88d9e37e082460f7f9beac25ed362fbf4beacdd9521a411cfe953b",
     "scripts/audit_fidelity_baseline.py": "eaee9b9130ac4bf4f40a50665cdb755e67ee043a8fb66f3847737fadb31765b4",
     "scripts/sitl_scenario_batch.py": "02457fade2dbfc08d511844b45fba7c694eaa02014dc2d242957cd473d58a9d2",
-    "scripts/validate.py": "5226a7122b7ee1a8474ee4b509d07742c5dceaad45c3031d89aa221b937b967d",
+    "scripts/validate.py": "0cac85e153fc02f03219c0b9e20d7b8e978677f8fc50f16842146cb752b28f72",
     "scripts/check_studio_usability.py": "c34fb1359e87ca037881ce5afc6e1249d6a5093fd15650026d067e453adfdcb6",
     "scripts/sitl_wind.py": "6aee3e49ad3e9b3635915971cc5d8efea1dd115f0c8620d91462387108275272",
     "scripts/check_conference_planner.py": "e9c4a29dd7b24e0ce20058b969471ba56c980029b1a674a91717f9f66ed48e03",
@@ -162,5 +162,6 @@
     "tests/test_analysis_pipeline.py": "83f7285a63a3be919fc395bf8e2f1e0dff84baf0ee1deb4a90f6e0b1caea8d18",
     "tests/test_sitl_parameter_reads.py": "a30dded05d791ecf7de367cf3329237dc7555247a853a4c405cef77c2b85afcf",
     "tests/test_mission_plan_contract.py": "3bd47bfd29b824c8155112bed3e5bb04cfd05f1b1024feebbd5eb396650cd989"
-  }
+  },
+  "ci_followup": "Run full discovery once under controller coverage; no production planner/controller changes after ce6eebc."
 }

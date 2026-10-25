@@ -23,6 +23,7 @@ qualify the new family for reliable connected SITL or physical flight.
 | PR #5 truth audit | Already incorporated into #6 | No blind merge. #6 additionally hemisphere-aligns quaternions and refuses missing interpolation brackets/gaps |
 | Genuine simulator evidence | Historical compressed telemetry retained; latest family never flown in this checkout | Re-audit historical recording separately; new connected launch is retained as FAILED before simulator start |
 | Public hosting | Existing URL supplied; no Site identity in Git checkout and no owned/shared editable Site returned by connected Sites account | Local build/browser tested; existing production site cannot be updated from this account |
+| CI runtime | The 15-minute job repeated the complete suite for coverage and timed out after deterministic tests passed | Collect branch coverage during the existing deterministic pass; preserve discovery and both coverage gates |
 | Hardware | Not qualified | No hardware transport or physical-flight changes |
 
 ## Mathematical and engineering changes

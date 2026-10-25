@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import compileall
 import os
 from pathlib import Path
@@ -22,7 +23,11 @@ def run(command: list[str], cwd: Path = ROOT) -> None:
     subprocess.run(command, cwd=cwd, check=True, env=os.environ.copy())
 
 
-def main() -> None:
+def main(argv=None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--controller-coverage', action='store_true',
+                        help='Collect controller branch coverage during the full test pass')
+    args = parser.parse_args(argv)
     os.environ.setdefault("MPLBACKEND", "Agg")
     run([sys.executable, "main.py"], cwd=GENERATOR)
     shutil.copy2(GENERATOR / "trajectory.csv", CONTROLLER / "trajectory.csv")
@@ -52,8 +57,10 @@ def main() -> None:
 
     # Discovery prevents new safety tests from being silently omitted. The
     # trajectory-generator import isolation is covered by its regression test.
-    run([
-        sys.executable,
+    test_command = [sys.executable]
+    if args.controller_coverage:
+        test_command += ['-m', 'coverage', 'run', '--branch', '--source=controller']
+    run(test_command + [
         "-m", "unittest", "discover",
         "-s", str(ROOT / "tests"),
         "-v",

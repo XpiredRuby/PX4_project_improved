@@ -151,3 +151,17 @@ have stronger reproducible evidence. **Reliable SITL research acceptance for the
 new planner family is not yet established.** Run the declared connected campaigns
 on an accessible compiled PX4/Gazebo environment before promoting the adapter or
 presenting the animation as a newly simulated flight.
+
+## CI scheduling correction
+
+On commit `ce6eebccb6b03a2884b0b3016d4aa91e718f9504`, GitHub's Controller
+validation passed on Python 3.10. Validation run `40170468274` passed static
+checks, all deterministic tests and connector tests, then reached its 15-minute
+job limit during a second complete test pass for branch coverage. This was an
+incomplete coverage result, not an assertion failure or a coverage pass.
+
+The follow-up workflow invokes `scripts/validate.py --controller-coverage` so
+its one full deterministic test pass also collects controller coverage. The
+critical 80% report gate and separate waypoint 90% gate are unchanged. Test
+discovery, generator/determinism checks and the 15-minute limit are retained.
+No test was removed to accommodate the timeout.

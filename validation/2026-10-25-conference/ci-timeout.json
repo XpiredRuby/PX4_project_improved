@@ -1,0 +1,17 @@
+{
+  "run_id": 40170468274,
+  "source_commit": "ce6eebccb6b03a2884b0b3016d4aa91e718f9504",
+  "status": "completed",
+  "conclusion": "cancelled",
+  "started_at": "2026-10-25T06:49:23Z",
+  "completed_at": "2026-10-25T07:04:38Z",
+  "passed_steps": [
+    "Static checks",
+    "Deterministic validation",
+    "Connector subprocess regression tests"
+  ],
+  "incomplete_step": "Critical logic branch coverage",
+  "cause": "15-minute job limit during duplicated full-suite execution",
+  "controller_workflow_run": 40170468284,
+  "controller_workflow_conclusion": "success"
+}
