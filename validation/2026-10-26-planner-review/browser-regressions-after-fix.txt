@@ -1,0 +1,16 @@
+✔ gap is the nearest segment distance, not distance to a drawn vertex (1.103494ms)
+✔ overlapping paths have zero displayed change and repeated vertices stay finite (0.161248ms)
+✔ verified bound is unavailable when certificate is absent, failed or invalid (0.258881ms)
+✔ layer rendering isolates state and uses visible widths at phone scale (0.338278ms)
+✔ adjusted routes keep the original shadow and its certified displacement (0.887676ms)
+✔ a failed verification cannot turn an adjustment estimate into a certified bound (0.174086ms)
+✔ a missing or invalid original-request bound cannot fall back to an effective-route bound (0.246283ms)
+✔ an adjustment bound still requires the effective geometry check to pass (0.170591ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 83.02687

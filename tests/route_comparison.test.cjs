@@ -33,3 +33,26 @@ test('a failed verification cannot turn an adjustment estimate into a certified 
  result.planning_adjustments={curve_error_bound_from_requested_m:3};
  assert.equal(compare.analyze(result).bound,null);
 });
+test('a missing or invalid original-request bound cannot fall back to an effective-route bound',()=>{
+ for(const bound of [undefined,null,NaN,Infinity,-1]){
+  const result=fixture([[0,0],[0,2]]);
+  result.requested_intent={path:{points:[{east_m:0,north_m:0},{east_m:0,north_m:30}],maximum_deviation_m:.5}};
+  result.planning_adjustments={adjusted:true,curve_error_bound_from_requested_m:bound};
+  assert.equal(compare.analyze(result).bound,null);
+ }
+ const result=fixture([[0,0],[0,2]]);
+ result.requested_intent={path:{points:[{east_m:0,north_m:0},{east_m:0,north_m:30}],maximum_deviation_m:.5}};
+ assert.equal(compare.analyze(result).bound,null);
+});
+test('an adjustment bound still requires the effective geometry check to pass',()=>{
+ for(const change of [
+  r=>{r.verification.checks=[]},
+  r=>{r.verification.checks[0].status='FAIL'},
+  r=>{r.verification.checks[0].margin=null}
+ ]){
+  const result=fixture([[0,0],[0,2]]);
+  result.planning_adjustments={adjusted:true,curve_error_bound_from_requested_m:3};
+  change(result);
+  assert.equal(compare.analyze(result).bound,null);
+ }
+});

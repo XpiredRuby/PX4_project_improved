@@ -1,0 +1,2 @@
+Accepted reference retained; baseline native execution remains refused.
+PASS: oracle and execution fixture regenerate byte-for-byte; every archived artifact hash matches.

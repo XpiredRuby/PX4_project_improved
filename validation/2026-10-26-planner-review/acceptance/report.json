@@ -1,0 +1,177 @@
+{
+  "release_class": "SITL_ONLY",
+  "campaign_ran": false,
+  "source_digest_sha256": "dd8db111f8aaca78a3b28e9c08c172621bf36661f25b4121c7aeb236f563031f",
+  "cases": [
+    {
+      "case": "straight",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 3.675781439000275,
+      "samples": 332,
+      "maximum_sampled_speed_m_s": 0.899999999099994,
+      "trajectory_sha256": "aff9a9a49d6686b52f8568b846bcb517b27f8aa44357014cf831e44e10aba2ae",
+      "duration_s": 16.51802100520191,
+      "limiting_constraint": "speed"
+    },
+    {
+      "case": "l-turn",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 5.4217845639996085,
+      "samples": 586,
+      "maximum_sampled_speed_m_s": 0.8999095886998485,
+      "trajectory_sha256": "6dbe9517bb17944aea5a4ac7b2b50995691c9f69daa77c478daad72a1ccb598c",
+      "duration_s": 29.23304676384547,
+      "limiting_constraint": "speed"
+    },
+    {
+      "case": "tight-turn",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 4.3290521549988625,
+      "samples": 562,
+      "maximum_sampled_speed_m_s": 0.8886778791521937,
+      "trajectory_sha256": "f07a63f695a9be401015fc74f6557036b8fd07b14d1864834535225c9eb6111c",
+      "duration_s": 28.005296391652553,
+      "limiting_constraint": "jerk"
+    },
+    {
+      "case": "s-curve",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 5.946165806999488,
+      "samples": 711,
+      "maximum_sampled_speed_m_s": 0.8981091334988432,
+      "trajectory_sha256": "95b3bab1765ab2e1fcf8a01f7291092214cbf02bbf880c86bfabbc94cfbfa013",
+      "duration_s": 35.48710127761754,
+      "limiting_constraint": "jerk"
+    },
+    {
+      "case": "circle",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 7.191083940999306,
+      "samples": 800,
+      "maximum_sampled_speed_m_s": 0.8963292367058745,
+      "trajectory_sha256": "8f5a33017597d2e77c0aa61ab74aaf9fec8ef3af77e73727932de2161ca5c624",
+      "duration_s": 39.93663196061992,
+      "limiting_constraint": "speed"
+    },
+    {
+      "case": "hard-stop",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 11.081176764000702,
+      "samples": 391,
+      "maximum_sampled_speed_m_s": 0.8988168098492929,
+      "trajectory_sha256": "c23ba945a8d356c027b9549cf13dbe6852607de7007d82d7ef5bc0207ce82795",
+      "duration_s": 19.467319159204504,
+      "limiting_constraint": "speed"
+    },
+    {
+      "case": "fly-through",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 4.0858651230009855,
+      "samples": 441,
+      "maximum_sampled_speed_m_s": 0.6951857759846183,
+      "trajectory_sha256": "8a5ae409d2dc6b0157046680523253909d094ae431433b700dde2bec043a5058",
+      "duration_s": 21.981652261814727,
+      "limiting_constraint": "jerk"
+    },
+    {
+      "case": "slow-route",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 4.491380538000158,
+      "samples": 591,
+      "maximum_sampled_speed_m_s": 0.4499999995499934,
+      "trajectory_sha256": "823d18b33541b54d5c019725f3930b46230142dc96dfeb4a73e3d8d00b3b2028",
+      "duration_s": 29.4762092650409,
+      "limiting_constraint": "speed"
+    },
+    {
+      "case": "interview-circle",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 11.604252852999707,
+      "samples": 1190,
+      "maximum_sampled_speed_m_s": 0.8936118370600564,
+      "trajectory_sha256": "57ad38635d0309749f1a88f3e8392aa1b15c60b5566cec1301d2ae139ae2597a",
+      "duration_s": 59.42566658950927,
+      "limiting_constraint": "jerk"
+    },
+    {
+      "case": "survey",
+      "expected_accepted": true,
+      "accepted": true,
+      "passed": true,
+      "elapsed_s": 7.796823405999021,
+      "samples": 754,
+      "maximum_sampled_speed_m_s": 0.8999929655495362,
+      "trajectory_sha256": "148987c2f44d0c1757ce7fa4ab65460b64f5c25b4e898ca8b9450e139f655558",
+      "duration_s": 37.647970895737714,
+      "limiting_constraint": "speed"
+    },
+    {
+      "case": "refuse-deadline",
+      "expected_accepted": false,
+      "accepted": false,
+      "passed": true,
+      "elapsed_s": 3.218362685000102,
+      "reason": "requested maximum duration is not certified by this planner; minimum feasible duration found for this candidate family is 16.518021 s; global optimality is not established"
+    },
+    {
+      "case": "refuse-overspeed",
+      "expected_accepted": false,
+      "accepted": false,
+      "passed": true,
+      "elapsed_s": 0.0005968089990346925,
+      "reason": "mission speed exceeds the vehicle model envelope"
+    },
+    {
+      "case": "refuse-outside-volume",
+      "expected_accepted": false,
+      "accepted": false,
+      "passed": true,
+      "elapsed_s": 0.0004948980003973702,
+      "reason": "path.points[1] exceeds environment radius"
+    },
+    {
+      "case": "refuse-zero-length",
+      "expected_accepted": false,
+      "accepted": false,
+      "passed": true,
+      "elapsed_s": 0.0006775370002287673,
+      "reason": "path has fewer than two distinct points"
+    },
+    {
+      "case": "refuse-conflicting-stop",
+      "expected_accepted": false,
+      "accepted": false,
+      "passed": true,
+      "elapsed_s": 5.611199958366342e-05,
+      "reason": "path.points[0] cannot both stop and be flown through"
+    },
+    {
+      "case": "refuse-nonfinite",
+      "expected_accepted": false,
+      "accepted": false,
+      "passed": true,
+      "elapsed_s": 0.00010198000018135644,
+      "reason": "motion.maximum_speed_m_s must be finite"
+    }
+  ],
+  "passed": true,
+  "scope": "Offline input/geometry/timing/export acceptance; Gazebo evidence is separate."
+}

@@ -1,0 +1,190 @@
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:203:48
+    |
+201 |             point["east_m"] *= ratio
+202 |         point["down_m"] = -min(max(-point["down_m"], .1), environment.max_height_above_launch_m)
+203 |         moved += any(point[k] != n for k, n in zip(("north_m","east_m","down_m"), original))
+    |                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+204 |     if moved:
+205 |         _change(changes, "envelope_projection", f"Moved {moved} point(s) into the permitted height and area.",
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:232:25
+    |
+230 |             poses = [[p[k] for k in ("north_m", "east_m", "down_m")] for p in points]
+231 |             lengths = [0.]
+232 |             for a, b in zip(poses, poses[1:]):
+    |                         ^^^^^^^^^^^^^^^^^^^^^
+233 |                 lengths.append(lengths[-1] + math.dist(a, b))
+234 |             total = lengths[-1]
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:244:45
+    |
+242 |             span = times[cursor+1] - times[cursor]
+243 |             u = (t-times[cursor])/span if span else 0.
+244 |             return [x + u*(y-x) for x, y in zip(poses[cursor], poses[cursor+1])], cursor
+    |                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+245 |         bound, ia, ib = prefix, 0, 0
+246 |         for t in sorted(set(ta + tb)):
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:253:38
+    |
+251 |     return max(prefix, *(math.dist([p[k] for k in ("north_m","east_m","down_m")],
+252 |                                   [q[k] for k in ("north_m","east_m","down_m")])
+253 |                          for p, q in zip(old, new)))
+    |                                      ^^^^^^^^^^^^^
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:269:17
+    |
+267 |     poses = [[p[k] for k in ("north_m", "east_m", "down_m")] for p in points]
+268 |     arc = [0.]
+269 |     for a, b in zip(poses, poses[1:]):
+    |                 ^^^^^^^^^^^^^^^^^^^^^
+270 |         arc.append(arc[-1] + math.dist(a, b))
+271 |     marked = {i for i, p in enumerate(points) if p["hard"] or p["exact"]}
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:285:44
+    |
+283 |         for i in range(left+1, right):
+284 |             u = (arc[i]-arc[left])/span if span else 0.
+285 |             chord = [x+u*(y-x) for x, y in zip(poses[left], poses[right])]
+    |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+286 |             error = math.dist(poses[i], chord)
+287 |             if error > best[0]:
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:297:24
+    |
+295 |             heapq.heappush(queue, (-error, left, right, index))
+296 |     ordered = sorted(keep)
+297 |     for left, right in zip(ordered, ordered[1:]):
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+298 |         push(left, right)
+299 |     while queue and len(keep) < limit:
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:357:47
+    |
+355 |                       intent["motion"]["target_speed_m_s"] or vehicle.maximum_speed_m_s,
+356 |                       vehicle.maximum_speed_m_s)
+357 |     if setup and any(a[2] != b[2] for a, b in zip(points, points[1:])):
+    |                                               ^^^^^^^^^^^^^^^^^^^^^^^
+358 |         speed = min(speed, .9*min(setup["profile"]["maximum_climb_m_s"], setup["profile"]["maximum_descent_m_s"]))
+359 |     phases, row_estimate = [], 0
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:390:66
+    |
+388 |     for phase in phases:
+389 |         start, finish = clock, clock + phase["duration_s"]
+390 |         if rows and any(abs(rows[-1][key]-v) > 1e-9 for key,v in zip(("x","y","z","yaw"), phase["start"])):
+    |                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+391 |             raise ValueError("Discontinuous polynomial phase join")
+392 |         count = math.ceil(phase["duration_s"]/PERIOD)
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:409:24
+    |
+407 |     if len(serialized) != len(rows) or any(
+408 |         float(raw[k]) != row[k] or not math.isfinite(float(raw[k]))
+409 |         for raw,row in zip(serialized,rows) for k in FIELDS
+    |                        ^^^^^^^^^^^^^^^^^^^^
+410 |     ):
+411 |         raise ValueError("Polynomial CSV serialization audit failed")
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:412:46
+    |
+410 |     ):
+411 |         raise ValueError("Polynomial CSV serialization audit failed")
+412 |     if any(b["time"] <= a["time"] for a,b in zip(rows,rows[1:])):
+    |                                              ^^^^^^^^^^^^^^^^^^
+413 |         raise ValueError("Polynomial route clocks must increase")
+414 |     digest = hashlib.sha256(csv_text.encode()).hexdigest()
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:512:44
+    |
+510 |         base["aircraft_profile"] = payload["aircraft_profile"]
+511 |     coordinates = [[p[k] for k in ("north_m","east_m","down_m")] for p in effective["path"]["points"]]
+512 |     length = sum(math.dist(a,b) for a,b in zip(coordinates,coordinates[1:]))
+    |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+513 |     reversal = False
+514 |     for a,b,d in zip(coordinates,coordinates[1:],coordinates[2:]):
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:514:18
+    |
+512 |     length = sum(math.dist(a,b) for a,b in zip(coordinates,coordinates[1:]))
+513 |     reversal = False
+514 |     for a,b,d in zip(coordinates,coordinates[1:],coordinates[2:]):
+    |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+515 |         left, right = [b[i]-a[i] for i in range(3)],[d[i]-b[i] for i in range(3)]
+516 |         magnitude = math.hypot(*left)*math.hypot(*right)
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+   --> mission_planner/closest.py:517:53
+    |
+515 |         left, right = [b[i]-a[i] for i in range(3)],[d[i]-b[i] for i in range(3)]
+516 |         magnitude = math.hypot(*left)*math.hypot(*right)
+517 |         if magnitude > 1e-16 and sum(x*y for x,y in zip(left,right))/magnitude < -.95:
+    |                                                     ^^^^^^^^^^^^^^^
+518 |             reversal = True
+519 |     quick = (len(coordinates)>8 or length>120 or reversal
+    |
+help: Add explicit value for parameter `strict=`
+
+B905 `zip()` without an explicit `strict=` parameter
+  --> tests/test_closest_preview.py:45:20
+   |
+43 |                    (1,11),(7,11),(7,14),(1,14)]
+44 |         dense = [corners[0]]
+45 |         for a,b in zip(corners,corners[1:]):
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^
+46 |             dense.extend((a[0]+(b[0]-a[0])*i/80,a[1]+(b[1]-a[1])*i/80) for i in range(1,81))
+47 |         request = drawing(dense)
+   |
+help: Add explicit value for parameter `strict=`
+
+F841 Local variable `request` is assigned to but never used
+   --> tests/test_closest_preview.py:146:9
+    |
+145 |     def test_periodic_two_lap_visit_count_is_preserved(self):
+146 |         request=drawing([(0,0),(0,2),(2,0),(0,0)])
+    |         ^^^^^^^
+147 |         # Interview converter supplies loop count; exercise its full preparation.
+148 |         doc=dict(schema_version=1,mission_id="circle-test",vehicle_model_id="px4-x500-sitl-v1",
+    |
+help: Remove assignment to unused variable `request`
+
+Found 16 errors.
+No fixes available (16 hidden fixes can be enabled with the `--unsafe-fixes` option).

@@ -1,0 +1,60 @@
+✔ gap is the nearest segment distance, not distance to a drawn vertex (1.081252ms)
+✔ overlapping paths have zero displayed change and repeated vertices stay finite (0.157602ms)
+✔ verified bound is unavailable when certificate is absent, failed or invalid (0.258911ms)
+✔ layer rendering isolates state and uses visible widths at phone scale (0.329815ms)
+✔ adjusted routes keep the original shadow and its certified displacement (0.752808ms)
+✔ a failed verification cannot turn an adjustment estimate into a certified bound (0.232662ms)
+✖ a missing or invalid original-request bound cannot fall back to an effective-route bound (1.084526ms)
+✖ an adjustment bound still requires the effective geometry check to pass (0.255386ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 90.885804
+
+✖ failing tests:
+
+test at tests/route_comparison.test.cjs:36:1
+✖ a missing or invalid original-request bound cannot fall back to an effective-route bound (1.084526ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  0.3 !== null
+
+      at TestContext.<anonymous> (/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/route_comparison.test.cjs:41:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0.3,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/route_comparison.test.cjs:47:1
+✖ an adjustment bound still requires the effective geometry check to pass (0.255386ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  3 !== null
+
+      at TestContext.<anonymous> (/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/route_comparison.test.cjs:56:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

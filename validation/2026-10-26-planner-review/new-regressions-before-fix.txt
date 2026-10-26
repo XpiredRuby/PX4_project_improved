@@ -1,0 +1,114 @@
+test_continuous_bounds_cover_independently_located_extrema (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_continuous_bounds_cover_independently_located_extrema) ... ok
+test_marked_points_within_budget_keep_order_and_identity (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_marked_points_within_budget_keep_order_and_identity) ... ok
+test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) ...
+  test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='duration_s', value=True) ... FAIL
+  test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='duration_s', value='2') ... ERROR
+  test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='speed_limit_m_s', value=True) ... FAIL
+  test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='speed_limit_m_s', value='2') ... ERROR
+  test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (pose_value=False) ... FAIL
+  test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (pose_value='0') ... ERROR
+test_septic_values_and_derivatives_match_rational_oracle (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_septic_values_and_derivatives_match_rational_oracle) ... ok
+test_simplification_cannot_silently_remove_exact_points (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_simplification_cannot_silently_remove_exact_points) ... FAIL
+test_simplification_cannot_silently_remove_required_stops (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_simplification_cannot_silently_remove_required_stops) ... FAIL
+test_speed_check_honors_both_phase_and_vehicle_limits (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_speed_check_honors_both_phase_and_vehicle_limits) ... ok
+test_vehicle_speed_limit_cannot_be_bypassed_by_phase_metadata (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_vehicle_speed_limit_cannot_be_bypassed_by_phase_metadata) ... FAIL
+
+======================================================================
+ERROR: test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='duration_s', value='2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 89, in test_phase_numeric_fields_refuse_booleans_and_strings
+    verify_phase(phase, self.vehicle, self.environment)
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/mission_planner/lifecycle_verification.py", line 43, in verify_phase
+    or not all(
+           ^^^^
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/mission_planner/lifecycle_verification.py", line 44, in <genexpr>
+    math.isfinite(v) for v in (*start, *end, duration, phase["speed_limit_m_s"])
+    ^^^^^^^^^^^^^^^^
+TypeError: must be real number, not str
+
+======================================================================
+ERROR: test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='speed_limit_m_s', value='2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 89, in test_phase_numeric_fields_refuse_booleans_and_strings
+    verify_phase(phase, self.vehicle, self.environment)
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/mission_planner/lifecycle_verification.py", line 43, in verify_phase
+    or not all(
+           ^^^^
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/mission_planner/lifecycle_verification.py", line 44, in <genexpr>
+    math.isfinite(v) for v in (*start, *end, duration, phase["speed_limit_m_s"])
+    ^^^^^^^^^^^^^^^^
+TypeError: must be real number, not str
+
+======================================================================
+ERROR: test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (pose_value='0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 95, in test_phase_numeric_fields_refuse_booleans_and_strings
+    verify_phase(phase, self.vehicle, self.environment)
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/mission_planner/lifecycle_verification.py", line 43, in verify_phase
+    or not all(
+           ^^^^
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/mission_planner/lifecycle_verification.py", line 44, in <genexpr>
+    math.isfinite(v) for v in (*start, *end, duration, phase["speed_limit_m_s"])
+    ^^^^^^^^^^^^^^^^
+TypeError: must be real number, not str
+
+======================================================================
+FAIL: test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='duration_s', value=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 88, in test_phase_numeric_fields_refuse_booleans_and_strings
+    with self.assertRaises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (field='speed_limit_m_s', value=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 88, in test_phase_numeric_fields_refuse_booleans_and_strings
+    with self.assertRaises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_phase_numeric_fields_refuse_booleans_and_strings (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_phase_numeric_fields_refuse_booleans_and_strings) (pose_value=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 94, in test_phase_numeric_fields_refuse_booleans_and_strings
+    with self.assertRaises(ValueError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_simplification_cannot_silently_remove_exact_points (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_simplification_cannot_silently_remove_exact_points)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 108, in test_simplification_cannot_silently_remove_exact_points
+    with self.assertRaises(PreviewBudgetError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PreviewBudgetError not raised
+
+======================================================================
+FAIL: test_simplification_cannot_silently_remove_required_stops (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_simplification_cannot_silently_remove_required_stops)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 100, in test_simplification_cannot_silently_remove_required_stops
+    with self.assertRaises(PreviewBudgetError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PreviewBudgetError not raised
+
+======================================================================
+FAIL: test_vehicle_speed_limit_cannot_be_bypassed_by_phase_metadata (test_constructive_reference_invariants.ConstructiveReferenceInvariants.test_vehicle_speed_limit_cannot_be_bypassed_by_phase_metadata)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/fc03c897ffa6/px4-planner-review/tests/test_constructive_reference_invariants.py", line 67, in test_vehicle_speed_limit_cannot_be_bypassed_by_phase_metadata
+    self.assertFalse(report["accepted"])
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.011s
+
+FAILED (failures=6, errors=3)

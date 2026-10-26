@@ -1,0 +1,10 @@
+test_child_inheriting_output_does_not_delay_parent_result (test_server.CommandRunnerTests.test_child_inheriting_output_does_not_delay_parent_result) ... ok
+test_input_is_closed_and_output_and_status_are_preserved (test_server.CommandRunnerTests.test_input_is_closed_and_output_and_status_are_preserved) ... ok
+test_large_output_returns_bounded_tail (test_server.CommandRunnerTests.test_large_output_returns_bounded_tail) ... ok
+test_launch_failure_returns_an_error (test_server.CommandRunnerTests.test_launch_failure_returns_an_error) ... ok
+test_timeout_retains_partial_output_without_pipe_drain (test_server.CommandRunnerTests.test_timeout_retains_partial_output_without_pipe_drain) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 1.100s
+
+OK
