@@ -1,0 +1,21 @@
+{
+  "configuration": "Research-only illustrative multicopter envelope (20 m/s planning ceiling). Speed, acceleration, jerk, thrust, tilt, and tracking not physically or in Gazebo validated. NOT an x500 flight qualification.",
+  "identified_for_physical_flight": false,
+  "mass_kg": 2.0643076923076924,
+  "maximum_acceleration_m_s2": 1,
+  "maximum_body_rate_deg_s": 90,
+  "maximum_jerk_m_s3": 1.5,
+  "maximum_speed_m_s": 20,
+  "maximum_thrust_n": 34.19432,
+  "maximum_tilt_deg": 25,
+  "maximum_yaw_acceleration_deg_s2": 60,
+  "maximum_yaw_jerk_deg_s3": 120,
+  "maximum_yaw_rate_deg_s": 45,
+  "minimum_thrust_n": 0,
+  "rotor_thrust_maximum_n": 8.54858,
+  "rotor_thrust_minimum_n": 0,
+  "schema_version": 1,
+  "vehicle_model_id": "research-20ms-kinematic-v1",
+  "yaw_inertia_kg_m2": 0.04399995371400395,
+  "yaw_torque_per_thrust_m": 0.016
+}
