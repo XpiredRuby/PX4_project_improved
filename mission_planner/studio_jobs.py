@@ -43,6 +43,9 @@ class StudioJobs:
         self.log = None
 
     def compatible(self, result):
+        # An unqualified research speed study is never eligible for PX4/Gazebo.
+        if result.get("research_only") or result.get("preview_mode") == "research_20ms":
+            return False
         if self.binding is None:
             default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
             return (result.get("aircraft_setup") is None
