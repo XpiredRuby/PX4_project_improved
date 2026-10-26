@@ -35,8 +35,13 @@ WORKER_TIMEOUT_S = 120
 def preview(payload: dict) -> dict:
     """Compile one explicit document without importing the flight runner."""
     if (not isinstance(payload, dict) or not {"source", "document"} <= set(payload)
-            or set(payload) - {"source", "document", "aircraft_profile"}):
+            or set(payload) - {"source", "document", "aircraft_profile", "preview_mode"}):
         raise ValueError("preview requires source, document and optionally aircraft_profile")
+    preview_mode = payload.get("preview_mode")
+    if preview_mode not in (None, "research_20ms"):
+        raise ValueError("unsupported preview mode")
+    if preview_mode == "research_20ms" and "aircraft_profile" in payload:
+        raise ValueError("research-only preview cannot carry an aircraft profile")
     source = payload["source"]
     raw = payload["document"]
     if source == "drawing":
@@ -46,6 +51,9 @@ def preview(payload: dict) -> dict:
         intent, loops = intent_from_interview(raw)
     else:
         raise ValueError("source must be drawing or interview")
+    if (preview_mode == "research_20ms"
+            and intent.get("vehicle_model_id") != "research-20ms-kinematic-v1"):
+        raise ValueError("research preview requires the unqualified research vehicle model")
     setup, error_budget = None, None
     if "aircraft_profile" in payload:
         setup = assess_profile(payload["aircraft_profile"])
@@ -75,7 +83,9 @@ def preview(payload: dict) -> dict:
         raise ValueError("preview requires a positive launch-relative cruise height")
     with tempfile.TemporaryDirectory(prefix="px4-preview-") as directory:
         work = Path(directory)
-        vehicle_path = ROOT / "config/planner/x500_sitl_vehicle_model.json"
+        vehicle_path = ROOT / ("config/planner/research_20ms_preview_vehicle_model.json"
+                               if preview_mode == "research_20ms"
+                               else "config/planner/x500_sitl_vehicle_model.json")
         environment_path = ROOT / "config/planner/empty_world_environment.json"
         if setup is not None:
             vehicle_path, environment_path = work / "vehicle.json", work / "environment.json"
@@ -90,6 +100,7 @@ def preview(payload: dict) -> dict:
         intent_path.write_text(json.dumps(intent, allow_nan=False), encoding="utf-8")
         trajectory = work / "trajectory.csv"
         report = work / "verification.json"
+        limit_scale = 1.0 if preview_mode == "research_20ms" else .9
         summary = compile_drawn_path(
             intent_path=intent_path,
             vehicle_path=vehicle_path,
@@ -100,7 +111,7 @@ def preview(payload: dict) -> dict:
             control_spacing_m=.5,
             verification_resolution_m=.02,
             sample_period_s=.05,
-            limit_scale=.9,
+            limit_scale=limit_scale,
             controller_cruise_height_m=altitude,
             deviation_utilization=.75,
             loop_count=loops,
@@ -132,7 +143,9 @@ def preview(payload: dict) -> dict:
             "aircraft_setup": setup,
             "mission_budget": budget,
             "path_error_budget": error_budget,
-            "simulation_compatible": setup is None,
+            "simulation_compatible": setup is None and preview_mode is None,
+            "preview_mode": preview_mode,
+            "research_only": preview_mode == "research_20ms",
             "summary": summary,
             "verification": json.loads(report.read_text(encoding="utf-8")),
             "samples": [
@@ -144,7 +157,7 @@ def preview(payload: dict) -> dict:
             "trajectory_csv": csv_text,
             "preview_settings": {
                 "control_spacing_m": .5, "verification_resolution_m": .02,
-                "sample_period_s": .05, "limit_scale": .9,
+                "sample_period_s": .05, "limit_scale": limit_scale,
                 "deviation_utilization": .75,
             },
         }
