@@ -60,6 +60,8 @@ Evidence directory: `validation/2026-10-26-planner-review/`.
 | Portable public build and source/manifest audit | PASS |
 | Offline acceptance matrix | PASS, 16 cases; `campaign_ran=false` |
 | Complete corrected Python validation | PASS, 428 tests; `VALIDATION_PASSED` |
+| GitHub implementation validation | Both workflows PASS at `d212903f3449139ce11db7bada699492e610f684`, including configured coverage gates |
+| Pinned PR #7 independent data auditor | Both reference artifacts PASS; three corrupted artifacts refused; see `github-comparison.md` |
 | Actual Chromium UI interaction | NOT RUN: browser download failed; retained error log |
 | PX4/Gazebo build, simulation, telemetry and physical tracking | NOT RUN by GPT A; owned by GPT B |
 
@@ -96,24 +98,29 @@ stricter speed and required-mark refusals for execution consequences. Any native
 family/schema change still needs both GPTs' review and an independently usable
 positive and negative fixture before integration.
 
-## Package status and next relay
+## Package completion and reserved native results
 
 | Package | State |
 |---|---|
-| A1 mathematical audit/reference fixtures | Implemented; awaits GPT B review |
-| A2 substantiated planner corrections | Implemented; awaits GPT B review |
-| A3 browser playback/comparison correctness | Offline checks complete; real UI check blocked by missing Chromium; GPT B can run the existing no-simulation `scripts/check_studio_usability.py` against its local studio |
-| A4 adversarial checks/artifact fixtures | Implemented; awaits GPT B review |
-| A5 independent native and measured-results review | WAITING for GPT B's exact commit and raw evidence |
+| A1 mathematical audit/reference fixtures | Independent implementation and checks complete; peer acceptance remains separate |
+| A2 substantiated planner corrections | Implementation and regression checks complete; peer acceptance remains separate |
+| A3 browser playback/comparison correctness | Implementation and offline checks complete; actual Chromium UI check NOT RUN after download failure |
+| A4 adversarial checks/artifact fixtures | Independent checks complete, including pinned peer auditor and corruption cases |
+| A5 independent native and measured-results review | Procedure and result form prepared in `native-results-review.md`; actual native assessment NOT ASSESSED because evidence is absent |
 
-Vin should relay this note and the exact published branch/commit to GPT B.
-GPT B should proceed with B1 if it has not yet received the kickoff, preserve
-existing work, review these changes and return its exact integration commit,
-commands/exit codes, model/source/artifact hashes and raw telemetry/truth files.
-Include nominal and cancellation outcomes, actual landing/disarm/stopped-output
-observations, and any unsupported cases. GPT A will independently inspect the
-changed contract and recompute available metrics. Neither workstream is finally
-accepted until the other GPT reviews it and the combined revision is tested.
+The independent GPT A implementation package is finished without waiting for a
+message relay. `native-results-review.md` contains deliberately blank cells for
+GPT B's exact integration commit, commands/exit codes, model/source/artifact
+hashes, raw telemetry/truth, nominal/cancellation outcomes and actual end-state
+observations. The review procedure is ready; its results remain unfilled rather
+than invented. Actual browser usability can be recorded there using the existing
+no-simulation `scripts/check_studio_usability.py` on the integrated local studio.
+
+`github-comparison.md` records the updated GitHub sources, passing implementation
+CI, independently checked peer artifacts and the concrete PR #7 overlap. No
+shared source base was changed or peer branch merged. Final combined-revision
+acceptance remains separate from this completed implementation package and
+requires actual independent review and executed integration checks.
 
 No direct cross-account delivery channel has been established. A file or branch
 does not itself notify or start the other GPT.

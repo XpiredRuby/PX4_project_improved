@@ -1,0 +1,9 @@
+1c6326a7c58f56921c2a6b6f7d6bd0a5bbff20d6
+100644 85c7bce000ac73c152867e4a26c58ef85d3d6c11 1	mission_planner/closest.py
+100644 14ccc48a199db8554b2bd3aaad66dea6bafdeac0 2	mission_planner/closest.py
+100644 0371f3f8a7768d7d561ed3d6f9020a8020d6e61c 3	mission_planner/closest.py
+
+Auto-merging mission_planner/closest.py
+CONFLICT (content): Merge conflict in mission_planner/closest.py
+Auto-merging tests/motion.test.cjs
+Auto-merging tests/test_closest_preview.py

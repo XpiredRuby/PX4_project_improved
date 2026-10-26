@@ -1,0 +1,111 @@
+{
+  "tested_commit": "d212903f3449139ce11db7bada699492e610f684",
+  "source_tree": "797621c6ceea1fcefa5cbef5637476f72bfb555a",
+  "workflow_runs": [
+    {
+      "id": 40293103999,
+      "name": "Controller validation",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 141,
+      "jobs_url": "https://api.github.com/repos/XpiredRuby/PX4_project_improved/actions/runs/40293103999/jobs",
+      "logs_url": "https://api.github.com/repos/XpiredRuby/PX4_project_improved/actions/runs/40293103999/logs",
+      "workflow_id": 350498875
+    },
+    {
+      "id": 40293104103,
+      "name": "Validation",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 60,
+      "jobs_url": "https://api.github.com/repos/XpiredRuby/PX4_project_improved/actions/runs/40293104103/jobs",
+      "logs_url": "https://api.github.com/repos/XpiredRuby/PX4_project_improved/actions/runs/40293104103/logs",
+      "workflow_id": 371166234
+    }
+  ],
+  "validation_jobs": [
+    {
+      "id": 121472587197,
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 40293104103,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Static checks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Deterministic validation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Connector subprocess regression tests",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Critical logic branch coverage",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Waypoint planner branch coverage",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ]
+    }
+  ],
+  "scope": "Remote CI of the implementation commit; native/Gazebo results are not inferred."
+}
