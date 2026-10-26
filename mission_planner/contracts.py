@@ -359,6 +359,8 @@ class MotionIntent:
             "motion.maximum_speed_m_s",
             exclusive_minimum=0.0,
         )
+        if maximum > 20.0:
+            raise ValueError("motion.maximum_speed_m_s must be at most 20 m/s")
         if target is not None and target > maximum:
             raise ValueError("motion target speed exceeds maximum speed")
         time_mode = _choice(
