@@ -34,17 +34,29 @@ def derivative_bound(order):
     return bound * (1 + 1e-10)
 
 
+def _finite_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
 def verify_phase(phase, vehicle, environment):
-    duration = phase["duration_s"]
-    start, end = phase["start"], phase["end"]
+    if not isinstance(phase, dict):
+        raise ValueError("Phase must be an object")
+    duration = phase.get("duration_s")
+    start, end = phase.get("start"), phase.get("end")
+    speed_limit = phase.get("speed_limit_m_s")
     if (
-        len(start) != 4
+        not isinstance(start, (list, tuple))
+        or not isinstance(end, (list, tuple))
+        or len(start) != 4
         or len(end) != 4
-        or not all(
-            math.isfinite(v) for v in (*start, *end, duration, phase["speed_limit_m_s"])
-        )
+        or not all(_finite_number(v) for v in (*start, *end, duration, speed_limit))
         or duration <= 0
-        or phase["speed_limit_m_s"] <= 0
+        or speed_limit <= 0
     ):
         raise ValueError(
             "Phase requires finite poses, positive duration and positive speed limit"
@@ -78,7 +90,7 @@ def verify_phase(phase, vehicle, environment):
             >= -1e-10
         )
     conditions = {
-        "speed": speed <= phase["speed_limit_m_s"] + 1e-9,
+        "speed": speed <= min(speed_limit, 0.9 * vehicle.maximum_speed_m_s) + 1e-9,
         "acceleration": acceleration <= 0.9 * vehicle.maximum_acceleration_m_s2 + 1e-9,
         "jerk": jerk <= 0.9 * vehicle.maximum_jerk_m_s3 + 1e-9,
         "yaw_rate": yaw_rate

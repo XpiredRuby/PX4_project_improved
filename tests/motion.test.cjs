@@ -2,6 +2,17 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {parseCsv,measurementRows,sampleAt,attitude,eventsFrom,stateLabel,advance,headingArrow}=require('../web/motion.js');
 const near=(a,b,tol=1e-8)=>assert.ok(Math.abs(a-b)<tol,`${a} != ${b}`);
 const base=t=>({time:t,x:0,y:0,z:-5,yaw:0,vx:0,vy:0,vz:0,ax:0,ay:0,az:0,jx:0,jy:0,jz:0,yaw_rate:0,yaw_acceleration:0,yaw_jerk:0,phase:'ROUTE'});
+test('serialized planner family matches the shared rational oracle across phase joins',()=>{
+ const fixture=require('./fixtures/septic_reference.json'),rows=parseCsv(fixture.trajectory_csv);
+ for(const query of fixture.queries){
+  const actual=sampleAt(rows,query.expected.time);
+  for(const [key,value] of Object.entries(query.expected))near(actual[key],value,2e-9);
+ }
+ for(const time of [7.5,10.75]){
+  const row=sampleAt(rows,time);assert.equal(row.interpolated,false);
+  for(const key of ['vx','vy','vz','ax','ay','az','jx','jy','jz','yaw_rate','yaw_acceleration','yaw_jerk'])near(row[key],0);
+ }
+});
 test('CSV retains every exported sample and rejects ambiguous or corrupt clocks',()=>{
  const text='time,x,y,z,yaw,phase\n0,0,0,0,0,TAKEOFF\n0.05,0,0,-0.1,0,TAKEOFF\n0.1,0,0,-0.2,0,TAKEOFF\n';
  const rows=parseCsv(text);assert.equal(rows.length,3);assert.equal(rows[1].z,-.1);

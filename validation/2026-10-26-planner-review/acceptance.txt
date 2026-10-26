@@ -1,0 +1,16 @@
+straight: PASS
+l-turn: PASS
+tight-turn: PASS
+s-curve: PASS
+circle: PASS
+hard-stop: PASS
+fly-through: PASS
+slow-route: PASS
+interview-circle: PASS
+survey: PASS
+refuse-deadline: PASS
+refuse-overspeed: PASS
+refuse-outside-volume: PASS
+refuse-zero-length: PASS
+refuse-conflicting-stop: PASS
+refuse-nonfinite: PASS

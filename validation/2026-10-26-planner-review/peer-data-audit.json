@@ -1,0 +1,135 @@
+{
+  "auditor_repository": "XpiredRuby/PX4_project_improved",
+  "auditor_commit": "72cb875c31bfd1a9a0074e7884986792ad594910",
+  "auditor_path": "analysis/reference_audit.py",
+  "auditor_sha256": "dae128312f04dd0c7acdb3d6ef2035f6baa5fc19f99f9c1f230a37d8ea3fe1bf",
+  "reviewed_planner_commit": "d212903f3449139ce11db7bada699492e610f684",
+  "scope": "Sampled independent reference cross-check; no Gazebo or telemetry",
+  "results": {
+    "route.csv": {
+      "passed": true,
+      "checks": {
+        "speed": true,
+        "acceleration": true,
+        "jerk": true,
+        "yaw_rate": true,
+        "yaw_acceleration": true,
+        "yaw_jerk": true,
+        "thrust_max": true,
+        "tilt": true,
+        "radius": true,
+        "height": true,
+        "thrust_min": true,
+        "above_launch": true,
+        "position_integral": true,
+        "yaw_integral": true,
+        "velocity_integral": true,
+        "yaw_rate_integral": true
+      },
+      "metrics": {
+        "speed_m_s": 0.875,
+        "acceleration_m_s2": 0.60085960704,
+        "jerk_m_s3": 0.84,
+        "thrust_max_n": 20.28190622579242,
+        "thrust_min_n": 20.24394303076923,
+        "tilt_deg": 3.5061653069077523,
+        "position_integral_residual_m": 7.62038222373038e-14,
+        "yaw_integral_residual_rad": 5.985609821375706e-14,
+        "velocity_integral_residual_m_s": 2.7720059426640108e-09,
+        "yaw_rate_integral_residual_rad_s": 2.17712837668804e-09
+      },
+      "sha256": "ade5c713f4c8852e43819248a35452e7061e9d7aa852180af35f36bb6d36a0dc",
+      "samples": 401,
+      "duration_s": 20.0,
+      "sampled_path_length_m": 4.0,
+      "average_speed_m_s": 0.2,
+      "sampled_stationary_time_s": 10.200000000000003,
+      "sampled_stationary_turn_time_s": 9.799999999999997,
+      "speed_only_lower_bound_s": 1.3333333333333333,
+      "scope": "sampled reference diagnostic; no continuous or control-authority certificate",
+      "model_identified": false,
+      "simulator_ran": false
+    },
+    "full-mission.csv": {
+      "passed": true,
+      "checks": {
+        "speed": true,
+        "acceleration": true,
+        "jerk": true,
+        "yaw_rate": true,
+        "yaw_acceleration": true,
+        "yaw_jerk": true,
+        "thrust_max": true,
+        "tilt": true,
+        "radius": true,
+        "height": true,
+        "thrust_min": true,
+        "above_launch": true,
+        "position_integral": true,
+        "yaw_integral": true,
+        "velocity_integral": true,
+        "yaw_rate_integral": true
+      },
+      "metrics": {
+        "speed_m_s": 0.8774823758265677,
+        "acceleration_m_s2": 0.60085960704,
+        "jerk_m_s3": 0.84,
+        "thrust_max_n": 20.566713568435674,
+        "thrust_min_n": 19.92117249310279,
+        "tilt_deg": 3.5061653069077523,
+        "position_integral_residual_m": 1.328238937565139e-13,
+        "yaw_integral_residual_rad": 5.985586273859773e-14,
+        "velocity_integral_residual_m_s": 2.7720059446562323e-09,
+        "yaw_rate_integral_residual_rad_s": 2.1771283763085693e-09
+      },
+      "sha256": "0b17b0dba6c727a0b56be1a76fe232720049765de10c1a4dbc82178287b1a9f2",
+      "samples": 1828,
+      "duration_s": 91.35000000000001,
+      "sampled_path_length_m": 16.828427124746174,
+      "average_speed_m_s": 0.1842192350820599,
+      "sampled_stationary_time_s": 19.649999999999995,
+      "sampled_stationary_turn_time_s": 17.15,
+      "speed_only_lower_bound_s": 5.609475708248724,
+      "scope": "sampled reference diagnostic; no continuous or control-authority certificate",
+      "model_identified": false,
+      "simulator_ran": false
+    }
+  },
+  "corrupted_artifacts": {
+    "wrong_velocity": {
+      "rejected": true,
+      "checks": {
+        "speed": false,
+        "acceleration": true,
+        "jerk": true,
+        "yaw_rate": true,
+        "yaw_acceleration": true,
+        "yaw_jerk": true,
+        "thrust_max": true,
+        "tilt": true,
+        "radius": true,
+        "height": true,
+        "thrust_min": true,
+        "above_launch": true,
+        "position_integral": false,
+        "yaw_integral": true,
+        "velocity_integral": false,
+        "yaw_rate_integral": true
+      }
+    },
+    "nonfinite_position": {
+      "rejected": true,
+      "error": "Reference requires at least two finite states"
+    },
+    "duplicate_clock": {
+      "rejected": true,
+      "error": "Reference clock must start at zero and increase by <= 50 ms"
+    }
+  },
+  "policy_difference": {
+    "required_points": 49,
+    "requested_budget": 48,
+    "peer_retained_points": 49,
+    "our_behavior": "Explicit PreviewBudgetError; input unchanged"
+  }
+}

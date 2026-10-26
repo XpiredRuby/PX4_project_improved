@@ -21,7 +21,10 @@
   const check=result.verification?.checks?.find(c=>c.requirement_id==='INT-007');
   const effectiveBound=result.verification?.accepted&&check?.status==='PASS'&&check.units==='m'&&Number.isFinite(check.margin)&&check.margin>=-1e-9&&check.margin<=effectiveTolerance+1e-9?Math.max(0,effectiveTolerance-check.margin):null;
   const adjustment=result.planning_adjustments;
-  const bound=result.verification?.accepted&&adjustment&&Number.isFinite(adjustment.curve_error_bound_from_requested_m)&&adjustment.curve_error_bound_from_requested_m>=0?adjustment.curve_error_bound_from_requested_m:effectiveBound;
+  // An effective-intent certificate cannot stand in for an original-request
+  // certificate after a repair. Missing evidence must stay unavailable.
+  const requestedBound=effectiveBound!==null&&adjustment&&Number.isFinite(adjustment.curve_error_bound_from_requested_m)&&adjustment.curve_error_bound_from_requested_m>=0?adjustment.curve_error_bound_from_requested_m:null;
+  const bound=result.requested_intent||adjustment?requestedBound:effectiveBound;
   return {input,planned,worst,tolerance,bound,adjustment,fit:result.summary?.fidelity_policy,decimated:!!result.display_samples_decimated};
  }
  function line(ctx,data,map,colour,width,dashes=[]){if(data.length<2)return;ctx.strokeStyle=colour;ctx.lineWidth=width;ctx.setLineDash(dashes);ctx.beginPath();data.forEach((p,i)=>{const q=map(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.stroke();}

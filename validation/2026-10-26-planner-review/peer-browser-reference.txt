@@ -1,0 +1,9 @@
+{
+  "peer_commit": "72cb875c31bfd1a9a0074e7884986792ad594910",
+  "module": "web/motion.js",
+  "sha256": "da385e20e6d0da47a472d54865157e540078d906843605ab8e9e9f958d9b27dd",
+  "queries": 123,
+  "maximum_absolute_component_error": 5.449529716372581e-13,
+  "passed": true,
+  "scope": "Node reference playback against rational fixture; no DOM or measured flight"
+}

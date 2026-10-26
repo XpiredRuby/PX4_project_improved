@@ -1,0 +1,22 @@
+Extracted from GitHub Actions job 121472587197 for implementation commit d212903f3449139ce11db7bada699492e610f684.
+2026-10-26T08:37:57.4725995Z Ran 428 tests in 232.846s
+2026-10-26T08:37:57.5896884Z VALIDATION_PASSED
+2026-10-26T08:37:58.6884922Z Ran 5 tests in 1.050s
+2026-10-26T08:42:48.5297263Z Ran 428 tests in 288.689s
+2026-10-26T08:42:48.7810679Z controller/PID_Controller.py           80      7     24      9    83%
+2026-10-26T08:42:48.7810925Z controller/flight_logger.py            83      7     26      2    90%
+2026-10-26T08:42:48.7811167Z controller/minimum_jerk.py            104      7     30      7    90%
+2026-10-26T08:42:48.7811435Z controller/mission_config.py          177     20     68     20    84%
+2026-10-26T08:42:48.7811669Z controller/mission_state.py            35      1      4      1    95%
+2026-10-26T08:42:48.7811910Z controller/position_prediction.py      13      0      4      0   100%
+2026-10-26T08:42:48.7812149Z controller/px4_policy.py              109     13     58      8    86%
+2026-10-26T08:42:48.7812384Z controller/run_record.py               62      8      8      2    86%
+2026-10-26T08:42:48.7812621Z controller/touchdown_quality.py        27      0     18      0   100%
+2026-10-26T08:42:48.7812870Z controller/tracking_governor.py        22      0      6      0   100%
+2026-10-26T08:42:48.7813114Z controller/trajectory.py               90      4     34      2    95%
+2026-10-26T08:42:48.7813547Z TOTAL                                 802     67    280     51    89%
+2026-10-26T08:42:49.7394023Z Ran 16 tests in 0.485s
+2026-10-26T08:42:49.8621964Z analysis/waypoint_mission_audit.py                 95     25     30      8    72%
+2026-10-26T08:42:49.8622286Z trajectory_generator/plan_waypoint_mission.py      31      1      4      1    94%
+2026-10-26T08:42:49.8622580Z trajectory_generator/waypoint_mission.py          267      3     70      3    98%
+2026-10-26T08:42:49.8623060Z TOTAL                                             393     29    104     12    91%

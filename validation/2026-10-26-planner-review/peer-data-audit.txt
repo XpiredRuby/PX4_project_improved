@@ -1,0 +1,1 @@
+PASS: both reference artifacts; three corrupted artifacts refused; 49-point policy difference reproduced.
