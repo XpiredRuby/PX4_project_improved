@@ -1,0 +1,13 @@
+test_actual_batch_staging_retains_all_sidecars_needed_before_transport (test_stop_turn_execution.StopTurnExecutionTests.test_actual_batch_staging_retains_all_sidecars_needed_before_transport) ... ok
+test_default_runner_and_campaign_still_refuse_unqualified_family (test_stop_turn_execution.StopTurnExecutionTests.test_default_runner_and_campaign_still_refuse_unqualified_family) ... ok
+test_experimental_campaign_case_is_audited_and_acknowledged (test_stop_turn_execution.StopTurnExecutionTests.test_experimental_campaign_case_is_audited_and_acknowledged) ... ok
+test_full_mission_cannot_be_mistaken_for_route_only (test_stop_turn_execution.StopTurnExecutionTests.test_full_mission_cannot_be_mistaken_for_route_only) ... ok
+test_native_interpolation_reconstructs_audited_polynomials_between_csv_rows (test_stop_turn_execution.StopTurnExecutionTests.test_native_interpolation_reconstructs_audited_polynomials_between_csv_rows) ... ok
+test_real_five_stop_route_independently_audited_and_staged_without_recompilation (test_stop_turn_execution.StopTurnExecutionTests.test_real_five_stop_route_independently_audited_and_staged_without_recompilation) ... ok
+test_rehashed_tampered_derivative_still_fails_independent_reconstruction (test_stop_turn_execution.StopTurnExecutionTests.test_rehashed_tampered_derivative_still_fails_independent_reconstruction) ... ok
+test_tampered_models_phases_and_intent_fail_binding (test_stop_turn_execution.StopTurnExecutionTests.test_tampered_models_phases_and_intent_fail_binding) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.824s
+
+OK

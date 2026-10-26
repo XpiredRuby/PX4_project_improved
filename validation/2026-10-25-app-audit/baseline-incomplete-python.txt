@@ -1,0 +1,958 @@
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python main.py
+Generated 1803 points
+Saved to trajetory.csv
+0 start: 0.0 cruise: 2 end: 1
+1 start: 1 cruise: 1 end: 1
+2 start: 1 cruise: 2 end: 0.0
+3 start: 0.0 cruise: 0.0 end: 0.0
+4 start: 0.0 cruise: 2 end: 0.0
+5 Hover: 5
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plan_waypoint_mission.py --plan /workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json --output /tmp/tmpj71r3ys5/first.csv
+{
+  "coordinate_frame": "LOCAL_NED",
+  "duration_s": 125.89916494628677,
+  "limits": {
+    "max_acceleration_m_s2": 1.0,
+    "max_horizontal_speed_m_s": 1.0,
+    "max_jerk_m_s3": 1.5,
+    "max_vertical_speed_m_s": 0.6,
+    "max_yaw_acceleration_deg_s2": 30.0,
+    "max_yaw_jerk_deg_s3": 60.0,
+    "max_yaw_rate_deg_s": 30.0,
+    "minimum_segment_duration_s": 2.0
+  },
+  "point_count": 2520,
+  "safety": {
+    "max_duration_s": 180.0,
+    "max_radius_from_start_m": 40.0,
+    "max_total_distance_m": 120.0,
+    "max_vertical_excursion_from_start_m": 3.0
+  },
+  "schema_version": 1,
+  "segments": [
+    {
+      "distance_m": 14.422205101855956,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-west",
+      "peak_acceleration_m_s2": 0.10886705847372821,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.02411302982731554,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 0.226457170116902,
+      "peak_yaw_jerk_deg_s3": 0.05015813391298775,
+      "peak_yaw_rate_deg_s": 2.080125735844609,
+      "start_stop": "start",
+      "yaw_change_deg": -29.999999999999996
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-north",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.37742861686150325,
+      "peak_yaw_jerk_deg_s3": 0.08359688985497957,
+      "peak_yaw_rate_deg_s": 3.4668762264076816,
+      "start_stop": "survey-west",
+      "yaw_change_deg": 49.999999999999986
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-east",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.5284000636061047,
+      "peak_yaw_jerk_deg_s3": 0.11703564579697143,
+      "peak_yaw_rate_deg_s": 4.853626716970755,
+      "start_stop": "survey-north",
+      "yaw_change_deg": 70.0
+    },
+    {
+      "distance_m": 10.63014581273465,
+      "duration_s": 23.253443965357047,
+      "end_stop": "exit",
+      "peak_acceleration_m_s2": 0.14770287010201777,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.04438504605381975,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 1.2505245500260784,
+      "peak_yaw_jerk_deg_s3": 0.3757854516029575,
+      "peak_yaw_rate_deg_s": 8.466487815452375,
+      "start_stop": "survey-east",
+      "yaw_change_deg": -90.0
+    }
+  ],
+  "source_plan": "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "stop_arrival_s": {
+    "exit": 124.89916494628677,
+    "start": 0.0,
+    "survey-east": 99.64572098092972,
+    "survey-north": 66.09714732061981,
+    "survey-west": 32.548573660309906
+  },
+  "stop_departure_s": {
+    "exit": 125.89916494628677,
+    "start": 1.0,
+    "survey-east": 101.64572098092972,
+    "survey-north": 68.09714732061981,
+    "survey-west": 34.548573660309906
+  },
+  "stops": [
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "start",
+      "north_m": 0.0,
+      "yaw_deg": 0.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": -8.0,
+      "hold_s": 2.0,
+      "name": "survey-west",
+      "north_m": 12.0,
+      "yaw_deg": -30.0
+    },
+    {
+      "down_m": -9.0,
+      "east_m": 0.0,
+      "hold_s": 2.0,
+      "name": "survey-north",
+      "north_m": 24.0,
+      "yaw_deg": 20.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 8.0,
+      "hold_s": 2.0,
+      "name": "survey-east",
+      "north_m": 12.0,
+      "yaw_deg": 90.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "exit",
+      "north_m": 5.0,
+      "yaw_deg": 0.0
+    }
+  ],
+  "trajectory": "/tmp/tmpj71r3ys5/first.csv",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plan_waypoint_mission.py --plan /workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json --output /tmp/tmpj71r3ys5/second.csv
+{
+  "coordinate_frame": "LOCAL_NED",
+  "duration_s": 125.89916494628677,
+  "limits": {
+    "max_acceleration_m_s2": 1.0,
+    "max_horizontal_speed_m_s": 1.0,
+    "max_jerk_m_s3": 1.5,
+    "max_vertical_speed_m_s": 0.6,
+    "max_yaw_acceleration_deg_s2": 30.0,
+    "max_yaw_jerk_deg_s3": 60.0,
+    "max_yaw_rate_deg_s": 30.0,
+    "minimum_segment_duration_s": 2.0
+  },
+  "point_count": 2520,
+  "safety": {
+    "max_duration_s": 180.0,
+    "max_radius_from_start_m": 40.0,
+    "max_total_distance_m": 120.0,
+    "max_vertical_excursion_from_start_m": 3.0
+  },
+  "schema_version": 1,
+  "segments": [
+    {
+      "distance_m": 14.422205101855956,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-west",
+      "peak_acceleration_m_s2": 0.10886705847372821,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.02411302982731554,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 0.226457170116902,
+      "peak_yaw_jerk_deg_s3": 0.05015813391298775,
+      "peak_yaw_rate_deg_s": 2.080125735844609,
+      "start_stop": "start",
+      "yaw_change_deg": -29.999999999999996
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-north",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.37742861686150325,
+      "peak_yaw_jerk_deg_s3": 0.08359688985497957,
+      "peak_yaw_rate_deg_s": 3.4668762264076816,
+      "start_stop": "survey-west",
+      "yaw_change_deg": 49.999999999999986
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-east",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.5284000636061047,
+      "peak_yaw_jerk_deg_s3": 0.11703564579697143,
+      "peak_yaw_rate_deg_s": 4.853626716970755,
+      "start_stop": "survey-north",
+      "yaw_change_deg": 70.0
+    },
+    {
+      "distance_m": 10.63014581273465,
+      "duration_s": 23.253443965357047,
+      "end_stop": "exit",
+      "peak_acceleration_m_s2": 0.14770287010201777,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.04438504605381975,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 1.2505245500260784,
+      "peak_yaw_jerk_deg_s3": 0.3757854516029575,
+      "peak_yaw_rate_deg_s": 8.466487815452375,
+      "start_stop": "survey-east",
+      "yaw_change_deg": -90.0
+    }
+  ],
+  "source_plan": "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "stop_arrival_s": {
+    "exit": 124.89916494628677,
+    "start": 0.0,
+    "survey-east": 99.64572098092972,
+    "survey-north": 66.09714732061981,
+    "survey-west": 32.548573660309906
+  },
+  "stop_departure_s": {
+    "exit": 125.89916494628677,
+    "start": 1.0,
+    "survey-east": 101.64572098092972,
+    "survey-north": 68.09714732061981,
+    "survey-west": 34.548573660309906
+  },
+  "stops": [
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "start",
+      "north_m": 0.0,
+      "yaw_deg": 0.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": -8.0,
+      "hold_s": 2.0,
+      "name": "survey-west",
+      "north_m": 12.0,
+      "yaw_deg": -30.0
+    },
+    {
+      "down_m": -9.0,
+      "east_m": 0.0,
+      "hold_s": 2.0,
+      "name": "survey-north",
+      "north_m": 24.0,
+      "yaw_deg": 20.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 8.0,
+      "hold_s": 2.0,
+      "name": "survey-east",
+      "north_m": 12.0,
+      "yaw_deg": 90.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "exit",
+      "north_m": 5.0,
+      "yaw_deg": 0.0
+    }
+  ],
+  "trajectory": "/tmp/tmpj71r3ys5/second.csv",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m unittest discover -s /workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests -v
+test_energy_tolerance_and_aircraft_id_mismatches_refuse_accepted_plan (test_aircraft_profiles.AircraftPreviewTests.test_energy_tolerance_and_aircraft_id_mismatches_refuse_accepted_plan) ... ok
+test_same_drawing_compiles_and_binds_quad_hex_octo_profiles (test_aircraft_profiles.AircraftPreviewTests.test_same_drawing_compiles_and_binds_quad_hex_octo_profiles) ... ok
+test_unanswered_setup_returns_questions_and_no_trajectory (test_aircraft_profiles.AircraftPreviewTests.test_unanswered_setup_returns_questions_and_no_trajectory) ... ok
+test_aircraft_types_and_adapters_are_explicit (test_aircraft_profiles.AircraftProfileTests.test_aircraft_types_and_adapters_are_explicit) ... ok
+test_allocation_box_matches_all_corners_and_exact_wrench (test_aircraft_profiles.AircraftProfileTests.test_allocation_box_matches_all_corners_and_exact_wrench) ... ok
+test_bad_values_and_unknown_fields_fail_closed (test_aircraft_profiles.AircraftProfileTests.test_bad_values_and_unknown_fields_fail_closed) ... ok
+test_missing_inputs_are_questions_not_assumed_x500_values (test_aircraft_profiles.AircraftProfileTests.test_missing_inputs_are_questions_not_assumed_x500_values) ... ok
+test_mission_budget_includes_lifecycle_contingency_and_reserve (test_aircraft_profiles.AircraftProfileTests.test_mission_budget_includes_lifecycle_contingency_and_reserve) ... ok
+test_more_mass_and_yaw_demand_reduce_feasible_motion (test_aircraft_profiles.AircraftProfileTests.test_more_mass_and_yaw_demand_reduce_feasible_motion) ... ok
+test_quad_hex_octo_and_custom_models_round_trip_with_distinct_hashes (test_aircraft_profiles.AircraftProfileTests.test_quad_hex_octo_and_custom_models_round_trip_with_distinct_hashes) ... ok
+test_readonly_parameter_import_provides_reviewable_ceilings (test_aircraft_profiles.AircraftProfileTests.test_readonly_parameter_import_provides_reviewable_ceilings) ... ok
+test_wind_overload_and_singular_rotor_geometry_are_refused (test_aircraft_profiles.AircraftProfileTests.test_wind_overload_and_singular_rotor_geometry_are_refused) ... ok
+test_wind_requires_force_bounds_and_those_bounds_consume_thrust (test_aircraft_profiles.AircraftProfileTests.test_wind_requires_force_bounds_and_those_bounds_consume_thrust) ... ok
+test_binding_checks_mass_geometry_capacity_and_fingerprints (test_aircraft_profiles.SimulationBindingTests.test_binding_checks_mass_geometry_capacity_and_fingerprints) ... ok
+test_browser_paths_and_unhandled_transforms_are_refused (test_aircraft_profiles.SimulationBindingTests.test_browser_paths_and_unhandled_transforms_are_refused) ... ok
+test_analysis_pipeline (unittest.loader._FailedTest.test_analysis_pipeline) ... ERROR
+test_captured_replay (unittest.loader._FailedTest.test_captured_replay) ... ERROR
+test_continuous_repair_bound_detects_order_and_simplified_away_loop (test_closest_preview.ClosestPreviewTests.test_continuous_repair_bound_detects_order_and_simplified_away_loop) ... ok
+test_dense_vin_handwriting_keeps_original_shadow_and_produces_checked_mission (test_closest_preview.ClosestPreviewTests.test_dense_vin_handwriting_keeps_original_shadow_and_produces_checked_mission) ... ok
+test_duplicate_only_route_is_a_stationary_hover (test_closest_preview.ClosestPreviewTests.test_duplicate_only_route_is_a_stationary_hover) ... ok
+test_independent_checker_rejects_a_too_fast_phase (test_closest_preview.ClosestPreviewTests.test_independent_checker_rejects_a_too_fast_phase) ... ok
+test_new_preview_certificate_cannot_enter_the_spline_only_runner (test_closest_preview.ClosestPreviewTests.test_new_preview_certificate_cannot_enter_the_spline_only_runner) ... ok
+test_non_origin_first_point_gets_a_declared_launch_leg (test_closest_preview.ClosestPreviewTests.test_non_origin_first_point_gets_a_declared_launch_leg) ... ok
+test_non_positive_preferences_are_adjusted_without_rejecting_geometry (test_closest_preview.ClosestPreviewTests.test_non_positive_preferences_are_adjusted_without_rejecting_geometry) ... ok
+test_periodic_two_lap_visit_count_is_preserved (test_closest_preview.ClosestPreviewTests.test_periodic_two_lap_visit_count_is_preserved) ... ok
+test_profile_energy_and_uncertainty_stay_binding_during_repair (test_closest_preview.ClosestPreviewTests.test_profile_energy_and_uncertainty_stay_binding_during_repair) ... ok
+test_projection_respects_immutable_model_and_reports_original_error (test_closest_preview.ClosestPreviewTests.test_projection_respects_immutable_model_and_reports_original_error) ... ok
+test_real_impossible_deadline_becomes_longer_verified_plan (test_closest_preview.ClosestPreviewTests.test_real_impossible_deadline_becomes_longer_verified_plan) ... ok
+test_real_reversal_falls_back_with_continuous_turns_and_ground_endpoints (test_closest_preview.ClosestPreviewTests.test_real_reversal_falls_back_with_continuous_turns_and_ground_endpoints) ... ok
+test_resource_fallback_refines_scale_and_reports_geometry_change (test_closest_preview.ClosestPreviewTests.test_resource_fallback_refines_scale_and_reports_geometry_change) ... ok
+test_retained_stop_turn_plan_is_refused_before_startup (test_closest_preview.ClosestPreviewTests.test_retained_stop_turn_plan_is_refused_before_startup) ... ok
+test_scribble_oversized_input_repairs_instead_of_256_point_refusal (test_closest_preview.ClosestPreviewTests.test_scribble_oversized_input_repairs_instead_of_256_point_refusal) ... ok
+test_strict_api_still_refuses_an_impossible_deadline (test_closest_preview.ClosestPreviewTests.test_strict_api_still_refuses_an_impossible_deadline) ... ok
+test_tiny_circle_no_longer_refuses_its_radius (test_closest_preview.ClosestPreviewTests.test_tiny_circle_no_longer_refuses_its_radius) ... ok
+test_unknown_fields_and_non_finite_data_remain_invalid (test_closest_preview.ClosestPreviewTests.test_unknown_fields_and_non_finite_data_remain_invalid) ... ok
+test_zero_rounding_and_exact_flythrough_can_stop_without_cutting_corner (test_closest_preview.ClosestPreviewTests.test_zero_rounding_and_exact_flythrough_can_stop_without_cutting_corner) ... ok
+test_control_lifecycle (unittest.loader._FailedTest.test_control_lifecycle) ... ERROR
+test_cli_writes_requested_outputs (test_drawn_path_cli.DrawnPathCompilerTests.test_cli_writes_requested_outputs) ... ok
+test_compiler_is_deterministic_and_controller_compatible (test_drawn_path_cli.DrawnPathCompilerTests.test_compiler_is_deterministic_and_controller_compatible) ... ok
+test_controller_origin_mismatch_fails_before_outputs (test_drawn_path_cli.DrawnPathCompilerTests.test_controller_origin_mismatch_fails_before_outputs) ... ok
+test_mismatched_contracts_fail_before_outputs (test_drawn_path_cli.DrawnPathCompilerTests.test_mismatched_contracts_fail_before_outputs) ... ok
+test_output_paths_must_not_alias (test_drawn_path_cli.DrawnPathCompilerTests.test_output_paths_must_not_alias) ... ok
+test_publication_failure_restores_previous_output_set (test_drawn_path_cli.DrawnPathCompilerTests.test_publication_failure_restores_previous_output_set) ... ok
+test_fault_injection (unittest.loader._FailedTest.test_fault_injection) ... ERROR
+test_fault_run_analysis (unittest.loader._FailedTest.test_fault_run_analysis) ... ERROR
+test_fixed_overlay (unittest.loader._FailedTest.test_fixed_overlay) ... ERROR
+test_capacity_failure_is_visible_without_overwriting_queued_evidence (test_flight_logger.FlightLoggerTests.test_capacity_failure_is_visible_without_overwriting_queued_evidence) ... ok
+test_close_drains_ordered_immutable_samples (test_flight_logger.FlightLoggerTests.test_close_drains_ordered_immutable_samples) ... ok
+test_close_has_bounded_deadline_for_stuck_storage (test_flight_logger.FlightLoggerTests.test_close_has_bounded_deadline_for_stuck_storage) ... ok
+test_repeated_flush_requests_are_coalesced (test_flight_logger.FlightLoggerTests.test_repeated_flush_requests_are_coalesced) ... ok
+test_slow_storage_does_not_block_sample_or_flush_publication (test_flight_logger.FlightLoggerTests.test_slow_storage_does_not_block_sample_or_flush_publication) ... ok
+test_unbounded_queue_and_invalid_shutdown_deadline_are_rejected (test_flight_logger.FlightLoggerTests.test_unbounded_queue_and_invalid_shutdown_deadline_are_rejected) ... ok
+test_write_failure_is_reported_to_caller (test_flight_logger.FlightLoggerTests.test_write_failure_is_reported_to_caller) ... ok
+test_flight_release (unittest.loader._FailedTest.test_flight_release) ... ERROR
+test_constant_bias_is_learned_from_prior_velocities_and_removed (test_inertial_outage_replay.InertialReplayTests.test_constant_bias_is_learned_from_prior_velocities_and_removed) ... ok
+test_irregular_clock_integrates_constant_and_linear_acceleration (test_inertial_outage_replay.InertialReplayTests.test_irregular_clock_integrates_constant_and_linear_acceleration) ... ok
+test_missing_nonfinite_repeated_regressed_and_gapped_samples_reject (test_inertial_outage_replay.InertialReplayTests.test_missing_nonfinite_repeated_regressed_and_gapped_samples_reject) ... ok
+test_fixed_heading_and_closed_route (test_lifecycle.LifecycleTests.test_fixed_heading_and_closed_route) ... ok
+test_independent_verifier_refuses_bad_time_and_overspeed (test_lifecycle.LifecycleTests.test_independent_verifier_refuses_bad_time_and_overspeed) ... ok
+test_origin_lifecycle_strict_clock_and_controller_artifact_identity (test_lifecycle.LifecycleTests.test_origin_lifecycle_strict_clock_and_controller_artifact_identity) ... ok
+test_phase_bounds_cover_all_emitted_derivatives_and_stationary_joins (test_lifecycle.LifecycleTests.test_phase_bounds_cover_all_emitted_derivatives_and_stationary_joins) ... ok
+test_sharp_turn_keeps_two_degree_heading_certificate (test_lifecycle.LifecycleTests.test_sharp_turn_keeps_two_degree_heading_certificate) ... ok
+test_bootstrap_thrust_rejects_every_nonfinite_input (test_magless_bootstrap.MaglessBootstrapTests.test_bootstrap_thrust_rejects_every_nonfinite_input) ... ok
+test_bootstrap_thrust_rejects_impossible_px4_ceiling (test_magless_bootstrap.MaglessBootstrapTests.test_bootstrap_thrust_rejects_impossible_px4_ceiling) ... ok
+test_bootstrap_thrust_uses_px4_ceiling_and_configured_floor (test_magless_bootstrap.MaglessBootstrapTests.test_bootstrap_thrust_uses_px4_ceiling_and_configured_floor) ... ok
+test_quaternion_is_normalized_and_preserves_level_yaw (test_magless_bootstrap.MaglessBootstrapTests.test_quaternion_is_normalized_and_preserves_level_yaw) ... ok
+test_raw_navigation_accepts_complete_finite_snapshot (test_magless_bootstrap.MaglessBootstrapTests.test_raw_navigation_accepts_complete_finite_snapshot) ... ok
+test_raw_navigation_rejects_nonfinite_and_invalid_inputs (test_magless_bootstrap.MaglessBootstrapTests.test_raw_navigation_rejects_nonfinite_and_invalid_inputs) ... ok
+test_raw_navigation_rejects_nonfinite_bootstrap_state (test_magless_bootstrap.MaglessBootstrapTests.test_raw_navigation_rejects_nonfinite_bootstrap_state) ... ok
+test_saved_launch_fix_maps_back_into_local_ned (test_magless_bootstrap.MaglessBootstrapTests.test_saved_launch_fix_maps_back_into_local_ned) ... ok
+test_mission_plan_contract (unittest.loader._FailedTest.test_mission_plan_contract) ... ERROR
+test_navigation_hold_braking (unittest.loader._FailedTest.test_navigation_hold_braking) ... ERROR
+test_budgets_refuse_instead_of_skipping_order_acceptance (test_ordered_fidelity.OrderedFidelityTests.test_budgets_refuse_instead_of_skipping_order_acceptance) ... ok
+test_crossed_loops_cannot_exchange_order (test_ordered_fidelity.OrderedFidelityTests.test_crossed_loops_cannot_exchange_order) ... ok
+test_geometric_checker_does_not_call_planner_evaluator (test_ordered_fidelity.OrderedFidelityTests.test_geometric_checker_does_not_call_planner_evaluator) ... ok
+test_same_spatial_set_in_wrong_visit_order_is_refused (test_ordered_fidelity.OrderedFidelityTests.test_same_spatial_set_in_wrong_visit_order_is_refused) ... ok
+test_separate_basis_matches_clamped_and_periodic_geometry (test_ordered_fidelity.OrderedFidelityTests.test_separate_basis_matches_clamped_and_periodic_geometry) ... ok
+test_serialized_reference_detects_changed_field (test_ordered_fidelity.OrderedFidelityTests.test_serialized_reference_detects_changed_field) ... ok
+test_vectorized_coupling_matches_scalar_dynamic_program (test_ordered_fidelity.OrderedFidelityTests.test_vectorized_coupling_matches_scalar_dynamic_program) ... ok
+test_artifact_hash_detects_tampering_and_cannot_approve_flight (test_planner_contracts.PlannerContractTests.test_artifact_hash_detects_tampering_and_cannot_approve_flight) ... ok
+test_canonical_json_rejects_nonfinite_values (test_planner_contracts.PlannerContractTests.test_canonical_json_rejects_nonfinite_values) ... ok
+test_checked_in_json_schemas_match_generator (test_planner_contracts.PlannerContractTests.test_checked_in_json_schemas_match_generator) ... ok
+test_cross_contract_references_and_envelopes_fail_closed (test_planner_contracts.PlannerContractTests.test_cross_contract_references_and_envelopes_fail_closed) ... ok
+test_existing_five_stop_baseline_is_pinned (test_planner_contracts.PlannerContractTests.test_existing_five_stop_baseline_is_pinned) ... ok
+test_loader_rejects_nonstandard_constants_and_malformed_json (test_planner_contracts.PlannerContractTests.test_loader_rejects_nonstandard_constants_and_malformed_json) ... ok
+test_map_identity_and_verification_must_agree (test_planner_contracts.PlannerContractTests.test_map_identity_and_verification_must_agree) ... ok
+test_report_acceptance_is_derived_from_hard_checks (test_planner_contracts.PlannerContractTests.test_report_acceptance_is_derived_from_hard_checks) ... ok
+test_time_speed_and_periodic_semantics_are_explicit (test_planner_contracts.PlannerContractTests.test_time_speed_and_periodic_semantics_are_explicit) ... ok
+test_unknown_missing_nonfinite_and_wrong_types_fail_closed (test_planner_contracts.PlannerContractTests.test_unknown_missing_nonfinite_and_wrong_types_fail_closed) ... ok
+test_valid_contract_set_is_immutable_and_canonical (test_planner_contracts.PlannerContractTests.test_valid_contract_set_is_immutable_and_canonical) ... ok
+test_both_inputs_use_the_compiler_and_export_actual_certificate (test_planner_editor.EditorTests.test_both_inputs_use_the_compiler_and_export_actual_certificate) ... ok
+test_editor_does_not_accept_arbitrary_paths_or_authority_requests (test_planner_editor.EditorTests.test_editor_does_not_accept_arbitrary_paths_or_authority_requests) ... ok
+test_size_limit_precedes_compiler (test_planner_editor.EditorTests.test_size_limit_precedes_compiler) ... ok
+test_aircraft_api_lists_missing_inputs_and_refuses_hidden_authority (test_planner_editor.HTTPBoundaryTests.test_aircraft_api_lists_missing_inputs_and_refuses_hidden_authority) ... 127.0.0.1 - - [25/Oct/2026 15:48:47] "GET /api/aircraft/catalog HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:47] "POST /api/aircraft/assess HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:47] "POST /api/aircraft/assess HTTP/1.1" 400 -
+ok
+test_cancellation_has_no_hardware_route_and_requires_owned_backend (test_planner_editor.HTTPBoundaryTests.test_cancellation_has_no_hardware_route_and_requires_owned_backend) ... 127.0.0.1 - - [25/Oct/2026 15:48:48] "POST /api/rehearsal/cancel HTTP/1.1" 409 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /api/rehearsal/cancel HTTP/1.1" 404 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "POST /api/rehearsal/cancel HTTP/1.1" 403 -
+ok
+test_cross_origin_and_rebinding_requests_cannot_run_worker (test_planner_editor.HTTPBoundaryTests.test_cross_origin_and_rebinding_requests_cannot_run_worker) ... 127.0.0.1 - - [25/Oct/2026 15:48:48] "POST /api/preview HTTP/1.1" 403 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "POST /api/preview HTTP/1.1" 403 -
+ok
+test_drawing_script_and_limits_have_explicit_local_routes (test_planner_editor.HTTPBoundaryTests.test_drawing_script_and_limits_have_explicit_local_routes) ... 127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /draft.js HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /api/editor-settings HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /draft.js HTTP/1.1" 403 -
+ok
+test_invalid_content_and_oversize_requests_fail_before_worker (test_planner_editor.HTTPBoundaryTests.test_invalid_content_and_oversize_requests_fail_before_worker) ... 127.0.0.1 - - [25/Oct/2026 15:48:48] "POST /api/preview HTTP/1.1" 400 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "POST /api/preview HTTP/1.1" 400 -
+ok
+test_page_available_but_files_and_launch_endpoints_absent (test_planner_editor.HTTPBoundaryTests.test_page_available_but_files_and_launch_endpoints_absent) ... 127.0.0.1 - - [25/Oct/2026 15:48:48] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /../config/planner/x500_sitl_vehicle_model.json HTTP/1.1" 404 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /api/arm HTTP/1.1" 404 -
+127.0.0.1 - - [25/Oct/2026 15:48:48] "GET /api/launch HTTP/1.1" 404 -
+ok
+test_real_http_worker_returns_verified_plan_and_refuses_bad_input (test_planner_editor.HTTPBoundaryTests.test_real_http_worker_returns_verified_plan_and_refuses_bad_input) ... 127.0.0.1 - - [25/Oct/2026 15:48:53] "POST /api/preview HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:53] "POST /api/preview HTTP/1.1" 422 -
+ok
+test_simulation_is_unavailable_until_backend_is_explicitly_configured (test_planner_editor.HTTPBoundaryTests.test_simulation_is_unavailable_until_backend_is_explicitly_configured) ... 127.0.0.1 - - [25/Oct/2026 15:48:54] "GET /api/capabilities HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:48:54] "POST /api/rehearsal HTTP/1.1" 409 -
+127.0.0.1 - - [25/Oct/2026 15:48:54] "POST /api/launch HTTP/1.1" 404 -
+ok
+test_acknowledgement_rejects_a_stale_or_mismatched_review (test_planner_finish.PlannerFinishTests.test_acknowledgement_rejects_a_stale_or_mismatched_review) ... ok
+test_circle_entry_meets_the_seam_in_motion_and_stops (test_planner_finish.PlannerFinishTests.test_circle_entry_meets_the_seam_in_motion_and_stops) ... ok
+test_circle_exit_flies_the_seam_and_stops_at_the_exit (test_planner_finish.PlannerFinishTests.test_circle_exit_flies_the_seam_and_stops_at_the_exit) ... ok
+test_circle_exit_rejects_a_stop_on_the_seam_and_other_patterns (test_planner_finish.PlannerFinishTests.test_circle_exit_rejects_a_stop_on_the_seam_and_other_patterns) ... ok
+test_corridor_avoids_a_wall_and_a_crossing_path_does_not (test_planner_finish.PlannerFinishTests.test_corridor_avoids_a_wall_and_a_crossing_path_does_not) ... ok
+test_exact_fly_through_lies_on_the_curve (test_planner_finish.PlannerFinishTests.test_exact_fly_through_lies_on_the_curve) ... ok
+test_explicit_heading_is_refused_when_a_stop_splits_the_path (test_planner_finish.PlannerFinishTests.test_explicit_heading_is_refused_when_a_stop_splits_the_path) ... ok
+test_explicit_heading_tracks_the_request_and_a_fast_turn_takes_longer (test_planner_finish.PlannerFinishTests.test_explicit_heading_tracks_the_request_and_a_fast_turn_takes_longer) ... ok
+test_look_at_heading_is_certified_and_verified (test_planner_finish.PlannerFinishTests.test_look_at_heading_is_certified_and_verified) ... ok
+test_paired_rotors_lose_yaw_torque_as_thrust_approaches_the_ceiling (test_planner_finish.PlannerFinishTests.test_paired_rotors_lose_yaw_torque_as_thrust_approaches_the_ceiling) ... ok
+test_track_comparison_does_not_claim_a_simulator_campaign (test_planner_finish.PlannerFinishTests.test_track_comparison_does_not_claim_a_simulator_campaign) ... ok
+test_analytic_derivatives_match_finite_differences (test_planner_geometry.PlannerGeometryTests.test_analytic_derivatives_match_finite_differences) ... ok
+test_corner_is_accepted_or_rejected_by_declared_fidelity (test_planner_geometry.PlannerGeometryTests.test_corner_is_accepted_or_rejected_by_declared_fidelity) ... ok
+test_default_targets_closer_fidelity_than_legacy_utilization (test_planner_geometry.PlannerGeometryTests.test_default_targets_closer_fidelity_than_legacy_utilization) ... ok
+test_deviation_budget_is_spent_to_widen_corners (test_planner_geometry.PlannerGeometryTests.test_deviation_budget_is_spent_to_widen_corners) ... ok
+test_deviation_utilization_is_validated (test_planner_geometry.PlannerGeometryTests.test_deviation_utilization_is_validated) ... ok
+test_geometry_is_byte_deterministic (test_planner_geometry.PlannerGeometryTests.test_geometry_is_byte_deterministic) ... ok
+test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents (test_planner_geometry.PlannerGeometryTests.test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents) ... ok
+test_invalid_curve_queries_fail_closed (test_planner_geometry.PlannerGeometryTests.test_invalid_curve_queries_fail_closed) ... ok
+test_periodic_circle_matches_position_and_derivatives_at_seam (test_planner_geometry.PlannerGeometryTests.test_periodic_circle_matches_position_and_derivatives_at_seam) ... ok
+test_scalar_spline_reuses_curve_evaluation_and_bounds (test_planner_geometry.PlannerGeometryTests.test_scalar_spline_reuses_curve_evaluation_and_bounds) ... ok
+test_straight_path_is_endpoint_exact_and_collinear (test_planner_geometry.PlannerGeometryTests.test_straight_path_is_endpoint_exact_and_collinear) ... ok
+test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound (test_planner_geometry.PlannerGeometryTests.test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound) ... ok
+test_unsupported_or_degenerate_inputs_fail_closed (test_planner_geometry.PlannerGeometryTests.test_unsupported_or_degenerate_inputs_fail_closed) ... ok
+test_generated_survey_budget_is_checked_before_expansion (test_planner_input_and_evidence.InterviewBoundaryTests.test_generated_survey_budget_is_checked_before_expansion) ... ok
+test_json_duplicate_keys_and_nonfinite_constants_are_rejected (test_planner_input_and_evidence.InterviewBoundaryTests.test_json_duplicate_keys_and_nonfinite_constants_are_rejected) ... ok
+test_loop_count_and_version_do_not_coerce_types (test_planner_input_and_evidence.InterviewBoundaryTests.test_loop_count_and_version_do_not_coerce_types) ... ok
+test_normalized_interview_is_validated_before_return (test_planner_input_and_evidence.InterviewBoundaryTests.test_normalized_interview_is_validated_before_return) ... ok
+test_unused_or_unknown_pattern_fields_are_rejected (test_planner_input_and_evidence.InterviewBoundaryTests.test_unused_or_unknown_pattern_fields_are_rejected) ... ok
+test_waypoint_flags_must_be_actual_booleans (test_planner_input_and_evidence.InterviewBoundaryTests.test_waypoint_flags_must_be_actual_booleans) ... ok
+test_complete_track_pass_is_scoped_to_sampled_tracking (test_planner_input_and_evidence.TrackEvidenceTests.test_complete_track_pass_is_scoped_to_sampled_tracking) ... ok
+test_endpoint_only_track_cannot_hide_missing_middle (test_planner_input_and_evidence.TrackEvidenceTests.test_endpoint_only_track_cannot_hide_missing_middle) ... ok
+test_endpoint_tolerance_is_explicit_and_bounded (test_planner_input_and_evidence.TrackEvidenceTests.test_endpoint_tolerance_is_explicit_and_bounded) ... ok
+test_invalid_thresholds_cannot_relax_acceptance (test_planner_input_and_evidence.TrackEvidenceTests.test_invalid_thresholds_cannot_relax_acceptance) ... ok
+test_partial_track_cannot_pass_by_having_zero_error (test_planner_input_and_evidence.TrackEvidenceTests.test_partial_track_cannot_pass_by_having_zero_error) ... ok
+test_regressed_duplicate_and_nonfinite_samples_are_rejected (test_planner_input_and_evidence.TrackEvidenceTests.test_regressed_duplicate_and_nonfinite_samples_are_rejected) ... ok
+test_unwrapped_reference_yaw_does_not_erase_a_turn (test_planner_input_and_evidence.TrackEvidenceTests.test_unwrapped_reference_yaw_does_not_erase_a_turn) ... ok
+test_a_tighter_tilt_limit_stretches_the_duration (test_planner_mission.PlannerMissionTests.test_a_tighter_tilt_limit_stretches_the_duration) ... ok
+test_hard_point_is_a_stop_on_the_flown_path (test_planner_mission.PlannerMissionTests.test_hard_point_is_a_stop_on_the_flown_path) ... ok
+test_interview_circle_starts_at_launch_and_closes (test_planner_mission.PlannerMissionTests.test_interview_circle_starts_at_launch_and_closes) ... ok
+test_review_names_the_limit_and_refuses_a_flight_clearance (test_planner_mission.PlannerMissionTests.test_review_names_the_limit_and_refuses_a_flight_clearance) ... ok
+test_tangent_yaw_stays_inside_its_certificate_and_the_yaw_limits (test_planner_mission.PlannerMissionTests.test_tangent_yaw_stays_inside_its_certificate_and_the_yaw_limits) ... ok
+test_tilt_of_an_acceleration_ball_is_the_tangent_angle (test_planner_mission.PlannerMissionTests.test_tilt_of_an_acceleration_ball_is_the_tangent_angle) ... ok
+test_two_laps_return_to_the_seam_with_two_turns_of_heading (test_planner_mission.PlannerMissionTests.test_two_laps_return_to_the_seam_with_two_turns_of_heading) ... ok
+test_complete_truth_and_lifecycle_pass_only_sampled_sitl_scope (test_planner_rehearsal.RehearsalTests.test_complete_truth_and_lifecycle_pass_only_sampled_sitl_scope) ... ok
+test_constructive_runtime_reference_uses_phase_polynomial_not_linear_chords (test_planner_rehearsal.RehearsalTests.test_constructive_runtime_reference_uses_phase_polynomial_not_linear_chords) ... ok
+test_declared_profile_accuracy_and_time_limits_cannot_be_ignored (test_planner_rehearsal.RehearsalTests.test_declared_profile_accuracy_and_time_limits_cannot_be_ignored) ... ok
+test_every_motor_is_checked_for_a_six_rotor_aircraft (test_planner_rehearsal.RehearsalTests.test_every_motor_is_checked_for_a_six_rotor_aircraft) ... ok
+test_partial_route_rewritten_reference_and_unconfirmed_shutdown_fail (test_planner_rehearsal.RehearsalTests.test_partial_route_rewritten_reference_and_unconfirmed_shutdown_fail) ... ok
+test_truth_error_cannot_be_hidden_by_perfect_estimated_reference (test_planner_rehearsal.RehearsalTests.test_truth_error_cannot_be_hidden_by_perfect_estimated_reference) ... ok
+test_candidate_carries_a_valid_time_law_that_sets_the_duration (test_planner_retiming.PlannerRetimingTests.test_candidate_carries_a_valid_time_law_that_sets_the_duration) ... ok
+test_exact_and_maximum_duration_semantics_fail_closed (test_planner_retiming.PlannerRetimingTests.test_exact_and_maximum_duration_semantics_fail_closed) ... ok
+test_invalid_retiming_controls_fail (test_planner_retiming.PlannerRetimingTests.test_invalid_retiming_controls_fail) ... ok
+test_output_is_deterministic_and_digest_sensitive (test_planner_retiming.PlannerRetimingTests.test_output_is_deterministic_and_digest_sensitive) ... ok
+test_periodic_lap_stops_at_the_seam_and_unconstrained_yaw_is_refused (test_planner_retiming.PlannerRetimingTests.test_periodic_lap_stops_at_the_seam_and_unconstrained_yaw_is_refused) ... ok
+test_retimed_path_is_endpoint_inclusive_stationary_and_bounded (test_planner_retiming.PlannerRetimingTests.test_retimed_path_is_endpoint_inclusive_stationary_and_bounded) ... ok
+test_tighter_limits_increase_duration (test_planner_retiming.PlannerRetimingTests.test_tighter_limits_increase_duration) ... ok
+test_planner_sitl_campaign (unittest.loader._FailedTest.test_planner_sitl_campaign) ... ERROR
+test_certified_bounds_hold_and_fit_the_limits (test_planner_timing.PlannerTimingTests.test_certified_bounds_hold_and_fit_the_limits) ... ok
+test_invalid_limits_and_grids_are_rejected (test_planner_timing.PlannerTimingTests.test_invalid_limits_and_grids_are_rejected) ... ok
+test_local_timing_beats_a_single_global_time_law (test_planner_timing.PlannerTimingTests.test_local_timing_beats_a_single_global_time_law) ... ok
+test_planning_is_deterministic_and_a_closed_path_stops_at_its_seam (test_planner_timing.PlannerTimingTests.test_planning_is_deterministic_and_a_closed_path_stops_at_its_seam) ... ok
+test_requirements_are_localized_to_each_schedule_span (test_planner_timing.PlannerTimingTests.test_requirements_are_localized_to_each_schedule_span) ... ok
+test_schedule_defects_detect_tampering (test_planner_timing.PlannerTimingTests.test_schedule_defects_detect_tampering) ... ok
+test_schedule_is_monotone_stationary_and_spans_the_path (test_planner_timing.PlannerTimingTests.test_schedule_is_monotone_stationary_and_spans_the_path) ... ok
+test_stretching_the_duration_scales_every_bound_down (test_planner_timing.PlannerTimingTests.test_stretching_the_duration_scales_every_bound_down) ... ok
+test_environment_control_hull_violation_is_rejected (test_planner_verification.PlannerVerificationTests.test_environment_control_hull_violation_is_rejected) ... ok
+test_falsified_duration_and_limit_scale_are_rejected (test_planner_verification.PlannerVerificationTests.test_falsified_duration_and_limit_scale_are_rejected) ... ok
+test_fidelity_is_recomputed_from_mission_limit (test_planner_verification.PlannerVerificationTests.test_fidelity_is_recomputed_from_mission_limit) ... ok
+test_invalid_verifier_policy_fails (test_planner_verification.PlannerVerificationTests.test_invalid_verifier_policy_fails) ... ok
+test_modified_derivative_or_time_law_is_rejected (test_planner_verification.PlannerVerificationTests.test_modified_derivative_or_time_law_is_rejected) ... ok
+test_modified_position_is_rejected (test_planner_verification.PlannerVerificationTests.test_modified_position_is_rejected) ... ok
+test_modified_schedule_is_rejected (test_planner_verification.PlannerVerificationTests.test_modified_schedule_is_rejected) ... ok
+test_report_is_deterministic (test_planner_verification.PlannerVerificationTests.test_report_is_deterministic) ... ok
+test_sparse_endpoint_only_controller_path_is_rejected (test_planner_verification.PlannerVerificationTests.test_sparse_endpoint_only_controller_path_is_rejected) ... ok
+test_valid_candidate_passes_independent_checks (test_planner_verification.PlannerVerificationTests.test_valid_candidate_passes_independent_checks) ... ok
+test_constant_velocity_projects_to_command_instant (test_position_prediction.PositionPredictionTests.test_constant_velocity_projects_to_command_instant) ... ok
+test_prediction_removes_sample_hold_error_for_constant_velocity (test_position_prediction.PositionPredictionTests.test_prediction_removes_sample_hold_error_for_constant_velocity) ... ok
+test_stale_negative_or_invalid_age_never_extrapolated (test_position_prediction.PositionPredictionTests.test_stale_negative_or_invalid_age_never_extrapolated) ... ok
+test_vector_displacement_capped (test_position_prediction.PositionPredictionTests.test_vector_displacement_capped) ... ok
+test_fixed_run_rejects_missing_profile (test_presentation_plots.PresentationPlotTests.test_fixed_run_rejects_missing_profile) ... ok
+test_fixed_run_selects_only_validated_profile (test_presentation_plots.PresentationPlotTests.test_fixed_run_selects_only_validated_profile) ... ok
+test_phase_spans_preserves_phase_order (test_presentation_plots.PresentationPlotTests.test_phase_spans_preserves_phase_order) ... ok
+test_run_record (unittest.loader._FailedTest.test_run_record) ... ERROR
+test_runner_protocol (unittest.loader._FailedTest.test_runner_protocol) ... ERROR
+test_safety_supervisor (unittest.loader._FailedTest.test_safety_supervisor) ... ERROR
+test_attitude_missing_brackets_and_long_gaps_remain_uncovered (test_simulation_physics.SimulatorPhysicsTests.test_attitude_missing_brackets_and_long_gaps_remain_uncovered) ... ok
+test_attitude_sign_changes_do_not_invent_motion_or_missing_truth (test_simulation_physics.SimulatorPhysicsTests.test_attitude_sign_changes_do_not_invent_motion_or_missing_truth) ... ok
+test_measured_quaternion_tilt_ignores_yaw_and_normalizes (test_simulation_physics.SimulatorPhysicsTests.test_measured_quaternion_tilt_ignores_yaw_and_normalizes) ... ok
+test_only_trajectory_truth_is_scored_not_bootstrap_and_landing (test_simulation_physics.SimulatorPhysicsTests.test_only_trajectory_truth_is_scored_not_bootstrap_and_landing) ... ok
+test_shape_and_configuration_refused (test_simulation_physics.SimulatorPhysicsTests.test_shape_and_configuration_refused) ... ok
+test_speed_tilt_or_missing_simulation_truth_refuses (test_simulation_physics.SimulatorPhysicsTests.test_speed_tilt_or_missing_simulation_truth_refuses) ... ok
+test_truth_inside_envelope_passes_and_reports_physical_acceleration (test_simulation_physics.SimulatorPhysicsTests.test_truth_inside_envelope_passes_and_reports_physical_acceleration) ... ok
+test_sitl_control_stall (unittest.loader._FailedTest.test_sitl_control_stall) ... ERROR
+test_sitl_fault_injector (unittest.loader._FailedTest.test_sitl_fault_injector) ... ERROR
+test_each_hold_episode_requires_covered_bounded_physical_motion (test_sitl_ground_truth.GroundTruthTests.test_each_hold_episode_requires_covered_bounded_physical_motion) ... ok
+test_identical_source_duplicates_collapse_but_conflicting_values_reject (test_sitl_ground_truth.GroundTruthTests.test_identical_source_duplicates_collapse_but_conflicting_values_reject) ... ok
+test_independent_position_fails_even_when_estimator_reports_zero_error (test_sitl_ground_truth.GroundTruthTests.test_independent_position_fails_even_when_estimator_reports_zero_error) ... ok
+test_invalid_truth_clocks_reject_alignment (test_sitl_ground_truth.GroundTruthTests.test_invalid_truth_clocks_reject_alignment) ... ok
+test_known_north_east_up_displacements (test_sitl_ground_truth.GroundTruthTests.test_known_north_east_up_displacements) ... ok
+test_local_origin_reset_is_held_until_reported_not_interpolated (test_sitl_ground_truth.GroundTruthTests.test_local_origin_reset_is_held_until_reported_not_interpolated) ... ok
+test_long_truth_gaps_are_not_bridged_but_exact_samples_are_usable (test_sitl_ground_truth.GroundTruthTests.test_long_truth_gaps_are_not_bridged_but_exact_samples_are_usable) ... ok
+test_missing_truth_contact_and_changed_landing_reference_cannot_pass (test_sitl_ground_truth.GroundTruthTests.test_missing_truth_contact_and_changed_landing_reference_cannot_pass) ... ok
+test_uncovered_truth_is_not_extrapolated (test_sitl_ground_truth.GroundTruthTests.test_uncovered_truth_is_not_extrapolated) ... ok
+test_undefined_preflight_origin_is_outside_flight_but_inflight_nan_refuses (test_sitl_ground_truth.GroundTruthTests.test_undefined_preflight_origin_is_outside_flight_but_inflight_nan_refuses) ... ok
+test_sitl_monitor (unittest.loader._FailedTest.test_sitl_monitor) ... ERROR
+test_sitl_parameter_reads (unittest.loader._FailedTest.test_sitl_parameter_reads) ... ERROR
+test_cli_startup_time_fits_bounded_confirmation (test_sitl_wind.WindTests.test_cli_startup_time_fits_bounded_confirmation) ... ok
+test_lost_publication_is_retried_and_observed (test_sitl_wind.WindTests.test_lost_publication_is_retried_and_observed) ... ok
+test_missing_service_stops_at_deadline (test_sitl_wind.WindTests.test_missing_service_stops_at_deadline) ... ok
+test_zero_requires_actual_wind_response (test_sitl_wind.WindTests.test_zero_requires_actual_wind_response) ... ok
+test_stop_turn_execution (unittest.loader._FailedTest.test_stop_turn_execution) ... ERROR
+test_studio_cancellation (unittest.loader._FailedTest.test_studio_cancellation) ... ERROR
+test_real_browser_draft_model (test_studio_drawing.DrawingLogicTests.test_real_browser_draft_model) ... ok
+test_worker_preserves_structured_duration_refusal (test_studio_drawing.DrawingLogicTests.test_worker_preserves_structured_duration_refusal) ... ok
+test_studio_jobs (unittest.loader._FailedTest.test_studio_jobs) ... ERROR
+test_status_and_cancel_remain_available_while_one_plan_compiles (test_studio_responsiveness.StudioResponsivenessTests.test_status_and_cancel_remain_available_while_one_plan_compiles) ... 127.0.0.1 - - [25/Oct/2026 15:52:28] "GET /api/rehearsal/active HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 15:52:28] "POST /api/rehearsal/cancel HTTP/1.1" 202 -
+127.0.0.1 - - [25/Oct/2026 15:52:28] "POST /api/preview HTTP/1.1" 409 -
+127.0.0.1 - - [25/Oct/2026 15:52:28] "POST /api/preview HTTP/1.1" 422 -
+127.0.0.1 - - [25/Oct/2026 15:52:28] "POST /api/preview HTTP/1.1" 422 -
+ok
+test_telemetry_replay (unittest.loader._FailedTest.test_telemetry_replay) ... ERROR
+test_combined_roll_and_pitch_exceed_contact_tilt_limit (test_touchdown_quality.TouchdownQualityTests.test_combined_roll_and_pitch_exceed_contact_tilt_limit) ... ok
+test_horizontal_contact_position_requires_finite_frozen_reference (test_touchdown_quality.TouchdownQualityTests.test_horizontal_contact_position_requires_finite_frozen_reference) ... ok
+test_normal_contact_and_boundary_are_accepted (test_touchdown_quality.TouchdownQualityTests.test_normal_contact_and_boundary_are_accepted) ... ok
+test_speed_tilt_and_unknown_motion_are_rejected (test_touchdown_quality.TouchdownQualityTests.test_speed_tilt_and_unknown_motion_are_rejected) ... ok
+test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority (test_tracking_governor.TrackingGovernorTests.test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority) ... ERROR
+test_invalid_inputs_and_invalid_configuration_fail (test_tracking_governor.TrackingGovernorTests.test_invalid_inputs_and_invalid_configuration_fail) ... ok
+test_nominal_tracking_and_disabled_baseline (test_tracking_governor.TrackingGovernorTests.test_nominal_tracking_and_disabled_baseline) ... ok
+test_slowdown_and_recovery_are_bounded_and_asymmetric (test_tracking_governor.TrackingGovernorTests.test_slowdown_and_recovery_are_bounded_and_asymmetric) ... ok
+test_stall_does_not_jump_scale (test_tracking_governor.TrackingGovernorTests.test_stall_does_not_jump_scale) ... ok
+test_arc_derivatives_include_curvature_terms (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_arc_derivatives_include_curvature_terms) ... ok
+test_compatible_straight_segments_keep_boundary_speed (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_compatible_straight_segments_keep_boundary_speed) ... ok
+test_export_contains_all_derivatives (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_export_contains_all_derivatives) ... ok
+test_hover_uses_exact_requested_duration (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_hover_uses_exact_requested_duration) ... ok
+test_profiles_include_exact_endpoint (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_profiles_include_exact_endpoint) ... ok
+test_smooth_turn_preserves_compatible_boundary_speed (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_smooth_turn_preserves_compatible_boundary_speed) ... ok
+test_whole_mission_has_exact_connections_and_is_repeatable (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_whole_mission_has_exact_connections_and_is_repeatable) ... ok
+test_do_not_differentiate_across_phase_boundary_or_gap (test_trajectory_quality.TrajectoryQualityTests.test_do_not_differentiate_across_phase_boundary_or_gap) ... ok
+test_known_error_acceleration_and_jerk (test_trajectory_quality.TrajectoryQualityTests.test_known_error_acceleration_and_jerk) ... ok
+test_reject_duplicate_time (test_trajectory_quality.TrajectoryQualityTests.test_reject_duplicate_time) ... ok
+test_analytic_segment_peaks_stay_within_every_limit (test_waypoint_mission.WaypointMissionTests.test_analytic_segment_peaks_stay_within_every_limit) ... ok
+test_cli_parser_and_entrypoint_write_requested_outputs (test_waypoint_mission.WaypointMissionTests.test_cli_parser_and_entrypoint_write_requested_outputs) ... ok
+test_compilation_is_byte_deterministic_and_loadable (test_waypoint_mission.WaypointMissionTests.test_compilation_is_byte_deterministic_and_loadable) ... ok
+test_contract_structure_and_scalar_bounds_fail_closed (test_waypoint_mission.WaypointMissionTests.test_contract_structure_and_scalar_bounds_fail_closed) ... ok
+test_defensive_sample_audit_rejects_nonfinite_and_excess_motion (test_waypoint_mission.WaypointMissionTests.test_defensive_sample_audit_rejects_nonfinite_and_excess_motion) ... ok
+test_duration_budget_is_enforced_after_retiming (test_waypoint_mission.WaypointMissionTests.test_duration_budget_is_enforced_after_retiming) ... ok
+test_five_named_stops_are_exact_c3_boundaries (test_waypoint_mission.WaypointMissionTests.test_five_named_stops_are_exact_c3_boundaries) ... ok
+test_holds_are_stationary_and_exact_duration (test_waypoint_mission.WaypointMissionTests.test_holds_are_stationary_and_exact_duration) ... ok
+test_loader_rejects_nonstandard_json_constants (test_waypoint_mission.WaypointMissionTests.test_loader_rejects_nonstandard_json_constants) ... ok
+test_loader_reports_missing_and_malformed_files (test_waypoint_mission.WaypointMissionTests.test_loader_reports_missing_and_malformed_files) ... ok
+test_unknown_missing_nonfinite_and_unsafe_inputs_fail_closed (test_waypoint_mission.WaypointMissionTests.test_unknown_missing_nonfinite_and_unsafe_inputs_fail_closed) ... ok
+test_yaw_uses_shortest_wrapped_change (test_waypoint_mission.WaypointMissionTests.test_yaw_uses_shortest_wrapped_change) ... ok
+test_all_stops_and_shutdown_pass_with_bounded_evidence (test_waypoint_mission_audit.WaypointMissionAuditTests.test_all_stops_and_shutdown_pass_with_bounded_evidence) ... ok
+test_invalid_inputs_are_rejected (test_waypoint_mission_audit.WaypointMissionAuditTests.test_invalid_inputs_are_rejected) ... ok
+test_missing_stop_evidence_and_failed_shutdown_fail (test_waypoint_mission_audit.WaypointMissionAuditTests.test_missing_stop_evidence_and_failed_shutdown_fail) ... ok
+test_tracking_or_planned_motion_failure_is_not_hidden (test_waypoint_mission_audit.WaypointMissionAuditTests.test_tracking_or_planned_motion_failure_is_not_hidden) ... ok
+
+======================================================================
+ERROR: test_analysis_pipeline (unittest.loader._FailedTest.test_analysis_pipeline)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_analysis_pipeline
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_analysis_pipeline.py", line 14, in <module>
+    from analyze_run import (
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/analysis/analyze_run.py", line 13, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_captured_replay (unittest.loader._FailedTest.test_captured_replay)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_captured_replay
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_captured_replay.py", line 13, in <module>
+    from pymavlink.dialects.v20 import common
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_control_lifecycle (unittest.loader._FailedTest.test_control_lifecycle)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_control_lifecycle
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_control_lifecycle.py", line 15, in <module>
+    from PID_position_new import PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_fault_injection (unittest.loader._FailedTest.test_fault_injection)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_fault_injection
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_fault_injection.py", line 17, in <module>
+    from PID_position_new import PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_fault_run_analysis (unittest.loader._FailedTest.test_fault_run_analysis)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_fault_run_analysis
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_fault_run_analysis.py", line 14, in <module>
+    from analyze_fault_run import (
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/analysis/analyze_fault_run.py", line 11, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_fixed_overlay (unittest.loader._FailedTest.test_fixed_overlay)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_fixed_overlay
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_fixed_overlay.py", line 15, in <module>
+    from PID_position_new import PositionController, wrapped_angle
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_flight_release (unittest.loader._FailedTest.test_flight_release)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_flight_release
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_flight_release.py", line 27, in <module>
+    from VehicleState import VehicleState  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/VehicleState.py", line 4, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_mission_plan_contract (unittest.loader._FailedTest.test_mission_plan_contract)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_mission_plan_contract
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_mission_plan_contract.py", line 17, in <module>
+    from PID_position_new import PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_navigation_hold_braking (unittest.loader._FailedTest.test_navigation_hold_braking)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_navigation_hold_braking
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_navigation_hold_braking.py", line 10, in <module>
+    from PID_position_new import PositionController  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_planner_sitl_campaign (unittest.loader._FailedTest.test_planner_sitl_campaign)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_planner_sitl_campaign
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_planner_sitl_campaign.py", line 10, in <module>
+    import planner_sitl_campaign as campaign  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/planner_sitl_campaign.py", line 26, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_run_record (unittest.loader._FailedTest.test_run_record)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_run_record
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_run_record.py", line 15, in <module>
+    from PID_position_new import PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_runner_protocol (unittest.loader._FailedTest.test_runner_protocol)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_runner_protocol
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_runner_protocol.py", line 16, in <module>
+    import offboard_runner
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/offboard_runner.py", line 12, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_safety_supervisor (unittest.loader._FailedTest.test_safety_supervisor)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_safety_supervisor
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_safety_supervisor.py", line 14, in <module>
+    from PID_position_new import NavigationEstimateLost, PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_sitl_control_stall (unittest.loader._FailedTest.test_sitl_control_stall)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_sitl_control_stall
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_sitl_control_stall.py", line 14, in <module>
+    from analyze_fault_run import build_control_stall_audit, build_storage_stall_audit, build_nominal_run_audit
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/analysis/analyze_fault_run.py", line 11, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_sitl_fault_injector (unittest.loader._FailedTest.test_sitl_fault_injector)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_sitl_fault_injector
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_sitl_fault_injector.py", line 12, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_sitl_monitor (unittest.loader._FailedTest.test_sitl_monitor)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_sitl_monitor
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_sitl_monitor.py", line 9, in <module>
+    from sitl_scenario_batch import stage_case_artifacts, stage_sitl_acknowledgement  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/sitl_scenario_batch.py", line 17, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_sitl_parameter_reads (unittest.loader._FailedTest.test_sitl_parameter_reads)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_sitl_parameter_reads
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_sitl_parameter_reads.py", line 10, in <module>
+    import sitl_fault_injector as injector  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/sitl_fault_injector.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_stop_turn_execution (unittest.loader._FailedTest.test_stop_turn_execution)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_stop_turn_execution
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_stop_turn_execution.py", line 21, in <module>
+    from offboard_runner import load_planner_summary  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/offboard_runner.py", line 12, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_studio_cancellation (unittest.loader._FailedTest.test_studio_cancellation)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_studio_cancellation
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_studio_cancellation.py", line 9, in <module>
+    from scripts.planner_sitl_campaign import cancellation_verified
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/planner_sitl_campaign.py", line 26, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_studio_jobs (unittest.loader._FailedTest.test_studio_jobs)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_studio_jobs
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_studio_jobs.py", line 18, in <module>
+    from planner_sitl_campaign import prepare_case  # noqa: E402
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/planner_sitl_campaign.py", line 26, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_telemetry_replay (unittest.loader._FailedTest.test_telemetry_replay)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: test_telemetry_replay
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 396, in _find_test_path
+    module = self._get_module_from_name(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/loader.py", line 339, in _get_module_from_name
+    __import__(name)
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_telemetry_replay.py", line 15, in <module>
+    from PID_position_new import PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+
+======================================================================
+ERROR: test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority (test_tracking_governor.TrackingGovernorTests.test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests/test_tracking_governor.py", line 52, in test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority
+    from PID_position_new import PositionController
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/controller/PID_position_new.py", line 9, in <module>
+    from pymavlink import mavutil
+ModuleNotFoundError: No module named 'pymavlink'
+
+----------------------------------------------------------------------
+Ran 254 tests in 324.841s
+
+FAILED (errors=22)
+Traceback (most recent call last):
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/validate.py", line 73, in <module>
+    main()
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/validate.py", line 63, in main
+    run(test_command + [
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/validate.py", line 23, in run
+    subprocess.run(command, cwd=cwd, check=True, env=os.environ.copy())
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python', '-m', 'unittest', 'discover', '-s', '/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests', '-v']' returned non-zero exit status 1.

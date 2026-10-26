@@ -64,6 +64,9 @@ class PreviewHandler(BaseHTTPRequestHandler):
         elif self.path == "/draft.js":
             self._reply(200, (ROOT / "mission_planner/draft.js").read_bytes(),
                         "text/javascript; charset=utf-8")
+        elif self.path == "/speed-settings.js":
+            self._reply(200, (ROOT / "web/speed-settings.js").read_bytes(),
+                        "text/javascript; charset=utf-8")
         elif self.path == "/api/editor-settings":
             environment = load_contract(ROOT / "config/planner/empty_world_environment.json", dict)
             self._json(200, {"max_input_points": MAX_INPUT_POINTS, "max_drawing_points": 8192,

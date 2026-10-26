@@ -25,14 +25,12 @@ jobs:
       - name: Deterministic validation
         env:
           MPLBACKEND: Agg
-        run: python scripts/validate.py
+        run: python scripts/validate.py --controller-coverage
       - name: Connector subprocess regression tests
         run: python -m unittest discover -s tools/powershell_connector -p test_server.py -v
       - name: Critical logic branch coverage
         run: |
-          python -m coverage erase
-          python -m coverage run --branch --source=controller \
-            -m unittest discover -s tests
+          # Deterministic validation already ran the entire suite under coverage.
           python -m coverage report --fail-under=80 \
             controller/PID_Controller.py \
             controller/minimum_jerk.py \
@@ -56,3 +54,25 @@ jobs:
             trajectory_generator/waypoint_mission.py \
             trajectory_generator/plan_waypoint_mission.py \
             analysis/waypoint_mission_audit.py
+
+  public-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install declared Python dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Browser logic regression tests
+        run: node --test tests/*.test.cjs
+      - name: Public build and release boundary checks
+        run: |
+          python -m unittest tests.test_app_release -v
+          python web/build_public_studio.py dist
+          for source in web/*.js mission_planner/draft.js; do node --check "$source"; done

@@ -59,3 +59,13 @@ test('arrow rotates continuously through north and during a stationary turn',()=
  const a=headingArrow(2*Math.PI-.001)[0],b=headingArrow(2*Math.PI+.001)[0];assert.ok(Math.hypot(a[0]-b[0],a[1]-b[1])<.05);
  const r=sampleAt([{...base(0),yaw:0},{...base(2),yaw:Math.PI}],1),nose=headingArrow(r.yaw)[0];near(r.x,0);near(r.y,0);near(nose[0],20);near(nose[1],0);
 });
+test('measurement outages remain blank and missing derivatives remain absent',()=>{
+ const {measurementAt}=require('../web/motion.js');
+ const rows=measurementRows('time,x,y,z,yaw\n0,0,0,0,0\n0.1,1,0,0,0\n10,10,0,0,0');
+ const mid=measurementAt(rows,.05);near(mid.x,.5);assert.equal(mid.vx,undefined);assert.equal(mid.ax,undefined);
+ assert.equal(measurementAt(rows,5),null);assert.equal(measurementAt(rows,-1),null);assert.equal(measurementAt(rows,11),null);assert.equal(measurementAt(rows,10).x,10);
+});
+test('display decimation keeps the last exported endpoint without changing playback rows',()=>{
+ const {displayRows}=require('../web/motion.js');const rows=Array.from({length:10001},(_,i)=>base(i*.05)),copy=JSON.stringify(rows),display=displayRows(rows,100);
+ assert.ok(display.length<=102);assert.equal(display.at(-1),rows.at(-1));assert.equal(JSON.stringify(rows),copy);assert.equal(sampleAt(rows,400).time,400);
+});

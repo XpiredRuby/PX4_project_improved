@@ -6,14 +6,14 @@ import json
 import re
 import shutil
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from mission_planner.aircraft import catalog  # noqa: E402
 
 
-def build(destination):
-    dest = Path(destination).resolve()
+def _build_into(dest):
     dest.mkdir(parents=True, exist_ok=True)
     # Follow local Python imports from the preview; never bundle flight runners.
     names = {'__init__', 'preview'}
@@ -25,6 +25,9 @@ def build(destination):
                 if node.module not in names:
                     names.add(node.module)
                     todo.append(node.module)
+    forbidden = {'editor', 'studio_jobs', 'stop_turn_execution', 'sitl_campaign', 'flight_release', 'flight_preflight', 'simulation_binding'}
+    if names & forbidden:
+        raise ValueError('Portable compiler imported execution modules: '+str(sorted(names & forbidden)))
     sources = [ROOT / 'mission_planner' / f'{name}.py' for name in sorted(names)]
     sources += sorted((ROOT / 'config/planner').rglob('*.json'))
     manifest = {'schema_version': 1, 'runtime': 'pyodide-0.27.7', 'files': []}
@@ -36,7 +39,7 @@ def build(destination):
         manifest['files'].append({'path': relative, 'sha256': hashlib.sha256(source.read_bytes()).hexdigest()})
     (dest / 'python-manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
     (dest / 'aircraft-catalog.json').write_text(json.dumps(catalog(), allow_nan=False)+'\n')
-    for name in ('planner-worker.js', 'browser-api.js', 'workspace.js', 'workspace.css', 'comparison.js', 'lifecycle-ui.js', 'simple-ui.js', 'motion.js'):
+    for name in ('planner-worker.js', 'browser-api.js', 'workspace.js', 'workspace.css', 'comparison.js', 'lifecycle-ui.js', 'simple-ui.js', 'motion.js', 'run-state.js', 'speed-settings.js'):
         shutil.copyfile(ROOT / 'web' / name, dest / name)
     shutil.copyfile(ROOT / 'mission_planner/draft.js', dest / 'draft.js')
     page = (ROOT / 'mission_planner/editor.html').read_text()
@@ -67,10 +70,55 @@ def build(destination):
     page = page.replace('<p class="muted">Stop asks the virtual drone to land. Keep this page open while it lands and turns its motors off. This can take a little while.</p>', '')
     page = page.replace("$('lifecycle').textContent='What happens: take off → follow '+(closed?'the closed loop':'your route')+' → return to START → land and stop. The faint dotted return is indicative; the controller generates it during the run.';", "$('lifecycle').textContent='This page checks your route. A future connected Gazebo run will add takeoff, return to START and landing.';")
     page = re.sub(r'<style>.*?</style>', '<link rel="stylesheet" href="/workspace.css">', page, flags=re.S)
-    page = page.replace('<script src="/browser-api.js"></script>', '<script src="/browser-api.js"></script>\n<script src="/workspace.js"></script>\n<script src="/comparison.js"></script>\n<script src="/lifecycle-ui.js"></script>\n<script src="/simple-ui.js"></script>')
+    page = page.replace('<script src="/browser-api.js"></script>', '<script src="/browser-api.js"></script>\n<script src="/run-state.js"></script>\n<script src="/workspace.js"></script>\n<script src="/comparison.js"></script>\n<script src="/lifecycle-ui.js"></script>\n<script src="/simple-ui.js"></script>')
     page = page.replace('<script src="/simple-ui.js"></script>', '<script src="/simple-ui.js"></script>\n<script src="/motion.js"></script>')
+    assets = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+              for p in sorted(dest.glob('*')) if p.is_file()}
+    assets['editor-template'] = hashlib.sha256(page.encode()).hexdigest()
+    assets['build-script'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    fingerprint = hashlib.sha256(json.dumps({'files': manifest['files'], 'assets': assets}, sort_keys=True).encode()).hexdigest()
+    manifest['build_id'] = fingerprint[:16]
+    (dest / 'python-manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
+    page = page.replace('<head>', '<head>\n<meta name="px4-build" content="'+manifest['build_id']+'">')
+    page = re.sub(r'((?:src|href)="/[^"?]+\.(?:js|css))"', r'\1?v='+manifest['build_id']+'"', page)
     (dest / 'index.html').write_text(page)
-    print(f'Built {len(sources)} portable planner files at {dest}')
+    info = dict(schema_version=1, build_id=manifest['build_id'], source_tree_sha256=fingerprint,
+                runtime=manifest['runtime'], planner_files=len(sources),
+                scope='Planned reference only; Gazebo has not run; no physical-flight approval',
+                assets={p.relative_to(dest).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
+                        for p in sorted(dest.rglob('*')) if p.is_file()})
+    (dest / 'build-info.json').write_text(json.dumps(info, indent=2)+'\n')
+    return info
+
+
+def build(destination):
+    requested = Path(destination)
+    if requested.is_symlink():
+        raise ValueError('Build destination must not be a symbolic link')
+    dest = requested.resolve()
+    if dest == ROOT or dest in ROOT.parents:
+        raise ValueError('Build destination must not replace the source checkout')
+    if dest.exists() and any(dest.iterdir()):
+        marker = dest / 'python-manifest.json'
+        if not marker.is_file() or json.loads(marker.read_text()).get('runtime') != 'pyodide-0.27.7':
+            raise ValueError('Refusing to replace a nonempty directory that is not a portable studio build')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    # Complete the build before touching the previous output. Stale executable
+    # files never survive a successful rebuild of this owned output directory.
+    with tempfile.TemporaryDirectory(prefix='.studio-build-', dir=dest.parent) as temporary:
+        staging = Path(temporary) / 'new'
+        info = _build_into(staging)
+        previous = Path(temporary) / 'previous'
+        if dest.exists():
+            dest.rename(previous)
+        try:
+            staging.rename(dest)
+        except OSError:
+            if previous.exists():
+                previous.rename(dest)
+            raise
+    print(f"Built {info['planner_files']} portable planner files at {dest}; build {info['build_id']}")
+    return info
 
 
 if __name__ == '__main__':

@@ -107,7 +107,7 @@ def connect():
     return master
 
 
-def prepare_case(name, output, reviewed_plan=None):
+def prepare_case(name, output, reviewed_plan=None, *, experimental_stop_turn=False):
     artifacts = output / "plan"
     artifacts.mkdir()
     trajectory, summary = artifacts / "trajectory.csv", artifacts / "summary.json"
@@ -143,6 +143,12 @@ def prepare_case(name, output, reviewed_plan=None):
             case["controller_overrides"] = controller_overrides(setup["profile"])
             if load_contract(artifacts / "mission_budget.json", dict).get("passed") is not True:
                 raise ValueError("aircraft mission budget failed")
+        if declared.get('retiming', {}).get('limiting_constraint') == 'stop_and_turn':
+            if not experimental_stop_turn:
+                raise ValueError('Constructive route requires --experimental-stop-turn for SITL research')
+            from mission_planner.stop_turn_execution import audit_stop_turn_artifacts
+            write_json(artifacts / 'stop_turn_adapter_audit.json', audit_stop_turn_artifacts(artifacts))
+            case['experimental_stop_turn'] = True
         if intent["motion"]["yaw_mode"] != "fixed":
             raise ValueError("connected studio rehearsal requires fixed heading")
         case.update(planner_summary=str(summary), sitl_acknowledgement=str(acknowledgement),
@@ -171,7 +177,27 @@ def prepare_case(name, output, reviewed_plan=None):
     )
     reference_cases = {"turn-nominal": "l-turn", "hard-stop-nominal": "hard-stop",
                        "survey-nominal": "survey"}
-    if name in reference_cases:
+    if name == 'stop-turn-nominal':
+        if not experimental_stop_turn:
+            raise ValueError('stop-turn-nominal requires --experimental-stop-turn')
+        from mission_planner.preview import preview
+        from mission_planner.stop_turn_execution import audit_stop_turn_artifacts
+        intent = load_contract(ROOT / 'missions/drawn_path_example.json', dict)
+        base = intent['path']['points'][0]
+        intent['path'].update(closure='open_stop', maximum_deviation_m=.5, points=[
+            dict(base, point_id=f'research-stop-{i}', north_m=n, east_m=e, down_m=-20., hard=True, exact=False)
+            for i, (n, e) in enumerate(((0, 0), (0, 8), (0, 0), (8, 0), (8, 8), (3, 4)))])
+        intent['motion'].update(yaw_mode='fixed', fixed_yaw_deg=0., target_speed_m_s=1., maximum_speed_m_s=1.25)
+        plan = preview(dict(source='drawing', document=intent, planning_mode='closest'))
+        if not plan.get('accepted') or plan['preview_settings'].get('planner_backend') != 'stop_turn':
+            raise ValueError('Experimental case did not produce the intended constructive certificate')
+        trajectory.write_text(plan['trajectory_csv'])
+        for key in ('summary', 'verification', 'intent', 'vehicle_model', 'environment'):
+            write_json(artifacts / (key+'.json'), plan[key])
+        write_json(artifacts / 'stop_turn_adapter_audit.json', audit_stop_turn_artifacts(artifacts))
+        case['experimental_stop_turn'] = True
+        result = plan['summary']
+    elif name in reference_cases:
         payload = next(payload for label, payload, accepted in acceptance_cases()
                        if label == reference_cases[name] and accepted)
         if payload["source"] == "drawing":
@@ -216,7 +242,8 @@ def prepare_case(name, output, reviewed_plan=None):
 def run_one(name, args):
     folder = args.output / name
     folder.mkdir()
-    case = prepare_case(name, folder, args.reviewed_plan)
+    case = prepare_case(name, folder, args.reviewed_plan,
+                        experimental_stop_turn=getattr(args, "experimental_stop_turn", False))
     if name == "reviewed-plan" and args.reviewed_plan is not None:
         # The owner-controlled marker exists in the retained studio plan.
         # This does not introduce a hardware endpoint or allow process killing.
@@ -388,8 +415,12 @@ def main():
     parser.add_argument("--world", default="afvl_validation")
     parser.add_argument("--gui", action="store_true")
     parser.add_argument("--reviewed-plan", type=Path)
-    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "turn-nominal", "hard-stop-nominal", "survey-nominal", "drawn-gps-outage-4s", "drawn-control-stall", "reviewed-plan"], default=["five-stop-baseline"])
+    parser.add_argument("--experimental-stop-turn", action="store_true",
+                        help="Enable independently checked fixed-heading constructive routes for SITL research")
+    parser.add_argument("--cases", nargs="+", choices=["five-stop-baseline", "drawn-nominal", "circle-nominal", "turn-nominal", "hard-stop-nominal", "survey-nominal", "drawn-gps-outage-4s", "drawn-control-stall", "reviewed-plan", "stop-turn-nominal"], default=["five-stop-baseline"])
     args = parser.parse_args()
+    if args.experimental_stop_turn and not set(args.cases) <= {"reviewed-plan", "stop-turn-nominal"}:
+        parser.error("--experimental-stop-turn requires reviewed-plan or stop-turn-nominal cases")
     if (args.reviewed_plan is not None) != (args.cases == ["reviewed-plan"]):
         parser.error("--reviewed-plan requires exactly --cases reviewed-plan")
     # One controller owns the simulator ports across studio/browser processes.
@@ -421,7 +452,7 @@ def main():
             assessment = assess_case(args.output / name)
             results[-1]["sampled_rehearsal_passed"] = assessment["sampled_rehearsal_passed"]
             write_json(args.output / "results.json", results)
-            if name in ("drawn-nominal", "circle-nominal", "turn-nominal", "hard-stop-nominal", "survey-nominal", "reviewed-plan") and not assessment["sampled_rehearsal_passed"]:
+            if name in ("drawn-nominal", "circle-nominal", "turn-nominal", "hard-stop-nominal", "survey-nominal", "reviewed-plan", "stop-turn-nominal") and not assessment["sampled_rehearsal_passed"]:
                 raise RuntimeError("Sampled rehearsal targets failed; inspect assessment.json")
             if name in ("drawn-gps-outage-4s", "drawn-control-stall") and not assessment["fault_response_passed"]:
                 raise RuntimeError("Fault response targets failed; inspect assessment.json")

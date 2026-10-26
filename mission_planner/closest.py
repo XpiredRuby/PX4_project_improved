@@ -61,18 +61,24 @@ def _models(payload):
 
 def _motion(value, vehicle, changes):
     maximum = _finite(value["maximum_speed_m_s"], "Maximum speed")
+    if maximum <= 0:
+        raise ValueError("Maximum speed must be greater than zero")
     target = value.get("target_speed_m_s")
-    chosen = min(max(maximum, .1), vehicle.maximum_speed_m_s)
+    chosen = min(maximum, vehicle.maximum_speed_m_s)
     if chosen != maximum:
         _change(changes, "speed_limit", f"Speed limit adjusted to {chosen:g} m/s for this aircraft.",
                 requested=maximum, effective=chosen)
     value["maximum_speed_m_s"] = chosen
     if target is not None:
         target = _finite(target, "Cruising speed")
-        effective = min(max(target, .1), chosen)
+        if target <= 0:
+            raise ValueError("Cruising speed must be greater than zero")
+        effective = min(target, chosen)
         if effective != target:
-            _change(changes, "cruise_speed", f"Cruising speed adjusted to {effective:g} m/s.",
-                    requested=target, effective=effective)
+            reason = "your Never exceed setting" if maximum < target and maximum <= vehicle.maximum_speed_m_s else "the aircraft model ceiling"
+            _change(changes, "cruise_speed", f"Requested cruise {target:g} m/s is limited to {effective:g} m/s by {reason}, before the 10% planning margin.",
+                    requested=target, effective=effective, reason=reason,
+                    requested_cap_m_s=maximum, aircraft_cap_m_s=vehicle.maximum_speed_m_s)
         value["target_speed_m_s"] = effective
     if value.get("requested_duration_s") is not None:
         duration = _finite(value["requested_duration_s"], "Route time")
@@ -178,12 +184,19 @@ def _prepare(payload, vehicle, environment, changes):
         raise ValueError("source must be drawing or interview")
     # Parse the complete strict schema before changing geometry or trying solvers.
     conversion_deviation = intent["path"]["maximum_deviation_m"]
+    effective_motion = deepcopy(intent["motion"])
     requested = json.loads(json.dumps(MissionIntent.from_dict(intent).to_dict()))
+    original_motion = payload["document"]["motion"] if source == "drawing" else payload["document"]
+    # Keep original preferences separate from the effective, verified contract.
+    # Repaired malformed values (e.g. wrapped heading) remain disclosed above.
+    for key in ("maximum_speed_m_s", "target_speed_m_s"):
+        requested["motion"][key] = original_motion.get(key)
     requested["path"]["maximum_deviation_m"] = max(0.,_finite(payload["document"].get("maximum_deviation_m", payload["document"].get("path",{}).get("maximum_deviation_m")),"Rounding"))
     if source == "interview" and height != bounded:
         for p in requested["path"]["points"]:
             p["down_m"] = -height
     intent = deepcopy(requested)
+    intent["motion"] = effective_motion
     intent["path"]["maximum_deviation_m"] = conversion_deviation
     if source == "interview" and payload["document"].get("pattern") == "circle" and not any(k in payload["document"] for k in ("entry","exit")):
         circle = payload["document"]["circle"]
@@ -200,7 +213,7 @@ def _prepare(payload, vehicle, environment, changes):
             point["north_m"] *= ratio
             point["east_m"] *= ratio
         point["down_m"] = -min(max(-point["down_m"], .1), environment.max_height_above_launch_m)
-        moved += any(point[k] != n for k, n in zip(("north_m","east_m","down_m"), original))
+        moved += any(point[k] != n for k, n in zip(("north_m","east_m","down_m"), original, strict=True))
     if moved:
         _change(changes, "envelope_projection", f"Moved {moved} point(s) into the permitted height and area.",
                 point_count=moved)
@@ -229,7 +242,7 @@ def _repair_bound(original, effective):
         def parameterize(points):
             poses = [[p[k] for k in ("north_m", "east_m", "down_m")] for p in points]
             lengths = [0.]
-            for a, b in zip(poses, poses[1:]):
+            for a, b in zip(poses, poses[1:], strict=False):
                 lengths.append(lengths[-1] + math.dist(a, b))
             total = lengths[-1]
             return poses, [v / total if total else i / (len(poses)-1)
@@ -241,7 +254,7 @@ def _repair_bound(original, effective):
                 cursor += 1
             span = times[cursor+1] - times[cursor]
             u = (t-times[cursor])/span if span else 0.
-            return [x + u*(y-x) for x, y in zip(poses[cursor], poses[cursor+1])], cursor
+            return [x + u*(y-x) for x, y in zip(poses[cursor], poses[cursor+1], strict=True)], cursor
         bound, ia, ib = prefix, 0, 0
         for t in sorted(set(ta + tb)):
             pa, ia = at(a, ta, t, ia)
@@ -250,7 +263,7 @@ def _repair_bound(original, effective):
         return bound
     return max(prefix, *(math.dist([p[k] for k in ("north_m","east_m","down_m")],
                                   [q[k] for k in ("north_m","east_m","down_m")])
-                         for p, q in zip(old, new)))
+                         for p, q in zip(old, new, strict=True)))
 
 
 def _simplify_sketch(intent, limit=MAX_SKETCH_VERTICES):
@@ -265,19 +278,18 @@ def _simplify_sketch(intent, limit=MAX_SKETCH_VERTICES):
         return deepcopy(intent)
     poses = [[p[k] for k in ("north_m", "east_m", "down_m")] for p in points]
     arc = [0.]
-    for a, b in zip(poses, poses[1:]):
+    for a, b in zip(poses, poses[1:], strict=False):
         arc.append(arc[-1] + math.dist(a, b))
     marked = {i for i, p in enumerate(points) if p["hard"] or p["exact"]}
-    keep = {0, len(points)-1}
-    if len(marked | keep) <= limit:
-        keep |= marked
+    keep = {0, len(points)-1} | marked
+    limit = max(limit, len(keep))
     target = max(.005, .25*intent["path"]["maximum_deviation_m"])
     def worst(left, right):
         span = arc[right]-arc[left]
         best = (0., None)
         for i in range(left+1, right):
             u = (arc[i]-arc[left])/span if span else 0.
-            chord = [x+u*(y-x) for x, y in zip(poses[left], poses[right])]
+            chord = [x+u*(y-x) for x, y in zip(poses[left], poses[right], strict=True)]
             error = math.dist(poses[i], chord)
             if error > best[0]:
                 best = error, i
@@ -289,7 +301,7 @@ def _simplify_sketch(intent, limit=MAX_SKETCH_VERTICES):
         if index is not None:
             heapq.heappush(queue, (-error, left, right, index))
     ordered = sorted(keep)
-    for left, right in zip(ordered, ordered[1:]):
+    for left, right in zip(ordered, ordered[1:], strict=False):
         push(left, right)
     while queue and len(keep) < limit:
         negative, left, right, index = heapq.heappop(queue)
@@ -349,7 +361,7 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     speed = .9 * min(intent["motion"]["maximum_speed_m_s"],
                       intent["motion"]["target_speed_m_s"] or vehicle.maximum_speed_m_s,
                       vehicle.maximum_speed_m_s)
-    if setup and any(a[2] != b[2] for a, b in zip(points, points[1:])):
+    if setup and any(a[2] != b[2] for a, b in zip(points, points[1:], strict=False)):
         speed = min(speed, .9*min(setup["profile"]["maximum_climb_m_s"], setup["profile"]["maximum_descent_m_s"]))
     phases, row_estimate = [], 0
     pose = points[0] + [heading]
@@ -382,7 +394,7 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     rows, clock, spans = [], 0., []
     for phase in phases:
         start, finish = clock, clock + phase["duration_s"]
-        if rows and any(abs(rows[-1][key]-v) > 1e-9 for key,v in zip(("x","y","z","yaw"), phase["start"])):
+        if rows and any(abs(rows[-1][key]-v) > 1e-9 for key,v in zip(("x","y","z","yaw"), phase["start"], strict=True)):
             raise ValueError("Discontinuous polynomial phase join")
         count = math.ceil(phase["duration_s"]/PERIOD)
         for i in range(count+1):
@@ -401,10 +413,10 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     serialized = list(csv.DictReader(csv_text.splitlines()))
     if len(serialized) != len(rows) or any(
         float(raw[k]) != row[k] or not math.isfinite(float(raw[k]))
-        for raw,row in zip(serialized,rows) for k in FIELDS
+        for raw,row in zip(serialized,rows, strict=True) for k in FIELDS
     ):
         raise ValueError("Polynomial CSV serialization audit failed")
-    if any(b["time"] <= a["time"] for a,b in zip(rows,rows[1:])):
+    if any(b["time"] <= a["time"] for a,b in zip(rows,rows[1:], strict=False)):
         raise ValueError("Polynomial route clocks must increase")
     digest = hashlib.sha256(csv_text.encode()).hexdigest()
     full = build_mission(csv_text, contract, vehicle, environment,
@@ -504,12 +516,12 @@ def closest_preview(payload, strict_preview):
     if setup:
         base["aircraft_profile"] = payload["aircraft_profile"]
     coordinates = [[p[k] for k in ("north_m","east_m","down_m")] for p in effective["path"]["points"]]
-    length = sum(math.dist(a,b) for a,b in zip(coordinates,coordinates[1:]))
+    length = sum(math.dist(a,b) for a,b in zip(coordinates,coordinates[1:], strict=False))
     reversal = False
-    for a,b,d in zip(coordinates,coordinates[1:],coordinates[2:]):
+    for a,b,d in zip(coordinates,coordinates[1:],coordinates[2:], strict=False):
         left, right = [b[i]-a[i] for i in range(3)],[d[i]-b[i] for i in range(3)]
         magnitude = math.hypot(*left)*math.hypot(*right)
-        if magnitude > 1e-16 and sum(x*y for x,y in zip(left,right))/magnitude < -.95:
+        if magnitude > 1e-16 and sum(x*y for x,y in zip(left,right, strict=True))/magnitude < -.95:
             reversal = True
     quick = (len(coordinates)>8 or length>120 or reversal
              or any(c["code"] == "sketch_simplification" for c in changes)

@@ -27,6 +27,23 @@ class RehearsalTests(unittest.TestCase):
                 {"overall_passed": True}, {"armed": False, "landed_state": 1,
                                            "actuators": [0.]*4, "continuous_confirmation_s": 2.}]
 
+    def test_constructive_runtime_reference_uses_phase_polynomial_not_linear_chords(self):
+        from mission_planner.stop_turn_execution import sample_stop_turn_reference
+        evidence = self.evidence()
+        df, plan, physical, yaw, velocity, audit, ground = evidence
+        phases = [dict(name='LEG',start=[0.,0.,0.,0.],end=[1.,0.,0.,0.],duration_s=1.)]
+        values = sample_stop_turn_reference(phases, df.mission_time_s.to_numpy())
+        df['desired_x'] = values[:, 0]
+        physical[:, 0] = values[:, 0]
+        # Deliberately sparse CSV: a linear chord would differ by ~0.18 m.
+        plan['x'] = [0., 1.]
+        result = assess_frames(df,plan,physical,yaw,velocity,audit,ground,constructive_phases=phases)
+        check = next(c for c in result['checks'] if c['name']=='Runtime reference follows exact CSV with one translation')
+        self.assertTrue(check['passed'])
+        legacy = assess_frames(df,plan,physical,yaw,velocity,audit,ground)
+        check = next(c for c in legacy['checks'] if c['name']=='Runtime reference follows exact CSV with one translation')
+        self.assertFalse(check['passed'])
+
     def test_complete_truth_and_lifecycle_pass_only_sampled_sitl_scope(self):
         result = assess_frames(*self.evidence())
         self.assertTrue(result["sampled_rehearsal_passed"])

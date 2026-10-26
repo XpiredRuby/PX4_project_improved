@@ -1,0 +1,13 @@
+test_build_refuses_to_replace_user_files_or_source (tests.test_app_release.AppReleaseTests.test_build_refuses_to_replace_user_files_or_source) ... ok
+test_malformed_payloads_fail_at_the_boundary (tests.test_app_release.AppReleaseTests.test_malformed_payloads_fail_at_the_boundary) ... ok
+test_more_than_48_mandatory_marks_survive_simplification (tests.test_app_release.AppReleaseTests.test_more_than_48_mandatory_marks_survive_simplification) ... ok
+test_original_motion_survives_adjustment_but_effective_limits_remain_binding (tests.test_app_release.AppReleaseTests.test_original_motion_survives_adjustment_but_effective_limits_remain_binding) ... ok
+test_portable_build_is_deterministic_clean_and_bound_to_all_assets (tests.test_app_release.AppReleaseTests.test_portable_build_is_deterministic_clean_and_bound_to_all_assets) ... ok
+test_positive_small_caps_are_never_increased (tests.test_app_release.AppReleaseTests.test_positive_small_caps_are_never_increased) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.295s
+
+OK
+Built 28 portable planner files at /tmp/tmpmf29wfvw/app; build 2efbe41a522355ce
+Built 28 portable planner files at /tmp/tmpmf29wfvw/app; build 2efbe41a522355ce

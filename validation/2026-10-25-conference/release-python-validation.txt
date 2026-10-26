@@ -1,0 +1,873 @@
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python main.py
+Generated 1803 points
+Saved to trajetory.csv
+0 start: 0.0 cruise: 2 end: 1
+1 start: 1 cruise: 1 end: 1
+2 start: 1 cruise: 2 end: 0.0
+3 start: 0.0 cruise: 0.0 end: 0.0
+4 start: 0.0 cruise: 2 end: 0.0
+5 Hover: 5
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plan_waypoint_mission.py --plan /workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json --output /tmp/tmpk6p8f253/first.csv
+{
+  "coordinate_frame": "LOCAL_NED",
+  "duration_s": 125.89916494628677,
+  "limits": {
+    "max_acceleration_m_s2": 1.0,
+    "max_horizontal_speed_m_s": 1.0,
+    "max_jerk_m_s3": 1.5,
+    "max_vertical_speed_m_s": 0.6,
+    "max_yaw_acceleration_deg_s2": 30.0,
+    "max_yaw_jerk_deg_s3": 60.0,
+    "max_yaw_rate_deg_s": 30.0,
+    "minimum_segment_duration_s": 2.0
+  },
+  "point_count": 2520,
+  "safety": {
+    "max_duration_s": 180.0,
+    "max_radius_from_start_m": 40.0,
+    "max_total_distance_m": 120.0,
+    "max_vertical_excursion_from_start_m": 3.0
+  },
+  "schema_version": 1,
+  "segments": [
+    {
+      "distance_m": 14.422205101855956,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-west",
+      "peak_acceleration_m_s2": 0.10886705847372821,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.02411302982731554,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 0.226457170116902,
+      "peak_yaw_jerk_deg_s3": 0.05015813391298775,
+      "peak_yaw_rate_deg_s": 2.080125735844609,
+      "start_stop": "start",
+      "yaw_change_deg": -29.999999999999996
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-north",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.37742861686150325,
+      "peak_yaw_jerk_deg_s3": 0.08359688985497957,
+      "peak_yaw_rate_deg_s": 3.4668762264076816,
+      "start_stop": "survey-west",
+      "yaw_change_deg": 49.999999999999986
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-east",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.5284000636061047,
+      "peak_yaw_jerk_deg_s3": 0.11703564579697143,
+      "peak_yaw_rate_deg_s": 4.853626716970755,
+      "start_stop": "survey-north",
+      "yaw_change_deg": 70.0
+    },
+    {
+      "distance_m": 10.63014581273465,
+      "duration_s": 23.253443965357047,
+      "end_stop": "exit",
+      "peak_acceleration_m_s2": 0.14770287010201777,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.04438504605381975,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 1.2505245500260784,
+      "peak_yaw_jerk_deg_s3": 0.3757854516029575,
+      "peak_yaw_rate_deg_s": 8.466487815452375,
+      "start_stop": "survey-east",
+      "yaw_change_deg": -90.0
+    }
+  ],
+  "source_plan": "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "stop_arrival_s": {
+    "exit": 124.89916494628677,
+    "start": 0.0,
+    "survey-east": 99.64572098092972,
+    "survey-north": 66.09714732061981,
+    "survey-west": 32.548573660309906
+  },
+  "stop_departure_s": {
+    "exit": 125.89916494628677,
+    "start": 1.0,
+    "survey-east": 101.64572098092972,
+    "survey-north": 68.09714732061981,
+    "survey-west": 34.548573660309906
+  },
+  "stops": [
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "start",
+      "north_m": 0.0,
+      "yaw_deg": 0.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": -8.0,
+      "hold_s": 2.0,
+      "name": "survey-west",
+      "north_m": 12.0,
+      "yaw_deg": -30.0
+    },
+    {
+      "down_m": -9.0,
+      "east_m": 0.0,
+      "hold_s": 2.0,
+      "name": "survey-north",
+      "north_m": 24.0,
+      "yaw_deg": 20.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 8.0,
+      "hold_s": 2.0,
+      "name": "survey-east",
+      "north_m": 12.0,
+      "yaw_deg": 90.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "exit",
+      "north_m": 5.0,
+      "yaw_deg": 0.0
+    }
+  ],
+  "trajectory": "/tmp/tmpk6p8f253/first.csv",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plan_waypoint_mission.py --plan /workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json --output /tmp/tmpk6p8f253/second.csv
+{
+  "coordinate_frame": "LOCAL_NED",
+  "duration_s": 125.89916494628677,
+  "limits": {
+    "max_acceleration_m_s2": 1.0,
+    "max_horizontal_speed_m_s": 1.0,
+    "max_jerk_m_s3": 1.5,
+    "max_vertical_speed_m_s": 0.6,
+    "max_yaw_acceleration_deg_s2": 30.0,
+    "max_yaw_jerk_deg_s3": 60.0,
+    "max_yaw_rate_deg_s": 30.0,
+    "minimum_segment_duration_s": 2.0
+  },
+  "point_count": 2520,
+  "safety": {
+    "max_duration_s": 180.0,
+    "max_radius_from_start_m": 40.0,
+    "max_total_distance_m": 120.0,
+    "max_vertical_excursion_from_start_m": 3.0
+  },
+  "schema_version": 1,
+  "segments": [
+    {
+      "distance_m": 14.422205101855956,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-west",
+      "peak_acceleration_m_s2": 0.10886705847372821,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.02411302982731554,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 0.226457170116902,
+      "peak_yaw_jerk_deg_s3": 0.05015813391298775,
+      "peak_yaw_rate_deg_s": 2.080125735844609,
+      "start_stop": "start",
+      "yaw_change_deg": -29.999999999999996
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-north",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.37742861686150325,
+      "peak_yaw_jerk_deg_s3": 0.08359688985497957,
+      "peak_yaw_rate_deg_s": 3.4668762264076816,
+      "start_stop": "survey-west",
+      "yaw_change_deg": 49.999999999999986
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-east",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.5284000636061047,
+      "peak_yaw_jerk_deg_s3": 0.11703564579697143,
+      "peak_yaw_rate_deg_s": 4.853626716970755,
+      "start_stop": "survey-north",
+      "yaw_change_deg": 70.0
+    },
+    {
+      "distance_m": 10.63014581273465,
+      "duration_s": 23.253443965357047,
+      "end_stop": "exit",
+      "peak_acceleration_m_s2": 0.14770287010201777,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.04438504605381975,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 1.2505245500260784,
+      "peak_yaw_jerk_deg_s3": 0.3757854516029575,
+      "peak_yaw_rate_deg_s": 8.466487815452375,
+      "start_stop": "survey-east",
+      "yaw_change_deg": -90.0
+    }
+  ],
+  "source_plan": "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "stop_arrival_s": {
+    "exit": 124.89916494628677,
+    "start": 0.0,
+    "survey-east": 99.64572098092972,
+    "survey-north": 66.09714732061981,
+    "survey-west": 32.548573660309906
+  },
+  "stop_departure_s": {
+    "exit": 125.89916494628677,
+    "start": 1.0,
+    "survey-east": 101.64572098092972,
+    "survey-north": 68.09714732061981,
+    "survey-west": 34.548573660309906
+  },
+  "stops": [
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "start",
+      "north_m": 0.0,
+      "yaw_deg": 0.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": -8.0,
+      "hold_s": 2.0,
+      "name": "survey-west",
+      "north_m": 12.0,
+      "yaw_deg": -30.0
+    },
+    {
+      "down_m": -9.0,
+      "east_m": 0.0,
+      "hold_s": 2.0,
+      "name": "survey-north",
+      "north_m": 24.0,
+      "yaw_deg": 20.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 8.0,
+      "hold_s": 2.0,
+      "name": "survey-east",
+      "north_m": 12.0,
+      "yaw_deg": 90.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "exit",
+      "north_m": 5.0,
+      "yaw_deg": 0.0
+    }
+  ],
+  "trajectory": "/tmp/tmpk6p8f253/second.csv",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m unittest discover -s /workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests -v
+test_energy_tolerance_and_aircraft_id_mismatches_refuse_accepted_plan (test_aircraft_profiles.AircraftPreviewTests.test_energy_tolerance_and_aircraft_id_mismatches_refuse_accepted_plan) ... ok
+test_same_drawing_compiles_and_binds_quad_hex_octo_profiles (test_aircraft_profiles.AircraftPreviewTests.test_same_drawing_compiles_and_binds_quad_hex_octo_profiles) ... ok
+test_unanswered_setup_returns_questions_and_no_trajectory (test_aircraft_profiles.AircraftPreviewTests.test_unanswered_setup_returns_questions_and_no_trajectory) ... ok
+test_aircraft_types_and_adapters_are_explicit (test_aircraft_profiles.AircraftProfileTests.test_aircraft_types_and_adapters_are_explicit) ... ok
+test_allocation_box_matches_all_corners_and_exact_wrench (test_aircraft_profiles.AircraftProfileTests.test_allocation_box_matches_all_corners_and_exact_wrench) ... ok
+test_bad_values_and_unknown_fields_fail_closed (test_aircraft_profiles.AircraftProfileTests.test_bad_values_and_unknown_fields_fail_closed) ... ok
+test_missing_inputs_are_questions_not_assumed_x500_values (test_aircraft_profiles.AircraftProfileTests.test_missing_inputs_are_questions_not_assumed_x500_values) ... ok
+test_mission_budget_includes_lifecycle_contingency_and_reserve (test_aircraft_profiles.AircraftProfileTests.test_mission_budget_includes_lifecycle_contingency_and_reserve) ... ok
+test_more_mass_and_yaw_demand_reduce_feasible_motion (test_aircraft_profiles.AircraftProfileTests.test_more_mass_and_yaw_demand_reduce_feasible_motion) ... ok
+test_quad_hex_octo_and_custom_models_round_trip_with_distinct_hashes (test_aircraft_profiles.AircraftProfileTests.test_quad_hex_octo_and_custom_models_round_trip_with_distinct_hashes) ... ok
+test_readonly_parameter_import_provides_reviewable_ceilings (test_aircraft_profiles.AircraftProfileTests.test_readonly_parameter_import_provides_reviewable_ceilings) ... ok
+test_wind_overload_and_singular_rotor_geometry_are_refused (test_aircraft_profiles.AircraftProfileTests.test_wind_overload_and_singular_rotor_geometry_are_refused) ... ok
+test_wind_requires_force_bounds_and_those_bounds_consume_thrust (test_aircraft_profiles.AircraftProfileTests.test_wind_requires_force_bounds_and_those_bounds_consume_thrust) ... ok
+test_binding_checks_mass_geometry_capacity_and_fingerprints (test_aircraft_profiles.SimulationBindingTests.test_binding_checks_mass_geometry_capacity_and_fingerprints) ... ok
+test_browser_paths_and_unhandled_transforms_are_refused (test_aircraft_profiles.SimulationBindingTests.test_browser_paths_and_unhandled_transforms_are_refused) ... ok
+test_enrichment_adds_finite_attitude_and_acceleration (test_analysis_pipeline.AnalysisPipelineTests.test_enrichment_adds_finite_attitude_and_acceleration) ... ok
+test_failed_failsafe_landing_preserves_measured_quality_and_shutdown (test_analysis_pipeline.AnalysisPipelineTests.test_failed_failsafe_landing_preserves_measured_quality_and_shutdown) ... ok
+test_failed_failsafe_without_contact_still_fails_completion_checks (test_analysis_pipeline.AnalysisPipelineTests.test_failed_failsafe_without_contact_still_fails_completion_checks) ... ok
+test_identity_quaternion_converts_to_zero_euler (test_analysis_pipeline.AnalysisPipelineTests.test_identity_quaternion_converts_to_zero_euler) ... ok
+test_level_stationary_specific_force_becomes_zero_ned_acceleration (test_analysis_pipeline.AnalysisPipelineTests.test_level_stationary_specific_force_becomes_zero_ned_acceleration) ... ok
+test_navigation_response_keeps_hold_bounds_and_quality_verdict (test_analysis_pipeline.AnalysisPipelineTests.test_navigation_response_keeps_hold_bounds_and_quality_verdict) ... ok
+test_navigation_timeout_landing_requires_specific_reason_and_cleanup (test_analysis_pipeline.AnalysisPipelineTests.test_navigation_timeout_landing_requires_specific_reason_and_cleanup) ... ok
+test_quaternion_yaw_conversion (test_analysis_pipeline.AnalysisPipelineTests.test_quaternion_yaw_conversion) ... ok
+test_reference_acceleration_uses_retimed_velocity_and_irregular_real_time (test_analysis_pipeline.AnalysisPipelineTests.test_reference_acceleration_uses_retimed_velocity_and_irregular_real_time) ... ok
+test_reference_derivatives_do_not_bridge_hold_native_land_or_gaps (test_analysis_pipeline.AnalysisPipelineTests.test_reference_derivatives_do_not_bridge_hold_native_land_or_gaps) ... ok
+test_safety_audit_exposes_command_and_completion_failures (test_analysis_pipeline.AnalysisPipelineTests.test_safety_audit_exposes_command_and_completion_failures) ... ok
+test_safety_audit_passes_complete_bounded_run (test_analysis_pipeline.AnalysisPipelineTests.test_safety_audit_passes_complete_bounded_run) ... ok
+test_safety_audit_rejects_unsafe_touchdown_and_live_propulsion (test_analysis_pipeline.AnalysisPipelineTests.test_safety_audit_rejects_unsafe_touchdown_and_live_propulsion) ... ok
+test_touchdown_audit_uses_frozen_reference_when_tracking_reference_moves (test_analysis_pipeline.AnalysisPipelineTests.test_touchdown_audit_uses_frozen_reference_when_tracking_reference_moves) ... ok
+test_growing_delay_detected_with_increasing_sensor_timestamps (test_captured_replay.CapturedReplayTests.test_growing_delay_detected_with_increasing_sensor_timestamps) ... ok
+test_real_wire_packets_are_parsed_and_have_valid_navigation (test_captured_replay.CapturedReplayTests.test_real_wire_packets_are_parsed_and_have_valid_navigation) ... ok
+test_repeated_sensor_timestamps_detected_despite_fresh_arrivals (test_captured_replay.CapturedReplayTests.test_repeated_sensor_timestamps_detected_despite_fresh_arrivals) ... ok
+test_scaled_simulator_clock_does_not_look_like_growing_gps_delay (test_captured_replay.CapturedReplayTests.test_scaled_simulator_clock_does_not_look_like_growing_gps_delay) ... ok
+test_unknown_uncertainty_is_unhealthy (test_captured_replay.CapturedReplayTests.test_unknown_uncertainty_is_unhealthy) ... ok
+test_continuous_repair_bound_detects_order_and_simplified_away_loop (test_closest_preview.ClosestPreviewTests.test_continuous_repair_bound_detects_order_and_simplified_away_loop) ... ok
+test_dense_vin_handwriting_keeps_original_shadow_and_produces_checked_mission (test_closest_preview.ClosestPreviewTests.test_dense_vin_handwriting_keeps_original_shadow_and_produces_checked_mission) ... ok
+test_duplicate_only_route_is_a_stationary_hover (test_closest_preview.ClosestPreviewTests.test_duplicate_only_route_is_a_stationary_hover) ... ok
+test_independent_checker_rejects_a_too_fast_phase (test_closest_preview.ClosestPreviewTests.test_independent_checker_rejects_a_too_fast_phase) ... ok
+test_new_preview_certificate_cannot_enter_the_spline_only_runner (test_closest_preview.ClosestPreviewTests.test_new_preview_certificate_cannot_enter_the_spline_only_runner) ... ok
+test_non_origin_first_point_gets_a_declared_launch_leg (test_closest_preview.ClosestPreviewTests.test_non_origin_first_point_gets_a_declared_launch_leg) ... ok
+test_non_positive_preferences_are_adjusted_without_rejecting_geometry (test_closest_preview.ClosestPreviewTests.test_non_positive_preferences_are_adjusted_without_rejecting_geometry) ... ok
+test_periodic_two_lap_visit_count_is_preserved (test_closest_preview.ClosestPreviewTests.test_periodic_two_lap_visit_count_is_preserved) ... ok
+test_profile_energy_and_uncertainty_stay_binding_during_repair (test_closest_preview.ClosestPreviewTests.test_profile_energy_and_uncertainty_stay_binding_during_repair) ... ok
+test_projection_respects_immutable_model_and_reports_original_error (test_closest_preview.ClosestPreviewTests.test_projection_respects_immutable_model_and_reports_original_error) ... ok
+test_real_impossible_deadline_becomes_longer_verified_plan (test_closest_preview.ClosestPreviewTests.test_real_impossible_deadline_becomes_longer_verified_plan) ... ok
+test_real_reversal_falls_back_with_continuous_turns_and_ground_endpoints (test_closest_preview.ClosestPreviewTests.test_real_reversal_falls_back_with_continuous_turns_and_ground_endpoints) ... ok
+test_resource_fallback_refines_scale_and_reports_geometry_change (test_closest_preview.ClosestPreviewTests.test_resource_fallback_refines_scale_and_reports_geometry_change) ... ok
+test_retained_stop_turn_plan_is_refused_before_startup (test_closest_preview.ClosestPreviewTests.test_retained_stop_turn_plan_is_refused_before_startup) ... ok
+test_scribble_oversized_input_repairs_instead_of_256_point_refusal (test_closest_preview.ClosestPreviewTests.test_scribble_oversized_input_repairs_instead_of_256_point_refusal) ... ok
+test_strict_api_still_refuses_an_impossible_deadline (test_closest_preview.ClosestPreviewTests.test_strict_api_still_refuses_an_impossible_deadline) ... ok
+test_tiny_circle_no_longer_refuses_its_radius (test_closest_preview.ClosestPreviewTests.test_tiny_circle_no_longer_refuses_its_radius) ... ok
+test_unknown_fields_and_non_finite_data_remain_invalid (test_closest_preview.ClosestPreviewTests.test_unknown_fields_and_non_finite_data_remain_invalid) ... ok
+test_zero_rounding_and_exact_flythrough_can_stop_without_cutting_corner (test_closest_preview.ClosestPreviewTests.test_zero_rounding_and_exact_flythrough_can_stop_without_cutting_corner) ... ok
+test_arm_never_sends_after_receiver_failure_or_handoff (test_control_lifecycle.ControlLifecycleTests.test_arm_never_sends_after_receiver_failure_or_handoff) ... ok
+test_arm_rechecks_ownership_after_waiting_for_transport (test_control_lifecycle.ControlLifecycleTests.test_arm_rechecks_ownership_after_waiting_for_transport) ... ok
+test_arm_requires_fresh_disarmed_offboard_ownership_at_send_time (test_control_lifecycle.ControlLifecycleTests.test_arm_requires_fresh_disarmed_offboard_ownership_at_send_time) ... ok
+test_attitude_replay_does_not_renew_source_freshness_and_regression_latches (test_control_lifecycle.ControlLifecycleTests.test_attitude_replay_does_not_renew_source_freshness_and_regression_latches) ... ok
+test_bootstrap_handoff_preserves_current_heading_without_moving_home (test_control_lifecycle.ControlLifecycleTests.test_bootstrap_handoff_preserves_current_heading_without_moving_home) ... ok
+test_bootstrap_rejects_stale_heartbeat_or_pilot_takeover (test_control_lifecycle.ControlLifecycleTests.test_bootstrap_rejects_stale_heartbeat_or_pilot_takeover) ... ok
+test_bootstrap_waiting_for_transport_rechecks_age_and_ownership (test_control_lifecycle.ControlLifecycleTests.test_bootstrap_waiting_for_transport_rechecks_age_and_ownership) ... ok
+test_command_waiting_for_transport_cannot_send_after_native_handoff (test_control_lifecycle.ControlLifecycleTests.test_command_waiting_for_transport_cannot_send_after_native_handoff) ... ok
+test_contact_rejects_replayed_measurements (test_control_lifecycle.ControlLifecycleTests.test_contact_rejects_replayed_measurements) ... ok
+test_delayed_disarm_is_reported_after_motor_shutdown (test_control_lifecycle.ControlLifecycleTests.test_delayed_disarm_is_reported_after_motor_shutdown) ... ok
+test_duplicate_measurement_time_cannot_replace_position_or_attitude (test_control_lifecycle.ControlLifecycleTests.test_duplicate_measurement_time_cannot_replace_position_or_attitude) ... ok
+test_estimator_replay_cannot_renew_validity_or_replace_flags (test_control_lifecycle.ControlLifecycleTests.test_estimator_replay_cannot_renew_validity_or_replace_flags) ... ok
+test_expired_control_brakes_once_with_fresh_navigation_then_yields (test_control_lifecycle.ControlLifecycleTests.test_expired_control_brakes_once_with_fresh_navigation_then_yields) ... ok
+test_expiry_never_brakes_with_invalid_navigation_or_other_owner (test_control_lifecycle.ControlLifecycleTests.test_expiry_never_brakes_with_invalid_navigation_or_other_owner) ... ok
+test_heartbeat_evidence_expires_and_recovers (test_control_lifecycle.ControlLifecycleTests.test_heartbeat_evidence_expires_and_recovers) ... ok
+test_heartbeat_gap_resets_continuous_shutdown_confirmation (test_control_lifecycle.ControlLifecycleTests.test_heartbeat_gap_resets_continuous_shutdown_confirmation) ... ok
+test_incomplete_propulsion_vector_never_establishes_shutdown (test_control_lifecycle.ControlLifecycleTests.test_incomplete_propulsion_vector_never_establishes_shutdown) ... ok
+test_invalid_deadlines_counts_types_and_command_age_are_rejected (test_control_lifecycle.ControlLifecycleTests.test_invalid_deadlines_counts_types_and_command_age_are_rejected) ... ok
+test_lost_arm_ack_and_unknown_heartbeat_use_failsafe_cleanup (test_control_lifecycle.ControlLifecycleTests.test_lost_arm_ack_and_unknown_heartbeat_use_failsafe_cleanup) ... ok
+test_missing_heartbeat_cannot_confirm_landing_shutdown (test_control_lifecycle.ControlLifecycleTests.test_missing_heartbeat_cannot_confirm_landing_shutdown) ... ok
+test_missing_invalid_estimator_timestamp_is_not_fresh_evidence (test_control_lifecycle.ControlLifecycleTests.test_missing_invalid_estimator_timestamp_is_not_fresh_evidence) ... ok
+test_nonfinite_commands_never_reach_transport (test_control_lifecycle.ControlLifecycleTests.test_nonfinite_commands_never_reach_transport) ... ok
+test_other_component_cannot_supply_flight_state_or_command_ack (test_control_lifecycle.ControlLifecycleTests.test_other_component_cannot_supply_flight_state_or_command_ack) ... ok
+test_prearm_failure_does_not_command_landing_for_another_owner (test_control_lifecycle.ControlLifecycleTests.test_prearm_failure_does_not_command_landing_for_another_owner) ... ok
+test_prearm_ground_gate_rejects_an_already_armed_vehicle (test_control_lifecycle.ControlLifecycleTests.test_prearm_ground_gate_rejects_an_already_armed_vehicle) ... ok
+test_prearm_mode_request_does_not_reclaim_an_armed_or_unknown_vehicle (test_control_lifecycle.ControlLifecycleTests.test_prearm_mode_request_does_not_reclaim_an_armed_or_unknown_vehicle) ... ok
+test_runner_observes_watchdog_failure_even_when_worker_has_no_error (test_control_lifecycle.ControlLifecycleTests.test_runner_observes_watchdog_failure_even_when_worker_has_no_error) ... ok
+test_slow_computation_cannot_publish_old_feedback_as_fresh (test_control_lifecycle.ControlLifecycleTests.test_slow_computation_cannot_publish_old_feedback_as_fresh) ... ok
+test_stale_regressed_estimator_cannot_authorize_failsafe_brake (test_control_lifecycle.ControlLifecycleTests.test_stale_regressed_estimator_cannot_authorize_failsafe_brake) ... ok
+test_stop_does_not_send_an_unsolicited_setpoint (test_control_lifecycle.ControlLifecycleTests.test_stop_does_not_send_an_unsolicited_setpoint) ... ok
+test_timeout_return_is_an_abort_even_when_landing_succeeds (test_control_lifecycle.ControlLifecycleTests.test_timeout_return_is_an_abort_even_when_landing_succeeds) ... ok
+test_velocity_expiring_while_waiting_for_transport_never_sends (test_control_lifecycle.ControlLifecycleTests.test_velocity_expiring_while_waiting_for_transport_never_sends) ... ok
+test_watchdog_loop_leaves_clock_sampling_to_locked_step (test_control_lifecycle.ControlLifecycleTests.test_watchdog_loop_leaves_clock_sampling_to_locked_step) ... ok
+test_watchdog_reads_latest_command_after_transport_lock (test_control_lifecycle.ControlLifecycleTests.test_watchdog_reads_latest_command_after_transport_lock) ... ok
+test_watchdog_resends_short_gap_but_cannot_extend_expired_motion (test_control_lifecycle.ControlLifecycleTests.test_watchdog_resends_short_gap_but_cannot_extend_expired_motion) ... ok
+test_watchdog_samples_clock_after_waiting_for_publication_lock (test_control_lifecycle.ControlLifecycleTests.test_watchdog_samples_clock_after_waiting_for_publication_lock) ... ok
+test_watchdog_unknown_or_regressed_publication_time_yields (test_control_lifecycle.ControlLifecycleTests.test_watchdog_unknown_or_regressed_publication_time_yields) ... ok
+test_worker_resuming_after_handoff_does_not_write_stale_offboard_row (test_control_lifecycle.ControlLifecycleTests.test_worker_resuming_after_handoff_does_not_write_stale_offboard_row) ... ok
+test_cli_writes_requested_outputs (test_drawn_path_cli.DrawnPathCompilerTests.test_cli_writes_requested_outputs) ... ok
+test_compiler_is_deterministic_and_controller_compatible (test_drawn_path_cli.DrawnPathCompilerTests.test_compiler_is_deterministic_and_controller_compatible) ... ok
+test_controller_origin_mismatch_fails_before_outputs (test_drawn_path_cli.DrawnPathCompilerTests.test_controller_origin_mismatch_fails_before_outputs) ... ok
+test_mismatched_contracts_fail_before_outputs (test_drawn_path_cli.DrawnPathCompilerTests.test_mismatched_contracts_fail_before_outputs) ... ok
+test_output_paths_must_not_alias (test_drawn_path_cli.DrawnPathCompilerTests.test_output_paths_must_not_alias) ... ok
+test_publication_failure_restores_previous_output_set (test_drawn_path_cli.DrawnPathCompilerTests.test_publication_failure_restores_previous_output_set) ... ok
+test_hold_uses_last_fully_trusted_reference (test_fault_injection.FaultInjectionTests.test_hold_uses_last_fully_trusted_reference) ... ok
+test_mission_state_machine_rejects_skipped_phase (test_fault_injection.FaultInjectionTests.test_mission_state_machine_rejects_skipped_phase) ... ok
+test_moving_navigation_fault_freezes_reference_and_clock_promptly (test_fault_injection.FaultInjectionTests.test_moving_navigation_fault_freezes_reference_and_clock_promptly) ... ok
+test_px4_failsafe_configuration_contract (test_fault_injection.FaultInjectionTests.test_px4_failsafe_configuration_contract) ... ok
+test_random_commands_always_obey_speed_and_slew_limits (test_fault_injection.FaultInjectionTests.test_random_commands_always_obey_speed_and_slew_limits) ... ok
+test_random_navigation_faults_are_bounded_and_classified (test_fault_injection.FaultInjectionTests.test_random_navigation_faults_are_bounded_and_classified) ... ok
+test_return_request_is_an_event_and_phase_gated (test_fault_injection.FaultInjectionTests.test_return_request_is_an_event_and_phase_gated) ... ok
+test_timestamp_regression_is_latched_and_sample_rejected (test_fault_injection.FaultInjectionTests.test_timestamp_regression_is_latched_and_sample_rejected) ... ok
+test_expected_failsafe_sequence_accepts_valid_prefix (test_fault_run_analysis.FaultRunAnalysisTests.test_expected_failsafe_sequence_accepts_valid_prefix) ... ok
+test_failsafe_sequence_rejects_resumed_offboard_phase (test_fault_run_analysis.FaultRunAnalysisTests.test_failsafe_sequence_rejects_resumed_offboard_phase) ... ok
+test_hold_evidence_requires_frozen_clock_and_bounded_drift (test_fault_run_analysis.FaultRunAnalysisTests.test_hold_evidence_requires_frozen_clock_and_bounded_drift) ... ok
+test_manifest_requires_full_landing_cleanup (test_fault_run_analysis.FaultRunAnalysisTests.test_manifest_requires_full_landing_cleanup) ... ok
+test_recovery_manifest_requires_success_ground_and_disarm (test_fault_run_analysis.FaultRunAnalysisTests.test_recovery_manifest_requires_success_ground_and_disarm) ... ok
+test_recovery_requires_hold_then_stable_health (test_fault_run_analysis.FaultRunAnalysisTests.test_recovery_requires_hold_then_stable_health) ... ok
+test_all_phase_controllers_share_exact_result_contract (test_fixed_overlay.FixedOverlayTests.test_all_phase_controllers_share_exact_result_contract) ... ok
+test_foreign_heartbeat_cannot_override_px4_state (test_fixed_overlay.FixedOverlayTests.test_foreign_heartbeat_cannot_override_px4_state) ... ok
+test_horizontal_velocity_limit_is_vector_norm (test_fixed_overlay.FixedOverlayTests.test_horizontal_velocity_limit_is_vector_norm) ... ok
+test_landing_handoff_holds_xy_and_does_not_descend (test_fixed_overlay.FixedOverlayTests.test_landing_handoff_holds_xy_and_does_not_descend) ... ok
+test_pid_conditional_antiwindup (test_fixed_overlay.FixedOverlayTests.test_pid_conditional_antiwindup) ... ok
+test_return_segment_preserves_measured_start_velocity (test_fixed_overlay.FixedOverlayTests.test_return_segment_preserves_measured_start_velocity) ... ok
+test_runner_deadlines_use_monotonic_clock (test_fixed_overlay.FixedOverlayTests.test_runner_deadlines_use_monotonic_clock) ... ok
+test_runtime_health_rejects_stale_or_wrong_mode (test_fixed_overlay.FixedOverlayTests.test_runtime_health_rejects_stale_or_wrong_mode) ... ok
+test_takeoff_holds_common_xy_origin (test_fixed_overlay.FixedOverlayTests.test_takeoff_holds_common_xy_origin) ... ok
+test_trajectory_loader_exposes_exported_yaw_derivatives (test_fixed_overlay.FixedOverlayTests.test_trajectory_loader_exposes_exported_yaw_derivatives) ... ok
+test_velocity_mask_excludes_force_bit (test_fixed_overlay.FixedOverlayTests.test_velocity_mask_excludes_force_bit) ... ok
+test_watchdog_resends_when_control_publication_stalls (test_fixed_overlay.FixedOverlayTests.test_watchdog_resends_when_control_publication_stalls) ... ok
+test_capacity_failure_is_visible_without_overwriting_queued_evidence (test_flight_logger.FlightLoggerTests.test_capacity_failure_is_visible_without_overwriting_queued_evidence) ... ok
+test_close_drains_ordered_immutable_samples (test_flight_logger.FlightLoggerTests.test_close_drains_ordered_immutable_samples) ... ok
+test_close_has_bounded_deadline_for_stuck_storage (test_flight_logger.FlightLoggerTests.test_close_has_bounded_deadline_for_stuck_storage) ... ok
+test_repeated_flush_requests_are_coalesced (test_flight_logger.FlightLoggerTests.test_repeated_flush_requests_are_coalesced) ... ok
+test_slow_storage_does_not_block_sample_or_flush_publication (test_flight_logger.FlightLoggerTests.test_slow_storage_does_not_block_sample_or_flush_publication) ... ok
+test_unbounded_queue_and_invalid_shutdown_deadline_are_rejected (test_flight_logger.FlightLoggerTests.test_unbounded_queue_and_invalid_shutdown_deadline_are_rejected) ... ok
+test_write_failure_is_reported_to_caller (test_flight_logger.FlightLoggerTests.test_write_failure_is_reported_to_caller) ... ok
+test_abort_and_energy_deadline_reach_same_guard_in_bootstrap_and_route (test_flight_release.FlightReleaseTests.test_abort_and_energy_deadline_reach_same_guard_in_bootstrap_and_route) ... ok
+test_all_motors_in_custom_output_map_are_checked (test_flight_release.FlightReleaseTests.test_all_motors_in_custom_output_map_are_checked) ... ok
+test_battery_unknown_and_other_pack_do_not_create_fresh_evidence (test_flight_release.FlightReleaseTests.test_battery_unknown_and_other_pack_do_not_create_fresh_evidence) ... ok
+test_expired_local_confirmation_refuses_without_consuming (test_flight_release.FlightReleaseTests.test_expired_local_confirmation_refuses_without_consuming) ... ok
+test_live_parameter_change_refuses_and_success_retains_readonly_probe (test_flight_release.FlightReleaseTests.test_live_parameter_change_refuses_and_success_retains_readonly_probe) ... ok
+test_live_wrong_identity_never_reads_parameters_or_sends_modes (test_flight_release.FlightReleaseTests.test_live_wrong_identity_never_reads_parameters_or_sends_modes) ... ok
+test_preparation_preserves_sitl_bytes_and_binds_every_file (test_flight_release.FlightReleaseTests.test_preparation_preserves_sitl_bytes_and_binds_every_file) ... ok
+test_raw_log_tampering_cannot_keep_a_passing_assessment (test_flight_release.FlightReleaseTests.test_raw_log_tampering_cannot_keep_a_passing_assessment) ... ok
+test_rehearsal_changes_and_failed_run_refuse_preparation (test_flight_release.FlightReleaseTests.test_rehearsal_changes_and_failed_run_refuse_preparation) ... ok
+test_review_requires_mentor_identity_expiry_and_all_evidence (test_flight_release.FlightReleaseTests.test_review_requires_mentor_identity_expiry_and_all_evidence) ... ok
+test_runtime_config_change_is_not_authorized (test_flight_release.FlightReleaseTests.test_runtime_config_change_is_not_authorized) ... ok
+test_short_abort_budget_cannot_be_physically_prepared (test_flight_release.FlightReleaseTests.test_short_abort_budget_cannot_be_physically_prepared) ... ok
+test_single_use_confirmation_and_atomic_consumption (test_flight_release.FlightReleaseTests.test_single_use_confirmation_and_atomic_consumption) ... ok
+test_stale_battery_and_rc_unknown_and_site_errors_latch_abort (test_flight_release.FlightReleaseTests.test_stale_battery_and_rc_unknown_and_site_errors_latch_abort) ... ok
+test_tampered_bundle_or_wrong_confirmation_refuses_before_transport (test_flight_release.FlightReleaseTests.test_tampered_bundle_or_wrong_confirmation_refuses_before_transport) ... ok
+test_template_has_all_categories_and_cannot_prepare (test_flight_release.FlightReleaseTests.test_template_has_all_categories_and_cannot_prepare) ... ok
+test_constant_bias_is_learned_from_prior_velocities_and_removed (test_inertial_outage_replay.InertialReplayTests.test_constant_bias_is_learned_from_prior_velocities_and_removed) ... ok
+test_irregular_clock_integrates_constant_and_linear_acceleration (test_inertial_outage_replay.InertialReplayTests.test_irregular_clock_integrates_constant_and_linear_acceleration) ... ok
+test_missing_nonfinite_repeated_regressed_and_gapped_samples_reject (test_inertial_outage_replay.InertialReplayTests.test_missing_nonfinite_repeated_regressed_and_gapped_samples_reject) ... ok
+test_fixed_heading_and_closed_route (test_lifecycle.LifecycleTests.test_fixed_heading_and_closed_route) ... ok
+test_independent_verifier_refuses_bad_time_and_overspeed (test_lifecycle.LifecycleTests.test_independent_verifier_refuses_bad_time_and_overspeed) ... ok
+test_origin_lifecycle_strict_clock_and_controller_artifact_identity (test_lifecycle.LifecycleTests.test_origin_lifecycle_strict_clock_and_controller_artifact_identity) ... ok
+test_phase_bounds_cover_all_emitted_derivatives_and_stationary_joins (test_lifecycle.LifecycleTests.test_phase_bounds_cover_all_emitted_derivatives_and_stationary_joins) ... ok
+test_sharp_turn_keeps_two_degree_heading_certificate (test_lifecycle.LifecycleTests.test_sharp_turn_keeps_two_degree_heading_certificate) ... ok
+test_bootstrap_thrust_rejects_every_nonfinite_input (test_magless_bootstrap.MaglessBootstrapTests.test_bootstrap_thrust_rejects_every_nonfinite_input) ... ok
+test_bootstrap_thrust_rejects_impossible_px4_ceiling (test_magless_bootstrap.MaglessBootstrapTests.test_bootstrap_thrust_rejects_impossible_px4_ceiling) ... ok
+test_bootstrap_thrust_uses_px4_ceiling_and_configured_floor (test_magless_bootstrap.MaglessBootstrapTests.test_bootstrap_thrust_uses_px4_ceiling_and_configured_floor) ... ok
+test_quaternion_is_normalized_and_preserves_level_yaw (test_magless_bootstrap.MaglessBootstrapTests.test_quaternion_is_normalized_and_preserves_level_yaw) ... ok
+test_raw_navigation_accepts_complete_finite_snapshot (test_magless_bootstrap.MaglessBootstrapTests.test_raw_navigation_accepts_complete_finite_snapshot) ... ok
+test_raw_navigation_rejects_nonfinite_and_invalid_inputs (test_magless_bootstrap.MaglessBootstrapTests.test_raw_navigation_rejects_nonfinite_and_invalid_inputs) ... ok
+test_raw_navigation_rejects_nonfinite_bootstrap_state (test_magless_bootstrap.MaglessBootstrapTests.test_raw_navigation_rejects_nonfinite_bootstrap_state) ... ok
+test_saved_launch_fix_maps_back_into_local_ned (test_magless_bootstrap.MaglessBootstrapTests.test_saved_launch_fix_maps_back_into_local_ned) ... ok
+test_constructor_rejection_finalizes_manifest_without_connecting (test_mission_plan_contract.MissionPlanContractTests.test_constructor_rejection_finalizes_manifest_without_connecting) ... ok
+test_drawn_path_csv_requires_planner_summary (test_mission_plan_contract.MissionPlanContractTests.test_drawn_path_csv_requires_planner_summary) ... ok
+test_explicit_legacy_trajectory_requires_hash_summary (test_mission_plan_contract.MissionPlanContractTests.test_explicit_legacy_trajectory_requires_hash_summary) ... ok
+test_geometry_is_rejected_during_construction_before_transport (test_mission_plan_contract.MissionPlanContractTests.test_geometry_is_rejected_during_construction_before_transport) ... ok
+test_impossible_uncertainty_and_nonfinite_accuracy_fail (test_mission_plan_contract.MissionPlanContractTests.test_impossible_uncertainty_and_nonfinite_accuracy_fail) ... ok
+test_invalid_planner_summary_fails_closed (test_mission_plan_contract.MissionPlanContractTests.test_invalid_planner_summary_fails_closed) ... ok
+test_navigation_uncertainty_budget_applies_to_entire_trajectory (test_mission_plan_contract.MissionPlanContractTests.test_navigation_uncertainty_budget_applies_to_entire_trajectory) ... ok
+test_planner_summary_binds_trajectory_and_live_cruise_height (test_mission_plan_contract.MissionPlanContractTests.test_planner_summary_binds_trajectory_and_live_cruise_height) ... ok
+test_prearm_plan_failure_never_requests_arm (test_mission_plan_contract.MissionPlanContractTests.test_prearm_plan_failure_never_requests_arm) ... ok
+test_yaw_derivative_limits_are_checked_before_transport (test_mission_plan_contract.MissionPlanContractTests.test_yaw_derivative_limits_are_checked_before_transport) ... ok
+test_backward_query_after_completion_uses_correct_segment (test_mission_plan_contract.TrajectoryContractTests.test_backward_query_after_completion_uses_correct_segment) ... ok
+test_controller_can_select_an_explicit_prevalidated_trajectory (test_mission_plan_contract.TrajectoryContractTests.test_controller_can_select_an_explicit_prevalidated_trajectory) ... ok
+test_invalid_times_are_rejected (test_mission_plan_contract.TrajectoryContractTests.test_invalid_times_are_rejected) ... ok
+test_large_finite_headings_do_not_hang_or_overflow_interpolation (test_mission_plan_contract.TrajectoryContractTests.test_large_finite_headings_do_not_hang_or_overflow_interpolation) ... ok
+test_missing_or_empty_required_coordinates_cannot_silently_become_zero (test_mission_plan_contract.TrajectoryContractTests.test_missing_or_empty_required_coordinates_cannot_silently_become_zero) ... ok
+test_runner_trajectory_argument_is_explicit (test_mission_plan_contract.TrajectoryContractTests.test_runner_trajectory_argument_is_explicit) ... ok
+test_all_navigation_states_obey_their_vector_slew_limit (test_navigation_hold_braking.NavigationHoldBrakingTests.test_all_navigation_states_obey_their_vector_slew_limit) ... ok
+test_cruise_retimes_clock_and_feedforward_together (test_navigation_hold_braking.NavigationHoldBrakingTests.test_cruise_retimes_clock_and_feedforward_together) ... ok
+test_hold_braking_configuration_rejects_unsafe_values (test_navigation_hold_braking.NavigationHoldBrakingTests.test_hold_braking_configuration_rejects_unsafe_values) ... ok
+test_measured_velocity_damping_opposes_motion_and_is_logged (test_navigation_hold_braking.NavigationHoldBrakingTests.test_measured_velocity_damping_opposes_motion_and_is_logged) ... ok
+test_moving_hold_command_brakes_without_a_jump (test_navigation_hold_braking.NavigationHoldBrakingTests.test_moving_hold_command_brakes_without_a_jump) ... ok
+test_native_landing_reference_is_frozen_from_hold_or_home (test_navigation_hold_braking.NavigationHoldBrakingTests.test_native_landing_reference_is_frozen_from_hold_or_home) ... ok
+test_recovery_immediately_returns_to_normal_slew (test_navigation_hold_braking.NavigationHoldBrakingTests.test_recovery_immediately_returns_to_normal_slew) ... ok
+test_budgets_refuse_instead_of_skipping_order_acceptance (test_ordered_fidelity.OrderedFidelityTests.test_budgets_refuse_instead_of_skipping_order_acceptance) ... ok
+test_crossed_loops_cannot_exchange_order (test_ordered_fidelity.OrderedFidelityTests.test_crossed_loops_cannot_exchange_order) ... ok
+test_geometric_checker_does_not_call_planner_evaluator (test_ordered_fidelity.OrderedFidelityTests.test_geometric_checker_does_not_call_planner_evaluator) ... ok
+test_same_spatial_set_in_wrong_visit_order_is_refused (test_ordered_fidelity.OrderedFidelityTests.test_same_spatial_set_in_wrong_visit_order_is_refused) ... ok
+test_separate_basis_matches_clamped_and_periodic_geometry (test_ordered_fidelity.OrderedFidelityTests.test_separate_basis_matches_clamped_and_periodic_geometry) ... ok
+test_serialized_reference_detects_changed_field (test_ordered_fidelity.OrderedFidelityTests.test_serialized_reference_detects_changed_field) ... ok
+test_vectorized_coupling_matches_scalar_dynamic_program (test_ordered_fidelity.OrderedFidelityTests.test_vectorized_coupling_matches_scalar_dynamic_program) ... ok
+test_artifact_hash_detects_tampering_and_cannot_approve_flight (test_planner_contracts.PlannerContractTests.test_artifact_hash_detects_tampering_and_cannot_approve_flight) ... ok
+test_canonical_json_rejects_nonfinite_values (test_planner_contracts.PlannerContractTests.test_canonical_json_rejects_nonfinite_values) ... ok
+test_checked_in_json_schemas_match_generator (test_planner_contracts.PlannerContractTests.test_checked_in_json_schemas_match_generator) ... ok
+test_cross_contract_references_and_envelopes_fail_closed (test_planner_contracts.PlannerContractTests.test_cross_contract_references_and_envelopes_fail_closed) ... ok
+test_existing_five_stop_baseline_is_pinned (test_planner_contracts.PlannerContractTests.test_existing_five_stop_baseline_is_pinned) ... ok
+test_loader_rejects_nonstandard_constants_and_malformed_json (test_planner_contracts.PlannerContractTests.test_loader_rejects_nonstandard_constants_and_malformed_json) ... ok
+test_map_identity_and_verification_must_agree (test_planner_contracts.PlannerContractTests.test_map_identity_and_verification_must_agree) ... ok
+test_report_acceptance_is_derived_from_hard_checks (test_planner_contracts.PlannerContractTests.test_report_acceptance_is_derived_from_hard_checks) ... ok
+test_time_speed_and_periodic_semantics_are_explicit (test_planner_contracts.PlannerContractTests.test_time_speed_and_periodic_semantics_are_explicit) ... ok
+test_unknown_missing_nonfinite_and_wrong_types_fail_closed (test_planner_contracts.PlannerContractTests.test_unknown_missing_nonfinite_and_wrong_types_fail_closed) ... ok
+test_valid_contract_set_is_immutable_and_canonical (test_planner_contracts.PlannerContractTests.test_valid_contract_set_is_immutable_and_canonical) ... ok
+test_both_inputs_use_the_compiler_and_export_actual_certificate (test_planner_editor.EditorTests.test_both_inputs_use_the_compiler_and_export_actual_certificate) ... ok
+test_editor_does_not_accept_arbitrary_paths_or_authority_requests (test_planner_editor.EditorTests.test_editor_does_not_accept_arbitrary_paths_or_authority_requests) ... ok
+test_size_limit_precedes_compiler (test_planner_editor.EditorTests.test_size_limit_precedes_compiler) ... ok
+test_aircraft_api_lists_missing_inputs_and_refuses_hidden_authority (test_planner_editor.HTTPBoundaryTests.test_aircraft_api_lists_missing_inputs_and_refuses_hidden_authority) ... 127.0.0.1 - - [25/Oct/2026 00:37:10] "GET /api/aircraft/catalog HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:10] "POST /api/aircraft/assess HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:10] "POST /api/aircraft/assess HTTP/1.1" 400 -
+ok
+test_cancellation_has_no_hardware_route_and_requires_owned_backend (test_planner_editor.HTTPBoundaryTests.test_cancellation_has_no_hardware_route_and_requires_owned_backend) ... 127.0.0.1 - - [25/Oct/2026 00:37:10] "POST /api/rehearsal/cancel HTTP/1.1" 409 -
+127.0.0.1 - - [25/Oct/2026 00:37:10] "GET /api/rehearsal/cancel HTTP/1.1" 404 -
+127.0.0.1 - - [25/Oct/2026 00:37:10] "POST /api/rehearsal/cancel HTTP/1.1" 403 -
+ok
+test_cross_origin_and_rebinding_requests_cannot_run_worker (test_planner_editor.HTTPBoundaryTests.test_cross_origin_and_rebinding_requests_cannot_run_worker) ... 127.0.0.1 - - [25/Oct/2026 00:37:11] "POST /api/preview HTTP/1.1" 403 -
+127.0.0.1 - - [25/Oct/2026 00:37:11] "POST /api/preview HTTP/1.1" 403 -
+ok
+test_drawing_script_and_limits_have_explicit_local_routes (test_planner_editor.HTTPBoundaryTests.test_drawing_script_and_limits_have_explicit_local_routes) ... 127.0.0.1 - - [25/Oct/2026 00:37:11] "GET /draft.js HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:11] "GET /api/editor-settings HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:11] "GET /draft.js HTTP/1.1" 403 -
+ok
+test_invalid_content_and_oversize_requests_fail_before_worker (test_planner_editor.HTTPBoundaryTests.test_invalid_content_and_oversize_requests_fail_before_worker) ... 127.0.0.1 - - [25/Oct/2026 00:37:11] "POST /api/preview HTTP/1.1" 400 -
+127.0.0.1 - - [25/Oct/2026 00:37:11] "POST /api/preview HTTP/1.1" 400 -
+ok
+test_page_available_but_files_and_launch_endpoints_absent (test_planner_editor.HTTPBoundaryTests.test_page_available_but_files_and_launch_endpoints_absent) ... 127.0.0.1 - - [25/Oct/2026 00:37:12] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:12] "GET /../config/planner/x500_sitl_vehicle_model.json HTTP/1.1" 404 -
+127.0.0.1 - - [25/Oct/2026 00:37:12] "GET /api/arm HTTP/1.1" 404 -
+127.0.0.1 - - [25/Oct/2026 00:37:12] "GET /api/launch HTTP/1.1" 404 -
+ok
+test_real_http_worker_returns_verified_plan_and_refuses_bad_input (test_planner_editor.HTTPBoundaryTests.test_real_http_worker_returns_verified_plan_and_refuses_bad_input) ... 127.0.0.1 - - [25/Oct/2026 00:37:17] "POST /api/preview HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:17] "POST /api/preview HTTP/1.1" 422 -
+ok
+test_simulation_is_unavailable_until_backend_is_explicitly_configured (test_planner_editor.HTTPBoundaryTests.test_simulation_is_unavailable_until_backend_is_explicitly_configured) ... 127.0.0.1 - - [25/Oct/2026 00:37:17] "GET /api/capabilities HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:37:17] "POST /api/rehearsal HTTP/1.1" 409 -
+127.0.0.1 - - [25/Oct/2026 00:37:17] "POST /api/launch HTTP/1.1" 404 -
+ok
+test_acknowledgement_rejects_a_stale_or_mismatched_review (test_planner_finish.PlannerFinishTests.test_acknowledgement_rejects_a_stale_or_mismatched_review) ... ok
+test_circle_entry_meets_the_seam_in_motion_and_stops (test_planner_finish.PlannerFinishTests.test_circle_entry_meets_the_seam_in_motion_and_stops) ... ok
+test_circle_exit_flies_the_seam_and_stops_at_the_exit (test_planner_finish.PlannerFinishTests.test_circle_exit_flies_the_seam_and_stops_at_the_exit) ... ok
+test_circle_exit_rejects_a_stop_on_the_seam_and_other_patterns (test_planner_finish.PlannerFinishTests.test_circle_exit_rejects_a_stop_on_the_seam_and_other_patterns) ... ok
+test_corridor_avoids_a_wall_and_a_crossing_path_does_not (test_planner_finish.PlannerFinishTests.test_corridor_avoids_a_wall_and_a_crossing_path_does_not) ... ok
+test_exact_fly_through_lies_on_the_curve (test_planner_finish.PlannerFinishTests.test_exact_fly_through_lies_on_the_curve) ... ok
+test_explicit_heading_is_refused_when_a_stop_splits_the_path (test_planner_finish.PlannerFinishTests.test_explicit_heading_is_refused_when_a_stop_splits_the_path) ... ok
+test_explicit_heading_tracks_the_request_and_a_fast_turn_takes_longer (test_planner_finish.PlannerFinishTests.test_explicit_heading_tracks_the_request_and_a_fast_turn_takes_longer) ... ok
+test_look_at_heading_is_certified_and_verified (test_planner_finish.PlannerFinishTests.test_look_at_heading_is_certified_and_verified) ... ok
+test_paired_rotors_lose_yaw_torque_as_thrust_approaches_the_ceiling (test_planner_finish.PlannerFinishTests.test_paired_rotors_lose_yaw_torque_as_thrust_approaches_the_ceiling) ... ok
+test_track_comparison_does_not_claim_a_simulator_campaign (test_planner_finish.PlannerFinishTests.test_track_comparison_does_not_claim_a_simulator_campaign) ... ok
+test_analytic_derivatives_match_finite_differences (test_planner_geometry.PlannerGeometryTests.test_analytic_derivatives_match_finite_differences) ... ok
+test_corner_is_accepted_or_rejected_by_declared_fidelity (test_planner_geometry.PlannerGeometryTests.test_corner_is_accepted_or_rejected_by_declared_fidelity) ... ok
+test_default_targets_closer_fidelity_than_legacy_utilization (test_planner_geometry.PlannerGeometryTests.test_default_targets_closer_fidelity_than_legacy_utilization) ... ok
+test_deviation_budget_is_spent_to_widen_corners (test_planner_geometry.PlannerGeometryTests.test_deviation_budget_is_spent_to_widen_corners) ... ok
+test_deviation_utilization_is_validated (test_planner_geometry.PlannerGeometryTests.test_deviation_utilization_is_validated) ... ok
+test_geometry_is_byte_deterministic (test_planner_geometry.PlannerGeometryTests.test_geometry_is_byte_deterministic) ... ok
+test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents (test_planner_geometry.PlannerGeometryTests.test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents) ... ok
+test_invalid_curve_queries_fail_closed (test_planner_geometry.PlannerGeometryTests.test_invalid_curve_queries_fail_closed) ... ok
+test_periodic_circle_matches_position_and_derivatives_at_seam (test_planner_geometry.PlannerGeometryTests.test_periodic_circle_matches_position_and_derivatives_at_seam) ... ok
+test_scalar_spline_reuses_curve_evaluation_and_bounds (test_planner_geometry.PlannerGeometryTests.test_scalar_spline_reuses_curve_evaluation_and_bounds) ... ok
+test_straight_path_is_endpoint_exact_and_collinear (test_planner_geometry.PlannerGeometryTests.test_straight_path_is_endpoint_exact_and_collinear) ... ok
+test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound (test_planner_geometry.PlannerGeometryTests.test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound) ... ok
+test_unsupported_or_degenerate_inputs_fail_closed (test_planner_geometry.PlannerGeometryTests.test_unsupported_or_degenerate_inputs_fail_closed) ... ok
+test_generated_survey_budget_is_checked_before_expansion (test_planner_input_and_evidence.InterviewBoundaryTests.test_generated_survey_budget_is_checked_before_expansion) ... ok
+test_json_duplicate_keys_and_nonfinite_constants_are_rejected (test_planner_input_and_evidence.InterviewBoundaryTests.test_json_duplicate_keys_and_nonfinite_constants_are_rejected) ... ok
+test_loop_count_and_version_do_not_coerce_types (test_planner_input_and_evidence.InterviewBoundaryTests.test_loop_count_and_version_do_not_coerce_types) ... ok
+test_normalized_interview_is_validated_before_return (test_planner_input_and_evidence.InterviewBoundaryTests.test_normalized_interview_is_validated_before_return) ... ok
+test_unused_or_unknown_pattern_fields_are_rejected (test_planner_input_and_evidence.InterviewBoundaryTests.test_unused_or_unknown_pattern_fields_are_rejected) ... ok
+test_waypoint_flags_must_be_actual_booleans (test_planner_input_and_evidence.InterviewBoundaryTests.test_waypoint_flags_must_be_actual_booleans) ... ok
+test_complete_track_pass_is_scoped_to_sampled_tracking (test_planner_input_and_evidence.TrackEvidenceTests.test_complete_track_pass_is_scoped_to_sampled_tracking) ... ok
+test_endpoint_only_track_cannot_hide_missing_middle (test_planner_input_and_evidence.TrackEvidenceTests.test_endpoint_only_track_cannot_hide_missing_middle) ... ok
+test_endpoint_tolerance_is_explicit_and_bounded (test_planner_input_and_evidence.TrackEvidenceTests.test_endpoint_tolerance_is_explicit_and_bounded) ... ok
+test_invalid_thresholds_cannot_relax_acceptance (test_planner_input_and_evidence.TrackEvidenceTests.test_invalid_thresholds_cannot_relax_acceptance) ... ok
+test_partial_track_cannot_pass_by_having_zero_error (test_planner_input_and_evidence.TrackEvidenceTests.test_partial_track_cannot_pass_by_having_zero_error) ... ok
+test_regressed_duplicate_and_nonfinite_samples_are_rejected (test_planner_input_and_evidence.TrackEvidenceTests.test_regressed_duplicate_and_nonfinite_samples_are_rejected) ... ok
+test_unwrapped_reference_yaw_does_not_erase_a_turn (test_planner_input_and_evidence.TrackEvidenceTests.test_unwrapped_reference_yaw_does_not_erase_a_turn) ... ok
+test_a_tighter_tilt_limit_stretches_the_duration (test_planner_mission.PlannerMissionTests.test_a_tighter_tilt_limit_stretches_the_duration) ... ok
+test_hard_point_is_a_stop_on_the_flown_path (test_planner_mission.PlannerMissionTests.test_hard_point_is_a_stop_on_the_flown_path) ... ok
+test_interview_circle_starts_at_launch_and_closes (test_planner_mission.PlannerMissionTests.test_interview_circle_starts_at_launch_and_closes) ... ok
+test_review_names_the_limit_and_refuses_a_flight_clearance (test_planner_mission.PlannerMissionTests.test_review_names_the_limit_and_refuses_a_flight_clearance) ... ok
+test_tangent_yaw_stays_inside_its_certificate_and_the_yaw_limits (test_planner_mission.PlannerMissionTests.test_tangent_yaw_stays_inside_its_certificate_and_the_yaw_limits) ... ok
+test_tilt_of_an_acceleration_ball_is_the_tangent_angle (test_planner_mission.PlannerMissionTests.test_tilt_of_an_acceleration_ball_is_the_tangent_angle) ... ok
+test_two_laps_return_to_the_seam_with_two_turns_of_heading (test_planner_mission.PlannerMissionTests.test_two_laps_return_to_the_seam_with_two_turns_of_heading) ... ok
+test_complete_truth_and_lifecycle_pass_only_sampled_sitl_scope (test_planner_rehearsal.RehearsalTests.test_complete_truth_and_lifecycle_pass_only_sampled_sitl_scope) ... ok
+test_constructive_runtime_reference_uses_phase_polynomial_not_linear_chords (test_planner_rehearsal.RehearsalTests.test_constructive_runtime_reference_uses_phase_polynomial_not_linear_chords) ... ok
+test_declared_profile_accuracy_and_time_limits_cannot_be_ignored (test_planner_rehearsal.RehearsalTests.test_declared_profile_accuracy_and_time_limits_cannot_be_ignored) ... ok
+test_every_motor_is_checked_for_a_six_rotor_aircraft (test_planner_rehearsal.RehearsalTests.test_every_motor_is_checked_for_a_six_rotor_aircraft) ... ok
+test_partial_route_rewritten_reference_and_unconfirmed_shutdown_fail (test_planner_rehearsal.RehearsalTests.test_partial_route_rewritten_reference_and_unconfirmed_shutdown_fail) ... ok
+test_truth_error_cannot_be_hidden_by_perfect_estimated_reference (test_planner_rehearsal.RehearsalTests.test_truth_error_cannot_be_hidden_by_perfect_estimated_reference) ... ok
+test_candidate_carries_a_valid_time_law_that_sets_the_duration (test_planner_retiming.PlannerRetimingTests.test_candidate_carries_a_valid_time_law_that_sets_the_duration) ... ok
+test_exact_and_maximum_duration_semantics_fail_closed (test_planner_retiming.PlannerRetimingTests.test_exact_and_maximum_duration_semantics_fail_closed) ... ok
+test_invalid_retiming_controls_fail (test_planner_retiming.PlannerRetimingTests.test_invalid_retiming_controls_fail) ... ok
+test_output_is_deterministic_and_digest_sensitive (test_planner_retiming.PlannerRetimingTests.test_output_is_deterministic_and_digest_sensitive) ... ok
+test_periodic_lap_stops_at_the_seam_and_unconstrained_yaw_is_refused (test_planner_retiming.PlannerRetimingTests.test_periodic_lap_stops_at_the_seam_and_unconstrained_yaw_is_refused) ... ok
+test_retimed_path_is_endpoint_inclusive_stationary_and_bounded (test_planner_retiming.PlannerRetimingTests.test_retimed_path_is_endpoint_inclusive_stationary_and_bounded) ... ok
+test_tighter_limits_increase_duration (test_planner_retiming.PlannerRetimingTests.test_tighter_limits_increase_duration) ... ok
+test_armed_airborne_nonzero_or_wrong_component_cannot_pass (test_planner_sitl_campaign.GroundGateTests.test_armed_airborne_nonzero_or_wrong_component_cannot_pass) ... ok
+test_continuous_fresh_ground_and_zero_output_are_required (test_planner_sitl_campaign.GroundGateTests.test_continuous_fresh_ground_and_zero_output_are_required) ... ok
+test_certified_bounds_hold_and_fit_the_limits (test_planner_timing.PlannerTimingTests.test_certified_bounds_hold_and_fit_the_limits) ... ok
+test_invalid_limits_and_grids_are_rejected (test_planner_timing.PlannerTimingTests.test_invalid_limits_and_grids_are_rejected) ... ok
+test_local_timing_beats_a_single_global_time_law (test_planner_timing.PlannerTimingTests.test_local_timing_beats_a_single_global_time_law) ... ok
+test_planning_is_deterministic_and_a_closed_path_stops_at_its_seam (test_planner_timing.PlannerTimingTests.test_planning_is_deterministic_and_a_closed_path_stops_at_its_seam) ... ok
+test_requirements_are_localized_to_each_schedule_span (test_planner_timing.PlannerTimingTests.test_requirements_are_localized_to_each_schedule_span) ... ok
+test_schedule_defects_detect_tampering (test_planner_timing.PlannerTimingTests.test_schedule_defects_detect_tampering) ... ok
+test_schedule_is_monotone_stationary_and_spans_the_path (test_planner_timing.PlannerTimingTests.test_schedule_is_monotone_stationary_and_spans_the_path) ... ok
+test_stretching_the_duration_scales_every_bound_down (test_planner_timing.PlannerTimingTests.test_stretching_the_duration_scales_every_bound_down) ... ok
+test_environment_control_hull_violation_is_rejected (test_planner_verification.PlannerVerificationTests.test_environment_control_hull_violation_is_rejected) ... ok
+test_falsified_duration_and_limit_scale_are_rejected (test_planner_verification.PlannerVerificationTests.test_falsified_duration_and_limit_scale_are_rejected) ... ok
+test_fidelity_is_recomputed_from_mission_limit (test_planner_verification.PlannerVerificationTests.test_fidelity_is_recomputed_from_mission_limit) ... ok
+test_invalid_verifier_policy_fails (test_planner_verification.PlannerVerificationTests.test_invalid_verifier_policy_fails) ... ok
+test_modified_derivative_or_time_law_is_rejected (test_planner_verification.PlannerVerificationTests.test_modified_derivative_or_time_law_is_rejected) ... ok
+test_modified_position_is_rejected (test_planner_verification.PlannerVerificationTests.test_modified_position_is_rejected) ... ok
+test_modified_schedule_is_rejected (test_planner_verification.PlannerVerificationTests.test_modified_schedule_is_rejected) ... ok
+test_report_is_deterministic (test_planner_verification.PlannerVerificationTests.test_report_is_deterministic) ... ok
+test_sparse_endpoint_only_controller_path_is_rejected (test_planner_verification.PlannerVerificationTests.test_sparse_endpoint_only_controller_path_is_rejected) ... ok
+test_valid_candidate_passes_independent_checks (test_planner_verification.PlannerVerificationTests.test_valid_candidate_passes_independent_checks) ... ok
+test_constant_velocity_projects_to_command_instant (test_position_prediction.PositionPredictionTests.test_constant_velocity_projects_to_command_instant) ... ok
+test_prediction_removes_sample_hold_error_for_constant_velocity (test_position_prediction.PositionPredictionTests.test_prediction_removes_sample_hold_error_for_constant_velocity) ... ok
+test_stale_negative_or_invalid_age_never_extrapolated (test_position_prediction.PositionPredictionTests.test_stale_negative_or_invalid_age_never_extrapolated) ... ok
+test_vector_displacement_capped (test_position_prediction.PositionPredictionTests.test_vector_displacement_capped) ... ok
+test_fixed_run_rejects_missing_profile (test_presentation_plots.PresentationPlotTests.test_fixed_run_rejects_missing_profile) ... ok
+test_fixed_run_selects_only_validated_profile (test_presentation_plots.PresentationPlotTests.test_fixed_run_selects_only_validated_profile) ... ok
+test_phase_spans_preserves_phase_order (test_presentation_plots.PresentationPlotTests.test_phase_spans_preserves_phase_order) ... ok
+test_manifest_records_context_and_final_outcome_atomically (test_run_record.RunRecordTests.test_manifest_records_context_and_final_outcome_atomically) ... ok
+test_command_rejection_and_ack_timeout_are_explicit (test_runner_protocol.RunnerProtocolTests.test_command_rejection_and_ack_timeout_are_explicit) ... ok
+test_contact_position_violation_survives_until_safe_motor_shutdown (test_runner_protocol.RunnerProtocolTests.test_contact_position_violation_survives_until_safe_motor_shutdown) ... ok
+test_contact_violation_between_first_and_final_samples_is_retained (test_runner_protocol.RunnerProtocolTests.test_contact_violation_between_first_and_final_samples_is_retained) ... ok
+test_disarm_without_fresh_on_ground_report_is_rejected (test_runner_protocol.RunnerProtocolTests.test_disarm_without_fresh_on_ground_report_is_rejected) ... ok
+test_ensure_mode_accepts_confirmed_offboard (test_runner_protocol.RunnerProtocolTests.test_ensure_mode_accepts_confirmed_offboard) ... ok
+test_ensure_mode_retries_then_times_out (test_runner_protocol.RunnerProtocolTests.test_ensure_mode_retries_then_times_out) ... ok
+test_failsafe_cleanup_rejects_unexpected_takeover_mode (test_runner_protocol.RunnerProtocolTests.test_failsafe_cleanup_rejects_unexpected_takeover_mode) ... ok
+test_failsafe_cleanup_waits_for_land_disarm_and_zero_propulsion (test_runner_protocol.RunnerProtocolTests.test_failsafe_cleanup_waits_for_land_disarm_and_zero_propulsion) ... ok
+test_failure_outcome_distinguishes_prearm_land_and_px4_failsafe (test_runner_protocol.RunnerProtocolTests.test_failure_outcome_distinguishes_prearm_land_and_px4_failsafe) ... ok
+test_invalid_contact_estimate_cannot_establish_position_quality (test_runner_protocol.RunnerProtocolTests.test_invalid_contact_estimate_cannot_establish_position_quality) ... ok
+test_mode_requests_encode_px4_offboard_and_land (test_runner_protocol.RunnerProtocolTests.test_mode_requests_encode_px4_offboard_and_land) ... ok
+test_native_landing_requires_new_on_ground_report_and_disarm (test_runner_protocol.RunnerProtocolTests.test_native_landing_requires_new_on_ground_report_and_disarm) ... ok
+test_native_landing_waits_for_zero_propulsion (test_runner_protocol.RunnerProtocolTests.test_native_landing_waits_for_zero_propulsion) ... ok
+test_parameter_decoder_rejects_unsupported_64_bit_type (test_runner_protocol.RunnerProtocolTests.test_parameter_decoder_rejects_unsupported_64_bit_type) ... ok
+test_parameter_reader_decodes_px4_bytewise_int32 (test_runner_protocol.RunnerProtocolTests.test_parameter_reader_decodes_px4_bytewise_int32) ... ok
+test_parameter_reader_filters_other_vehicle_and_matches_bytes_id (test_runner_protocol.RunnerProtocolTests.test_parameter_reader_filters_other_vehicle_and_matches_bytes_id) ... ok
+test_unsafe_contact_is_reported_only_after_zero_propulsion_confirmation (test_runner_protocol.RunnerProtocolTests.test_unsafe_contact_is_reported_only_after_zero_propulsion_confirmation) ... ok
+test_analytic_peak_matches_dense_independent_sampling (test_safety_supervisor.SafetySupervisorTests.test_analytic_peak_matches_dense_independent_sampling) ... ok
+test_bad_gps_holds_path_then_requires_stable_recovery (test_safety_supervisor.SafetySupervisorTests.test_bad_gps_holds_path_then_requires_stable_recovery) ... ok
+test_cruise_height_budgets_vertical_uncertainty_and_ceiling (test_safety_supervisor.SafetySupervisorTests.test_cruise_height_budgets_vertical_uncertainty_and_ceiling) ... ok
+test_estimator_source_audit_rejects_unverified_or_extra_sources (test_safety_supervisor.SafetySupervisorTests.test_estimator_source_audit_rejects_unverified_or_extra_sources) ... ok
+test_invalid_local_estimate_yields_to_px4 (test_safety_supervisor.SafetySupervisorTests.test_invalid_local_estimate_yields_to_px4) ... ok
+test_slowed_clock_scales_trajectory_feedforward (test_safety_supervisor.SafetySupervisorTests.test_slowed_clock_scales_trajectory_feedforward) ... ok
+test_attitude_missing_brackets_and_long_gaps_remain_uncovered (test_simulation_physics.SimulatorPhysicsTests.test_attitude_missing_brackets_and_long_gaps_remain_uncovered) ... ok
+test_attitude_sign_changes_do_not_invent_motion_or_missing_truth (test_simulation_physics.SimulatorPhysicsTests.test_attitude_sign_changes_do_not_invent_motion_or_missing_truth) ... ok
+test_measured_quaternion_tilt_ignores_yaw_and_normalizes (test_simulation_physics.SimulatorPhysicsTests.test_measured_quaternion_tilt_ignores_yaw_and_normalizes) ... ok
+test_only_trajectory_truth_is_scored_not_bootstrap_and_landing (test_simulation_physics.SimulatorPhysicsTests.test_only_trajectory_truth_is_scored_not_bootstrap_and_landing) ... ok
+test_shape_and_configuration_refused (test_simulation_physics.SimulatorPhysicsTests.test_shape_and_configuration_refused) ... ok
+test_speed_tilt_or_missing_simulation_truth_refuses (test_simulation_physics.SimulatorPhysicsTests.test_speed_tilt_or_missing_simulation_truth_refuses) ... ok
+test_truth_inside_envelope_passes_and_reports_physical_acceleration (test_simulation_physics.SimulatorPhysicsTests.test_truth_inside_envelope_passes_and_reports_physical_acceleration) ... ok
+test_control_stall_is_once_only_and_does_not_pause_other_phases (test_sitl_control_stall.SoftwareStallTests.test_control_stall_is_once_only_and_does_not_pause_other_phases) ... ok
+test_invalid_stall_settings_are_rejected (test_sitl_control_stall.SoftwareStallTests.test_invalid_stall_settings_are_rejected) ... ok
+test_invalid_storage_stall_settings_are_rejected (test_sitl_control_stall.SoftwareStallTests.test_invalid_storage_stall_settings_are_rejected) ... ok
+test_nominal_audit_cannot_pass_an_incomplete_but_safely_landed_mission (test_sitl_control_stall.SoftwareStallTests.test_nominal_audit_cannot_pass_an_incomplete_but_safely_landed_mission) ... ok
+test_stall_abort_cannot_pass_without_exercised_fault_and_shutdown (test_sitl_control_stall.SoftwareStallTests.test_stall_abort_cannot_pass_without_exercised_fault_and_shutdown) ... ok
+test_stall_abort_requires_safe_touchdown_and_no_later_sends (test_sitl_control_stall.SoftwareStallTests.test_stall_abort_requires_safe_touchdown_and_no_later_sends) ... ok
+test_storage_stall_audit_requires_exercised_delay_and_live_control (test_sitl_control_stall.SoftwareStallTests.test_storage_stall_audit_requires_exercised_delay_and_live_control) ... ok
+test_storage_stall_blocks_only_evidence_stream_once (test_sitl_control_stall.SoftwareStallTests.test_storage_stall_blocks_only_evidence_stream_once) ... ok
+test_airborne_gate_rejects_nonfinite_position (test_sitl_fault_injector.SitlFaultInjectorTests.test_airborne_gate_rejects_nonfinite_position) ... ok
+test_airborne_gate_requires_arm_and_real_climb (test_sitl_fault_injector.SitlFaultInjectorTests.test_airborne_gate_requires_arm_and_real_climb) ... ok
+test_connection_must_be_local_udp_input (test_sitl_fault_injector.SitlFaultInjectorTests.test_connection_must_be_local_udp_input) ... ok
+test_fault_delay_ignores_foreign_heartbeats (test_sitl_fault_injector.SitlFaultInjectorTests.test_fault_delay_ignores_foreign_heartbeats) ... ok
+test_int32_parameter_round_trip_matches_px4_bytewise_encoding (test_sitl_fault_injector.SitlFaultInjectorTests.test_int32_parameter_round_trip_matches_px4_bytewise_encoding) ... ok
+test_scheduled_fault_delay_requires_fresh_armed_heartbeat (test_sitl_fault_injector.SitlFaultInjectorTests.test_scheduled_fault_delay_requires_fresh_armed_heartbeat) ... ok
+test_each_hold_episode_requires_covered_bounded_physical_motion (test_sitl_ground_truth.GroundTruthTests.test_each_hold_episode_requires_covered_bounded_physical_motion) ... ok
+test_identical_source_duplicates_collapse_but_conflicting_values_reject (test_sitl_ground_truth.GroundTruthTests.test_identical_source_duplicates_collapse_but_conflicting_values_reject) ... ok
+test_independent_position_fails_even_when_estimator_reports_zero_error (test_sitl_ground_truth.GroundTruthTests.test_independent_position_fails_even_when_estimator_reports_zero_error) ... ok
+test_invalid_truth_clocks_reject_alignment (test_sitl_ground_truth.GroundTruthTests.test_invalid_truth_clocks_reject_alignment) ... ok
+test_known_north_east_up_displacements (test_sitl_ground_truth.GroundTruthTests.test_known_north_east_up_displacements) ... ok
+test_local_origin_reset_is_held_until_reported_not_interpolated (test_sitl_ground_truth.GroundTruthTests.test_local_origin_reset_is_held_until_reported_not_interpolated) ... ok
+test_long_truth_gaps_are_not_bridged_but_exact_samples_are_usable (test_sitl_ground_truth.GroundTruthTests.test_long_truth_gaps_are_not_bridged_but_exact_samples_are_usable) ... ok
+test_missing_truth_contact_and_changed_landing_reference_cannot_pass (test_sitl_ground_truth.GroundTruthTests.test_missing_truth_contact_and_changed_landing_reference_cannot_pass) ... ok
+test_uncovered_truth_is_not_extrapolated (test_sitl_ground_truth.GroundTruthTests.test_uncovered_truth_is_not_extrapolated) ... ok
+test_undefined_preflight_origin_is_outside_flight_but_inflight_nan_refuses (test_sitl_ground_truth.GroundTruthTests.test_undefined_preflight_origin_is_outside_flight_but_inflight_nan_refuses) ... ok
+test_align_trigger_uses_elapsed_phase_time (test_sitl_monitor.SitlMonitorTests.test_align_trigger_uses_elapsed_phase_time) ... ok
+test_deadline_stops_injections_but_waits_for_cleanup (test_sitl_monitor.SitlMonitorTests.test_deadline_stops_injections_but_waits_for_cleanup) ... SITL scenario failed; waiting for mission cleanup: [{'type': 'TimeoutError', 'message': 'Test deadline exceeded; waiting for runner cleanup'}]
+ok
+test_drawn_artifact_requires_its_acknowledgement_before_execution (test_sitl_monitor.SitlMonitorTests.test_drawn_artifact_requires_its_acknowledgement_before_execution) ... ok
+test_failed_audit_or_injection_stops_next_trial (test_sitl_monitor.SitlMonitorTests.test_failed_audit_or_injection_stops_next_trial) ... ok
+test_injection_failure_waits_until_runner_cleanup_finishes (test_sitl_monitor.SitlMonitorTests.test_injection_failure_waits_until_runner_cleanup_finishes) ... SITL scenario failed; waiting for mission cleanup: [{'type': 'TimeoutError', 'message': 'parameter reply missing'}]
+ok
+test_quality_rejection_requires_native_shutdown_evidence (test_sitl_monitor.SitlMonitorTests.test_quality_rejection_requires_native_shutdown_evidence) ... ok
+test_recording_failure_also_retains_the_parent (test_sitl_monitor.SitlMonitorTests.test_recording_failure_also_retains_the_parent) ... SITL scenario failed; waiting for mission cleanup: [{'type': 'RuntimeError', 'message': 'injection failed'}, {'type': 'OSError', 'message': 'Error recording failed: disk full'}]
+ok
+test_waypoint_case_artifacts_are_frozen_inside_evidence (test_sitl_monitor.SitlMonitorTests.test_waypoint_case_artifacts_are_frozen_inside_evidence) ... ok
+test_lost_request_is_retried_without_extending_total_deadline (test_sitl_parameter_reads.ParameterReadTests.test_lost_request_is_retried_without_extending_total_deadline) ... ok
+test_unresponsive_transport_stops_at_original_deadline (test_sitl_parameter_reads.ParameterReadTests.test_unresponsive_transport_stops_at_original_deadline) ... ok
+test_wrong_component_reply_cannot_satisfy_parameter_read (test_sitl_parameter_reads.ParameterReadTests.test_wrong_component_reply_cannot_satisfy_parameter_read) ... ok
+test_cli_startup_time_fits_bounded_confirmation (test_sitl_wind.WindTests.test_cli_startup_time_fits_bounded_confirmation) ... ok
+test_lost_publication_is_retried_and_observed (test_sitl_wind.WindTests.test_lost_publication_is_retried_and_observed) ... ok
+test_missing_service_stops_at_deadline (test_sitl_wind.WindTests.test_missing_service_stops_at_deadline) ... ok
+test_zero_requires_actual_wind_response (test_sitl_wind.WindTests.test_zero_requires_actual_wind_response) ... ok
+test_actual_batch_staging_retains_all_sidecars_needed_before_transport (test_stop_turn_execution.StopTurnExecutionTests.test_actual_batch_staging_retains_all_sidecars_needed_before_transport) ... ok
+test_default_runner_and_campaign_still_refuse_unqualified_family (test_stop_turn_execution.StopTurnExecutionTests.test_default_runner_and_campaign_still_refuse_unqualified_family) ... ok
+test_experimental_campaign_case_is_audited_and_acknowledged (test_stop_turn_execution.StopTurnExecutionTests.test_experimental_campaign_case_is_audited_and_acknowledged) ... ok
+test_full_mission_cannot_be_mistaken_for_route_only (test_stop_turn_execution.StopTurnExecutionTests.test_full_mission_cannot_be_mistaken_for_route_only) ... ok
+test_native_interpolation_reconstructs_audited_polynomials_between_csv_rows (test_stop_turn_execution.StopTurnExecutionTests.test_native_interpolation_reconstructs_audited_polynomials_between_csv_rows) ... ok
+test_real_five_stop_route_independently_audited_and_staged_without_recompilation (test_stop_turn_execution.StopTurnExecutionTests.test_real_five_stop_route_independently_audited_and_staged_without_recompilation) ... ok
+test_rehashed_tampered_derivative_still_fails_independent_reconstruction (test_stop_turn_execution.StopTurnExecutionTests.test_rehashed_tampered_derivative_still_fails_independent_reconstruction) ... ok
+test_tampered_models_phases_and_intent_fail_binding (test_stop_turn_execution.StopTurnExecutionTests.test_tampered_models_phases_and_intent_fail_binding) ... ok
+test_cancelled_only_after_complete_ground_shutdown (test_studio_cancellation.StudioCancellationTests.test_cancelled_only_after_complete_ground_shutdown) ... ok
+test_only_owned_sitl_guard_accepts_marker_and_never_hardware (test_studio_cancellation.StudioCancellationTests.test_only_owned_sitl_guard_accepts_marker_and_never_hardware) ... ok
+test_real_browser_draft_model (test_studio_drawing.DrawingLogicTests.test_real_browser_draft_model) ... ok
+test_worker_preserves_structured_duration_refusal (test_studio_drawing.DrawingLogicTests.test_worker_preserves_structured_duration_refusal) ... ok
+test_cancellation_is_exact_artifact_bound_and_never_kills_worker (test_studio_jobs.StudioJobTests.test_cancellation_is_exact_artifact_bound_and_never_kills_worker) ... ok
+test_confirmation_binds_real_compiler_artifacts_without_recompiling (test_studio_jobs.StudioJobTests.test_confirmation_binds_real_compiler_artifacts_without_recompiling) ... ok
+test_exited_worker_never_becomes_a_success (test_studio_jobs.StudioJobTests.test_exited_worker_never_becomes_a_success) ... ok
+test_live_phase_uses_a_complete_telemetry_row_only (test_studio_jobs.StudioJobTests.test_live_phase_uses_a_complete_telemetry_row_only) ... ok
+test_modified_retained_csv_and_report_refuse_execution (test_studio_jobs.StudioJobTests.test_modified_retained_csv_and_report_refuse_execution) ... ok
+test_no_cancel_before_start_or_after_process_exit (test_studio_jobs.StudioJobTests.test_no_cancel_before_start_or_after_process_exit) ... ok
+test_paths_commands_missing_confirmation_and_mismatched_hash_cannot_start (test_studio_jobs.StudioJobTests.test_paths_commands_missing_confirmation_and_mismatched_hash_cannot_start) ... ok
+test_simultaneous_confirmations_can_start_only_one_worker (test_studio_jobs.StudioJobTests.test_simultaneous_confirmations_can_start_only_one_worker) ... ok
+test_unregistered_aircraft_cannot_silently_use_the_x500_simulator (test_studio_jobs.StudioJobTests.test_unregistered_aircraft_cannot_silently_use_the_x500_simulator) ... ok
+test_status_and_cancel_remain_available_while_one_plan_compiles (test_studio_responsiveness.StudioResponsivenessTests.test_status_and_cancel_remain_available_while_one_plan_compiles) ... 127.0.0.1 - - [25/Oct/2026 00:40:53] "GET /api/rehearsal/active HTTP/1.1" 200 -
+127.0.0.1 - - [25/Oct/2026 00:40:53] "POST /api/rehearsal/cancel HTTP/1.1" 202 -
+127.0.0.1 - - [25/Oct/2026 00:40:53] "POST /api/preview HTTP/1.1" 409 -
+127.0.0.1 - - [25/Oct/2026 00:40:53] "POST /api/preview HTTP/1.1" 422 -
+127.0.0.1 - - [25/Oct/2026 00:40:53] "POST /api/preview HTTP/1.1" 422 -
+ok
+test_sequence_filters_foreign_data_and_latches_time_regression (test_telemetry_replay.TelemetryReplayTests.test_sequence_filters_foreign_data_and_latches_time_regression) ... ok
+test_combined_roll_and_pitch_exceed_contact_tilt_limit (test_touchdown_quality.TouchdownQualityTests.test_combined_roll_and_pitch_exceed_contact_tilt_limit) ... ok
+test_horizontal_contact_position_requires_finite_frozen_reference (test_touchdown_quality.TouchdownQualityTests.test_horizontal_contact_position_requires_finite_frozen_reference) ... ok
+test_normal_contact_and_boundary_are_accepted (test_touchdown_quality.TouchdownQualityTests.test_normal_contact_and_boundary_are_accepted) ... ok
+test_speed_tilt_and_unknown_motion_are_rejected (test_touchdown_quality.TouchdownQualityTests.test_speed_tilt_and_unknown_motion_are_rejected) ... ok
+test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority (test_tracking_governor.TrackingGovernorTests.test_integrated_clock_and_feedforward_share_scale_feedback_keeps_authority) ... ok
+test_invalid_inputs_and_invalid_configuration_fail (test_tracking_governor.TrackingGovernorTests.test_invalid_inputs_and_invalid_configuration_fail) ... ok
+test_nominal_tracking_and_disabled_baseline (test_tracking_governor.TrackingGovernorTests.test_nominal_tracking_and_disabled_baseline) ... ok
+test_slowdown_and_recovery_are_bounded_and_asymmetric (test_tracking_governor.TrackingGovernorTests.test_slowdown_and_recovery_are_bounded_and_asymmetric) ... ok
+test_stall_does_not_jump_scale (test_tracking_governor.TrackingGovernorTests.test_stall_does_not_jump_scale) ... ok
+test_arc_derivatives_include_curvature_terms (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_arc_derivatives_include_curvature_terms) ... ok
+test_compatible_straight_segments_keep_boundary_speed (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_compatible_straight_segments_keep_boundary_speed) ... ok
+test_export_contains_all_derivatives (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_export_contains_all_derivatives) ... ok
+test_hover_uses_exact_requested_duration (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_hover_uses_exact_requested_duration) ... ok
+test_profiles_include_exact_endpoint (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_profiles_include_exact_endpoint) ... ok
+test_smooth_turn_preserves_compatible_boundary_speed (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_smooth_turn_preserves_compatible_boundary_speed) ... ok
+test_whole_mission_has_exact_connections_and_is_repeatable (test_trajectory_generator.FixedTrajectoryGeneratorTests.test_whole_mission_has_exact_connections_and_is_repeatable) ... ok
+test_do_not_differentiate_across_phase_boundary_or_gap (test_trajectory_quality.TrajectoryQualityTests.test_do_not_differentiate_across_phase_boundary_or_gap) ... ok
+test_known_error_acceleration_and_jerk (test_trajectory_quality.TrajectoryQualityTests.test_known_error_acceleration_and_jerk) ... ok
+test_reject_duplicate_time (test_trajectory_quality.TrajectoryQualityTests.test_reject_duplicate_time) ... ok
+test_analytic_segment_peaks_stay_within_every_limit (test_waypoint_mission.WaypointMissionTests.test_analytic_segment_peaks_stay_within_every_limit) ... ok
+test_cli_parser_and_entrypoint_write_requested_outputs (test_waypoint_mission.WaypointMissionTests.test_cli_parser_and_entrypoint_write_requested_outputs) ... ok
+test_compilation_is_byte_deterministic_and_loadable (test_waypoint_mission.WaypointMissionTests.test_compilation_is_byte_deterministic_and_loadable) ... ok
+test_contract_structure_and_scalar_bounds_fail_closed (test_waypoint_mission.WaypointMissionTests.test_contract_structure_and_scalar_bounds_fail_closed) ... ok
+test_defensive_sample_audit_rejects_nonfinite_and_excess_motion (test_waypoint_mission.WaypointMissionTests.test_defensive_sample_audit_rejects_nonfinite_and_excess_motion) ... ok
+test_duration_budget_is_enforced_after_retiming (test_waypoint_mission.WaypointMissionTests.test_duration_budget_is_enforced_after_retiming) ... ok
+test_five_named_stops_are_exact_c3_boundaries (test_waypoint_mission.WaypointMissionTests.test_five_named_stops_are_exact_c3_boundaries) ... ok
+test_holds_are_stationary_and_exact_duration (test_waypoint_mission.WaypointMissionTests.test_holds_are_stationary_and_exact_duration) ... ok
+test_loader_rejects_nonstandard_json_constants (test_waypoint_mission.WaypointMissionTests.test_loader_rejects_nonstandard_json_constants) ... ok
+test_loader_reports_missing_and_malformed_files (test_waypoint_mission.WaypointMissionTests.test_loader_reports_missing_and_malformed_files) ... ok
+test_unknown_missing_nonfinite_and_unsafe_inputs_fail_closed (test_waypoint_mission.WaypointMissionTests.test_unknown_missing_nonfinite_and_unsafe_inputs_fail_closed) ... ok
+test_yaw_uses_shortest_wrapped_change (test_waypoint_mission.WaypointMissionTests.test_yaw_uses_shortest_wrapped_change) ... ok
+test_all_stops_and_shutdown_pass_with_bounded_evidence (test_waypoint_mission_audit.WaypointMissionAuditTests.test_all_stops_and_shutdown_pass_with_bounded_evidence) ... ok
+test_invalid_inputs_are_rejected (test_waypoint_mission_audit.WaypointMissionAuditTests.test_invalid_inputs_are_rejected) ... ok
+test_missing_stop_evidence_and_failed_shutdown_fail (test_waypoint_mission_audit.WaypointMissionAuditTests.test_missing_stop_evidence_and_failed_shutdown_fail) ... ok
+test_tracking_or_planned_motion_failure_is_not_hidden (test_waypoint_mission_audit.WaypointMissionAuditTests.test_tracking_or_planned_motion_failure_is_not_hidden) ... ok
+
+----------------------------------------------------------------------
+Ran 426 tests in 330.167s
+
+OK
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+Using averaged home origin: x=1.000 y=2.000 z=0.100 yaw=0.200
+Target: x=1.000 y=2.000 z=-14.900; minimum-jerk takeoff duration=30.3s
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[runner] Connecting to PX4...
+[runner] Pre-streaming level attitude setpoints for 2.0s...
+[runner] Requesting attitude OFFBOARD...
+[runner] Attitude OFFBOARD confirmed
+[runner] Requesting arm...
+[runner] Failure cleanup: stopping Offboard commands and yielding to PX4 failsafe (phase=<Mock name='mock.phase_snapshot()' id='139738321565168'>, main_mode=None, sub_mode=None)
+[runner] Run manifest: <Mock name='mock.path' id='139738321553360'>
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[runner] Connecting to PX4...
+[runner] Run manifest: <MagicMock name='RunRecord().path' id='139738323221104'>
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+Stopping controller...
+[research] MAVLink message counts: {}
+Controller stopped.
+[runner] Connecting to PX4...
+[runner] Pre-streaming level attitude setpoints for 2.0s...
+[runner] Requesting attitude OFFBOARD...
+[runner] Attitude OFFBOARD confirmed
+[runner] Requesting arm...
+[runner] Armed confirmed
+[runner] Starting position controller...
+[runner] Stable over home; handing descent to PX4 LAND...
+[runner] PX4 LAND confirmed; waiting for touchdown + auto-disarm...
+[runner] PX4 ON_GROUND and automatic disarm confirmed
+[runner] Final state main_mode=4 sub_mode=6 armed=False landed_state=1 phase=<Mock name='mock.phase_snapshot()' id='139738321408016'>
+[runner] ABORTED_TO_LAND
+[runner] Run manifest: <Mock name='mock.path' id='139738321407680'>
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+Starting fixed research controller loop
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Navigation state HEALTHY->HOLD
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Phase transition TAKEOFF->TRAJECTORY
+[research] Phase transition TRAJECTORY->RETURN_HOME
+[research] Phase transition RETURN_HOME->ALIGN
+[research] Phase transition ALIGN->HANDOFF
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Navigation state HEALTHY->DEGRADED
+[research] Navigation state DEGRADED->HOLD
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Safe return requested: test timeout
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 2 points inside flight envelope
+[research] Mission plan validated: 2 points inside flight envelope
+[research] Uncertainty-aware cruise height: 18.00m (VAcc=1.00m, uncertainty margin=2.00m)
+[research] Mission plan validated: 2 points inside flight envelope
+[runner] Connecting to PX4...
+[runner] Run manifest: <MagicMock name='RunRecord().path' id='139738323439200'>
+[research] Mission plan validated: 2 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Navigation state HEALTHY->HOLD
+[research] Navigation state HOLD->HEALTHY
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Uncertainty-aware cruise height: 20.00m (VAcc=2.00m, uncertainty margin=4.00m)
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Navigation state HEALTHY->LOST
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+[research] Mission plan validated: 1803 points inside flight envelope
+VALIDATION_PASSED

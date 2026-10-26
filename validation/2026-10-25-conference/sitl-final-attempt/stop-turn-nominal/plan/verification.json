@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "accepted": true,
+  "release_class": "SITL_ONLY",
+  "method": "stop_turn_septic_bernstein",
+  "checks": [
+    {
+      "requirement_id": "INT-007",
+      "status": "PASS",
+      "units": "m",
+      "margin": 0.5,
+      "detail": "Exact ordered segment geometry; polynomial progress is monotone."
+    },
+    {
+      "requirement_id": "ORDER",
+      "status": "PASS",
+      "detail": "Vertices and laps visited in order; stationary turns add no geometric deviation."
+    },
+    {
+      "requirement_id": "DYNAMICS",
+      "status": "PASS",
+      "detail": "Every polynomial has continuous Bernstein limits and rotor-authority checks."
+    },
+    {
+      "requirement_id": "JOINS",
+      "status": "PASS",
+      "detail": "Position/yaw continuous; velocity, acceleration and jerk zero at every join."
+    },
+    {
+      "requirement_id": "SERIALIZATION",
+      "status": "PASS",
+      "detail": "All serialized samples and fields round-trip exactly."
+    }
+  ],
+  "continuous_phase_checks": {
+    "speed": true,
+    "acceleration": true,
+    "jerk": true,
+    "yaw_rate": true,
+    "yaw_acceleration": true,
+    "yaw_jerk": true,
+    "tilt": true,
+    "thrust": true,
+    "body_rate": true,
+    "rotor_authority": true,
+    "ground_and_envelope": true
+  },
+  "phases": [
+    {
+      "name": "LEG",
+      "start": [
+        0.0,
+        0.0,
+        -20.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        8.0,
+        -20.0,
+        0.0
+      ],
+      "duration_s": 19.85,
+      "speed_limit_m_s": 0.9,
+      "verification": {
+        "accepted": true,
+        "checks": {
+          "speed": true,
+          "acceleration": true,
+          "jerk": true,
+          "yaw_rate": true,
+          "yaw_acceleration": true,
+          "yaw_jerk": true,
+          "tilt": true,
+          "thrust": true,
+          "body_rate": true,
+          "rotor_authority": true,
+          "ground_and_envelope": true
+        },
+        "speed_bound_m_s": 0.8816120907682619,
+        "acceleration_bound_m_s2": 0.15259182008655395,
+        "jerk_bound_m_s3": 0.05369919275787114,
+        "yaw_rate_bound_rad_s": 0.0,
+        "method": "septic Bernstein interval hulls; monotone straight segment"
+      }
+    },
+    {
+      "name": "LEG",
+      "start": [
+        0.0,
+        8.0,
+        -20.0,
+        0.0
+      ],
+      "end": [
+        0.0,
+        0.0,
+        -20.0,
+        0.0
+      ],
+      "duration_s": 19.85,
+      "speed_limit_m_s": 0.9,
+      "verification": {
+        "accepted": true,
+        "checks": {
+          "speed": true,
+          "acceleration": true,
+          "jerk": true,
+          "yaw_rate": true,
+          "yaw_acceleration": true,
+          "yaw_jerk": true,
+          "tilt": true,
+          "thrust": true,
+          "body_rate": true,
+          "rotor_authority": true,
+          "ground_and_envelope": true
+        },
+        "speed_bound_m_s": 0.8816120907682619,
+        "acceleration_bound_m_s2": 0.15259182008655395,
+        "jerk_bound_m_s3": 0.05369919275787114,
+        "yaw_rate_bound_rad_s": 0.0,
+        "method": "septic Bernstein interval hulls; monotone straight segment"
+      }
+    },
+    {
+      "name": "LEG",
+      "start": [
+        0.0,
+        0.0,
+        -20.0,
+        0.0
+      ],
+      "end": [
+        8.0,
+        0.0,
+        -20.0,
+        0.0
+      ],
+      "duration_s": 19.85,
+      "speed_limit_m_s": 0.9,
+      "verification": {
+        "accepted": true,
+        "checks": {
+          "speed": true,
+          "acceleration": true,
+          "jerk": true,
+          "yaw_rate": true,
+          "yaw_acceleration": true,
+          "yaw_jerk": true,
+          "tilt": true,
+          "thrust": true,
+          "body_rate": true,
+          "rotor_authority": true,
+          "ground_and_envelope": true
+        },
+        "speed_bound_m_s": 0.8816120907682619,
+        "acceleration_bound_m_s2": 0.15259182008655395,
+        "jerk_bound_m_s3": 0.05369919275787114,
+        "yaw_rate_bound_rad_s": 0.0,
+        "method": "septic Bernstein interval hulls; monotone straight segment"
+      }
+    },
+    {
+      "name": "LEG",
+      "start": [
+        8.0,
+        0.0,
+        -20.0,
+        0.0
+      ],
+      "end": [
+        8.0,
+        8.0,
+        -20.0,
+        0.0
+      ],
+      "duration_s": 19.85,
+      "speed_limit_m_s": 0.9,
+      "verification": {
+        "accepted": true,
+        "checks": {
+          "speed": true,
+          "acceleration": true,
+          "jerk": true,
+          "yaw_rate": true,
+          "yaw_acceleration": true,
+          "yaw_jerk": true,
+          "tilt": true,
+          "thrust": true,
+          "body_rate": true,
+          "rotor_authority": true,
+          "ground_and_envelope": true
+        },
+        "speed_bound_m_s": 0.8816120907682619,
+        "acceleration_bound_m_s2": 0.15259182008655395,
+        "jerk_bound_m_s3": 0.05369919275787114,
+        "yaw_rate_bound_rad_s": 0.0,
+        "method": "septic Bernstein interval hulls; monotone straight segment"
+      }
+    },
+    {
+      "name": "LEG",
+      "start": [
+        8.0,
+        8.0,
+        -20.0,
+        0.0
+      ],
+      "end": [
+        3.0,
+        4.0,
+        -20.0,
+        0.0
+      ],
+      "duration_s": 15.9,
+      "speed_limit_m_s": 0.9,
+      "verification": {
+        "accepted": true,
+        "checks": {
+          "speed": true,
+          "acceleration": true,
+          "jerk": true,
+          "yaw_rate": true,
+          "yaw_acceleration": true,
+          "yaw_jerk": true,
+          "tilt": true,
+          "thrust": true,
+          "body_rate": true,
+          "rotor_authority": true,
+          "ground_and_envelope": true
+        },
+        "speed_bound_m_s": 0.8809329730053483,
+        "acceleration_bound_m_s2": 0.19035310624129184,
+        "jerk_bound_m_s3": 0.08362956905236486,
+        "yaw_rate_bound_rad_s": 0.0,
+        "method": "septic Bernstein interval hulls; monotone straight segment"
+      }
+    }
+  ],
+  "controller_trajectory_sha256": "6d7b18ea0b816671f2509ff74a39e7625f3160fce5459d9b65000c7885f8e29f"
+}

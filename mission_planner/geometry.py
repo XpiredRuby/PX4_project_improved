@@ -814,6 +814,11 @@ def build_smooth_path(
             key = (excess, -candidate_spacing)
             if best is None or key < best[0]:
                 best = (key, attempt, curve_bound)
+            # Spacings strictly decrease. Once excess is zero, every later
+            # candidate has key >= (0, -candidate_spacing), so cannot win.
+            # Stop only after both symmetric and ordered fidelity passed.
+            if excess == 0.0:
+                break
     if attempt is None:
         raise ValueError("exact fly-through could not be satisfied")
     candidate_spacing, curve, fidelity = best[1] if best is not None else attempt

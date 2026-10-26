@@ -1,0 +1,29 @@
+test_analytic_derivatives_match_finite_differences (tests.test_planner_geometry.PlannerGeometryTests.test_analytic_derivatives_match_finite_differences) ... ok
+test_corner_is_accepted_or_rejected_by_declared_fidelity (tests.test_planner_geometry.PlannerGeometryTests.test_corner_is_accepted_or_rejected_by_declared_fidelity) ... ok
+test_default_targets_closer_fidelity_than_legacy_utilization (tests.test_planner_geometry.PlannerGeometryTests.test_default_targets_closer_fidelity_than_legacy_utilization) ... ok
+test_deviation_budget_is_spent_to_widen_corners (tests.test_planner_geometry.PlannerGeometryTests.test_deviation_budget_is_spent_to_widen_corners) ... ok
+test_deviation_utilization_is_validated (tests.test_planner_geometry.PlannerGeometryTests.test_deviation_utilization_is_validated) ... ok
+test_geometry_is_byte_deterministic (tests.test_planner_geometry.PlannerGeometryTests.test_geometry_is_byte_deterministic) ... ok
+test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents (tests.test_planner_geometry.PlannerGeometryTests.test_heading_slope_bound_is_valid_and_rejects_vanishing_tangents) ... ok
+test_invalid_curve_queries_fail_closed (tests.test_planner_geometry.PlannerGeometryTests.test_invalid_curve_queries_fail_closed) ... ok
+test_periodic_circle_matches_position_and_derivatives_at_seam (tests.test_planner_geometry.PlannerGeometryTests.test_periodic_circle_matches_position_and_derivatives_at_seam) ... ok
+test_scalar_spline_reuses_curve_evaluation_and_bounds (tests.test_planner_geometry.PlannerGeometryTests.test_scalar_spline_reuses_curve_evaluation_and_bounds) ... ok
+test_search_stops_when_no_later_candidate_can_improve_rank (tests.test_planner_geometry.PlannerGeometryTests.test_search_stops_when_no_later_candidate_can_improve_rank) ... ok
+test_straight_path_is_endpoint_exact_and_collinear (tests.test_planner_geometry.PlannerGeometryTests.test_straight_path_is_endpoint_exact_and_collinear) ... ok
+test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound (tests.test_planner_geometry.PlannerGeometryTests.test_unmet_soft_target_is_explicit_and_does_not_relax_hard_bound) ... ok
+test_unsupported_or_degenerate_inputs_fail_closed (tests.test_planner_geometry.PlannerGeometryTests.test_unsupported_or_degenerate_inputs_fail_closed) ... ok
+test_analytic_motion (tests.test_reference_audit.ReferenceAuditTests.test_analytic_motion) ... ok
+test_constant_acceleration_bias_detected (tests.test_reference_audit.ReferenceAuditTests.test_constant_acceleration_bias_detected) ... ok
+test_missing_duplicate_nonfinite_and_sparse_data (tests.test_reference_audit.ReferenceAuditTests.test_missing_duplicate_nonfinite_and_sparse_data) ... ok
+test_ned_thrust_sign (tests.test_reference_audit.ReferenceAuditTests.test_ned_thrust_sign) ... ok
+test_overspeed_detected_even_when_kinematically_consistent (tests.test_reference_audit.ReferenceAuditTests.test_overspeed_detected_even_when_kinematically_consistent) ... ok
+test_position_corruption_detected (tests.test_reference_audit.ReferenceAuditTests.test_position_corruption_detected) ... ok
+test_stationary_turn_accounting (tests.test_reference_audit.ReferenceAuditTests.test_stationary_turn_accounting) ... ok
+test_velocity_corruption_detected (tests.test_reference_audit.ReferenceAuditTests.test_velocity_corruption_detected) ... ok
+test_yaw_corruption_detected (tests.test_reference_audit.ReferenceAuditTests.test_yaw_corruption_detected) ... ok
+test_irregular_clock_and_stationary_turns (tests.test_reference_audit.TimingDisclosureTests.test_irregular_clock_and_stationary_turns) ... ok
+
+----------------------------------------------------------------------
+Ran 24 tests in 23.426s
+
+OK

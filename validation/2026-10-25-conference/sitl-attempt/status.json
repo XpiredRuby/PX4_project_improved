@@ -1,0 +1,5 @@
+{
+  "stage": "FAILED",
+  "case": "stop-turn-nominal",
+  "error": "FileNotFoundError: [Errno 2] No such file or directory: '/home/xpire/PX4-Autopilot/build/px4_sitl_default/rootfs/gz_env.sh'"
+}

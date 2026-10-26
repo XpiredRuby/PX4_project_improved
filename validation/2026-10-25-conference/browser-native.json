@@ -1,0 +1,114 @@
+{
+  "scope": "real browser Pyodide vs native planned reference; no measured flight",
+  "passed": true,
+  "browser_rows": 6066,
+  "native_rows": 6066,
+  "duration_difference_s": 2.717115421546623e-11,
+  "maximum_absolute_differences": {
+    "x": 5.3232085406307306e-11,
+    "y": 0.0,
+    "z": 7.190692485892214e-12,
+    "yaw": 1.876609978523902e-11,
+    "vx": 2.6560975641132245e-11,
+    "vy": 0.0,
+    "vz": 1.4943601911454607e-13,
+    "yaw_rate": 6.476597036453313e-12,
+    "ax": 3.598289306267047e-11,
+    "ay": 0.0,
+    "az": 6.333990406823253e-15,
+    "jx": 2.4432245115946216e-10,
+    "jy": 0.0,
+    "jz": 6.102916854196965e-16,
+    "yaw_acceleration": 4.549106751017273e-12,
+    "yaw_jerk": 7.096790169414113e-12
+  },
+  "absolute_numerical_tolerance": 1e-05,
+  "browser_full_csv_sha256": "55c5237985d43bcef6f6ab42407b3c0084bf16049314bef16b6c9ede02bf00b5",
+  "native_full_csv_sha256": "ac63cde592d13076eb6c5e5b7eab6dc5cfd300c8a6df9f689e82ebce8709d421",
+  "browser_runtime": "Pyodide 0.27.7",
+  "browser_requested_document": {
+    "schema_version": 1,
+    "mission_id": "studio-mission-v1",
+    "vehicle_model_id": "px4-x500-sitl-v1",
+    "environment_id": "empty-world-v1",
+    "release_class": "SITL_ONLY",
+    "frame": {
+      "name": "LOCAL_NED",
+      "units": "m",
+      "origin_id": "launch-001",
+      "altitude_datum": "launch"
+    },
+    "objective_priority": [
+      "legal_and_safety",
+      "vehicle_and_environment",
+      "intent_fidelity",
+      "tracking_margin_and_energy",
+      "duration"
+    ],
+    "path": {
+      "kind": "polyline",
+      "closure": "open_stop",
+      "maximum_deviation_m": 0.5,
+      "points": [
+        {
+          "point_id": "stroke-0",
+          "east_m": 0,
+          "north_m": 0,
+          "down_m": -20,
+          "hard": false,
+          "exact": false
+        },
+        {
+          "point_id": "stroke-1",
+          "east_m": 0,
+          "north_m": 20,
+          "down_m": -20,
+          "hard": false,
+          "exact": false
+        }
+      ]
+    },
+    "motion": {
+      "target_speed_m_s": 2,
+      "maximum_speed_m_s": 3,
+      "yaw_mode": "tangent",
+      "fixed_yaw_deg": null,
+      "look_at_north_m": null,
+      "look_at_east_m": null,
+      "look_at_down_m": null,
+      "yaw_profile": null,
+      "time_mode": "minimize",
+      "requested_duration_s": null
+    }
+  },
+  "browser_speed": {
+    "requested_cruise_m_s": 2,
+    "requested_never_exceed_m_s": 3,
+    "effective_cruise_m_s": 2,
+    "effective_never_exceed_m_s": 3,
+    "aircraft_maximum_m_s": 3,
+    "planning_cap_m_s": 1.8,
+    "planned_route_peak_sampled_m_s": 1.796502508486872,
+    "planned_route_mean_sampled_m_s": 1.222672033551608,
+    "reasons": [
+      "planning_margin"
+    ],
+    "scope": "planned route reference; no measured flight",
+    "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+  },
+  "native_speed": {
+    "requested_cruise_m_s": 2,
+    "requested_never_exceed_m_s": 3,
+    "effective_cruise_m_s": 2.0,
+    "effective_never_exceed_m_s": 3.0,
+    "aircraft_maximum_m_s": 3.0,
+    "planning_cap_m_s": 1.8,
+    "planned_route_peak_sampled_m_s": 1.7965025084875796,
+    "planned_route_mean_sampled_m_s": 1.2226720335536396,
+    "reasons": [
+      "planning_margin"
+    ],
+    "scope": "planned route reference; no measured flight",
+    "semantics": "Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion."
+  }
+}

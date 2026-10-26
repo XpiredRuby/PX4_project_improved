@@ -15,6 +15,18 @@
  }
  function indexAt(rows,t){let lo=0,hi=rows.length-1;while(lo<hi){const mid=Math.ceil((lo+hi)/2);if(rows[mid].time<=t)lo=mid;else hi=mid-1;}return lo;}
  function measurementRows(text){const rows=parseCsv(text);for(let i=1;i<rows.length;i++){const previous=rows[i-1].yaw,delta=rows[i].yaw-previous;rows[i].yaw=previous+Math.atan2(Math.sin(delta),Math.cos(delta));}return rows;}
+ // Measurement interpolation does not invent unrecorded derivatives and never
+ // bridges telemetry outages. The 0.5 s display gap policy is not a flight gate.
+ function measurementAt(rows,t,maxGap=.5){
+  if(!rows.length||!Number.isFinite(t)||t<rows[0].time||t>rows.at(-1).time)return null;
+  const i=indexAt(rows,t),a=rows[i],b=rows[i+1];
+  if(!b||Math.abs(t-a.time)<1e-10)return {...a};
+  if(b.time-a.time>maxGap)return null;
+  const u=(t-a.time)/(b.time-a.time),out={time:t,interpolated:true};
+  for(const key of ['x','y','z','yaw','vx','vy','vz','ax','ay','az','jx','jy','jz','yaw_rate','yaw_acceleration','yaw_jerk'])if(Number.isFinite(a[key])&&Number.isFinite(b[key]))out[key]=a[key]+u*(b[key]-a[key]);
+  return out;
+ }
+ function displayRows(rows,limit=1800){const stride=Math.max(1,Math.ceil(rows.length/limit));return rows.filter((r,i)=>i%stride===0||i===rows.length-1);}
  function hermite(a,b,keys,u,dt){
   const [p,v,acc,j]=keys;
   if(!keys.every(k=>Number.isFinite(a[k])&&Number.isFinite(b[k]))){const value=a[p]+u*(b[p]-a[p]);return [value,(b[p]-a[p])/dt,0,0];}
@@ -59,15 +71,16 @@
  }
  function advance(time,wallSeconds,rate,end){return Math.min(end,time+Math.max(0,wallSeconds)*rate);}
  function headingArrow(yaw,size=1){const c=Math.cos(yaw),s=Math.sin(yaw);return [[0,-20],[11,13],[0,7],[-11,13]].map(([x,y])=>[(x*c-y*s)*size,(x*s+y*c)*size]);}
- const api={parseCsv,measurementRows,indexAt,hermite,sampleAt,attitude,eventsFrom,stateLabel,advance,headingArrow,ready:false};
+ const api={parseCsv,measurementRows,measurementAt,displayRows,indexAt,hermite,sampleAt,attitude,eventsFrom,stateLabel,advance,headingArrow,ready:false};
  if(typeof document==='undefined')return api;
  const $=id=>document.getElementById(id),make=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
- let panel,transport,overlay,scene,rows=[],routeRows=[],events=[],result,measured=null,current=0,playing=false,frame=0,lastWall=null,mapState=null,sceneView='3d',fit=null,generation=0;
+ let panel,transport,overlay,scene,rows=[],routeRows=[],events=[],result,measured=null,current=0,playing=false,frame=0,lastWall=null,mapState=null,sceneView='3d',fit=null,generation=0,returnDisplay=[],sceneDisplay=[],heightPeak=1,measuredDisplay=[];
  const clock=t=>{const m=Math.floor(t/60),s=(t-m*60).toFixed(2).padStart(5,'0');return m+':'+s;};
- function pause(){playing=false;cancelAnimationFrame(frame);lastWall=null;if($('motionPlay'))$('motionPlay').textContent='Play';}
+ function playbackState(){if(!transport)return;const state=playing?'playing':rows.length&&current>=rows.at(-1).time?'complete':current>0?'paused':'ready';transport.dataset.state=state;$('motionPlaybackState').textContent={playing:'Playing reference',complete:'Reference complete',paused:'Paused',ready:'Ready to play'}[state];$('motionPlay').setAttribute('aria-pressed',String(playing));}
+ function pause(){playing=false;cancelAnimationFrame(frame);lastWall=null;if($('motionPlay'))$('motionPlay').textContent='Play';playbackState();}
  function seek(t){if(!rows.length)return;current=Math.max(rows[0].time,Math.min(rows.at(-1).time,t));render();}
  function tick(wall){if(!playing)return;if(lastWall!==null)current=advance(current,(wall-lastWall)/1000,Number($('motionRate').value),rows.at(-1).time);lastWall=wall;render();if(current>=rows.at(-1).time){pause();return;}frame=requestAnimationFrame(tick);}
- function togglePlay(){if(playing){pause();return;}if(current>=rows.at(-1).time)current=rows[0].time;playing=true;lastWall=null;$('motionPlay').textContent='Pause';frame=requestAnimationFrame(tick);}
+ function togglePlay(){if(playing){pause();return;}if(current>=rows.at(-1).time)current=rows[0].time;playing=true;lastWall=null;$('motionPlay').textContent='Pause';playbackState();frame=requestAnimationFrame(tick);}
  function step(direction){pause();const i=indexAt(rows,current),next=direction>0?i+1:(Math.abs(rows[i].time-current)<1e-8?i-1:i);seek(rows[Math.max(0,Math.min(rows.length-1,next))].time);}
  function line(ctx,data,project,color,width=2){if(!data.length)return;ctx.beginPath();for(const [i,row] of data.entries()){const q=project(row);i?ctx.lineTo(...q):ctx.moveTo(...q);}ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
  function marker(ctx,point,row,ui,color='#f2cf86'){
@@ -83,7 +96,7 @@
   if(!overlay||!mapState)return;const ctx=overlay.getContext('2d');ctx.clearRect(0,0,900,630);if(!api.ready||window.PX4Compare?.view==='input')return;
   const {map,ui,scale}=mapState,row=sampleAt(rows,current),project=r=>map([r.y,r.x]);
   ctx.save();ctx.lineCap='round';
-  ctx.setLineDash([5*ui,6*ui]);line(ctx,rows.filter(r=>r.phase==='RETURN_HOME'),project,'#8bac9c',1.5*ui);ctx.setLineDash([]);
+  ctx.setLineDash([5*ui,6*ui]);line(ctx,returnDisplay,project,'#8bac9c',1.5*ui);ctx.setLineDash([]);
   // Only a short recent trail is bright; the full route remains in the base map.
   const from=indexAt(rows,Math.max(0,current-8)),to=indexAt(rows,current);
   line(ctx,[...rows.slice(from,to+1),row],project,'#f4d08b',3*ui);
@@ -92,7 +105,10 @@
   const groups=[];
   for(let i=0;i<marked.length;i+=stride){const e=marked[i],p=project(sampleAt(rows,e.time));if(p[0]<25||p[0]>875||p[1]<40||p[1]>570)continue;const group=groups.find(g=>Math.hypot(g.p[0]-p[0],g.p[1]-p[1])<20*ui);if(group)group.ids.push(e.id);else groups.push({p,ids:[e.id]});}
   for(const {p,ids} of groups){const text=ids.join(', ');ctx.font=`${10*ui}px system-ui`;const w=ctx.measureText(text).width+12*ui,left=Math.max(2,Math.min(898-w,p[0]-w/2));ctx.fillStyle='#1a2833';ctx.strokeStyle='#8a9ca6';ctx.lineWidth=ui;ctx.beginPath();ctx.moveTo(...p);ctx.lineTo(p[0],p[1]-12*ui);ctx.stroke();ctx.fillRect(left,p[1]-30*ui,w,18*ui);ctx.strokeRect(left,p[1]-30*ui,w,18*ui);ctx.fillStyle='#d1dce4';ctx.textAlign='center';ctx.fillText(text,left+w/2,p[1]-17*ui);}
-  if(measured){const off=Number($('motionOffset').value)||0,mt=current+off;if(mt>=measured[0].time&&mt<=measured.at(-1).time){const m=sampleAt(measured,mt);line(ctx,measured.filter((_,i)=>i%Math.max(1,Math.ceil(measured.length/1200))===0),project,'#ce9ff4',1.5*ui);marker(ctx,project(m),m,ui,'#ce9ff4');}}
+  if(measured){const mt=current+(Number($('motionOffset').value)||0),m=measurementAt(measured,mt);if(m){
+   // Separate segments at gaps; an outage is never drawn as measured motion.
+   for(const segment of measuredDisplay)line(ctx,segment,project,'#ce9ff4',1.5*ui);
+   marker(ctx,project(m),m,ui,'#ce9ff4');}}
   marker(ctx,project(row),row,ui);ctx.textAlign='left';
   const desired=100*ui/scale,power=10**Math.floor(Math.log10(desired)),length=([1,2,5,10].filter(v=>v*power<=desired).at(-1)||1)*power;
   const left=30*ui,y=570;ctx.fillStyle='#0e1822e8';ctx.fillRect(left-8*ui,y-25*ui,length*scale+80*ui,36*ui);ctx.strokeStyle='#b9cbd5';ctx.lineWidth=1.5*ui;ctx.beginPath();ctx.moveTo(left,y-5*ui);ctx.lineTo(left,y);ctx.lineTo(left+length*scale,y);ctx.lineTo(left+length*scale,y-5*ui);ctx.stroke();ctx.fillStyle='#b9cbd5';ctx.font=`${10*ui}px system-ui`;ctx.fillText(length+' m · equal N/E scale',left,y-10*ui);ctx.restore();
@@ -102,13 +118,13 @@
  function drawScene(row){
   const c=scene.getContext('2d'),ui=Math.max(1,900/(scene.getBoundingClientRect().width||900));c.clearRect(0,0,900,380);c.fillStyle='#101c29';c.fillRect(0,0,900,380);c.font=`${12*ui}px system-ui`;c.fillStyle='#9cb3c0';
   if(sceneView==='height'){
-   const top=rows.reduce((v,r)=>Math.max(v,-r.z),1),end=rows.at(-1).time,map=r=>[55+r.time/end*790,320+r.z/top*260];
+   const top=heightPeak,end=rows.at(-1).time,map=r=>[55+r.time/end*790,320+r.z/top*260];
    c.strokeStyle='#344652';for(let i=0;i<=4;i++){const y=320-i*65;c.beginPath();c.moveTo(55,y);c.lineTo(845,y);c.stroke();c.fillText((top*i/4).toFixed(1)+' m',5,y+4);c.fillText(clock(end*i/4),40+790*i/4,345);}
-   line(c,rows,map,'#6fa7b0',2);const p=map(row);c.fillStyle='#f2cf86';c.beginPath();c.arc(...p,6,0,Math.PI*2);c.fill();c.fillText('Height above launch · time in min:sec',55,25);return;
+   line(c,sceneDisplay,map,'#6fa7b0',2);const p=map(row);c.fillStyle='#f2cf86';c.beginPath();c.arc(...p,6,0,Math.PI*2);c.fill();c.fillText('Height above launch · time in min:sec',55,25);return;
   }
   const project=fit.project,origin=project({x:0,y:0,z:0});
   for(const [axis,color,end] of [['N','#9db9bb',{x:5,y:0,z:0}],['E','#9db9bb',{x:0,y:5,z:0}],['Up','#9db9bb',{x:0,y:0,z:-5}]]){const p=project(end);line(c,[{x:0,y:0,z:0},end],project,color);c.fillText(axis+' 5 m',p[0]+5,p[1]);}
-  line(c,rows.filter((_,i)=>i%Math.max(1,Math.ceil(rows.length/1800))===0),project,'#46717b',1.7);
+  line(c,sceneDisplay,project,'#46717b',1.7);
   const pose=project(row),shadow=project({...row,z:0});c.setLineDash([4,5]);line(c,[{...row,z:0},row],project,'#819388',1);c.setLineDash([]);c.fillStyle='#e2bd6c33';c.beginPath();c.ellipse(...shadow,9,4,0,0,Math.PI*2);c.fill();
   const att=attitude(row),symbol=18/fit.scale;
   for(const vector of [att.x,att.y]){const end=sign=>({x:row.x+sign*symbol*vector[0],y:row.y+sign*symbol*vector[1],z:row.z+sign*symbol*vector[2]});line(c,[end(-1),end(1)],project,'#f2cf86',3);for(const sign of [-1,1]){const p=project(end(sign));c.strokeStyle='#e9d5b2';c.beginPath();c.ellipse(...p,7,3,0,0,Math.PI*2);c.stroke();}}
@@ -116,7 +132,7 @@
   c.fillStyle='#d8e4e6';c.fillText((-row.z).toFixed(2)+' m',Math.min(690,pose[0]+26),Math.max(40,pose[1]-10));c.fillStyle='#9cb3c0';c.fillText('Equal axes · drone symbol enlarged',24,360);
  }
  function render(){
-  if(!api.ready)return;const row=sampleAt(rows,current),att=attitude(row),speed=Math.hypot(row.vx||0,row.vy||0,row.vz||0);
+  if(!api.ready)return;playbackState();const row=sampleAt(rows,current),att=attitude(row),speed=Math.hypot(row.vx||0,row.vy||0,row.vz||0);
   $('motionTime').textContent=clock(current)+' / '+clock(rows.at(-1).time);$('motionSeek').value=String(current);$('motionSeek').setAttribute('aria-valuetext',clock(current)+' · '+stateLabel(row,events));
   $('motionPhase').textContent=stateLabel(row,events);$('motionHeight').textContent=(-row.z).toFixed(2)+' m';$('motionSpeed').textContent=speed.toFixed(2)+' m/s';$('motionHeading').textContent=((row.yaw*DEG%360+360)%360).toFixed(1)+'°';
   $('motionLive').textContent=`${stateLabel(row,events)} · Height ${(-row.z).toFixed(2)} m · Speed ${speed.toFixed(2)} m/s · Heading ${((row.yaw*DEG%360+360)%360).toFixed(1)}°`;
@@ -125,15 +141,15 @@
   $('motionAttitude').textContent=`Roll ${(att.roll*DEG).toFixed(2)}° · Pitch ${(att.pitch*DEG).toFixed(2)}° · Yaw rate ${((row.yaw_rate||0)*DEG).toFixed(2)}°/s`;
   $('motionSample').textContent=`Sample ${row.sampleIndex+1} / ${rows.length}${row.interpolated?' · interpolated between exported samples':' · exact exported sample'}`;
   $('motionMeasured').textContent=measured?'Imported measurement loaded; purple marker appears only during overlapping times.':'Measured motion: no telemetry loaded.';
-  if(measured){const mt=current+(Number($('motionOffset').value)||0);if(mt>=measured[0].time&&mt<=measured.at(-1).time){const m=sampleAt(measured,mt);$('motionMeasured').textContent=`Imported measured position · separation ${Math.hypot(m.x-row.x,m.y-row.y,m.z-row.z).toFixed(3)} m at this time. Source and clock alignment supplied by you.`;}}
+  if(measured){const mt=current+(Number($('motionOffset').value)||0),m=measurementAt(measured,mt);$('motionMeasured').textContent=m?`Imported measured position · separation ${Math.hypot(m.x-row.x,m.y-row.y,m.z-row.z).toFixed(3)} m at this time. Source and clock alignment supplied by you.`:'Measurement unavailable at this time (outside recording or a gap over 0.5 s). No measured state is inferred.';}
   drawOverlay();drawScene(row);
  }
  api.mapChanged=(map,ui,scale)=>{mapState={map,ui,scale};drawOverlay();};
  api.routeSamples=()=>api.ready?routeRows:null;
- api.clear=()=>{generation++;pause();api.ready=false;rows=[];routeRows=[];events=[];result=null;measured=null;if(panel){panel.hidden=true;transport.hidden=true;$('motionOffset').value='0';$('motionFile').value='';}if(overlay)overlay.getContext('2d').clearRect(0,0,900,630);};
+ api.clear=()=>{generation++;pause();api.ready=false;rows=[];routeRows=[];events=[];result=null;measured=null;measuredDisplay=[];returnDisplay=[];sceneDisplay=[];if(panel){panel.hidden=true;transport.hidden=true;$('motionOffset').value='0';$('motionFile').value='';}if(overlay)overlay.getContext('2d').clearRect(0,0,900,630);};
  api.show=value=>{
   api.clear();if(!panel||!value.mission?.trajectory_csv)return;result=value;
-  try{rows=parseCsv(value.mission.trajectory_csv);const route=value.mission.phases.find(p=>p.name==='ROUTE');routeRows=rows.filter(r=>r.time>=route.start_time_s&&r.time<=route.end_time_s);events=eventsFrom(value);fit=sceneFit();current=rows[0].time;api.ready=true;panel.hidden=false;transport.hidden=false;
+  try{rows=parseCsv(value.mission.trajectory_csv);const route=value.mission.phases.find(p=>p.name==='ROUTE');routeRows=rows.filter(r=>r.time>=route.start_time_s&&r.time<=route.end_time_s);events=eventsFrom(value);returnDisplay=displayRows(rows.filter(r=>r.phase==='RETURN_HOME'));sceneDisplay=displayRows(rows);heightPeak=rows.reduce((v,r)=>Math.max(v,-r.z),1);fit=sceneFit();current=rows[0].time;api.ready=true;panel.hidden=false;transport.hidden=false;
    $('motionSeek').max=String(rows.at(-1).time);$('motionSeek').min=String(rows[0].time);$('motionEvents').replaceChildren();
    const first=make('option','', 'Jump to a flight event…');first.value='';$('motionEvents').append(first);
    for(const e of events){const o=make('option','',`${e.id}. ${clock(e.time)} · ${e.label}${e.end>e.time?' · '+(e.end-e.time).toFixed(1)+' s':''}`);o.value=String(e.time);$('motionEvents').append(o);}
@@ -144,16 +160,16 @@
   const editor=document.querySelector('.map-card');if(!editor)return;
   overlay=make('canvas','motion-overlay');overlay.width=900;overlay.height=630;overlay.setAttribute('aria-hidden','true');$('route').parentElement.append(overlay);
   panel=make('section','motion-panel');panel.id='motionPanel';panel.hidden=true;panel.setAttribute('aria-label','Full mission playback');
-  panel.innerHTML='<div class="motion-title"><div><p class="overline">FLIGHT PLAYBACK</p><h2>Follow every movement</h2></div><span id="motionPhase" class="motion-phase"></span></div><p id="motionSource" class="muted"></p><div class="motion-controls"><button id="motionPrevious" aria-label="Previous exported sample">‹ Sample</button><button id="motionPlay">Play</button><button id="motionNext" aria-label="Next exported sample">Sample ›</button><label>Playback speed<select id="motionRate"><option value="0.25">0.25× slow</option><option value="1" selected>1× real time</option><option value="4">4×</option><option value="16">16×</option></select></label><output id="motionTime"></output></div><label class="sr-only" for="motionSeek">Mission time</label><input id="motionSeek" type="range" min="0" max="1" step="0.01" value="0"><div class="motion-readouts"><div><span>Height</span><strong id="motionHeight"></strong></div><div><span>Speed</span><strong id="motionSpeed"></strong></div><div><span>Heading · 0° north</span><strong id="motionHeading"></strong></div></div><p id="motionPosition" class="motion-position"></p><label class="sr-only" for="motionEvents">Jump to flight event</label><select id="motionEvents" aria-label="Jump to flight event"></select><p class="muted">Numbered map markers match this event list. Repeated visits keep their own timestamps.</p><div class="motion-views" role="group" aria-label="Motion view"><button id="motion3d" aria-pressed="true">3D overview</button><button id="motionHeightView" aria-pressed="false">Height over time</button></div><canvas id="motionScene" width="900" height="380" role="img" aria-label="Planned three-dimensional flight position and attitude"></canvas><p id="motionAttitude" class="muted"></p><p id="motionSample" class="muted"></p><details class="motion-method"><summary>Scale, accuracy and measured motion</summary><p>1× means one mission second per real second. Map north/east use the same metres-to-pixels scale. The 3D view uses equal world-axis scale with no amplified height. The drone symbol is enlarged for visibility, not an airframe dimension model.</p><p>Playback uses every exported CSV sample, including takeoff, stops, heading changes, return and descent. Sample buttons select exact exported states; between samples, position and heading are interpolated using their available derivatives. Roll and pitch are ideal references inferred from commanded acceleration and yaw without aerodynamic drag. They are not measured attitudes.</p><p>This shows the planned reference. Exact physical motion requires a matching PX4/Gazebo or aircraft telemetry recording. Ground height zero alone does not prove touchdown or disarm.</p><label for="motionFile">Compare measured CSV (optional, stays on this device)</label><input id="motionFile" type="file" accept=".csv,text/csv"><p>Required: time,x,y,z,yaw. LOCAL_NED metres, time in seconds, yaw in radians; zero time must align with mission start. Velocity/acceleration/jerk columns are optional. This imports your measurements; it does not start Gazebo.</p><label for="motionOffset">Measurement clock offset (s): measured time = mission time + offset</label><input id="motionOffset" type="number" value="0" step="any"><button id="motionRemove">Remove measured track</button></details><p id="motionMeasured" class="muted" role="status"></p>';
+  panel.innerHTML='<div class="motion-title"><div><p class="overline">FLIGHT PLAYBACK</p><h2>Follow every movement</h2></div><span id="motionPhase" class="motion-phase"></span></div><p id="motionSource" class="muted"></p><div class="motion-controls"><button id="motionPrevious" aria-label="Previous exported sample">‹ Sample</button><button id="motionPlay">Play</button><button id="motionNext" aria-label="Next exported sample">Sample ›</button><label>Playback speed<select id="motionRate"><option value="0.25">0.25× slow</option><option value="1" selected>1× real time</option><option value="4">4×</option><option value="16">16×</option></select></label><output id="motionTime"></output></div><label class="sr-only" for="motionSeek">Mission time</label><input id="motionSeek" type="range" min="0" max="1" step="0.01" value="0"><div class="motion-readouts"><div><span>Height</span><strong id="motionHeight"></strong></div><div><span>Speed</span><strong id="motionSpeed"></strong></div><div><span>Heading · 0° north</span><strong id="motionHeading"></strong></div></div><p id="motionPosition" class="motion-position"></p><label class="sr-only" for="motionEvents">Jump to flight event</label><select id="motionEvents" aria-label="Jump to flight event"></select><p class="muted">Numbered map markers match this event list. Repeated visits keep their own timestamps.</p><div class="motion-views" role="group" aria-label="Motion view"><button id="motion3d" aria-pressed="true">3D overview</button><button id="motionHeightView" aria-pressed="false">Height over time</button></div><canvas id="motionScene" width="900" height="380" role="img" aria-label="Planned three-dimensional flight position and attitude"></canvas><p id="motionAttitude" class="muted"></p><p id="motionSample" class="muted"></p><details class="motion-method"><summary>Scale, accuracy and measured motion</summary><p>1× means one mission second per real second. Map north/east use the same metres-to-pixels scale. The 3D view uses equal world-axis scale with no amplified height. The drone symbol is enlarged for visibility, not an airframe dimension model.</p><p>Playback uses every exported CSV sample, including takeoff, stops, heading changes, return and descent. Sample buttons select exact exported states; between samples, position and heading are interpolated using their available derivatives. Roll and pitch are ideal references inferred from commanded acceleration and yaw without aerodynamic drag. They are not measured attitudes.</p><p>This shows the planned reference. Exact physical motion requires a matching PX4/Gazebo or aircraft telemetry recording. Ground height zero alone does not prove touchdown or disarm.</p><label for="motionFile">Compare measured CSV (optional, stays on this device)</label><input id="motionFile" type="file" accept=".csv,text/csv"><p>Required: time,x,y,z,yaw. LOCAL_NED metres, time in seconds, yaw in radians; zero time must align with mission start. Velocity/acceleration/jerk columns are optional. This imports your measurements; it does not start Gazebo. Gaps over 0.5 s are left blank; missing derivatives are not invented.</p><label for="motionOffset">Measurement clock offset (s): measured time = mission time + offset</label><input id="motionOffset" type="number" value="0" step="any"><button id="motionRemove">Remove measured track</button></details><p id="motionMeasured" class="muted" role="status"></p>';
   const legend=make('div','motion-legend');legend.innerHTML='<span class="motion-key-current">Drone now + recent motion</span><span class="motion-key-return">Return home</span><span class="motion-key-measured">Imported measurement</span>';panel.insertBefore(legend,panel.querySelector('#motionEvents'));
   transport=make('div','motion-transport');transport.hidden=true;transport.setAttribute('aria-label','Playback controls');transport.append(make('p','motion-live',''));transport.firstChild.id='motionLive';transport.append(panel.querySelector('.motion-controls'),panel.querySelector('label[for="motionSeek"]'),panel.querySelector('#motionSeek'));document.querySelector('.map-surface').before(transport);
   const facing=make('div','motion-facing'),compass=make('div','motion-compass');compass.id='motionCompass';compass.setAttribute('role','img');compass.innerHTML='<span>N</span><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21" fill="none" stroke="#68828d"/><g id="motionCompassArrow"><path d="M24 6 L34 36 L24 30 L14 36 Z" fill="#f2cf86" stroke="#13232a" stroke-width="2"/><path d="M24 4 V9" stroke="#f2cf86" stroke-width="2"/></g></svg>';
-  facing.append(compass,$('motionLive'));transport.prepend(facing);
+  const playbackBadge=make('span','playback-state');playbackBadge.id='motionPlaybackState';playbackBadge.setAttribute('role','status');facing.append(compass,$('motionLive'),playbackBadge);transport.prepend(facing);
   editor.append(panel);scene=$('motionScene');$('motionPlay').onclick=togglePlay;$('motionPrevious').onclick=()=>step(-1);$('motionNext').onclick=()=>step(1);$('motionSeek').oninput=()=>{pause();seek(Number($('motionSeek').value));};
   $('motionEvents').onchange=()=>{if($('motionEvents').value!==''){pause();seek(Number($('motionEvents').value));}};
   for(const [id,view] of [['motion3d','3d'],['motionHeightView','height']])$(id).onclick=()=>{sceneView=view;$('motion3d').setAttribute('aria-pressed',String(view==='3d'));$('motionHeightView').setAttribute('aria-pressed',String(view==='height'));render();};
   $('motionRate').onchange=()=>{lastWall=null;};$('motionOffset').oninput=render;$('motionRemove').onclick=()=>{measured=null;$('motionFile').value='';render();};
-  $('motionFile').onchange=async e=>{pause();const submitted=generation;try{const file=e.target.files[0];if(!file)return;if(file.size>24*1024*1024)throw Error('Use a CSV under 24 MB.');const parsed=measurementRows(await file.text());if(submitted!==generation)return;measured=parsed;render();}catch(error){if(submitted!==generation)return;measured=null;render();$('motionMeasured').textContent='Measurement import failed: '+error.message;}};
+  $('motionFile').onchange=async e=>{pause();const submitted=generation;try{const file=e.target.files[0];if(!file)return;if(file.size>24*1024*1024)throw Error('Use a CSV under 24 MB.');const parsed=measurementRows(await file.text());if(submitted!==generation)return;measured=parsed;const segments=[[]];for(const r of parsed){const segment=segments.at(-1);if(segment.length&&r.time-segment.at(-1).time>.5)segments.push([]);segments.at(-1).push(r);}measuredDisplay=segments.map(r=>displayRows(r,1200));render();}catch(error){if(submitted!==generation)return;measured=null;render();$('motionMeasured').textContent='Measurement import failed: '+error.message;}};
   document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
  });
  return api;

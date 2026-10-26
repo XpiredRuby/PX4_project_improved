@@ -42,7 +42,7 @@ class ClosestPreviewTests(unittest.TestCase):
         corners = [(0,0),(8,0),(0,3),(8,6),(1,8),(7,8),(8,8),(1,8),
                    (1,11),(7,11),(7,14),(1,14)]
         dense = [corners[0]]
-        for a,b in zip(corners,corners[1:]):
+        for a,b in zip(corners,corners[1:], strict=False):
             dense.extend((a[0]+(b[0]-a[0])*i/80,a[1]+(b[1]-a[1])*i/80) for i in range(1,81))
         request = drawing(dense)
         result = preview(dict(request,planning_mode="closest"))
@@ -133,17 +133,14 @@ class ClosestPreviewTests(unittest.TestCase):
         self.assertEqual(result["intent"]["path"]["points"][0]["north_m"],0.)
         self.assertGreaterEqual(result["planning_adjustments"]["requested_path_displacement_bound_m"],5.)
 
-    def test_non_positive_preferences_are_adjusted_without_rejecting_geometry(self):
+    def test_non_positive_speed_is_refused_without_mutating_the_drawing(self):
         request=drawing([(0,0),(0,1)],maximum_speed_m_s=0.,target_speed_m_s=-1.)
-        for p in request["document"]["path"]["points"]:
-            p["down_m"]=1.
-        result=closest_preview(request,refused)
-        self.assertTrue(result["accepted"])
-        self.assertGreater(result["intent"]["motion"]["maximum_speed_m_s"],0.)
-        self.assertLess(result["intent"]["path"]["points"][0]["down_m"],0.)
+        original=deepcopy(request)
+        with self.assertRaisesRegex(ValueError,"Maximum speed must be greater than zero"):
+            closest_preview(request,refused)
+        self.assertEqual(request,original)
 
     def test_periodic_two_lap_visit_count_is_preserved(self):
-        request=drawing([(0,0),(0,2),(2,0),(0,0)])
         # Interview converter supplies loop count; exercise its full preparation.
         doc=dict(schema_version=1,mission_id="circle-test",vehicle_model_id="px4-x500-sitl-v1",
                  environment_id="empty-world-v1",pattern="circle",altitude_m=5.,maximum_deviation_m=.5,

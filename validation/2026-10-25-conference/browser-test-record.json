@@ -1,0 +1,27 @@
+{
+  "method": "Actual Chrome via CUA and real Pyodide worker; no mocked planner",
+  "url": "http://terminal.local:4173/",
+  "runtime": "Pyodide 0.27.7",
+  "planning_scope": "reference only",
+  "gazebo_ran": false,
+  "checks": [
+    "2 m/s preferred cruise with 3 m/s cap: 1.80 m/s planned sampled peak",
+    "Vin: 481 original points, 12 flight vertices, 8255 full mission CSV samples, adjusted plan disclosed",
+    "At mission 63.50 s: N=0 E=0 Up=20 m, speed=0 m/s, heading=337.7 deg, yaw rate=-37.30 deg/s",
+    "Exact next sample 1272, previous sample 1271 at 63.50 s",
+    "Play/pause and reference ready/playing/paused/complete states",
+    "Height/time and 3D view buttons",
+    "Final endpoint 412.60 s: N=0 E=0 Up=0 m, speed=0, exact sample 8255/8255",
+    "Planner cancellation returns enabled retry, retains drawing, hides error details",
+    "Edit during active planning discards late result and hides old playback/results",
+    "390 px iframe: body scroll width 375 px; no horizontal overflow",
+    "Device-local draft restored and required fresh verification",
+    "Request 4 m/s with cap 3 m/s shows conflict guidance",
+    "Blank preferred speed shows Needs attention and readable field label; corrected input can re-run"
+  ],
+  "limitations": [
+    "Viewport test is not a physical phone test",
+    "1x arithmetic regression tested; no exact wall-clock browser latency certificate",
+    "Production Site was not republished"
+  ]
+}

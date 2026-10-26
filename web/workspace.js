@@ -51,7 +51,8 @@
  const dialogHeader=node('div','dialog-header');const dialogTitle=node('h2','','Workspace settings');dialogTitle.id='settingsTitle';const close=node('button','close-button','×');close.setAttribute('aria-label','Close settings');dialogHeader.append(dialogTitle,close);
  const tabbar=node('div','settings-tabs');tabbar.setAttribute('role','tablist');tabbar.setAttribute('aria-label','Settings categories');
  const panels=node('div','settings-content');const pointEditor=byId('pointEditor');pointEditor.open=true;pointEditor.querySelector('summary').hidden=true;
- const entries=[['flight','Flight',flight],['points','Points & stops',pointEditor],['model','Model',model]];
+ const advanced=node('div');advanced.append(byId('speedCapControls'),byId('motionOptions'));
+ const entries=[['flight','Flight',flight],['advanced','Advanced',advanced],['points','Points & stops',pointEditor],['model','Model',model]];
  let lastTrigger=settingsButton;
  function selectTab(key){for(const [id,,panel] of entries){byId('panel-'+id).hidden=id!==key;const tab=byId('settings-'+id);tab.setAttribute('aria-selected',String(id===key));tab.tabIndex=id===key?0:-1;}}
  for(const [id,title,panel] of entries){const b=node('button','',title);b.id='settings-'+id;b.setAttribute('role','tab');b.setAttribute('aria-controls','panel-'+id);panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',b.id);panel.id==='flightSettings'||panel.id==='pointEditor'?panel.setAttribute('data-panel',id):null;const wrapper=node('div','settings-panel');wrapper.id='panel-'+id;wrapper.append(panel);panels.append(wrapper);b.onclick=()=>{selectTab(id);};b.onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const index=entries.findIndex(x=>x[0]===id),next=e.key==='Home'?0:e.key==='End'?entries.length-1:(index+(e.key==='ArrowRight'?1:-1)+entries.length)%entries.length;selectTab(entries[next][0]);byId('settings-'+entries[next][0]).focus();};tabbar.append(b);}
@@ -65,7 +66,7 @@
  originalMain.replaceWith(main);document.body.append(dialog,retained);
  const yawLabel=document.querySelector('label[for="yaw"]'),fixedLabel=document.querySelector('label[for="fixedYaw"]');
  const headingGroup=node('div','heading-settings');headingGroup.append(yawLabel,byId('yaw'),fixedLabel,byId('fixedYaw'));
- flight.insertBefore(headingGroup,byId('motionOptions'));byId('yaw').value='tangent';
+ flight.append(headingGroup);byId('yaw').value='tangent';
  byId('yaw').querySelector('[value="tangent"]').textContent='Face along the route';
  const headingExplanation=node('p','muted');headingExplanation.id='headingExplanation';headingGroup.append(headingExplanation);
  function headingSummary(){const fixed=byId('yaw').value==='fixed';fixedLabel.hidden=byId('fixedYaw').hidden=!fixed;headingExplanation.textContent=fixed?'Hold the chosen heading while moving. 0° keeps the launch reference direction.':'Yaw changes with the route direction. Vertical takeoff and landing hold their phase heading.';}
@@ -76,7 +77,23 @@
  document.querySelector('footer').textContent='Trajectory Studio · Planning checks a mathematical model. Gazebo has not run.';
  function syncSummary(){heightButton.innerHTML='<span>Height</span><strong>'+byId('altitude').value+' <small>m</small></strong>';speedButton.innerHTML='<span>Cruising speed</span><strong>'+byId('targetSpeed').value+' <small>m/s</small></strong>';}
  byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',syncSummary);syncSummary();
- function syncState(){const busy=byId('busy').style.display==='block',ready=!results.hidden,error=byId('status').classList.contains('error');empty.hidden=busy||ready||error;const state=busy?'Checking':error?'Needs attention':ready?'Verified':'Draft';if(stateLabel.textContent!==state)stateLabel.textContent=state;stateLabel.dataset.state=state;review.dataset.state=state;byId('compile').setAttribute('aria-busy',String(busy));const text=busy?'Checking your route…':ready?'Verify again':'Plan and verify';if(byId('compile').textContent!==text)byId('compile').textContent=text;}
+ let runState='draft',startedAt=null,elapsedTimer=null;
+ const runInfo=node('div','run-info');runInfo.hidden=true;runInfo.setAttribute('role','status');
+ const pulse=node('span','run-pulse'),runText=node('span'),elapsed=node('span','run-elapsed');elapsed.id='runElapsed';
+ const cancel=node('button','text-button','Cancel check');cancel.id='cancelPlanning';cancel.onclick=()=>window.PX4Editor?.cancelPlanning();
+ runInfo.append(pulse,runText,elapsed,cancel);byId('busy').before(runInfo);
+ const messages={starting:'Starting the planning engine',loading:'Preparing the engine',checking:'Checking geometry and motion',stale:'Edits kept · previous check will be discarded'};
+ function syncState(){const busy=byId('busy').style.display==='block',ready=!results.hidden,error=byId('status').classList.contains('error');
+  if(!busy&&error)runState='error';
+  empty.hidden=busy||ready||error;const label=window.PX4RunState.labels[runState];
+  stateLabel.textContent=label;stateLabel.dataset.state=label;review.dataset.state=label;
+  byId('compile').setAttribute('aria-busy',String(busy));byId('compile').textContent=busy?'Checking your route…':ready?'Verify again':'Plan and verify';
+  runInfo.hidden=!busy;cancel.disabled=!busy;runText.textContent=messages[runState]||'Finishing checks';
+  if(busy&&startedAt===null){startedAt=performance.now();elapsedTimer=setInterval(()=>{elapsed.textContent=Math.floor((performance.now()-startedAt)/1000)+' s';},1000);}
+  if(!busy){clearInterval(elapsedTimer);startedAt=null;elapsed.textContent='';}
+ }
+ window.addEventListener('planner-state',e=>{runState=window.PX4RunState.next(runState,e.detail.state);syncState();});
+ window.addEventListener('planner-progress',e=>{if(byId('busy').style.display!=='block')return;const stage=/Loading|Preparing/.test(e.detail)?'loading':'checking';runState=window.PX4RunState.next(runState,stage);syncState();});
  new MutationObserver(syncState).observe(byId('status'),{childList:true,attributes:true});new MutationObserver(syncState).observe(results,{attributes:true,attributeFilter:['hidden']});new MutationObserver(syncState).observe(byId('busy'),{attributes:true,attributeFilter:['style']});syncState();
  // The core hides this details element in shape mode; only show its tab contents when drawing.
  window.addEventListener('DOMContentLoaded',()=>{const modeHint=node('p','muted','Point editing is available in Draw mode. Choose Draw in Flight settings.');pointEditor.parentElement.append(modeHint);new MutationObserver(()=>modeHint.hidden=!pointEditor.hidden).observe(pointEditor,{attributes:true,attributeFilter:['hidden']});modeHint.hidden=!pointEditor.hidden;});

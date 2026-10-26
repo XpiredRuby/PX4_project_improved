@@ -1,0 +1,303 @@
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python main.py
+Generated 1803 points
+Saved to trajetory.csv
+0 start: 0.0 cruise: 2 end: 1
+1 start: 1 cruise: 1 end: 1
+2 start: 1 cruise: 2 end: 0.0
+3 start: 0.0 cruise: 0.0 end: 0.0
+4 start: 0.0 cruise: 2 end: 0.0
+5 Hover: 5
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plan_waypoint_mission.py --plan /workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json --output /tmp/tmpocrqhbl0/first.csv
+{
+  "coordinate_frame": "LOCAL_NED",
+  "duration_s": 125.89916494628677,
+  "limits": {
+    "max_acceleration_m_s2": 1.0,
+    "max_horizontal_speed_m_s": 1.0,
+    "max_jerk_m_s3": 1.5,
+    "max_vertical_speed_m_s": 0.6,
+    "max_yaw_acceleration_deg_s2": 30.0,
+    "max_yaw_jerk_deg_s3": 60.0,
+    "max_yaw_rate_deg_s": 30.0,
+    "minimum_segment_duration_s": 2.0
+  },
+  "point_count": 2520,
+  "safety": {
+    "max_duration_s": 180.0,
+    "max_radius_from_start_m": 40.0,
+    "max_total_distance_m": 120.0,
+    "max_vertical_excursion_from_start_m": 3.0
+  },
+  "schema_version": 1,
+  "segments": [
+    {
+      "distance_m": 14.422205101855956,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-west",
+      "peak_acceleration_m_s2": 0.10886705847372821,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.02411302982731554,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 0.226457170116902,
+      "peak_yaw_jerk_deg_s3": 0.05015813391298775,
+      "peak_yaw_rate_deg_s": 2.080125735844609,
+      "start_stop": "start",
+      "yaw_change_deg": -29.999999999999996
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-north",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.37742861686150325,
+      "peak_yaw_jerk_deg_s3": 0.08359688985497957,
+      "peak_yaw_rate_deg_s": 3.4668762264076816,
+      "start_stop": "survey-west",
+      "yaw_change_deg": 49.999999999999986
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-east",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.5284000636061047,
+      "peak_yaw_jerk_deg_s3": 0.11703564579697143,
+      "peak_yaw_rate_deg_s": 4.853626716970755,
+      "start_stop": "survey-north",
+      "yaw_change_deg": 70.0
+    },
+    {
+      "distance_m": 10.63014581273465,
+      "duration_s": 23.253443965357047,
+      "end_stop": "exit",
+      "peak_acceleration_m_s2": 0.14770287010201777,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.04438504605381975,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 1.2505245500260784,
+      "peak_yaw_jerk_deg_s3": 0.3757854516029575,
+      "peak_yaw_rate_deg_s": 8.466487815452375,
+      "start_stop": "survey-east",
+      "yaw_change_deg": -90.0
+    }
+  ],
+  "source_plan": "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "stop_arrival_s": {
+    "exit": 124.89916494628677,
+    "start": 0.0,
+    "survey-east": 99.64572098092972,
+    "survey-north": 66.09714732061981,
+    "survey-west": 32.548573660309906
+  },
+  "stop_departure_s": {
+    "exit": 125.89916494628677,
+    "start": 1.0,
+    "survey-east": 101.64572098092972,
+    "survey-north": 68.09714732061981,
+    "survey-west": 34.548573660309906
+  },
+  "stops": [
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "start",
+      "north_m": 0.0,
+      "yaw_deg": 0.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": -8.0,
+      "hold_s": 2.0,
+      "name": "survey-west",
+      "north_m": 12.0,
+      "yaw_deg": -30.0
+    },
+    {
+      "down_m": -9.0,
+      "east_m": 0.0,
+      "hold_s": 2.0,
+      "name": "survey-north",
+      "north_m": 24.0,
+      "yaw_deg": 20.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 8.0,
+      "hold_s": 2.0,
+      "name": "survey-east",
+      "north_m": 12.0,
+      "yaw_deg": 90.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "exit",
+      "north_m": 5.0,
+      "yaw_deg": 0.0
+    }
+  ],
+  "trajectory": "/tmp/tmpocrqhbl0/first.csv",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plan_waypoint_mission.py --plan /workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json --output /tmp/tmpocrqhbl0/second.csv
+{
+  "coordinate_frame": "LOCAL_NED",
+  "duration_s": 125.89916494628677,
+  "limits": {
+    "max_acceleration_m_s2": 1.0,
+    "max_horizontal_speed_m_s": 1.0,
+    "max_jerk_m_s3": 1.5,
+    "max_vertical_speed_m_s": 0.6,
+    "max_yaw_acceleration_deg_s2": 30.0,
+    "max_yaw_jerk_deg_s3": 60.0,
+    "max_yaw_rate_deg_s": 30.0,
+    "minimum_segment_duration_s": 2.0
+  },
+  "point_count": 2520,
+  "safety": {
+    "max_duration_s": 180.0,
+    "max_radius_from_start_m": 40.0,
+    "max_total_distance_m": 120.0,
+    "max_vertical_excursion_from_start_m": 3.0
+  },
+  "schema_version": 1,
+  "segments": [
+    {
+      "distance_m": 14.422205101855956,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-west",
+      "peak_acceleration_m_s2": 0.10886705847372821,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.02411302982731554,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 0.226457170116902,
+      "peak_yaw_jerk_deg_s3": 0.05015813391298775,
+      "peak_yaw_rate_deg_s": 2.080125735844609,
+      "start_stop": "start",
+      "yaw_change_deg": -29.999999999999996
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-north",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.37742861686150325,
+      "peak_yaw_jerk_deg_s3": 0.08359688985497957,
+      "peak_yaw_rate_deg_s": 3.4668762264076816,
+      "start_stop": "survey-west",
+      "yaw_change_deg": 49.999999999999986
+    },
+    {
+      "distance_m": 14.45683229480096,
+      "duration_s": 31.548573660309906,
+      "end_stop": "survey-east",
+      "peak_acceleration_m_s2": 0.1091284443445088,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.024170924340007754,
+      "peak_vertical_speed_m_s": 0.06933752452815364,
+      "peak_yaw_acceleration_deg_s2": 0.5284000636061047,
+      "peak_yaw_jerk_deg_s3": 0.11703564579697143,
+      "peak_yaw_rate_deg_s": 4.853626716970755,
+      "start_stop": "survey-north",
+      "yaw_change_deg": 70.0
+    },
+    {
+      "distance_m": 10.63014581273465,
+      "duration_s": 23.253443965357047,
+      "end_stop": "exit",
+      "peak_acceleration_m_s2": 0.14770287010201777,
+      "peak_horizontal_speed_m_s": 1.0,
+      "peak_jerk_m_s3": 0.04438504605381975,
+      "peak_vertical_speed_m_s": 0.0,
+      "peak_yaw_acceleration_deg_s2": 1.2505245500260784,
+      "peak_yaw_jerk_deg_s3": 0.3757854516029575,
+      "peak_yaw_rate_deg_s": 8.466487815452375,
+      "start_stop": "survey-east",
+      "yaw_change_deg": -90.0
+    }
+  ],
+  "source_plan": "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/missions/five_stop_example.json",
+  "source_plan_sha256": "02cf942db1a345134e668e1d5c8f4f615a1ac8e420b6010a87238231cacc25ed",
+  "stop_arrival_s": {
+    "exit": 124.89916494628677,
+    "start": 0.0,
+    "survey-east": 99.64572098092972,
+    "survey-north": 66.09714732061981,
+    "survey-west": 32.548573660309906
+  },
+  "stop_departure_s": {
+    "exit": 125.89916494628677,
+    "start": 1.0,
+    "survey-east": 101.64572098092972,
+    "survey-north": 68.09714732061981,
+    "survey-west": 34.548573660309906
+  },
+  "stops": [
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "start",
+      "north_m": 0.0,
+      "yaw_deg": 0.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": -8.0,
+      "hold_s": 2.0,
+      "name": "survey-west",
+      "north_m": 12.0,
+      "yaw_deg": -30.0
+    },
+    {
+      "down_m": -9.0,
+      "east_m": 0.0,
+      "hold_s": 2.0,
+      "name": "survey-north",
+      "north_m": 24.0,
+      "yaw_deg": 20.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 8.0,
+      "hold_s": 2.0,
+      "name": "survey-east",
+      "north_m": 12.0,
+      "yaw_deg": 90.0
+    },
+    {
+      "down_m": -8.0,
+      "east_m": 0.0,
+      "hold_s": 1.0,
+      "name": "exit",
+      "north_m": 5.0,
+      "yaw_deg": 0.0
+    }
+  ],
+  "trajectory": "/tmp/tmpocrqhbl0/second.csv",
+  "trajectory_sha256": "383e7ce05810947bc558dd6acbc6b1a9e40fbc6b82109caf61d898e5090901f6"
+}
++ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m coverage run --branch --source=controller -m unittest discover -s /workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests -v
+/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python: No module named coverage
+Traceback (most recent call last):
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/validate.py", line 73, in <module>
+    main()
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/validate.py", line 63, in main
+    run(test_command + [
+  File "/workspace/scratch/9d61c3c0a48a/PX4_project_improved/scripts/validate.py", line 23, in run
+    subprocess.run(command, cwd=cwd, check=True, env=os.environ.copy())
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python', '-m', 'coverage', 'run', '--branch', '--source=controller', '-m', 'unittest', 'discover', '-s', '/workspace/scratch/9d61c3c0a48a/PX4_project_improved/tests', '-v']' returned non-zero exit status 1.

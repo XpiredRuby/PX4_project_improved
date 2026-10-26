@@ -41,6 +41,16 @@ def polyline(
 
 
 class PlannerGeometryTests(unittest.TestCase):
+    def test_search_stops_when_no_later_candidate_can_improve_rank(self):
+        plan = build_smooth_path(
+            polyline([(0., 0., -8.), (35., 0., -8.)], maximum_deviation_m=.5),
+            control_spacing_m=.5,
+        )
+        self.assertTrue(plan.smoothing.soft_target_met)
+        self.assertEqual(plan.smoothing.candidates_evaluated, 1)
+        self.assertTrue(plan.fidelity.accepted)
+
+
     def test_default_targets_closer_fidelity_than_legacy_utilization(self):
         path = polyline(
             [(0.0, 0.0, -8.0), (15.0, 0.0, -8.0), (15.0, 12.0, -8.0)],

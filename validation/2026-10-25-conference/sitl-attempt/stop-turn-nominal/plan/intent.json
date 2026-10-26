@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "mission_id": "drawn-path-example-v1",
+  "release_class": "SITL_ONLY",
+  "frame": {
+    "name": "LOCAL_NED",
+    "units": "m",
+    "origin_id": "launch-001",
+    "altitude_datum": "launch"
+  },
+  "path": {
+    "kind": "polyline",
+    "closure": "open_stop",
+    "maximum_deviation_m": 0.0,
+    "points": [
+      {
+        "point_id": "research-stop-0",
+        "north_m": 0.0,
+        "east_m": 0.0,
+        "down_m": -20.0,
+        "hard": true,
+        "exact": false
+      },
+      {
+        "point_id": "research-stop-1",
+        "north_m": 0.0,
+        "east_m": 8.0,
+        "down_m": -20.0,
+        "hard": true,
+        "exact": false
+      },
+      {
+        "point_id": "research-stop-2",
+        "north_m": 8.0,
+        "east_m": 8.0,
+        "down_m": -20.0,
+        "hard": true,
+        "exact": false
+      },
+      {
+        "point_id": "research-stop-3",
+        "north_m": 8.0,
+        "east_m": 0.0,
+        "down_m": -20.0,
+        "hard": true,
+        "exact": false
+      },
+      {
+        "point_id": "research-stop-4",
+        "north_m": 3.0,
+        "east_m": 0.0,
+        "down_m": -20.0,
+        "hard": true,
+        "exact": false
+      },
+      {
+        "point_id": "research-stop-5",
+        "north_m": 3.0,
+        "east_m": 4.0,
+        "down_m": -20.0,
+        "hard": true,
+        "exact": false
+      }
+    ]
+  },
+  "motion": {
+    "target_speed_m_s": 1.0,
+    "maximum_speed_m_s": 1.25,
+    "yaw_mode": "fixed",
+    "fixed_yaw_deg": 0.0,
+    "look_at_north_m": null,
+    "look_at_east_m": null,
+    "look_at_down_m": null,
+    "yaw_profile": null,
+    "time_mode": "minimize",
+    "requested_duration_s": null
+  },
+  "vehicle_model_id": "px4-x500-sitl-v1",
+  "environment_id": "empty-world-v1",
+  "objective_priority": [
+    "legal_and_safety",
+    "vehicle_and_environment",
+    "intent_fidelity",
+    "tracking_margin_and_energy",
+    "duration"
+  ]
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import csv
+import io
 import json
 import math
 from pathlib import Path
@@ -21,14 +22,101 @@ MAX_INPUT_POINTS = 256
 
 def preview(payload: dict) -> dict:
     """Keep strict API behavior; the studio opts into closest-feasible planning."""
+    validate_preview_request(payload)
     if isinstance(payload, dict) and payload.get("planning_mode") == "closest":
         from .closest import closest_preview
         clean = dict(payload)
         clean.pop("planning_mode")
         result = closest_preview(clean, _preview_strict)
         result['requested_document'] = deepcopy(clean['document'])
-        return result
-    return _preview_strict(payload)
+    else:
+        result = _preview_strict({k: v for k, v in payload.items() if k != "planning_mode"})
+    if result.get('accepted'):
+        result['summary']['speed_preferences'] = speed_preferences(payload, result)
+    return result
+
+
+def validate_preview_request(payload):
+    """Validate container shape before best-effort geometry accesses members."""
+    if not isinstance(payload, dict):
+        raise ValueError("Preview request must be an object")
+    if (not {"source", "document"} <= payload.keys()
+            or payload.keys() - {"source", "document", "aircraft_profile", "planning_mode"}):
+        raise ValueError("Preview requires source and document, with no unknown fields")
+    if payload["source"] not in ("drawing", "interview"):
+        raise ValueError("source must be drawing or interview")
+    document = payload["document"]
+    if not isinstance(document, dict):
+        raise ValueError("Route document must be an object")
+    if payload.get("planning_mode", "strict") not in ("strict", "closest"):
+        raise ValueError("planning_mode must be strict or closest")
+    if ("aircraft_profile" in payload and payload.get("planning_mode") != "closest"
+            and not assess_profile(payload["aircraft_profile"])["ready"]):
+        # Preserve the aircraft intake response before requesting route fields.
+        return
+    if payload["source"] == "drawing":
+        if not isinstance(document.get("motion"), dict) or not isinstance(document.get("path"), dict):
+            raise ValueError("Drawing requires path and motion objects")
+        points = document["path"].get("points")
+        if not isinstance(points, list) or not points or any(not isinstance(p, dict) for p in points):
+            raise ValueError("Drawing points must be a nonempty array of objects")
+        if len(points) > 20_000:
+            raise ValueError("Preview accepts at most 20000 source points; split this drawing into missions")
+    motion = document["motion"] if payload["source"] == "drawing" else document
+    if "maximum_speed_m_s" not in motion:
+        raise ValueError("Maximum speed is required")
+    for key in ("maximum_speed_m_s", "target_speed_m_s"):
+        value = motion.get(key)
+        if key == "target_speed_m_s" and value is None:
+            continue
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(key + " must be a finite number greater than zero")
+
+
+def speed_preferences(payload, result):
+    """Explain reference speed using every route sample, never display decimation.
+
+    A requested cruise is an upper preference in the current conservative timer,
+    not a constant-speed tracking guarantee. Aircraft limits remain unchanged.
+    """
+    document = payload['document']
+    requested = document['motion'] if payload['source'] == 'drawing' else document
+    effective = result['intent']['motion']
+    rows = list(csv.DictReader(io.StringIO(result['trajectory_csv'])))
+    speeds = [math.sqrt(sum(float(r[k])**2 for k in ('vx', 'vy', 'vz'))) for r in rows]
+    times = [float(r['time']) for r in rows]
+    duration = times[-1] - times[0]
+    distance = sum((b-a)*(u+v)/2 for a,b,u,v in zip(times, times[1:], speeds, speeds[1:], strict=False))
+    stationary = [u < 1e-4 and v < 1e-4 for u, v in zip(speeds, speeds[1:], strict=False)]
+    stationary_s = sum(b-a for a, b, stopped in zip(times, times[1:], stationary, strict=False) if stopped)
+    yaw_rates = [abs(float(r['yaw_rate'])) for r in rows]
+    turn_s = sum(b-a for a, b, stopped, u, v in zip(times, times[1:], stationary, yaw_rates, yaw_rates[1:], strict=False) if stopped and u+v > 1e-4)
+    aircraft = result['vehicle_model']['maximum_speed_m_s']
+    cap = effective['maximum_speed_m_s']
+    target = effective.get('target_speed_m_s')
+    reasons = []
+    original_target = requested.get('target_speed_m_s')
+    if original_target is not None and original_target > requested['maximum_speed_m_s']:
+        reasons.append('requested_speed_cap')
+    if max(requested['maximum_speed_m_s'], original_target or 0.) > aircraft:
+        reasons.append('aircraft_speed_cap')
+    reasons.append('planning_margin')
+    peak = max(speeds)
+    planned_cap = result['summary']['retiming']['speed_limit_m_s']
+    if peak < .95 * planned_cap:
+        reasons.append('route_dynamics_and_stops')
+    return dict(requested_cruise_m_s=original_target,
+                requested_never_exceed_m_s=requested['maximum_speed_m_s'],
+                effective_cruise_m_s=target, effective_never_exceed_m_s=cap,
+                aircraft_maximum_m_s=aircraft, planning_cap_m_s=planned_cap,
+                planned_route_peak_sampled_m_s=peak,
+                route_distance_sampled_m=distance, route_duration_s=duration,
+                stationary_time_sampled_s=stationary_s,
+                stationary_turn_time_sampled_s=turn_s,
+                timing_measurement='50 ms sampled reference; stationary means endpoint speeds below 0.0001 m/s',
+                planned_route_mean_sampled_m_s=distance/duration if duration else 0.,
+                reasons=reasons, scope='planned route reference; no measured flight',
+                semantics='Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion.')
 
 
 def _preview_strict(payload: dict, *, loops_override=None) -> dict:

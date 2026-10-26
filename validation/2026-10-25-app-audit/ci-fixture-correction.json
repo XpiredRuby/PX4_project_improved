@@ -1,0 +1,15 @@
+{
+  "production_source_commit": "98c1a33f8fb874eaeffacb97d423e6e9cc1900d6",
+  "controller_run": 40235142211,
+  "controller_conclusion": "success",
+  "validation_run": 40235142208,
+  "python_job": 121294992861,
+  "python_conclusion": "success",
+  "public_app_job": 121294992560,
+  "public_app_conclusion": "failure",
+  "javascript_passed": 55,
+  "javascript_total": 56,
+  "cause": "Mock classList lacked add; corrected fixture without changing production code",
+  "final_local_js_exit": 0,
+  "final_local_js_passed": 56
+}

@@ -1,0 +1,18 @@
+{
+  "accepted": true,
+  "scope": "offline exact route adapter; connected tracking NOT VALIDATED",
+  "route_only": true,
+  "execution_adapter_eligible": true,
+  "native_lifecycle_owner": "offboard_runner",
+  "controller_trajectory_sha256": "6d7b18ea0b816671f2509ff74a39e7625f3160fce5459d9b65000c7885f8e29f",
+  "samples": 1907,
+  "phases": 5,
+  "maximum_serialized_state_error": 4.4497738826976274e-13,
+  "root_extrema_speed_acceleration_jerk": [
+    0.88161209068008,
+    0.1902926259744792,
+    0.08362956904400067
+  ],
+  "simulator_ran": false,
+  "physical_flight_approved": false
+}

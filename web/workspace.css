@@ -55,3 +55,10 @@ body:has(#results:not([hidden])) .map-hint{display:none}
 .motion-transport{margin:10px 0 16px;padding:14px 16px 4px;border:1px solid #3d514f;border-radius:10px;background:#162823}.motion-live{font-size:12px;line-height:1.6;color:#dfd3b4;margin:0}.motion-transport .motion-controls{margin-top:8px}.motion-transport #motionSeek{margin-top:8px}.motion-transport .motion-controls label{max-width:160px}
 
 .motion-facing{display:flex;align-items:center;gap:12px}.motion-compass{width:48px;height:58px;position:relative;flex:none;padding-top:10px}.motion-compass>span{position:absolute;top:-2px;left:20px;font-size:10px;color:#c8d9dc}.motion-compass svg{display:block;width:48px;height:48px}.motion-facing .motion-live{flex:1}
+
+/* Stage indicator stays useful during real computation, without a fake percentage. */
+.run-info{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:14px;font-size:11px;color:#b9dfdc}.run-pulse{width:8px;height:8px;border-radius:50%;background:#93e8d0;box-shadow:0 0 0 5px #93e8d018;animation:planner-pulse 1.8s ease-in-out infinite}.run-elapsed{color:#8fa4ad;font-variant-numeric:tabular-nums}.run-info button{margin-left:auto;font-size:11px}.speed-warning{color:#f4ce91!important}.state-chip[data-state="Adjusted plan"]{color:#f4ce91;border-color:#806b47}.state-chip[data-state="Checking"],.state-chip[data-state="Preparing engine"]{color:#b0f0de}.motion-transport[data-state="playing"]{border-color:#80c9b5;box-shadow:0 0 24px #7fe2bf10}.playback-state{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#c5e8dc}
+@keyframes planner-pulse{50%{opacity:.45;box-shadow:0 0 0 8px #93e8d008}}
+@media(prefers-reduced-motion:reduce){.run-pulse{animation:none}}
+
+.speed-summary{font-size:.875rem;line-height:1.65;color:#d7e7e7;margin:10px 0 18px}.project-controls{margin-top:22px;padding-top:14px;border-top:1px solid #344652}.project-controls input{max-width:100%}input[readonly]{opacity:.7}.speed-warning{color:#f2cf86!important}#buildIdentity{font-variant-numeric:tabular-nums}#legacySpeedNotice{margin-top:12px}
