@@ -1,0 +1,15 @@
+test_analytic_motion (tests.test_reference_audit.ReferenceAuditTests.test_analytic_motion) ... ok
+test_constant_acceleration_bias_detected (tests.test_reference_audit.ReferenceAuditTests.test_constant_acceleration_bias_detected) ... ok
+test_missing_duplicate_nonfinite_and_sparse_data (tests.test_reference_audit.ReferenceAuditTests.test_missing_duplicate_nonfinite_and_sparse_data) ... ok
+test_ned_thrust_sign (tests.test_reference_audit.ReferenceAuditTests.test_ned_thrust_sign) ... ok
+test_overspeed_detected_even_when_kinematically_consistent (tests.test_reference_audit.ReferenceAuditTests.test_overspeed_detected_even_when_kinematically_consistent) ... ok
+test_position_corruption_detected (tests.test_reference_audit.ReferenceAuditTests.test_position_corruption_detected) ... ok
+test_stationary_turn_accounting (tests.test_reference_audit.ReferenceAuditTests.test_stationary_turn_accounting) ... ok
+test_velocity_corruption_detected (tests.test_reference_audit.ReferenceAuditTests.test_velocity_corruption_detected) ... ok
+test_yaw_corruption_detected (tests.test_reference_audit.ReferenceAuditTests.test_yaw_corruption_detected) ... ok
+test_irregular_clock_and_stationary_turns (tests.test_reference_audit.TimingDisclosureTests.test_irregular_clock_and_stationary_turns) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.076s
+
+OK

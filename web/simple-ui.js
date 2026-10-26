@@ -93,6 +93,7 @@
    $('speedBound').nextElementSibling.textContent='Planned route peak · sampled';
    const requested=pace.requested_cruise_m_s===null?'automatic':pace.requested_cruise_m_s.toFixed(2)+' m/s';
    $('paceExplanation').textContent='Requested cruise '+requested+' · effective cap '+pace.planning_cap_m_s.toFixed(2)+' m/s · planned mean '+pace.planned_route_mean_sampled_m_s.toFixed(2)+' m/s. '+pace.semantics+' A 10% planning margin applies. This is reference motion; no measured flight is loaded.';
+   if(Number.isFinite(pace.stationary_time_sampled_s))$('speedSummary').textContent+=' Route '+pace.route_distance_sampled_m.toFixed(1)+' m in '+duration(pace.route_duration_s)+'. Stationary '+duration(pace.stationary_time_sampled_s)+' (including '+duration(pace.stationary_turn_time_sampled_s)+' turning), estimated from full-resolution reference samples.';
    if(pace.reasons.includes('requested_speed_cap'))$('paceExplanation').textContent+=' Your Never exceed setting limits the requested cruise. Change it in Flight settings if intended.';
    if(pace.reasons.includes('aircraft_speed_cap'))$('paceExplanation').textContent+=' The selected aircraft ceiling is '+pace.aircraft_maximum_m_s.toFixed(2)+' m/s.';
   }

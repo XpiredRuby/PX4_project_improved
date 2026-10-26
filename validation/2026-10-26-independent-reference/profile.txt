@@ -1,0 +1,33 @@
+         11718464 function calls (11638719 primitive calls) in 13.572 seconds
+
+   Ordered by: cumulative time
+   List reduced from 882 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   13.578   13.578 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/preview.py:23(preview)
+        1    0.000    0.000   13.569   13.569 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/closest.py:501(closest_preview)
+        1    0.005    0.005   13.568   13.568 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/preview.py:122(_preview_strict)
+        1    0.000    0.000   13.389   13.389 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/plan_drawn_path.py:140(compile_drawn_path)
+        1    0.002    0.002    6.303    6.303 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:673(build_smooth_path)
+    84576    0.206    0.000    5.833    0.000 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:188(evaluate)
+       12    0.016    0.001    5.195    0.433 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:416(measure_path_fidelity)
+        1    0.013    0.013    4.546    4.546 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/retiming.py:140(retime_stop_path)
+    84576    2.943    0.000    3.320    0.000 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:126(_de_boor)
+   229220    0.061    0.000    2.803    0.000 {built-in method builtins.max}
+        1    0.012    0.012    2.749    2.749 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/timing.py:581(plan_time_law)
+        1    0.000    0.000    2.479    2.479 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/verification.py:468(verify_candidate_trajectory)
+        1    0.013    0.013    1.833    1.833 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/verification.py:100(_trajectory_binds_to_curve)
+   363003    1.784    0.000    1.784    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+   258923    1.743    0.000    1.743    0.000 {built-in method numpy.asarray}
+    21024    0.009    0.000    1.714    0.000 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:445(<genexpr>)
+    21012    0.390    0.000    1.705    0.000 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:403(_minimum_sample_distance)
+       12    0.073    0.006    1.685    0.140 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/ordered_fidelity.py:123(ordered_fidelity)
+    69227    0.320    0.000    1.582    0.000 /opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/site-packages/numpy/linalg/_linalg.py:2623(norm)
+       96    0.750    0.008    1.272    0.013 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/ordered_fidelity.py:105(coupling_within)
+    35028    0.023    0.000    1.021    0.000 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:439(<genexpr>)
+      648    0.048    0.000    1.011    0.002 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/timing.py:490(duration_requirements)
+    35016    0.406    0.000    0.998    0.000 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/geometry.py:379(_point_to_segments)
+        1    0.000    0.000    0.955    0.955 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/yaw.py:173(heading_error_bound)
+        2    0.007    0.004    0.948    0.474 /workspace/scratch/9d61c3c0a48a/PX4_project_improved/mission_planner/yaw.py:204(_bounded_profile_error)
+
+

@@ -1,0 +1,18 @@
+straight-speed-0.5 1 True 
+straight-speed-1 1 False ValueError: Independent exported-reference diagnostic failed
+straight-speed-1.25 1 False ValueError: Independent exported-reference diagnostic failed
+straight-speed-1.5 1 False ValueError: Independent exported-reference diagnostic failed
+straight-speed-2 1 False ValueError: Independent exported-reference diagnostic failed
+straight-speed-3 1 True 
+straight-speed-5 1 True 
+explicit-low-cap 1 False ValueError: Independent exported-reference diagnostic failed
+height-0.1 1 True 
+height-1 1 False ValueError: Independent exported-reference diagnostic failed
+height-30 1 False ValueError: Independent exported-reference diagnostic failed
+height-50 1 False ValueError: Independent exported-reference diagnostic failed
+reversal 1 True 
+five-stops 1 True 
+duplicate-hover 1 True 
+tiny-detail 1 True 
+figure-eight 1 True 
+dense-10000 1 True 

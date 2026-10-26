@@ -87,6 +87,10 @@ def speed_preferences(payload, result):
     times = [float(r['time']) for r in rows]
     duration = times[-1] - times[0]
     distance = sum((b-a)*(u+v)/2 for a,b,u,v in zip(times, times[1:], speeds, speeds[1:], strict=False))
+    stationary = [u < 1e-4 and v < 1e-4 for u, v in zip(speeds, speeds[1:], strict=False)]
+    stationary_s = sum(b-a for a, b, stopped in zip(times, times[1:], stationary, strict=False) if stopped)
+    yaw_rates = [abs(float(r['yaw_rate'])) for r in rows]
+    turn_s = sum(b-a for a, b, stopped, u, v in zip(times, times[1:], stationary, yaw_rates, yaw_rates[1:], strict=False) if stopped and u+v > 1e-4)
     aircraft = result['vehicle_model']['maximum_speed_m_s']
     cap = effective['maximum_speed_m_s']
     target = effective.get('target_speed_m_s')
@@ -106,6 +110,10 @@ def speed_preferences(payload, result):
                 effective_cruise_m_s=target, effective_never_exceed_m_s=cap,
                 aircraft_maximum_m_s=aircraft, planning_cap_m_s=planned_cap,
                 planned_route_peak_sampled_m_s=peak,
+                route_distance_sampled_m=distance, route_duration_s=duration,
+                stationary_time_sampled_s=stationary_s,
+                stationary_turn_time_sampled_s=turn_s,
+                timing_measurement='50 ms sampled reference; stationary means endpoint speeds below 0.0001 m/s',
                 planned_route_mean_sampled_m_s=distance/duration if duration else 0.,
                 reasons=reasons, scope='planned route reference; no measured flight',
                 semantics='Cruise is an upper preference. Acceleration, jerk, turns and stops may require slower motion.')

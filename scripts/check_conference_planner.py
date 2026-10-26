@@ -11,11 +11,13 @@ import json
 import math
 from pathlib import Path
 import sys
+import subprocess
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from mission_planner.preview import preview  # noqa: E402
+from analysis.reference_audit import audit_reference  # noqa: E402
 from mission_planner.stop_turn_execution import audit_stop_turn_artifacts  # noqa: E402
 
 
@@ -122,6 +124,16 @@ def cases():
 
 def run(output, repeats):
     output.mkdir(parents=True, exist_ok=False)
+    sources = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+               for directory in ('mission_planner', 'analysis', 'scripts', 'config/planner')
+               for p in sorted((ROOT / directory).rglob('*'))
+               if p.is_file() and p.suffix in ('.py', '.json')}
+    identity = dict(
+        source_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
+        source_files=sources,
+        source_fingerprint=hashlib.sha256(json.dumps(sources, sort_keys=True).encode()).hexdigest(),
+        note='Commit plus exact working-source hashes; may include uncommitted changes.'
+    )
     results = []
     for name, payload in cases():
         for repeat in range(repeats):
@@ -175,6 +187,11 @@ def run(output, repeats):
                         "original_rounding_met"
                     ],
                 )
+                item["independent_reference_audit"] = audit_reference(
+                    value["trajectory_csv"], value["vehicle_model"], value["environment"]
+                )
+                if not item["independent_reference_audit"]["passed"]:
+                    raise ValueError("Independent exported-reference diagnostic failed")
                 if value["preview_settings"].get("planner_backend") == "stop_turn":
                     folder = output / (name + f"-{repeat + 1}")
                     folder.mkdir()
@@ -207,7 +224,7 @@ def run(output, repeats):
                     dict(
                         scope="offline references only",
                         simulator_ran=False,
-                        source_base="72f7b03c26e4ca20e2d45a19f272e5b1d9c4961b",
+                        source_identity=identity,
                         cases=results,
                     ),
                     indent=2,
