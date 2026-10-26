@@ -100,6 +100,25 @@ The runner retains any detected contact violation while waiting for PX4 ground,
 automatic disarm, and fresh zero propulsion outputs, then reports the failure.
 Detecting a violation is evidence of a failed landing, not proof it was avoided.
 
+## 20 m/s offline speed study
+
+The trajectory studio starts in an explicit research-only mode with a
+**20 m/s requested speed ceiling** (preferred cap initially 10 m/s).
+This removes the old 1.25 m/s *planner interface default*, but does not
+change the x500's independently bounded 3 m/s SITL model or the conservative
+PX4 controller's 1.25 m/s cruise-command default. The research model is
+unqualified, cannot be passed to the built-in Gazebo runner, and does not
+claim real-world 20 m/s tracking. Even in research mode, finite acceleration,
+jerk, turns and route length may keep the realized trajectory peak below
+the preferred cap. The status panel reports the effective limit and the
+certified speed bound.
+
+For a reproducible offline 10 m/s request within a 20 m/s maximum, use
+`missions/research_20ms_example.json` with
+`config/planner/research_20ms_preview_vehicle_model.json` and the
+normal empty-world environment in the drawn-path CLI. The complete studio
+workflow is described in [the quickstart](docs/trajectory_studio_quickstart.md).
+
 ## Drawn-path research baseline
 
 The first `SITL_ONLY` general-planner slice accepts a strict `LOCAL_NED`
