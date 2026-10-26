@@ -19,8 +19,16 @@ Python command. Open <http://127.0.0.1:8765>. A different port is available with
 
 ## Use
 
-Start with **Aircraft setup**. Enter a loaded configuration, import a saved
-profile, or use the registered simulator profile. **Check setup** lists missing
+The studio now opens in **20 m/s research preview**, an **offline-only**
+mode with an illustrative, unqualified multicopter model. Its hard speed
+ceiling is 20 m/s and its initial preferred cap is 10 m/s. Enter any
+preferred cap up to 20 m/s. The planner does not fall back to 1.25 m/s,
+but acceleration, jerk, geometry and available path length can still make
+the actual trajectory peak slower than requested. This mode has **no PX4/Gazebo
+rehearsal** and is not evidence of real-drone performance.
+
+For a vehicle-specific plan, select **Set up an aircraft**. Enter a loaded
+configuration, import a saved profile, or use the registered simulator profile. **Check setup** lists missing
 inputs and compatibility errors. Quad, hex, octo and custom parallel-rotor
 geometry feed the same independent checker. Save/export the profile for reuse.
 The explicit x500 reference demo remains available without custom setup.
@@ -118,12 +126,20 @@ physical flight.
 ## Explicit preview assumptions
 
 - `LOCAL_NED`, metres, launch origin `launch-001`; horizontal drawing plane.
-- Model: the existing conservative x500 SITL configuration, maximum speed
-  3 m/s. It is not an identified physical aircraft.
+- Research default: illustrative offline-only model with a declared 20 m/s
+  ceiling, 1.0 limit scale, and no validated high-speed tracking. Its output
+  cannot be submitted to the built-in PX4/Gazebo campaign.
+- x500 reference demo: a separate conservative SITL model with 3 m/s maximum
+  and 0.9 dynamic reserve. Changing to this mode explicitly sets its preferred
+  cap to 2 m/s and hard ceiling to 3 m/s. It does not inherit the 20 m/s study.
+- Custom aircraft: the declared vehicle speed and 0.9 reserve still bound the
+  resulting trajectory. The aircraft profile is not a speed permission.
 - Environment: existing empty-world contract, 40 m radius and maximum 30 m
   launch-relative height, without an obstacle map. No obstacle-avoidance claim.
-- Timing: current certified spline schedule, 0.9 limit scale; the preferred
-  speed currently acts as a cap, then is scaled by that reserve.
+- Timing: current certified spline schedule. The preferred speed is a cap,
+  not a guarantee of attained speed; the independent verifier reports the
+  actual speed bound. Aircraft-specific modes retain 0.9 reserve; research
+  preview uses the full declared envelope to study the requested limit.
 - Geometry: requested control spacing 0.5 m, verification resolution 0.02 m,
   75% smoothing utilization of the accepted geometric deviation tube.
 - CSV sampling: 0.05 s. Display samples are decimated to about 1,000 points;
