@@ -41,6 +41,39 @@ class EditorTests(unittest.TestCase):
                 self.assertIn("planner_contract_version", result["trajectory_csv"])
                 self.assertLessEqual(len(result["samples"]), 1002)
 
+    def test_twenty_meter_per_second_research_ceiling_is_offline_only(self):
+        drawn = json.loads((ROOT / "missions/drawn_path_example.json").read_text())
+        drawn["vehicle_model_id"] = "research-20ms-kinematic-v1"
+        drawn["path"]["points"] = [drawn["path"]["points"][0], drawn["path"]["points"][-1]]
+        drawn["motion"]["target_speed_m_s"] = 10.0
+        drawn["motion"]["maximum_speed_m_s"] = 20.0
+        payload = {"source": "drawing", "document": drawn,
+                   "preview_mode": "research_20ms"}
+        result = preview(payload)
+        self.assertTrue(result["accepted"])
+        self.assertTrue(result["verification"]["accepted"])
+        self.assertEqual(result["preview_mode"], "research_20ms")
+        self.assertTrue(result["research_only"])
+        self.assertFalse(result["simulation_compatible"])
+        self.assertFalse(result["flight_approval"])
+        self.assertAlmostEqual(result["vehicle_model"]["maximum_speed_m_s"], 20.0)
+        self.assertAlmostEqual(result["summary"]["retiming"]["speed_limit_m_s"], 10.0)
+        self.assertAlmostEqual(result["preview_settings"]["limit_scale"], 1.0)
+
+        from mission_planner.studio_jobs import StudioJobs
+        self.assertFalse(StudioJobs.compatible(object(), result))
+
+        drawn["motion"]["maximum_speed_m_s"] = 20.1
+        with self.assertRaisesRegex(ValueError, "at most 20 m/s"):
+            preview(payload)
+        drawn["motion"]["maximum_speed_m_s"] = 20.0
+        with self.assertRaisesRegex(ValueError, "unqualified research"):
+            preview({"source": "drawing", "document": {**drawn,
+                     "vehicle_model_id": "px4-x500-sitl-v1"},
+                     "preview_mode": "research_20ms"})
+        with self.assertRaisesRegex(ValueError, "cannot carry an aircraft profile"):
+            preview({**payload, "aircraft_profile": {}})
+
     def test_editor_does_not_accept_arbitrary_paths_or_authority_requests(self):
         for payload in (
             {"source": "drawing", "document": {}, "vehicle_path": "/tmp/model.json"},
