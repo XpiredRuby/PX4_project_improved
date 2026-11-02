@@ -30,8 +30,8 @@ export default function Plot({samples,field,cursor,onCursor,ceiling}:{
   const first=samples[0]?.time??0, last=samples[samples.length-1]?.time??1;
   const duration=Math.max(0.001,last-first);
   const vals=samples.map(s=>s[field]);
-  const yMin=Math.min(0,...(vals.length?vals:[0]));
-  const yMax=Math.max(0,...(vals.length?vals:[1]),ceiling??0);
+  let yMin=0,yMax=ceiling??0;
+  for(const v of vals){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}
   const spread=Math.max(0.01,yMax-yMin);
   const max=yMax+spread*.08,min=yMin-spread*.08;
   const X=(t:number)=>L+(t-first)/duration*(W-L-R);
