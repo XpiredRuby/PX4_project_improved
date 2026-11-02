@@ -1,4 +1,4 @@
-import type { Environment, Point, Preview, Project, Sample } from './types';
+import type { Environment, Preview, Project, Sample } from './types';
 
 export const initialEnvironment: Environment = {
   mode:'manual', latitude:30.62, longitude:-96.34,
