@@ -355,6 +355,9 @@ export default function App(){
           <button onClick={()=>applyExample('Circle')}>Closed-looking loop</button>
         </div>
         <div className="left-footer"><HelpCircle size={15}/><span>Draw or edit route points, then run the verified numerical planner. The shape may be adjusted to obey aircraft limits.</span></div>
+        <div className="pane-resizer left-resizer" role="separator" aria-label="Resize model explorer" aria-orientation="vertical" tabIndex={0}
+          onKeyDown={e=>{if(e.key==='ArrowLeft')setPaneWidths(w=>({...w,left:Math.max(180,w.left-15)}));if(e.key==='ArrowRight')setPaneWidths(w=>({...w,left:Math.min(400,w.left+15)}));}}
+          onPointerDown={e=>onResizeStart('left',e)} onPointerMove={onResizeMove} onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}/>
       </aside>
       <main className="main-pane">
         <div className="workspace-header"><div><div className="eyebrow">WORKSPACE / {active.toUpperCase()}</div>
