@@ -116,6 +116,9 @@ export default function App(){
   const [notice,setNotice]=useState('');
   const [result,setResult]=useState<Preview|null>(null);
   const [samples,setSamples]=useState<Sample[]>([]);
+  const [routeSamples,setRouteSamples]=useState<Sample[]>([]);
+  const [fullMissionSamples,setFullMissionSamples]=useState<Sample[]>([]);
+  const [viewScope,setViewScope]=useState<'route'|'full'>('full');
   const [cursor,setCursor]=useState(0);
   const [playing,setPlaying]=useState(false);
   const [engine,setEngine]=useState<'unknown'|'browser'|'local'>('unknown');
@@ -140,7 +143,7 @@ export default function App(){
     geometryRevision.current++;
     abort.current?.abort();
     setProject(prev=>{const next=f(prev);if(next!==prev){history.current=[...history.current.slice(-19),prev];}return next;});
-    setResult(null);setSamples([]);setCursor(0);setPlaying(false);setDirty(true);setError('');setNotice('');
+    setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setCursor(0);setPlaying(false);setDirty(true);setError('');setNotice('');
   },[]);
   const changeValue=(key:keyof Project,value:number|string)=>{
     update(p=>({...p,[key]:value}));
@@ -165,11 +168,11 @@ export default function App(){
     geometryRevision.current++;
     abort.current?.abort();
     setProject(old=>old.points.length>=8192?old:{...old,points:[...old.points,p]});
-    setDirty(true);setResult(null);setSamples([]);setPlaying(false);setCursor(0);
+    setDirty(true);setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setPlaying(false);setCursor(0);
   };
   const finishDraw=()=>{lastDraw.current=null;setNotice('Sketch added. Run verification; the planner may adjust this route to satisfy constraints.');};
   const clearRoute=()=>{update(p=>({...p,title:'New mission',points:[]}));setTool('draw');setSelected(-1);};
-  const undo=()=>{const previous=history.current.pop();if(previous){geometryRevision.current++;abort.current?.abort();setProject(previous);setResult(null);setSamples([]);setPlaying(false);setDirty(true);}};
+  const undo=()=>{const previous=history.current.pop();if(previous){geometryRevision.current++;abort.current?.abort();setProject(previous);setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setPlaying(false);setDirty(true);}};
   const applyExample=(name:string)=>{update(p=>({...p,title:name+' study',points:example(name,p.altitude)}));setSelected(-1);};
   const selectedPoint=project.points[selected];
   const stats=useMemo(()=>metrics(samples,project.environment),[samples,project.environment]);
@@ -201,9 +204,10 @@ export default function App(){
       if(!data.accepted||!response.ok)throw Error(data.error||'Planner rejected the requested route');
       if(!data.trajectory_csv)throw Error('Planner accepted but returned no reference CSV');
       const parsed=parseCsv(data.trajectory_csv);
+      const full=data.mission?.trajectory_csv?parseCsv(data.mission.trajectory_csv):[];
       if(submittedRevision!==geometryRevision.current){setNotice('Edited during compilation; discarded the obsolete result. Run verification again.');return;}
       if(!parsed.length)throw Error('Verified plan returned no usable samples');
-      setResult(data);setSamples(parsed);setCursor(parsed[0].time);setActive('analysis');setDirty(false);
+      setResult(data);setRouteSamples(parsed);setFullMissionSamples(full);setViewScope(full.length?'full':'route');setSamples(full.length?full:parsed);setCursor(0);setActive('analysis');setDirty(false);
       setNotice('Verified mathematical reference received. This is not PX4/Gazebo or flight telemetry.');
     }catch(e){if((e as Error).name!=='AbortError')setError((e as Error).message);else setNotice('Planning cancelled or invalidated by an edit. Your mission was kept.');}
     finally{setBusy(false);abort.current=null;}
@@ -290,6 +294,11 @@ export default function App(){
   };
   const saveProject=()=>downloadJson(project.title.replace(/[^a-z0-9_-]/gi,'_')+'.px4-project.json',project);
   const saveReference=()=>{if(result?.trajectory_csv)exportBlob('verified-route.csv',result.trajectory_csv,'text/csv');};
+  const changeScope=(scope:'route'|'full')=>{
+    const next=scope==='route'?routeSamples:fullMissionSamples;
+    if(!next.length)return;
+    setViewScope(scope);setSamples(next);setPlaying(false);setCursor(next[0].time);
+  };
   const summary=getPreviewSummary(result||{accepted:false});
   return <div className="app-shell">
     <header className="topbar">
@@ -376,7 +385,7 @@ export default function App(){
         </section>:
         <section className="data-section">
           <div className="section-heading"><div><strong>Reference timeline</strong><span>Play, scrub, and inspect the verified CSV at original time coordinates.</span></div>
-          <div className="timeline-buttons"><button aria-label="Play or pause" onClick={()=>{if(cursor>= (samples[samples.length-1]?.time||0))setCursor(samples[0]?.time||0);setPlaying(!playing);}} disabled={!samples.length}>{playing?<Pause size={16}/>:<Play size={16}/>}</button>
+          <div className="timeline-buttons"><div className="scope-tabs"><button className={viewScope==='route'?'scope-current':''} disabled={!routeSamples.length} onClick={()=>changeScope('route')}>Route</button><button className={viewScope==='full'?'scope-current':''} disabled={!fullMissionSamples.length} onClick={()=>changeScope('full')}>Full mission</button></div><button aria-label="Play or pause" onClick={()=>{if(cursor>= (samples[samples.length-1]?.time||0))setCursor(samples[0]?.time||0);setPlaying(!playing);}} disabled={!samples.length}>{playing?<Pause size={16}/>:<Play size={16}/>}</button>
             <button onClick={()=>setCursor(samples[0]?.time||0)} disabled={!samples.length} title="Reset time"><RotateCcw size={15}/></button></div></div>
           <div className="scrubber"><input aria-label="Reference time" type="range" min={samples[0]?.time||0} max={samples[samples.length-1]?.time||1} step=".01" value={cursor} disabled={!samples.length} onChange={e=>{setPlaying(false);setCursor(Number(e.target.value));}}/>
             <span>{display(cursor,'s')} / {display(duration,'s')}</span></div>
@@ -409,7 +418,8 @@ export default function App(){
         </section>}
         {result&&<section className="data-section">
           <div className="section-heading"><div><strong>Verification & artifact exports</strong><span>Mathematical reference — not simulated or physically measured flight</span></div>
-            <div className="section-actions"><button onClick={saveReference}><ArrowDownToLine size={14}/> CSV</button>
+            <div className="section-actions"><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
+              {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
               <button onClick={()=>downloadJson('planner-evidence.json',{result:{...result,trajectory_csv:undefined},environment:project.environment,scope:'planned reference; environment used only for air-relative analysis'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
             <div><span>RESULT</span><strong className="pass-label">ACCEPTED REFERENCE</strong></div>
@@ -492,7 +502,7 @@ export default function App(){
       </aside>
     </div>
     <footer className="statusbar"><span><span className="status-indicator"/> {result?.accepted?'Reference verified':'No active verified result'}</span>
-      <span>Display: NED → East/North/Up · SI</span><span>Weather: {project.environment.mode} · analysis only</span><span>PX4/Gazebo: Not run</span>
+      <span>Display: NED → East/North/Up · SI</span><span>Weather: {project.environment.mode} · analysis only</span><span>PX4/Gazebo: Not run · {viewScope} reference</span>
       <span>Milestones 1–2 preview / NOT FLIGHT APPROVAL</span></footer>
   </div>;
 }
