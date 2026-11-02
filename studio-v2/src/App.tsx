@@ -127,11 +127,14 @@ export default function App(){
   const frame=useRef<number>(0);
   const clock=useRef<number>(0);
   const lastDraw=useRef<Point|null>(null);
+  const geometryRevision=useRef(0);
   const history=useRef<Project[]>([]);
 
   useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>setEngine(d.execution_location==='browser'?'browser':'local')).catch(()=>setEngine('unknown'));},[]);
   useEffect(()=>()=>{abort.current?.abort();cancelAnimationFrame(frame.current);},[]);
   const update=useCallback((f:(p:Project)=>Project)=>{
+    geometryRevision.current++;
+    abort.current?.abort();
     setProject(prev=>{const next=f(prev);if(next!==prev){history.current=[...history.current.slice(-19),prev];}return next;});
     setResult(null);setSamples([]);setCursor(0);setPlaying(false);setDirty(true);setError('');setNotice('');
   },[]);
@@ -155,12 +158,14 @@ export default function App(){
     if(!first&&previous&&Math.hypot(previous.north-north,previous.east-east)<.6)return;
     const p:Point={id:'D'+sid(),north,east,altitude:project.altitude,hard:false,exact:false};
     lastDraw.current=p;
+    geometryRevision.current++;
+    abort.current?.abort();
     setProject(old=>old.points.length>=8192?old:{...old,points:[...old.points,p]});
     setDirty(true);setResult(null);setSamples([]);setPlaying(false);setCursor(0);
   };
   const finishDraw=()=>{lastDraw.current=null;setNotice('Sketch added. Run verification; the planner may adjust this route to satisfy constraints.');};
   const clearRoute=()=>{update(p=>({...p,title:'New mission',points:[]}));setTool('draw');setSelected(-1);};
-  const undo=()=>{const previous=history.current.pop();if(previous){setProject(previous);setResult(null);setSamples([]);setPlaying(false);setDirty(true);}};
+  const undo=()=>{const previous=history.current.pop();if(previous){geometryRevision.current++;abort.current?.abort();setProject(previous);setResult(null);setSamples([]);setPlaying(false);setDirty(true);}};
   const applyExample=(name:string)=>{update(p=>({...p,title:name+' study',points:example(name,p.altitude)}));setSelected(-1);};
   const selectedPoint=project.points[selected];
   const stats=useMemo(()=>metrics(samples,project.environment),[samples,project.environment]);
@@ -184,6 +189,7 @@ export default function App(){
     setError('');setNotice('');setPlaying(false);
     try{
       const request=buildRequest(project);
+      const submittedRevision=geometryRevision.current;
       const controller=new AbortController();abort.current=controller;
       setBusy(true);
       const response=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request),signal:controller.signal});
@@ -191,10 +197,11 @@ export default function App(){
       if(!data.accepted||!response.ok)throw Error(data.error||'Planner rejected the requested route');
       if(!data.trajectory_csv)throw Error('Planner accepted but returned no reference CSV');
       const parsed=parseCsv(data.trajectory_csv);
+      if(submittedRevision!==geometryRevision.current){setNotice('Edited during compilation; discarded the obsolete result. Run verification again.');return;}
       if(!parsed.length)throw Error('Verified plan returned no usable samples');
       setResult(data);setSamples(parsed);setCursor(parsed[0].time);setActive('analysis');setDirty(false);
       setNotice('Verified mathematical reference received. This is not PX4/Gazebo or flight telemetry.');
-    }catch(e){if((e as Error).name!=='AbortError')setError((e as Error).message);else setNotice('Planning cancelled. Your mission was kept.');}
+    }catch(e){if((e as Error).name!=='AbortError')setError((e as Error).message);else setNotice('Planning cancelled or invalidated by an edit. Your mission was kept.');}
     finally{setBusy(false);abort.current=null;}
   };
   const fetchWeather=async()=>{
