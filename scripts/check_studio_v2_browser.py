@@ -65,6 +65,7 @@ def main():
     base = f"http://127.0.0.1:{server.server_port}"
     results = []
     page_errors = []
+    runtime_diagnostics = []
     try:
         from playwright.sync_api import sync_playwright
 
@@ -130,10 +131,21 @@ def main():
                 real = browser.new_context(viewport={"width": 1440, "height": 940})
                 live = real.new_page()
                 live.on("pageerror", lambda error: page_errors.append(str(error)))
+                live.on("console", lambda msg: runtime_diagnostics.append('console '+msg.type+': '+msg.text) if msg.type == 'error' else None)
+                live.on("requestfailed", lambda req: runtime_diagnostics.append('request failed: '+req.url+' '+str(req.failure)))
                 live.goto(base, wait_until="domcontentloaded", timeout=30000)
                 live.get_by_role("button", name="Straight path").click()
                 live.get_by_role("button", name="Plan & verify").click()
-                live.get_by_text("ACCEPTED REFERENCE").wait_for(timeout=150000)
+                try:
+                    live.wait_for_function("""() => Boolean(document.querySelector('.pass-label')) || Boolean(document.querySelector('.notice.error'))""", timeout=137000)
+                except Exception:
+                    runtime_diagnostics.append('timeout; no verified reference or explicit UI refusal')
+                if not live.locator('.pass-label').count():
+                    runtime_diagnostics.append('UI notices: '+repr(live.locator('.notice').all_inner_texts()))
+                    runtime_diagnostics.append('engine status: '+repr(live.locator('.menu-right').all_inner_texts()))
+                    runtime_diagnostics.append('working: '+repr(live.get_by_role('button',name='Verifying…').count()))
+                    live.screenshot(path=str(options.output / 'real-planner-diagnostic.png'), full_page=True)
+                    raise RuntimeError('Real-browser planner did not accept route: '+repr(runtime_diagnostics[-25:]))
                 assert "NOT RUN" in live.locator(".verification-grid").inner_text()
                 results.append("REAL Pyodide Python planner accepted a straight trajectory, no Gazebo")
                 live.screenshot(path=str(options.output / "real-planner-result.png"), full_page=True)
@@ -150,6 +162,7 @@ def main():
             "actual_planner_attempted": options.real_planner,
             "results": results,
             "page_errors": page_errors,
+            "runtime_diagnostics": runtime_diagnostics,
         }, indent=2) + "\n")
 
     print("\n".join("PASS " + label for label in results))
