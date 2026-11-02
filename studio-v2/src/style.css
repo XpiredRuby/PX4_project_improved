@@ -14,8 +14,8 @@ button.ghost:hover{background:#253846}.icon-button{width:34px;height:34px;paddin
 .menu-buttons{display:flex;align-items:stretch;gap:7px}.menu-buttons button{display:flex;align-items:center;gap:8px;padding:0 19px;background:none;color:#94acbc;border:0;border-bottom:2px solid transparent;font-size:12px}
 .menu-buttons button.nav-active{color:#e5f5fa;border-bottom-color:#5ac8e1;background:#192e3a}.menu-buttons button:hover{color:#edf7fc}
 .menu-right{display:flex;align-items:center;gap:12px;color:#829bab;font-family:'IBM Plex Mono',monospace;font-size:10px}.menu-divider{width:1px;height:18px;background:#354855}.live-dot{display:inline-block;width:6px;height:6px;background:#64c0a1;border-radius:50%;margin-right:5px}
-.workbench{display:grid;grid-template-columns:235px minmax(0,1fr) 288px;min-height:0;flex:1;overflow:hidden}
-.left-rail{display:flex;flex-direction:column;background:#15212c;border-right:1px solid #2c4050;min-width:0;overflow:auto}
+.workbench{display:grid;grid-template-columns:var(--left-pane,235px) minmax(0,1fr) var(--right-pane,288px);min-height:0;flex:1;overflow:hidden}
+.left-rail{position:relative;display:flex;flex-direction:column;background:#15212c;border-right:1px solid #2c4050;min-width:0;overflow:auto}
 .pane-title{padding:15px 16px;display:flex;gap:8px;align-items:center;letter-spacing:.11em;font-size:10px;font-weight:700;color:#a4b9c8;border-bottom:1px solid #2d4150}
 .tree{padding:12px 9px}.tree-root,.tree-child,.tree-sub{display:flex;gap:9px;align-items:center;color:#b7cad7;white-space:nowrap;min-height:32px;padding:4px 9px;font-size:12px}
 .tree-root{font-weight:700;color:#d8e9f0}.tree-child{padding-left:24px}.tree-sub{padding-left:48px;font-size:10px;color:#7f9aae}
@@ -68,7 +68,7 @@ button.ghost:hover{background:#253846}.icon-button{width:34px;height:34px;paddin
 .verification-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;padding:18px}.verification-grid strong{font:12px 'IBM Plex Mono',monospace;color:#e8f0f5}.verification-grid .pass-label{color:#7fe0ae}
 .data-section details{border-top:1px solid #344956;margin-top:4px;padding:13px 16px;color:#90aabd;font-size:12px}
 .data-section details pre{background:#101f2b;color:#acc3d0;padding:12px;border-radius:4px;max-height:310px;overflow:auto;font:10px/1.5 'IBM Plex Mono',monospace}
-.inspector{background:#16232e;border-left:1px solid #2c4050;display:flex;flex-direction:column;min-width:0;overflow-y:auto}.inspector-content{padding:0 15px 25px}
+.inspector{position:relative;background:#16232e;border-left:1px solid #2c4050;display:flex;flex-direction:column;min-width:0;overflow-y:auto}.inspector-content{padding:0 15px 25px}
 .inspector-section{border-bottom:1px solid #314655;padding:14px 0 19px}.group-title{display:flex;align-items:center;justify-content:space-between;color:#b7cbd6;font-size:10px;letter-spacing:.09em;font-weight:700;margin-bottom:13px;width:100%}
 .group-click{background:none;border:0;padding:0;text-align:left;cursor:pointer}.group-click svg:nth-child(2){margin-left:auto}
 .inspector-section label{display:block;color:#9eb5c3;font-size:11px;margin:10px 0 6px}.inspector-section input:not([type=checkbox]),.inspector-section select{width:100%;min-width:0;background:#10212d;border:1px solid #3c5362;border-radius:4px;color:#d8e9f1;padding:8px 9px;font-size:12px}
@@ -82,7 +82,7 @@ button.ghost:hover{background:#253846}.icon-button{width:34px;height:34px;paddin
 .notice{border-radius:4px;padding:10px 12px;margin-bottom:15px;display:flex;gap:9px;align-items:center;font-size:11px;line-height:1.5}.notice>span{flex:1}.notice button{background:transparent;border:0;color:inherit;display:grid;place-items:center}.notice.error{background:#38282d;border:1px solid #99535f;color:#ffb4b9}.notice.info{background:#1d3a38;border:1px solid #356963;color:#b0e5d8}
 .statusbar{height:30px;min-height:30px;background:#122431;border-top:1px solid #355061;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 15px;color:#89a4b5;font:9px 'IBM Plex Mono',monospace;white-space:nowrap;overflow:hidden}
 .status-indicator{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d3b06d;margin-right:5px}
-@media(max-width:1370px){.workbench{grid-template-columns:205px minmax(0,1fr) 264px}.main-pane{padding:18px}.menu-right{display:none}.workspace-header h1{font-size:23px}.tool-strip-info{display:none}.tool-group button{padding:7px}.tool-group span{display:none}}
+@media(max-width:1370px){.workbench{grid-template-columns:var(--left-pane,205px) minmax(0,1fr) var(--right-pane,264px)}.main-pane{padding:18px}.menu-right{display:none}.workspace-header h1{font-size:23px}.tool-strip-info{display:none}.tool-group button{padding:7px}.tool-group span{display:none}}
 @media(max-width:1050px){.workbench{grid-template-columns:0 minmax(0,1fr) 256px}.left-rail{display:none}.top-center{display:none}.metrics-row{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){body{min-width:360px}.app-shell{height:auto;min-height:100vh;overflow:visible}.topbar{padding:0 12px}.brand{min-width:0}.brand strong{font-size:12px}.brand small{font-size:8px}.top-actions .status-tag{display:none}
 .menubar{padding:0 8px}.menu-buttons{width:100%;justify-content:space-around}.menu-buttons button{padding:0 9px;font-size:10px}
@@ -97,3 +97,5 @@ button.ghost:hover{background:#253846}.icon-button{width:34px;height:34px;paddin
 .place-search{display:flex;gap:5px}.place-search input{flex:1;min-width:0}.place-search button{background:#245466;color:#d9f5fc;border:1px solid #4b91a6;border-radius:4px;padding:7px 10px;font-size:11px}.place-matches{background:#102632;border:1px solid #3b677a;border-radius:4px;margin-top:5px;max-height:160px;overflow-y:auto}.place-matches button{display:block;width:100%;text-align:left;background:transparent;color:#c6dce7;border:0;padding:8px 10px;font-size:11px}.place-matches button:hover{background:#2a4b5a}
 
 .scope-tabs{display:flex;gap:2px;padding:2px;background:#10232f;border:1px solid #3c5869;border-radius:4px}.scope-tabs button{border:0;background:transparent;color:#91acbc;padding:5px 9px}.scope-tabs button.scope-current{background:#2a5669;color:#d8f3f9}
+
+.pane-resizer{position:absolute;top:0;bottom:0;width:7px;z-index:4;cursor:col-resize;touch-action:none;background:transparent;outline-offset:-2px}.pane-resizer:hover,.pane-resizer:focus-visible{background:#4fc8e255}.left-resizer{right:0}.right-resizer{left:0}@media(max-width:1050px){.pane-resizer{display:none}}
