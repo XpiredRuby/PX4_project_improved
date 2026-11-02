@@ -32,7 +32,8 @@ export default function Viewport({points,samples,cursor}:{points:Point[];samples
     const W=size.width,H=size.height;
     ctx.fillStyle='#0c1923';ctx.fillRect(0,0,W,H);
     const all=samples.length?samples.map(s=>({north:s.north,east:s.east,altitude:s.altitude})):points;
-    const extreme=Math.max(20,...all.map(p=>Math.max(Math.abs(p.north),Math.abs(p.east),Math.abs(p.altitude))),1);
+    let extreme=20;
+    for(const p of all) extreme=Math.max(extreme,Math.abs(p.north),Math.abs(p.east),Math.abs(p.altitude));
     const scale=Math.max(1,Math.min(W,H)*.65/extreme)*camera.zoom;
     const get=(n:number,e:number,h:number)=>project(n,e,h,camera.az,camera.el,scale,W/2,H*.69);
     const drawLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width=1)=>{
