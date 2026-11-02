@@ -119,7 +119,7 @@ def main():
             page.get_by_role("button", name="Plan & verify").click()
             page.get_by_role("heading", name="Engineering post-processing").wait_for()
             page.get_by_text("ACCEPTED REFERENCE").wait_for()
-            assert page.locator(".plot-grid .plot-box").count() == 5
+            assert page.locator(".plot-grid .plot-box").count() == 6
             assert "SYNTHETIC UI TEST ONLY" in page.locator(".adjustments").inner_text()
             assert "NOT RUN" in page.locator(".verification-grid").inner_text()
             assert "0.00 s" in page.locator(".sample-readout").inner_text()
