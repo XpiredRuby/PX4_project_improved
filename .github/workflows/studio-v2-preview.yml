@@ -3,6 +3,9 @@ on:
   push:
     branches: [ai/studio-v2-milestones-1-2-20261101]
   workflow_dispatch:
+concurrency:
+  group: studio-v2-preview
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-24.04
