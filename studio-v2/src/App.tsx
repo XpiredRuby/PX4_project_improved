@@ -139,7 +139,8 @@ export default function App(){
     update(p=>({...p,[key]:value}));
   };
   const changeEnv=(patch:Partial<Environment>)=>{
-    setProject(p=>({...p,environment:{...p.environment,...patch}}));
+    const stale=project.environment.mode==='live' && ['latitude','longitude','timestamp'].some(k=>Object.prototype.hasOwnProperty.call(patch,k));
+    setProject(p=>({...p,environment:{...p.environment,...(stale?{windSpeed:0,windDirection:0,gust:0,source:'Awaiting new location/time forecast',fetchedAt:undefined}:{}),...patch}}));
     setDirty(true);
     if(patch.mode!==undefined)setWeatherError('');
   };
@@ -149,6 +150,7 @@ export default function App(){
     setSelected(project.points.length);
   };
   const drawPoint=(north:number,east:number,first:boolean)=>{
+    if(first)history.current=[...history.current.slice(-19),project];
     const previous=lastDraw.current;
     if(!first&&previous&&Math.hypot(previous.north-north,previous.east-east)<.6)return;
     const p:Point={id:'D'+sid(),north,east,altitude:project.altitude,hard:false,exact:false};
@@ -157,6 +159,7 @@ export default function App(){
     setDirty(true);setResult(null);setSamples([]);setPlaying(false);setCursor(0);
   };
   const finishDraw=()=>{lastDraw.current=null;setNotice('Sketch added. Run verification; the planner may adjust this route to satisfy constraints.');};
+  const clearRoute=()=>{update(p=>({...p,title:'New mission',points:[]}));setTool('draw');setSelected(-1);};
   const undo=()=>{const previous=history.current.pop();if(previous){setProject(previous);setResult(null);setSamples([]);setPlaying(false);setDirty(true);}};
   const applyExample=(name:string)=>{update(p=>({...p,title:name+' study',points:example(name,p.altitude)}));setSelected(-1);};
   const selectedPoint=project.points[selected];
@@ -264,6 +267,7 @@ export default function App(){
         </div>
         <div className="pane-title second-title"><SlidersHorizontal size={14}/> OPERATIONS</div>
         <div className="operations">
+          <button onClick={clearRoute}>+ New blank mission</button>
           <button onClick={()=>applyExample('Straight')}>Straight path</button>
           <button onClick={()=>applyExample('L')}>L-shaped route</button>
           <button onClick={()=>applyExample('Survey')}>Survey route</button>
@@ -295,7 +299,7 @@ export default function App(){
           {active==='geometry'?
             <TopMap points={project.points} selected={selected} onSelect={setSelected} onChange={editPoint} tool={tool}
               onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} range={range} setRange={setRange}/>
-          : <Viewport points={project.points} samples={samples} cursor={cursor}/>}
+          : <Viewport points={project.points} samples={samples} cursor={cursor} field={field}/>}
         </div>
         {active==='geometry'?<section className="data-section">
           <div className="section-heading"><div><strong>Waypoint definition</strong><span>Double-check positions and required stops</span></div>
@@ -321,8 +325,9 @@ export default function App(){
                 <option value="speed">Groundspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
                 <option value="altitude">Altitude</option><option value="yaw">Yaw</option></select>
               <span>Computed field, not an FEA stress solution</span></div>
-            <Plot samples={samples} field={field} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
-              ceiling={field==='speed'?cap:field==='acceleration'?1:field==='jerk'?1.5:undefined}/>
+            <div className="plot-grid">{(['speed','acceleration','jerk','altitude','yaw'] as const).map(metric=>
+              <Plot key={metric} samples={samples} field={metric} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
+                ceiling={metric==='speed'?cap:metric==='acceleration'?1:metric==='jerk'?1.5:undefined}/>)}</div>
           </>}
           {current&&<div className="sample-readout">
             <div><span>TIME</span><strong>{display(current.time,'s')}</strong></div>
@@ -352,7 +357,12 @@ export default function App(){
             <div><span>PLANNED CAP</span><strong>{String(summary.speed.planning_cap_m_s??'—')} m/s</strong></div>
             <div><span>GAZEBO CAMPAIGN</span><strong>NOT RUN</strong></div>
           </div>
-          <details><summary>Raw verification evidence and adjustment report</summary><pre>{JSON.stringify({verification:summary.certificate,adjustments:result.adjustments,interpretation:result.interpretation},null,2)}</pre></details>
+          {result.planning_adjustments&&<div className="adjustments"><strong>Requested vs accepted trajectory</strong>
+            <p>Original drawing tolerance: {display(result.planning_adjustments.requested_rounding_m??0,'m')}. Maximum documented requested-path bound: {display(result.planning_adjustments.curve_error_bound_from_requested_m??0,'m')}. Fidelity criterion: {result.planning_adjustments.original_rounding_met?'Met':'Not met; modified route requires review'}.</p>
+            <ul>{(result.planning_adjustments.adjustments||[]).map((a,i)=><li key={i}><strong>{a.code}</strong> — {a.message}</li>)}</ul>
+            {!result.planning_adjustments.adjusted&&<p>No requested-route adjustment was reported by the planner.</p>}
+          </div>}
+          <details><summary>Raw verification evidence and adjustment report</summary><pre>{JSON.stringify({verification:summary.certificate,adjustments:result.planning_adjustments,interpretation:result.interpretation},null,2)}</pre></details>
         </section>}
       </main>
       <aside className="inspector">
