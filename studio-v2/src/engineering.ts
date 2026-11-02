@@ -32,9 +32,10 @@ export function validateProject(project: Project) {
   finite(project.environment.latitude,'Latitude',-90,90);
   finite(project.environment.longitude,'Longitude',-180,180);
   for(const p of project.points) {
-    finite(p.north,'North coordinate',-40,40); finite(p.east,'East coordinate',-40,40);
+    finite(p.north,'North coordinate',-500,500); finite(p.east,'East coordinate',-500,500);
     finite(p.altitude,'Waypoint altitude',0.1,30);
-    if(Math.hypot(p.north,p.east)>40+1e-7) throw Error(p.id+' exceeds the 40 m reference radius');
+    // The closest-feasible planner can project oversize requests into the model envelope.
+    // Preserve the original geometry and let the verifier disclose the adjustment.
   }
   return project;
 }
@@ -67,7 +68,7 @@ export function parseCsv(text:string):Sample[] {
   for (let i=1;i<lines.length;i++){
     const values=lines[i].split(',');
     if(values.length!==headers.length) throw Error('Malformed trajectory row '+(i+1));
-    const get=(key:string)=>{const n=Number(values[headers.indexOf(key)]);if(!Number.isFinite(n))throw Error('Non-finite '+key+' in row '+(i+1));return n;};
+    const get=(key:string)=>{const raw=values[headers.indexOf(key)];if(raw===undefined||raw.trim()==='')throw Error('Missing '+key+' in row '+(i+1));const n=Number(raw);if(!Number.isFinite(n))throw Error('Non-finite '+key+' in row '+(i+1));return n;};
     const maybe=(key:string)=>headers.includes(key)?get(key):0;
     const time=get('time');
     if(time<=lastTime) throw Error('CSV time must be strictly increasing at row '+(i+1));
