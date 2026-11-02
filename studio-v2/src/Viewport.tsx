@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Point,Sample } from './types';
-import type { Field } from './Plot';
+import type { Environment, Point,Sample } from './types';
+import { fieldValue, type Field } from './Plot';
 import { interpolate } from './engineering';
 
 function project(n:number,e:number,h:number,az:number,el:number,scale:number,cx:number,cy:number){
@@ -12,7 +12,7 @@ const col=(t:number)=>{
   const u=Math.min(1,Math.max(0,t));
   return 'hsl('+(196-175*u)+', 85%, '+(62-7*u)+'%)';
 };
-export default function Viewport({points,samples,cursor,field}:{points:Point[];samples:Sample[];cursor:number;field:Field}){
+export default function Viewport({points,samples,cursor,field,environment}:{points:Point[];samples:Sample[];cursor:number;field:Field;environment:Environment}){
   const ref=useRef<HTMLCanvasElement>(null);
   const [camera,setCamera]=useState({az:-0.65,el:0.57,zoom:1});
   const [size,setSize]=useState({width:800,height:480});
@@ -20,9 +20,9 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
   const scene=useMemo(()=>{
     let extreme=20, low=Infinity, high=-Infinity;
     for(const p of points)extreme=Math.max(extreme,Math.abs(p.north),Math.abs(p.east),Math.abs(p.altitude));
-    for(const s of samples){extreme=Math.max(extreme,Math.abs(s.north),Math.abs(s.east),Math.abs(s.altitude));low=Math.min(low,s[field]);high=Math.max(high,s[field]);}
+    for(const s of samples){extreme=Math.max(extreme,Math.abs(s.north),Math.abs(s.east),Math.abs(s.altitude));const scalar=fieldValue(s,field,environment);low=Math.min(low,scalar);high=Math.max(high,scalar);}
     return {extreme,low,high,span:Math.max(0.01,high-low)};
-  },[points,samples,field]);
+  },[points,samples,field,environment]);
   useEffect(()=>{
     const canvas=ref.current;if(!canvas)return;
     const observer=new ResizeObserver(entries=>{
@@ -62,12 +62,12 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
       const stride=Math.max(1,Math.floor(samples.length/1400));
       for(let i=stride;i<samples.length;i+=stride){
         const a=samples[i-stride],b=samples[i];
-        drawLine(get(a.north,a.east,a.altitude),get(b.north,b.east,b.altitude),col((b[field]-low)/span),2.8);
+        drawLine(get(a.north,a.east,a.altitude),get(b.north,b.east,b.altitude),col((fieldValue(b,field,environment)-low)/span),2.8);
       }
       const last=samples[samples.length-1];
       if(last&&samples.length>1){
         const a=samples[Math.max(0,samples.length-1-stride)];
-        drawLine(get(a.north,a.east,a.altitude),get(last.north,last.east,last.altitude),col((last[field]-low)/span),2.8);
+        drawLine(get(a.north,a.east,a.altitude),get(last.north,last.east,last.altitude),col((fieldValue(last,field,environment)-low)/span),2.8);
       }
       const s=interpolate(samples,cursor);
       if(s){
@@ -80,7 +80,7 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
     }
     ctx.fillStyle='#b7ccd8';ctx.font='12px ui-monospace, monospace';
     ctx.fillText('NED frame · UP = −Down · equal axis scaling',16,H-16);
-  },[size,camera,points,samples,cursor,field,scene]);
+  },[size,camera,points,samples,cursor,field,environment,scene]);
   return <div className="viewer">
     <div className="viewer-tools"><span>3D ORBIT / REFERENCE FIELD</span>
       <button type="button" title="Reset 3D view" onClick={()=>setCamera({az:-.65,el:.57,zoom:1})}>Reset</button></div>
