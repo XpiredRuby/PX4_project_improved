@@ -31,6 +31,11 @@ export function validateProject(project: Project) {
   if (!Number.isFinite(Date.parse(project.environment.timestamp))) throw Error('Invalid environment timestamp');
   finite(project.environment.latitude,'Latitude',-90,90);
   finite(project.environment.longitude,'Longitude',-180,180);
+  finite(project.environment.windSpeed,'Wind speed',0,75);
+  finite(project.environment.gust,'Wind gust',0,100);
+  finite(project.environment.windDirection,'Wind from',-3600,3600);
+  finite(project.environment.temperature,'Temperature',-100,80);
+  finite(project.environment.pressure,'Pressure',100,1100);
   for(const p of project.points) {
     finite(p.north,'North coordinate',-500,500); finite(p.east,'East coordinate',-500,500);
     finite(p.altitude,'Waypoint altitude',0.1,30);
@@ -90,6 +95,11 @@ export function windNE(speed:number, directionFromDeg:number) {
   const angle=directionFromDeg*Math.PI/180;
   return {north:-speed*Math.cos(angle),east:-speed*Math.sin(angle)};
 }
+// Dry ideal-gas approximation using the supplied near-surface pressure and temperature.
+// Not a vertical atmosphere model, pitot measurement or dynamic flight simulator.
+export function dryAirDensity(environment:Environment) {
+  return environment.pressure*100/(287.05*(environment.temperature+273.15));
+}
 export function airspeed(sample:Sample, environment:Environment) {
   const w=windNE(environment.windSpeed,environment.windDirection);
   return Math.hypot(sample.vx-w.north,sample.vy-w.east,sample.vz);
@@ -97,13 +107,14 @@ export function airspeed(sample:Sample, environment:Environment) {
 export function metrics(samples:Sample[], env:Environment) {
   if(!samples.length)return null;
   let path=0,peak=0,accel=0,jerk=0,air=0;
+  const density=dryAirDensity(env);
   for(let i=0;i<samples.length;i++){
     const s=samples[i];peak=Math.max(peak,s.speed);accel=Math.max(accel,s.acceleration);
     jerk=Math.max(jerk,s.jerk);air=Math.max(air,airspeed(s,env));
     if(i)path+=Math.hypot(s.north-samples[i-1].north,s.east-samples[i-1].east,s.altitude-samples[i-1].altitude);
   }
   return {duration:samples[samples.length-1].time-samples[0].time,
-    distance:path,peak,accel,jerk,air};
+    distance:path,peak,accel,jerk,air,density,peakDynamicPressure:0.5*density*air*air};
 }
 export function interpolate(samples:Sample[], t:number) {
   if(samples.length===0)return null;
