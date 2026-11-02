@@ -83,7 +83,7 @@ export function parseCsv(text:string):Sample[] {
     const ax=maybe('ax'),ay=maybe('ay'),az=maybe('az');
     const jx=maybe('jx'),jy=maybe('jy'),jz=maybe('jz');
     rows.push({time,north,east,altitude,vx,vy,vz,ax,ay,az,jx,jy,jz,
-      yaw:maybe('yaw'),speed:Math.hypot(vx,vy,vz),
+      yaw:maybe('yaw'),yawRate:maybe('yaw_rate'),yawAcceleration:maybe('yaw_acceleration'),yawJerk:maybe('yaw_jerk'),speed:Math.hypot(vx,vy,vz),
       acceleration:Math.hypot(ax,ay,az),jerk:Math.hypot(jx,jy,jz)});
     if(rows.length>250000)throw Error('CSV exceeds 250,000 sample display budget');
   }
@@ -116,18 +116,51 @@ export function metrics(samples:Sample[], env:Environment) {
   return {duration:samples[samples.length-1].time-samples[0].time,
     distance:path,peak,accel,jerk,air,density,peakDynamicPressure:0.5*density*air*air};
 }
-export function interpolate(samples:Sample[], t:number) {
+/**
+ * Exact degree <=7 Hermite reconstruction when two serialized reference
+ * samples belong to a single polynomial phase. The planner's per-sample
+ * (position,velocity,acceleration,jerk) at BOTH endpoints uniquely determine
+ * the septic polynomial, unlike inaccurate linear drawing interpolation.
+ * Phase boundaries must be emitted as separate samples by the exporter.
+ */
+export function septicAt(p0:number,v0:number,a0:number,j0:number,
+                         p1:number,v1:number,a1:number,j1:number,h:number,s:number) {
+  if(!Number.isFinite(h)||h<=0)throw Error('Invalid time interval');
+  const c0=p0,c1=v0*h,c2=a0*h*h/2,c3=j0*h*h*h/6;
+  const A=p1-c0-c1-c2-c3;
+  const B=v1*h-c1-2*c2-3*c3;
+  const C=a1*h*h-2*c2-6*c3;
+  const D=j1*h*h*h-6*c3;
+  const c4=35*A-15*B+2.5*C-D/6;
+  const c5=-84*A+39*B-7*C+D/2;
+  const c6=70*A-34*B+6.5*C-D/2;
+  const c7=-20*A+10*B-2*C+D/6;
+  const position=c0+s*(c1+s*(c2+s*(c3+s*(c4+s*(c5+s*(c6+s*c7))))));
+  const velocity=(c1+s*(2*c2+s*(3*c3+s*(4*c4+s*(5*c5+s*(6*c6+s*7*c7))))))/h;
+  const acceleration=(2*c2+s*(6*c3+s*(12*c4+s*(20*c5+s*(30*c6+s*42*c7)))))/(h*h);
+  const jerk=(6*c3+s*(24*c4+s*(60*c5+s*(120*c6+s*210*c7))))/(h*h*h);
+  return {position,velocity,acceleration,jerk};
+}
+export function interpolate(samples:Sample[], t:number):Sample|null {
   if(samples.length===0)return null;
   if(t<=samples[0].time)return samples[0];
   if(t>=samples[samples.length-1].time)return samples[samples.length-1];
   let low=0,high=samples.length-1;
   while(high-low>1){const mid=(low+high)>>1;if(samples[mid].time<=t)low=mid;else high=mid;}
-  const a=samples[low],b=samples[high],f=(t-a.time)/(b.time-a.time);
-  const out={...a};
-  for(const key of ['north','east','altitude','vx','vy','vz','speed','acceleration','jerk','yaw'] as const)
-    out[key]=a[key]+(b[key]-a[key])*f;
-  out.time=t;
-  return out;
+  const a=samples[low],b=samples[high],h=b.time-a.time,s=(t-a.time)/h;
+  const n=septicAt(a.north,a.vx,a.ax,a.jx,b.north,b.vx,b.ax,b.jx,h,s);
+  const e=septicAt(a.east,a.vy,a.ay,a.jy,b.east,b.vy,b.ay,b.jy,h,s);
+  const up=septicAt(a.altitude,-a.vz,-a.az,-a.jz,b.altitude,-b.vz,-b.az,-b.jz,h,s);
+  const yaw=septicAt(a.yaw,a.yawRate,a.yawAcceleration,a.yawJerk,
+                     b.yaw,b.yawRate,b.yawAcceleration,b.yawJerk,h,s);
+  return {...a,time:t,north:n.position,east:e.position,altitude:up.position,
+    vx:n.velocity,vy:e.velocity,vz:-up.velocity,
+    ax:n.acceleration,ay:e.acceleration,az:-up.acceleration,
+    jx:n.jerk,jy:e.jerk,jz:-up.jerk,
+    yaw:yaw.position,yawRate:yaw.velocity,yawAcceleration:yaw.acceleration,yawJerk:yaw.jerk,
+    speed:Math.hypot(n.velocity,e.velocity,up.velocity),
+    acceleration:Math.hypot(n.acceleration,e.acceleration,up.acceleration),
+    jerk:Math.hypot(n.jerk,e.jerk,up.jerk)};
 }
 export function getPreviewSummary(result:Preview) {
   const summary=result.summary||{};
