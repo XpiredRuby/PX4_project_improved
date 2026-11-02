@@ -35,7 +35,8 @@ planning. Never use a development server as a safety-qualified flight interface.
   CSV headers: point_id,north_m,east_m,altitude_m,hard,exact (last three optional
   except north/east/altitude). Place search uses Open-Meteo Geocoding/GeoNames.
 - Equal-axis 2D input view and orbitable 3D engineering view; synchronized
-  reference timeline and extrema-preserving plot display. Route vs full
+  reference timeline and extrema-preserving plot display, including wind-relative
+  airspeed as a synchronized chart and 3D contour field. Route vs full
   ground-to-ground mission reference can be toggled; this is NOT Gazebo truth.
   The playback interpolator reconstructs a C3 seventh-order reference from
   serialized position, velocity, acceleration and jerk at adjacent timestamps.
