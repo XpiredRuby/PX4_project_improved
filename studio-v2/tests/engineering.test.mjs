@@ -34,6 +34,12 @@ test('research speed cap is retained in request; model limit is not silently rai
  assert.equal(req.document.vehicle_model_id,'px4-x500-sitl-v1');
  assert.equal(req.document.path.points[0].down_m,-12);
 });
+test('oversized hand drawing remains original and is submitted for documented repair',()=>{
+ const p={...sampleProject,points:sampleProject.points.map((pt,i)=>i===2?{...pt,north:100,east:100}:pt)};
+ const req=buildRequest(p);
+ assert.equal(req.document.path.points[2].north_m,100);
+ assert.equal(req.document.path.points[2].east_m,100);
+});
 test('invalid geometry and conflicting cruise cap are rejected',()=>{
  assert.throws(()=>validateProject({...sampleProject,cruise:5,speedCap:3}),/Cruise cannot/);
  assert.throws(()=>validateProject({...sampleProject,points:[{...sampleProject.points[0],north:999},sampleProject.points[1]]}),/North coordinate/);
