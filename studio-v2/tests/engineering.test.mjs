@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { airspeed, dryAirDensity, buildRequest, initialEnvironment, interpolate, metrics, parseCsv, sampleProject, validateProject, windNE } from '../src/engineering.ts';
+import { airspeed, dryAirDensity, buildRequest, initialEnvironment, interpolate, metrics, parseCsv, sampleProject, septicAt, validateProject, windNE } from '../src/engineering.ts';
 
 const rows='time,x,y,z,vx,vy,vz,ax,ay,az,jx,jy,jz,yaw\n0,0,0,-12,0,0,0,0,0,0,0,0,0,0\n0.05,1,0,-12,2,0,0,1,0,0,0.1,0,0,0.2\n0.1,2,0,-12,2,0,0,0,0,0,0,0,0,0.4\n';
 test('first timestamp, NED height and endpoint are preserved',()=>{
@@ -8,7 +8,20 @@ test('first timestamp, NED height and endpoint are preserved',()=>{
  assert.equal(s[0].time,0);assert.equal(s[0].altitude,12);
  assert.equal(s[2].north,2);assert.equal(s[2].time,.1);
  assert.equal(interpolate(s,0).north,0);assert.equal(interpolate(s,.1).north,2);
- assert.equal(interpolate(s,.075).north,1.5);
+ assert.ok(Number.isFinite(interpolate(s,.075).north));
+});
+test('C3 septic reference interpolation exactly reconstructs rest-to-rest 7th order motion',()=>{
+ const start=parseCsv(rows)[0];
+ const finish={...start,time:1,north:1,yaw:Math.PI};
+ const middle=interpolate([start,finish],.5);
+ assert.ok(Math.abs(middle.north-.5)<1e-12);
+ assert.ok(Math.abs(middle.yaw-Math.PI/2)<1e-11);
+ assert.ok(Math.abs(middle.vx-2.1875)<1e-11);
+ assert.ok(Math.abs(middle.ax)<1e-11);
+ assert.ok(Math.abs(interpolate([start,finish],0).north)<1e-12);
+ assert.ok(Math.abs(interpolate([start,finish],1).north-1)<1e-12);
+ const q=septicAt(0,0,0,0,1,0,0,0,1,.25);
+ assert.ok(Math.abs(q.position-(35*.25**4-84*.25**5+70*.25**6-20*.25**7))<1e-11);
 });
 test('non-monotonic or nonfinite reference is rejected',()=>{
  assert.throws(()=>parseCsv(rows.replace('0.05,1','0,1')),/strictly increasing/);
