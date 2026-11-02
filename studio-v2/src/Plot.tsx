@@ -29,14 +29,16 @@ export default function Plot({samples,field,cursor,onCursor,ceiling}:{
   const data=useMemo(()=>extremaPreserving(samples,field,Math.round(W-L-R)),[samples,field]);
   const first=samples[0]?.time??0, last=samples[samples.length-1]?.time??1;
   const duration=Math.max(0.001,last-first);
-  const vals=samples.map(s=>s[field]);
-  let yMin=0,yMax=ceiling??0;
-  for(const v of vals){yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}
-  const spread=Math.max(0.01,yMax-yMin);
-  const max=yMax+spread*.08,min=yMin-spread*.08;
+  const bounds=useMemo(()=>{
+    let yMin=0,yMax=ceiling??0;
+    for(const s of samples){const v=s[field];yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}
+    const spread=Math.max(0.01,yMax-yMin);
+    return {min:yMin-spread*.08,max:yMax+spread*.08,spread};
+  },[samples,field,ceiling]);
+  const {min,max,spread}=bounds;
   const X=(t:number)=>L+(t-first)/duration*(W-L-R);
   const Y=(v:number)=>T+(max-v)/(max-min)*(H-T-B);
-  const path=data.map((s,i)=>(i?'L':'M')+X(s.time).toFixed(2)+' '+Y(s[field]).toFixed(2)).join(' ');
+  const path=useMemo(()=>data.map((s,i)=>(i?'L':'M')+X(s.time).toFixed(2)+' '+Y(s[field]).toFixed(2)).join(' '),[data,field,min,max,first,duration]);
   const mouse=(event:React.PointerEvent<SVGSVGElement>)=>{
     const bounds=event.currentTarget.getBoundingClientRect();
     const x=(event.clientX-bounds.left)*W/bounds.width;
