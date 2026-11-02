@@ -27,6 +27,10 @@ export function validateProject(project: Project) {
   if (project.cruise>project.speedCap) throw Error('Cruise cannot exceed the never-exceed speed limit');
   finite(project.tolerance,'Path tolerance',0.01,10);
   finite(project.yaw,'Yaw',-3600,3600);
+  if (!project.environment || !Number.isFinite(project.environment.windSpeed) || project.environment.windSpeed<0 || !Number.isFinite(project.environment.windDirection)) throw Error('Environment wind must be finite and nonnegative');
+  if (!Number.isFinite(Date.parse(project.environment.timestamp))) throw Error('Invalid environment timestamp');
+  finite(project.environment.latitude,'Latitude',-90,90);
+  finite(project.environment.longitude,'Longitude',-180,180);
   for(const p of project.points) {
     finite(p.north,'North coordinate',-40,40); finite(p.east,'East coordinate',-40,40);
     finite(p.altitude,'Waypoint altitude',0.1,30);
@@ -47,7 +51,7 @@ export function buildRequest(project:Project) {
         exact:i===0||i===project.points.length-1||p.exact,
         hard:i===0||i===project.points.length-1||p.hard
       }))},
-    motion:{maximum_speed_m_s:Math.min(project.speedCap,3),target_speed_m_s:Math.min(project.cruise,project.speedCap,3),
+    motion:{maximum_speed_m_s:project.speedCap,target_speed_m_s:project.cruise,
       time_mode:'minimize',requested_duration_s:null,yaw_mode:'fixed',fixed_yaw_deg:project.yaw,
       yaw_profile:null,look_at_north_m:null,look_at_east_m:null,look_at_down_m:null}
   }};
