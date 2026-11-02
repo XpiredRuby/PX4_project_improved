@@ -38,6 +38,18 @@ jobs:
           test -s studio-v2/preview/planner-worker.js
           test -s studio-v2/preview/python-manifest.json
           test -s studio-v2/preview/studio-v2-info.json
+      - name: Install Chromium browser test support
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Test real browser and Python planner
+        run: python scripts/check_studio_v2_browser.py --output /tmp/px4-studio-v2-browser --real-planner
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-v2-browser-evidence
+          path: /tmp/px4-studio-v2-browser/
+          retention-days: 14
       - uses: actions/upload-artifact@v4
         with:
           name: studio-v2-review-preview
