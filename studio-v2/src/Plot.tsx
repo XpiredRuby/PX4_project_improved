@@ -1,44 +1,47 @@
 import { useMemo } from 'react';
-import type { Sample } from './types';
+import type { Environment, Sample } from './types';
+import { airspeed } from './engineering';
 
-type Field = 'speed'|'acceleration'|'jerk'|'altitude'|'yaw';
+type Field = 'speed'|'airspeed'|'acceleration'|'jerk'|'altitude'|'yaw';
 const fields:Record<Field,{label:string;unit:string}> = {
   speed:{label:'Groundspeed',unit:'m/s'},
+  airspeed:{label:'Wind-relative airspeed',unit:'m/s'},
   acceleration:{label:'Acceleration',unit:'m/s²'},
   jerk:{label:'Jerk',unit:'m/s³'},
   altitude:{label:'Altitude AGL (assumed)',unit:'m'},
   yaw:{label:'Yaw',unit:'rad'}
 };
-function extremaPreserving(samples:Sample[],field:Field,width:number): Sample[] {
+export const fieldValue=(sample:Sample,field:Field,env:Environment):number=>field==='airspeed'?airspeed(sample,env):sample[field];
+function extremaPreserving(samples:Sample[],field:Field,env:Environment,width:number): Sample[] {
   if(samples.length<=width*2)return samples;
   const each=Math.ceil(samples.length/width);
   const out:Sample[]=[samples[0]];
   for(let i=1;i<samples.length-1;i+=each){
     const slice=samples.slice(i,Math.min(i+each,samples.length-1));
     if(!slice.length)continue;
-    const lo=slice.reduce((a,b)=>a[field]<b[field]?a:b);
-    const hi=slice.reduce((a,b)=>a[field]>b[field]?a:b);
+    const lo=slice.reduce((a,b)=>fieldValue(a,field,env)<fieldValue(b,field,env)?a:b);
+    const hi=slice.reduce((a,b)=>fieldValue(a,field,env)>fieldValue(b,field,env)?a:b);
     if(lo.time<hi.time)out.push(lo,hi);else if(hi!==lo)out.push(hi,lo);else out.push(lo);
   }
   out.push(samples[samples.length-1]);return out;
 }
-export default function Plot({samples,field,cursor,onCursor,ceiling}:{
-  samples:Sample[];field:Field;cursor:number;onCursor:(time:number)=>void;ceiling?:number
+export default function Plot({samples,field,environment,cursor,onCursor,ceiling}:{
+  samples:Sample[];field:Field;environment:Environment;cursor:number;onCursor:(time:number)=>void;ceiling?:number
 }){
   const W=680,H=198,L=60,R=15,T=17,B=37;
-  const data=useMemo(()=>extremaPreserving(samples,field,Math.round(W-L-R)),[samples,field]);
+  const data=useMemo(()=>extremaPreserving(samples,field,environment,Math.round(W-L-R)),[samples,field,environment]);
   const first=samples[0]?.time??0, last=samples[samples.length-1]?.time??1;
   const duration=Math.max(0.001,last-first);
   const bounds=useMemo(()=>{
     let yMin=0,yMax=ceiling??0;
-    for(const s of samples){const v=s[field];yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}
+    for(const s of samples){const v=fieldValue(s,field,environment);yMin=Math.min(yMin,v);yMax=Math.max(yMax,v);}
     const spread=Math.max(0.01,yMax-yMin);
     return {min:yMin-spread*.08,max:yMax+spread*.08,spread};
-  },[samples,field,ceiling]);
+  },[samples,field,ceiling,environment]);
   const {min,max,spread}=bounds;
   const X=(t:number)=>L+(t-first)/duration*(W-L-R);
   const Y=(v:number)=>T+(max-v)/(max-min)*(H-T-B);
-  const path=useMemo(()=>data.map((s,i)=>(i?'L':'M')+X(s.time).toFixed(2)+' '+Y(s[field]).toFixed(2)).join(' '),[data,field,min,max,first,duration]);
+  const path=useMemo(()=>data.map((s,i)=>(i?'L':'M')+X(s.time).toFixed(2)+' '+Y(fieldValue(s,field,environment)).toFixed(2)).join(' '),[data,field,environment,min,max,first,duration]);
   const mouse=(event:React.PointerEvent<SVGSVGElement>)=>{
     const bounds=event.currentTarget.getBoundingClientRect();
     const x=(event.clientX-bounds.left)*W/bounds.width;
