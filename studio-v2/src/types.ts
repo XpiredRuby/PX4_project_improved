@@ -14,6 +14,7 @@ export type Sample = {
   time: number; north: number; east: number; altitude: number;
   vx: number; vy: number; vz: number; ax: number; ay: number; az: number;
   jx: number; jy: number; jz: number; yaw: number;
+  yawRate: number; yawAcceleration: number; yawJerk: number;
   speed: number; acceleration: number; jerk: number;
 };
 export type Preview = {
