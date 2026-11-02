@@ -30,7 +30,9 @@ planning. Never use a development server as a safety-qualified flight interface.
 ## Scope and evidence
 
 - Interactive local-NED waypoint editor, precise coordinate table, hard/exact
-  points, drawing, route presets, import/export of editable JSON.
+  points, drawing, route presets, import/export of editable JSON and waypoint CSV.
+  CSV headers: point_id,north_m,east_m,altitude_m,hard,exact (last three optional
+  except north/east/altitude). Place search uses Open-Meteo Geocoding/GeoNames.
 - Equal-axis 2D input view and orbitable 3D engineering view; synchronized
   reference timeline and extrema-preserving plot display.
 - Exactly the existing planner backend and verifier; review accepted result
