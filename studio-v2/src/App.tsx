@@ -111,6 +111,8 @@ export default function App(){
   const [field,setField]=useState<Field>('speed');
   const [environmentTab,setEnvironmentTab]=useState(true);
   const [advanced,setAdvanced]=useState(false);
+  const [paneWidths,setPaneWidths]=useState({left:235,right:288});
+  const resizing=useRef<{edge:'left'|'right';pointerX:number;start:number}|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
@@ -137,6 +139,16 @@ export default function App(){
   const geometryRevision=useRef(0);
   const history=useRef<Project[]>([]);
 
+  const onResizeStart=(edge:'left'|'right',event:React.PointerEvent<HTMLDivElement>)=>{
+    resizing.current={edge,pointerX:event.clientX,start:paneWidths[edge]};
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onResizeMove=(event:React.PointerEvent<HTMLDivElement>)=>{
+    const r=resizing.current;if(!r)return;
+    const delta=(event.clientX-r.pointerX)*(r.edge==='left'?1:-1);
+    setPaneWidths(p=>({...p,[r.edge]:Math.max(r.edge==='left'?180:230,Math.min(r.edge==='left'?400:440,r.start+delta))}));
+  };
+  const onResizeEnd=()=>{resizing.current=null;};
   useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>setEngine(d.execution_location==='browser'?'browser':'local')).catch(()=>setEngine('unknown'));},[]);
   useEffect(()=>()=>{abort.current?.abort();cancelAnimationFrame(frame.current);},[]);
   const update=useCallback((f:(p:Project)=>Project)=>{
@@ -320,7 +332,7 @@ export default function App(){
       <div className="menu-right"><span><span className="live-dot"/> {engine==='browser'?'Browser verified planner':engine==='local'?'Local planner bridge':'Planner connection pending'}</span>
         <span className="menu-divider"/><span>LOCAL NED · SI UNITS</span></div>
     </nav>
-    <div className="workbench">
+    <div className="workbench" style={{'--left-pane':paneWidths.left+'px','--right-pane':paneWidths.right+'px'} as React.CSSProperties}>
       <aside className="left-rail">
         <div className="pane-title"><Layers size={14}/> MODEL EXPLORER</div>
         <div className="tree">
@@ -499,6 +511,9 @@ export default function App(){
             </>:<div className="hint">Select a point on the map or in the table.</div>}
           </div>
         </div>
+        <div className="pane-resizer right-resizer" role="separator" aria-label="Resize properties inspector" aria-orientation="vertical" tabIndex={0}
+          onKeyDown={e=>{if(e.key==='ArrowLeft')setPaneWidths(w=>({...w,right:Math.min(440,w.right+15)}));if(e.key==='ArrowRight')setPaneWidths(w=>({...w,right:Math.max(230,w.right-15)}));}}
+          onPointerDown={e=>onResizeStart('right',e)} onPointerMove={onResizeMove} onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}/>
       </aside>
     </div>
     <footer className="statusbar"><span><span className="status-indicator"/> {result?.accepted?'Reference verified':'No active verified result'}</span>
