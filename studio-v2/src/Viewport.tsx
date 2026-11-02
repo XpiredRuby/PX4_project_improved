@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Point,Sample } from './types';
 import type { Field } from './Plot';
 import { interpolate } from './engineering';
@@ -17,6 +17,12 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
   const [camera,setCamera]=useState({az:-0.65,el:0.57,zoom:1});
   const [size,setSize]=useState({width:800,height:480});
   const drag=useRef<{x:number;y:number}|null>(null);
+  const scene=useMemo(()=>{
+    let extreme=20, low=Infinity, high=-Infinity;
+    for(const p of points)extreme=Math.max(extreme,Math.abs(p.north),Math.abs(p.east),Math.abs(p.altitude));
+    for(const s of samples){extreme=Math.max(extreme,Math.abs(s.north),Math.abs(s.east),Math.abs(s.altitude));low=Math.min(low,s[field]);high=Math.max(high,s[field]);}
+    return {extreme,low,high,span:Math.max(0.01,high-low)};
+  },[points,samples,field]);
   useEffect(()=>{
     const canvas=ref.current;if(!canvas)return;
     const observer=new ResizeObserver(entries=>{
@@ -32,9 +38,7 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
     ctx.scale(pixelRatio,pixelRatio);
     const W=size.width,H=size.height;
     ctx.fillStyle='#0c1923';ctx.fillRect(0,0,W,H);
-    const all=samples.length?samples.map(s=>({north:s.north,east:s.east,altitude:s.altitude})):points;
-    let extreme=20;
-    for(const p of all) extreme=Math.max(extreme,Math.abs(p.north),Math.abs(p.east),Math.abs(p.altitude));
+    const {extreme,low,span}=scene;
     const scale=Math.max(1,Math.min(W,H)*.65/extreme)*camera.zoom;
     const get=(n:number,e:number,h:number)=>project(n,e,h,camera.az,camera.el,scale,W/2,H*.69);
     const drawLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width=1)=>{
@@ -55,9 +59,6 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
       drawLine(get(points[i-1].north,points[i-1].east,points[i-1].altitude),
         get(points[i].north,points[i].east,points[i].altitude),'#71899a',1.5);
     if(samples.length){
-      let low=Infinity,high=-Infinity;
-      for(const s of samples){low=Math.min(low,s[field]);high=Math.max(high,s[field]);}
-      const span=Math.max(0.01,high-low);
       const stride=Math.max(1,Math.floor(samples.length/1400));
       for(let i=stride;i<samples.length;i+=stride){
         const a=samples[i-stride],b=samples[i];
@@ -79,7 +80,7 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
     }
     ctx.fillStyle='#b7ccd8';ctx.font='12px ui-monospace, monospace';
     ctx.fillText('NED frame · UP = −Down · equal axis scaling',16,H-16);
-  },[size,camera,points,samples,cursor,field]);
+  },[size,camera,points,samples,cursor,field,scene]);
   return <div className="viewer">
     <div className="viewer-tools"><span>3D ORBIT / REFERENCE FIELD</span>
       <button type="button" title="Reset 3D view" onClick={()=>setCamera({az:-.65,el:.57,zoom:1})}>Reset</button></div>
