@@ -53,12 +53,23 @@ test('research speed cap is retained in request; model limit is not silently rai
  assert.equal(req.document.motion.target_speed_m_s,10);
  assert.equal(req.document.vehicle_model_id,'px4-x500-sitl-v1');
  assert.equal(req.document.path.points[0].down_m,-12);
+ assert.equal(req.document.path.points[0].hard,true);
+ assert.equal(req.document.path.points[0].exact,false);
+ assert.equal(req.document.path.points.at(-1).hard,true);
+ assert.equal(req.document.path.points.at(-1).exact,false);
+ assert.ok(req.document.path.points.every(p=>!(p.hard&&p.exact)));
 });
 test('oversized hand drawing remains original and is submitted for documented repair',()=>{
  const p={...sampleProject,points:sampleProject.points.map((pt,i)=>i===2?{...pt,north:100,east:100}:pt)};
  const req=buildRequest(p);
  assert.equal(req.document.path.points[2].north_m,100);
  assert.equal(req.document.path.points[2].east_m,100);
+});
+test('all marked stops override incompatible exact-flythrough requests',()=>{
+ const project={...sampleProject,points:sampleProject.points.map((p,i)=>i===1?{...p,hard:true,exact:true}:p)};
+ const req=buildRequest(project);
+ assert.equal(req.document.path.points[1].hard,true);
+ assert.equal(req.document.path.points[1].exact,false);
 });
 test('invalid geometry and conflicting cruise cap are rejected',()=>{
  assert.throws(()=>validateProject({...sampleProject,cruise:5,speedCap:3}),/Cruise cannot/);
