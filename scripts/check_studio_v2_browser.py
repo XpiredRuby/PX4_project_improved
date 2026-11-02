@@ -86,7 +86,12 @@ def main():
             page.keyboard.press("ArrowLeft")
             resized = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector('.inspector')).width)"))
             assert resized >= initial + 10, (initial, resized)
-            results.append("Keyboard-resizable inspector and desktop workspace")
+            explorer_start = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector(\'.left-rail\')).width)"))
+            page.get_by_role("separator", name="Resize model explorer").focus()
+            page.keyboard.press("ArrowRight")
+            explorer_end = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector(\'.left-rail\')).width)"))
+            assert explorer_end >= explorer_start + 10, (explorer_start, explorer_end)
+            results.append("Keyboard-resizable explorer, inspector and desktop workspace")
 
 
             page.get_by_role("button", name="Add row").click()
