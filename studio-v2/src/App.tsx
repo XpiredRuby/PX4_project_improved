@@ -383,7 +383,7 @@ export default function App(){
           {active==='geometry'?
             <TopMap points={project.points} selected={selected} onSelect={setSelected} onChange={editPoint} tool={tool}
               onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} range={range} setRange={setRange}/>
-          : <Viewport points={project.points} samples={samples} cursor={cursor} field={field}/>}
+          : <Viewport points={project.points} samples={samples} cursor={cursor} field={field} environment={project.environment}/>}
         </div>
         {active==='geometry'?<section className="data-section">
           <div className="section-heading"><div><strong>Waypoint definition</strong><span>Double-check positions and required stops</span></div>
@@ -406,11 +406,11 @@ export default function App(){
             <span>{display(cursor,'s')} / {display(duration,'s')}</span></div>
           {active==='analysis'&&<><div className="field-select">
               <label>Scalar</label><select value={field} onChange={e=>setField(e.target.value as Field)}>
-                <option value="speed">Groundspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
+                <option value="speed">Groundspeed</option><option value="airspeed">Wind-relative airspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
                 <option value="altitude">Altitude</option><option value="yaw">Yaw</option></select>
               <span>Computed field, not an FEA stress solution</span></div>
-            <div className="plot-grid">{(['speed','acceleration','jerk','altitude','yaw'] as const).map(metric=>
-              <Plot key={metric} samples={samples} field={metric} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
+            <div className="plot-grid">{(['speed','airspeed','acceleration','jerk','altitude','yaw'] as const).map(metric=>
+              <Plot key={metric} samples={samples} field={metric} environment={project.environment} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
                 ceiling={metric==='speed'?cap:metric==='acceleration'?1:metric==='jerk'?1.5:undefined}/>)}</div>
           </>}
           {current&&<div className="sample-readout">
