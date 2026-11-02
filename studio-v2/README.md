@@ -29,6 +29,7 @@ planning. Never use a development server as a safety-qualified flight interface.
 
 ## Scope and evidence
 
+- Resizable desktop model explorer/properties inspector panels (pointer and keyboard).
 - Interactive local-NED waypoint editor, precise coordinate table, hard/exact
   points, drawing, route presets, import/export of editable JSON and waypoint CSV.
   CSV headers: point_id,north_m,east_m,altitude_m,hard,exact (last three optional
