@@ -121,9 +121,13 @@ export default function App(){
   const [engine,setEngine]=useState<'unknown'|'browser'|'local'>('unknown');
   const [weatherBusy,setWeatherBusy]=useState(false);
   const [weatherError,setWeatherError]=useState('');
+  const [placeQuery,setPlaceQuery]=useState('');
+  const [placeMatches,setPlaceMatches]=useState<Array<{id:number;name:string;admin1?:string;country?:string;latitude:number;longitude:number}>>([]);
+  const [searchingPlace,setSearchingPlace]=useState(false);
   const [dirty,setDirty]=useState(false);
   const abort=useRef<AbortController|null>(null);
   const fileRef=useRef<HTMLInputElement>(null);
+  const pointsCsvRef=useRef<HTMLInputElement>(null);
   const frame=useRef<number>(0);
   const clock=useRef<number>(0);
   const lastDraw=useRef<Point|null>(null);
@@ -231,6 +235,52 @@ export default function App(){
         source:'Open-Meteo forecast · 10 m modeled wind · hourly UTC snapshot'});
     }catch(e){setWeatherError((e as Error).message);}finally{setWeatherBusy(false);}
   };
+  const searchPlace=async()=>{
+    setSearchingPlace(true);setWeatherError('');setPlaceMatches([]);
+    try{
+      if(placeQuery.trim().length<3||placeQuery.length>100)throw Error('Enter a city or place name with at least 3 characters');
+      const query=new URLSearchParams({name:placeQuery.trim(),count:'5',format:'json',language:'en'});
+      const response=await fetch('https://geocoding-api.open-meteo.com/v1/search?'+query.toString());
+      if(!response.ok)throw Error('Location search unavailable: '+response.status);
+      const json=await response.json();
+      if(json.error)throw Error(String(json.reason||'Location search failed'));
+      const results=(json.results||[]) as Array<{id:number;name:string;admin1?:string;country?:string;latitude:number;longitude:number}>;
+      setPlaceMatches(results.filter(p=>Number.isFinite(p.latitude)&&Number.isFinite(p.longitude)));
+      if(!results.length)setWeatherError('No location matches. Enter latitude and longitude directly.');
+    }catch(e){setWeatherError((e as Error).message);}finally{setSearchingPlace(false);}
+  };
+  const importWaypointCsv=async(event:React.ChangeEvent<HTMLInputElement>)=>{
+    const file=event.target.files?.[0];event.target.value='';if(!file)return;
+    try{
+      if(file.size>2_000_000)throw Error('Waypoint CSV exceeds 2 MB');
+      const rows=(await file.text()).trim().split(/\r?\n/);
+      const headings=rows.shift()?.split(',').map(s=>s.trim().toLowerCase())||[];
+      const keys=['north_m','east_m','altitude_m'];
+      if(keys.some(k=>!headings.includes(k)))throw Error('Waypoint CSV requires north_m,east_m,altitude_m headers');
+      if(rows.length<2||rows.length>8192)throw Error('Waypoint CSV requires 2–8,192 rows');
+      const imported=rows.map((line,i)=>{
+        const cells=line.split(',').map(s=>s.trim());
+        if(cells.length!==headings.length)throw Error('Invalid CSV column count at row '+(i+2));
+        const read=(k:string)=>cells[headings.indexOf(k)];
+        const number=(k:string)=>{const raw=read(k);if(raw==='')throw Error('Empty '+k+' at row '+(i+2));const n=Number(raw);if(!Number.isFinite(n))throw Error('Invalid '+k+' at row '+(i+2));return n;};
+        const safeId=(read('point_id')||'P'+String(i+1).padStart(2,'0')).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,50);
+        return {id:safeId,north:number('north_m'),east:number('east_m'),altitude:number('altitude_m'),
+          hard:read('hard')==='true'||read('hard')==='1'||i===0||i===rows.length-1,
+          exact:read('exact')==='true'||read('exact')==='1'||i===0||i===rows.length-1} satisfies Point;
+      });
+      const identifiers=new Set(imported.map(p=>p.id));
+      if(identifiers.size!==imported.length)throw Error('CSV point identifiers must be unique');
+      const next={...project,title:file.name.replace(/\.csv$/i,''),points:imported};
+      validateProject(next);
+      update(()=>next);setSelected(-1);
+      setNotice('Imported '+imported.length+' waypoint rows. Re-run verification to generate a reference.');
+    }catch(e){setError((e as Error).message);}
+  };
+  const exportWaypointCsv=()=>{
+    const lines=['point_id,north_m,east_m,altitude_m,hard,exact',
+      ...project.points.map(p=>[p.id,p.north,p.east,p.altitude,String(p.hard),String(p.exact)].join(','))];
+    exportBlob('mission-waypoints.csv',lines.join('\n')+'\n','text/csv');
+  };
   const importProject=async(event:React.ChangeEvent<HTMLInputElement>)=>{
     const file=event.target.files?.[0];event.target.value='';if(!file)return;
     try{if(file.size>2_000_000)throw Error('File exceeds 2 MB limit');
@@ -249,7 +299,8 @@ export default function App(){
       <div className="top-actions"><span className="status-tag"><ShieldCheck size={13}/> SITL ONLY</span>
         <button className="ghost icon-button" title="Open project" onClick={()=>fileRef.current?.click()}><FolderOpen size={17}/></button>
         <button className="ghost icon-button" title="Save editable project" onClick={saveProject}><Save size={17}/></button>
-        <input ref={fileRef} hidden type="file" accept=".json" onChange={importProject}/></div>
+        <input ref={fileRef} hidden type="file" accept=".json" onChange={importProject}/>
+        <input ref={pointsCsvRef} hidden type="file" accept=".csv,text/csv" onChange={importWaypointCsv}/></div>
     </header>
     <nav className="menubar" aria-label="Workspace sections">
       <div className="menu-buttons">
@@ -275,6 +326,8 @@ export default function App(){
         <div className="pane-title second-title"><SlidersHorizontal size={14}/> OPERATIONS</div>
         <div className="operations">
           <button onClick={clearRoute}>+ New blank mission</button>
+          <button onClick={()=>pointsCsvRef.current?.click()}>Import waypoint CSV</button>
+          <button onClick={exportWaypointCsv}>Export waypoint CSV</button>
           <button onClick={()=>applyExample('Straight')}>Straight path</button>
           <button onClick={()=>applyExample('L')}>L-shaped route</button>
           <button onClick={()=>applyExample('Survey')}>Survey route</button>
@@ -398,6 +451,10 @@ export default function App(){
               <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>changeEnv({mode:'manual',source:'User-specified manual scenario',fetchedAt:undefined})}>Manual</button>
               <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>changeEnv({mode:'live',source:'Awaiting forecast; last values are not current',fetchedAt:undefined})}>Live forecast</button>
             </div>
+            <label>Search city or place name</label>
+            <div className="place-search"><input aria-label="Search location" value={placeQuery} placeholder="e.g. College Station, Texas" onChange={e=>setPlaceQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchPlace();}}/><button disabled={searchingPlace} onClick={searchPlace}>{searchingPlace?'...':'Find'}</button></div>
+            {placeMatches.length>0&&<div className="place-matches">{placeMatches.map(place=><button key={place.id} onClick={()=>{changeEnv({latitude:place.latitude,longitude:place.longitude});setPlaceMatches([]);setPlaceQuery([place.name,place.admin1,place.country].filter(Boolean).join(', '));}}>{[place.name,place.admin1,place.country].filter(Boolean).join(', ')}</button>)}</div>}
+            <div className="hint">Search data: GeoNames via Open-Meteo. Choose a result to update coordinates.</div>
             <div className="form-row">
               <label>Latitude (°)<input type="number" step=".001" value={project.environment.latitude} onChange={e=>changeEnv({latitude:asNum(e.target.value,project.environment.latitude)})}/></label>
               <label>Longitude (°)<input type="number" step=".001" value={project.environment.longitude} onChange={e=>changeEnv({longitude:asNum(e.target.value,project.environment.longitude)})}/></label>
