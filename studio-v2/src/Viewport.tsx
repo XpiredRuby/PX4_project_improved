@@ -90,6 +90,6 @@ export default function Viewport({points,samples,cursor,field}:{points:Point[];s
         setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(.05,Math.min(1.5,c.el+dy*.008))}));}}
       onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}
       onWheel={e=>{e.preventDefault();setCamera(c=>({...c,zoom:Math.max(.35,Math.min(6,c.zoom*(e.deltaY>0?.9:1.1)))}));}}/>
-    <div className="field-legend"><span>{field}</span><div className="gradient-bar"/><span>low → high</span></div>
+    <div className="field-legend"><span>{field}</span><span>{Number.isFinite(scene.low)?scene.low.toFixed(2):'—'}</span><div className="gradient-bar"/><span>{Number.isFinite(scene.high)?scene.high.toFixed(2):'—'}</span></div>
   </div>;
 }
