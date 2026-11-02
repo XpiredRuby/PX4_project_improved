@@ -9,10 +9,10 @@ export const sampleProject: Project = {
   schema:1, title:'Untitled mission', cruise:1.5, speedCap:3, altitude:12,
   tolerance:0.5, yaw:0, environment:initialEnvironment,
   points:[
-    {id:'P01',north:0,east:0,altitude:12,hard:true,exact:true},
+    {id:'P01',north:0,east:0,altitude:12,hard:true,exact:false},
     {id:'P02',north:12,east:9,altitude:12,hard:false,exact:false},
     {id:'P03',north:22,east:-7,altitude:12,hard:false,exact:false},
-    {id:'P04',north:32,east:4,altitude:12,hard:true,exact:true}
+    {id:'P04',north:32,east:4,altitude:12,hard:true,exact:false}
   ]
 };
 export function finite(value:number, label:string, min=-Infinity, max=Infinity) {
@@ -54,8 +54,8 @@ export function buildRequest(project:Project) {
     path:{kind:'polyline',closure:'open_stop',maximum_deviation_m:project.tolerance,
       points:project.points.map((p,i)=>({
         point_id:p.id||'point-'+i,north_m:p.north,east_m:p.east,down_m:-p.altitude,
-        exact:i===0||i===project.points.length-1||p.exact,
-        hard:i===0||i===project.points.length-1||p.hard
+        hard:i===0||i===project.points.length-1||p.hard,
+        exact:!(i===0||i===project.points.length-1||p.hard)&&p.exact
       }))},
     motion:{maximum_speed_m_s:project.speedCap,target_speed_m_s:project.cruise,
       time_mode:'minimize',requested_duration_s:null,yaw_mode:'fixed',fixed_yaw_deg:project.yaw,
