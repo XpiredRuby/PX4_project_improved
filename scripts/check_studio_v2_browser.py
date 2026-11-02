@@ -80,6 +80,14 @@ def main():
             assert page.locator(".point-table tbody tr").count() == 4
             assert "SITL ONLY" in page.locator(".status-tag").inner_text()
             results.append("React shell, editing surface and flight-safety scope")
+            # Dock-like pane resizing stays accessible without a mouse.
+            initial = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector('.inspector')).width)"))
+            page.get_by_role("separator", name="Resize properties inspector").focus()
+            page.keyboard.press("ArrowLeft")
+            resized = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector('.inspector')).width)"))
+            assert resized >= initial + 10, (initial, resized)
+            results.append("Keyboard-resizable inspector and desktop workspace")
+
 
             page.get_by_role("button", name="Add row").click()
             assert page.locator(".point-table tbody tr").count() == 5
