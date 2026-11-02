@@ -15,7 +15,7 @@ const example=(name:string,alt:number):Point[]=>{
     Circle:Array.from({length:25},(_,i)=>[15+12*Math.sin(i*Math.PI*2/24),12-12*Math.cos(i*Math.PI*2/24)])
   };
   return (coords[name]||coords.Straight).map(([north,east],i,arr)=>({id:'P'+String(i+1).padStart(2,'0'),north,east,altitude:alt,
-    hard:i===0||i===arr.length-1,exact:i===0||i===arr.length-1}));
+    hard:i===0||i===arr.length-1,exact:false}));
 };
 const downloadJson=(filename:string,data:unknown)=>exportBlob(filename,JSON.stringify(data,null,2)+'\n','application/json');
 const display=(n:number,unit:string,digits=2)=>Number.isFinite(n)?n.toFixed(digits)+' '+unit:'—';
@@ -270,7 +270,7 @@ export default function App(){
         const safeId=(read('point_id')||'P'+String(i+1).padStart(2,'0')).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,50);
         return {id:safeId,north:number('north_m'),east:number('east_m'),altitude:number('altitude_m'),
           hard:read('hard')==='true'||read('hard')==='1'||i===0||i===rows.length-1,
-          exact:read('exact')==='true'||read('exact')==='1'||i===0||i===rows.length-1} satisfies Point;
+          exact:(read('exact')==='true'||read('exact')==='1') && !(read('hard')==='true'||read('hard')==='1'||i===0||i===rows.length-1)} satisfies Point;
       });
       const identifiers=new Set(imported.map(p=>p.id));
       if(identifiers.size!==imported.length)throw Error('CSV point identifiers must be unique');
@@ -378,8 +378,8 @@ export default function App(){
           <tbody>{project.points.slice(0,250).map((p,i)=><tr key={p.id+'-'+i} className={selected===i?'row-selected':''} onClick={()=>setSelected(i)}>
             <td><span className="point-number">{String(i+1).padStart(2,'0')}</span> {p.id}</td>
             {(['north','east','altitude'] as const).map(k=><td key={k}><input aria-label={p.id+' '+k} type="number" step=".1" value={p[k]} onChange={e=>editPoint(i,{...p,[k]:asNum(e.target.value,p[k])})}/></td>)}
-            <td><input aria-label={p.id+' hard stop'} type="checkbox" checked={p.hard||i===0||i===project.points.length-1} disabled={i===0||i===project.points.length-1} onChange={e=>editPoint(i,{...p,hard:e.target.checked})}/></td>
-            <td><input aria-label={p.id+' exact point'} type="checkbox" checked={p.exact||i===0||i===project.points.length-1} disabled={i===0||i===project.points.length-1} onChange={e=>editPoint(i,{...p,exact:e.target.checked})}/></td>
+            <td><input aria-label={p.id+' hard stop'} type="checkbox" checked={p.hard||i===0||i===project.points.length-1} disabled={i===0||i===project.points.length-1} onChange={e=>editPoint(i,{...p,hard:e.target.checked,exact:e.target.checked?false:p.exact})}/></td>
+            <td><input aria-label={p.id+' exact point'} type="checkbox" checked={i!==0&&i!==project.points.length-1&&!p.hard&&p.exact} disabled={i===0||i===project.points.length-1} onChange={e=>editPoint(i,{...p,exact:e.target.checked,hard:e.target.checked?false:p.hard})}/></td>
           </tr>)}</tbody></table></div>
           {project.points.length>250&&<p className="small-note">Displaying the first 250 of {project.points.length} sketch samples. The complete drawing is preserved and submitted to the planner.</p>}
         </section>:
@@ -494,8 +494,8 @@ export default function App(){
             <div className="group-title">SELECTED POINT</div>
             {selectedPoint?<><div className="selected-id">{selectedPoint.id}</div>
               <div className="hint">North {round(selectedPoint.north)} m · East {round(selectedPoint.east)} m · Alt {round(selectedPoint.altitude)} m</div>
-              <label className="checkbox-row"><input type="checkbox" checked={selectedPoint.hard} onChange={e=>editPoint(selected,{...selectedPoint,hard:e.target.checked})}/> Required full stop</label>
-              <label className="checkbox-row"><input type="checkbox" checked={selectedPoint.exact} onChange={e=>editPoint(selected,{...selectedPoint,exact:e.target.checked})}/> Exact point</label>
+              <label className="checkbox-row"><input type="checkbox" checked={selectedPoint.hard||selected===0||selected===project.points.length-1} disabled={selected===0||selected===project.points.length-1} onChange={e=>editPoint(selected,{...selectedPoint,hard:e.target.checked,exact:e.target.checked?false:selectedPoint.exact})}/> Required full stop</label>
+              <label className="checkbox-row"><input type="checkbox" checked={selected!==0&&selected!==project.points.length-1&&!selectedPoint.hard&&selectedPoint.exact} disabled={selected===0||selected===project.points.length-1} onChange={e=>editPoint(selected,{...selectedPoint,exact:e.target.checked,hard:e.target.checked?false:selectedPoint.hard})}/> Exact point</label>
             </>:<div className="hint">Select a point on the map or in the table.</div>}
           </div>
         </div>
