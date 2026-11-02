@@ -20,3 +20,8 @@ analysis/metrics.json
 analysis/diagnostics.json
 .coverage
 .coverage.*
+
+# Isolated engineering-workspace preview
+studio-v2/node_modules/
+studio-v2/preview/
+studio-v2/dist/

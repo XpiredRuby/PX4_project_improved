@@ -1,0 +1,57 @@
+name: Studio V2 preview verification
+on:
+  push:
+    branches: [ai/studio-v2-milestones-1-2-20261101]
+  workflow_dispatch:
+concurrency:
+  group: studio-v2-preview
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Install planner dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Install frontend dependencies
+        working-directory: studio-v2
+        run: npm install --no-audit --no-fund
+      - name: Unit tests and type checking
+        working-directory: studio-v2
+        run: |
+          npm test
+          npm run typecheck
+      - name: Build React
+        working-directory: studio-v2
+        run: npm run build
+      - name: Package verified planner with React
+        run: python web/build_studio_v2.py
+      - name: Verify preview assets
+        run: |
+          test -s studio-v2/preview/index.html
+          test -s studio-v2/preview/planner-worker.js
+          test -s studio-v2/preview/python-manifest.json
+          test -s studio-v2/preview/studio-v2-info.json
+      - name: Install Chromium browser test support
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Test real browser and Python planner
+        run: python scripts/check_studio_v2_browser.py --output /tmp/px4-studio-v2-browser --real-planner
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-v2-browser-evidence
+          path: /tmp/px4-studio-v2-browser/
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: studio-v2-review-preview
+          path: studio-v2/preview/
+          retention-days: 14
