@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { airspeed, buildRequest, initialEnvironment, interpolate, metrics, parseCsv, sampleProject, validateProject, windNE } from '../src/engineering.ts';
+import { airspeed, dryAirDensity, buildRequest, initialEnvironment, interpolate, metrics, parseCsv, sampleProject, validateProject, windNE } from '../src/engineering.ts';
 
 const rows='time,x,y,z,vx,vy,vz,ax,ay,az,jx,jy,jz,yaw\n0,0,0,-12,0,0,0,0,0,0,0,0,0,0\n0.05,1,0,-12,2,0,0,1,0,0,0.1,0,0,0.2\n0.1,2,0,-12,2,0,0,0,0,0,0,0,0,0.4\n';
 test('first timestamp, NED height and endpoint are preserved',()=>{
@@ -19,6 +19,13 @@ test('meteorological FROM direction is converted into actual wind velocity',()=>
  assert.ok(Math.abs(north.north+5)<1e-10);assert.ok(Math.abs(north.east)<1e-10);
  const s=parseCsv(rows)[1];assert.equal(airspeed(s,{...initialEnvironment,windSpeed:5,windDirection:0}),7);
  assert.equal(airspeed(s,{...initialEnvironment,windSpeed:5,windDirection:180}),3);
+});
+test('ideal-gas density and analytical dynamic pressure use weather snapshot',()=>{
+ const env={...initialEnvironment,temperature:15,pressure:1013.25,windSpeed:0};
+ const rho=dryAirDensity(env);
+ assert.ok(rho>1.22&&rho<1.23);
+ const m=metrics(parseCsv(rows),env);
+ assert.ok(Math.abs(m.peakDynamicPressure-(.5*rho*4))<1e-9);
 });
 test('first sample is included in metric computations',()=>{
  const m=metrics(parseCsv(rows),initialEnvironment);
