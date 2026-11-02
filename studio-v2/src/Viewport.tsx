@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Point,Sample } from './types';
+import type { Field } from './Plot';
 import { interpolate } from './engineering';
 
 function project(n:number,e:number,h:number,az:number,el:number,scale:number,cx:number,cy:number){
@@ -11,7 +12,7 @@ const col=(t:number)=>{
   const u=Math.min(1,Math.max(0,t));
   return 'hsl('+(196-175*u)+', 85%, '+(62-7*u)+'%)';
 };
-export default function Viewport({points,samples,cursor}:{points:Point[];samples:Sample[];cursor:number}){
+export default function Viewport({points,samples,cursor,field}:{points:Point[];samples:Sample[];cursor:number;field:Field}){
   const ref=useRef<HTMLCanvasElement>(null);
   const [camera,setCamera]=useState({az:-0.65,el:0.57,zoom:1});
   const [size,setSize]=useState({width:800,height:480});
@@ -54,16 +55,18 @@ export default function Viewport({points,samples,cursor}:{points:Point[];samples
       drawLine(get(points[i-1].north,points[i-1].east,points[i-1].altitude),
         get(points[i].north,points[i].east,points[i].altitude),'#71899a',1.5);
     if(samples.length){
-      const limit=Math.max(.01,...samples.map(s=>s.speed));
+      let low=Infinity,high=-Infinity;
+      for(const s of samples){low=Math.min(low,s[field]);high=Math.max(high,s[field]);}
+      const span=Math.max(0.01,high-low);
       const stride=Math.max(1,Math.floor(samples.length/1400));
       for(let i=stride;i<samples.length;i+=stride){
         const a=samples[i-stride],b=samples[i];
-        drawLine(get(a.north,a.east,a.altitude),get(b.north,b.east,b.altitude),col(b.speed/limit),2.8);
+        drawLine(get(a.north,a.east,a.altitude),get(b.north,b.east,b.altitude),col((b[field]-low)/span),2.8);
       }
       const last=samples[samples.length-1];
       if(last&&samples.length>1){
         const a=samples[Math.max(0,samples.length-1-stride)];
-        drawLine(get(a.north,a.east,a.altitude),get(last.north,last.east,last.altitude),col(last.speed/limit),2.8);
+        drawLine(get(a.north,a.east,a.altitude),get(last.north,last.east,last.altitude),col((last[field]-low)/span),2.8);
       }
       const s=interpolate(samples,cursor);
       if(s){
@@ -76,7 +79,7 @@ export default function Viewport({points,samples,cursor}:{points:Point[];samples
     }
     ctx.fillStyle='#b7ccd8';ctx.font='12px ui-monospace, monospace';
     ctx.fillText('NED frame · UP = −Down · equal axis scaling',16,H-16);
-  },[size,camera,points,samples,cursor]);
+  },[size,camera,points,samples,cursor,field]);
   return <div className="viewer">
     <div className="viewer-tools"><span>3D ORBIT / REFERENCE FIELD</span>
       <button type="button" title="Reset 3D view" onClick={()=>setCamera({az:-.65,el:.57,zoom:1})}>Reset</button></div>
@@ -86,6 +89,6 @@ export default function Viewport({points,samples,cursor}:{points:Point[];samples
         setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(.05,Math.min(1.5,c.el+dy*.008))}));}}
       onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}
       onWheel={e=>{e.preventDefault();setCamera(c=>({...c,zoom:Math.max(.35,Math.min(6,c.zoom*(e.deltaY>0?.9:1.1)))}));}}/>
-    <div className="field-legend"><span>Speed</span><div className="gradient-bar"/><span>low → high</span></div>
+    <div className="field-legend"><span>{field}</span><div className="gradient-bar"/><span>low → high</span></div>
   </div>;
 }
