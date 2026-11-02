@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, ArrowDownToLine, Box as BoxIcon, CheckCircle2, ChevronDown, CircleDot, CloudSun, Crosshair, FileUp, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Trash2, TriangleAlert, Wind, X } from 'lucide-react';
+import { Activity, ArrowDownToLine, Box as BoxIcon, CheckCircle2, ChevronDown, CircleDot, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Trash2, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
-import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, parseCsv, projectFromJson, sampleProject, validateProject } from './engineering';
+import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, parseCsv, projectFromJson, sampleProject } from './engineering';
 import Viewport from './Viewport';
 import Plot, { type Field } from './Plot';
 
@@ -35,11 +35,6 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   const panning=useRef<{x:number;y:number}|null>(null);
   const [center,setCenter]=useState({north:0,east:0});
   const view=range*2;
-  const fromEvent=(event:React.PointerEvent<SVGSVGElement>)=>{
-    const rect=event.currentTarget.getBoundingClientRect();
-    return {east:center.east+((event.clientX-rect.left)/rect.width-.5)*view,
-      north:center.north-( (event.clientY-rect.top)/rect.height-.5)*view*(rect.height/rect.width)};
-  };
   // Maintain an equal physical map scale on rectangular and square viewports.
   const [aspect,setAspect]=useState(1.65);
   useEffect(()=>{if(!ref.current)return;const obs=new ResizeObserver(es=>{const e=es[0];if(e.contentRect.height>0)setAspect(e.contentRect.width/e.contentRect.height);});obs.observe(ref.current);return()=>obs.disconnect();},[]);
@@ -114,7 +109,7 @@ export default function App(){
   const [range,setRange]=useState(45);
   const [active,setActive]=useState<'geometry'|'trajectory'|'analysis'>('geometry');
   const [field,setField]=useState<Field>('speed');
-  const [environmentTab,setEnvironmentTab]=useState(false);
+  const [environmentTab,setEnvironmentTab]=useState(true);
   const [advanced,setAdvanced]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
@@ -144,7 +139,8 @@ export default function App(){
     update(p=>({...p,[key]:value}));
   };
   const changeEnv=(patch:Partial<Environment>)=>{
-    update(p=>({...p,environment:{...p.environment,...patch}}));
+    setProject(p=>({...p,environment:{...p.environment,...patch}}));
+    setDirty(true);
     if(patch.mode!==undefined)setWeatherError('');
   };
   const editPoint=(index:number,point:Point)=>update(p=>({...p,points:p.points.map((v,i)=>i===index?point:v)}));
@@ -235,7 +231,6 @@ export default function App(){
   const saveProject=()=>downloadJson(project.title.replace(/[^a-z0-9_-]/gi,'_')+'.px4-project.json',project);
   const saveReference=()=>{if(result?.trajectory_csv)exportBlob('verified-route.csv',result.trajectory_csv,'text/csv');};
   const summary=getPreviewSummary(result||{accepted:false});
-  const scalar=stats?field==='speed'?stats.peak:field==='acceleration'?stats.accel:field==='jerk'?stats.jerk:0:0;
   return <div className="app-shell">
     <header className="topbar">
       <div className="brand"><div className="brand-mark"><Activity size={19}/></div>
@@ -381,8 +376,8 @@ export default function App(){
             {advanced&&<div className="hint">Planning uses the existing Python path geometry, constraint retiming, vehicle envelope and verification routines. Cruise is a preference, not an achieved-speed guarantee. Altitudes are launch-relative; positions are local NED.</div>}
           </div>
           <div className="inspector-section">
-            <button className="group-title group-click" onClick={()=>setEnvironmentTab(!environmentTab)}><Wind size={15}/> ENVIRONMENT <ChevronDown size={14}/></button>
-            <div className="mode-switch">
+            <button className="group-title group-click" aria-expanded={environmentTab} onClick={()=>setEnvironmentTab(!environmentTab)}><Wind size={15}/> ENVIRONMENT <ChevronDown size={14}/></button>
+            {environmentTab&&<><div className="mode-switch">
               <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>changeEnv({mode:'manual',source:'User-specified manual scenario',fetchedAt:undefined})}>Manual</button>
               <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>changeEnv({mode:'live',source:'Awaiting forecast; last values are not current',fetchedAt:undefined})}>Live forecast</button>
             </div>
@@ -390,9 +385,9 @@ export default function App(){
               <label>Latitude (°)<input type="number" step=".001" value={project.environment.latitude} onChange={e=>changeEnv({latitude:asNum(e.target.value,project.environment.latitude)})}/></label>
               <label>Longitude (°)<input type="number" step=".001" value={project.environment.longitude} onChange={e=>changeEnv({longitude:asNum(e.target.value,project.environment.longitude)})}/></label>
             </div>
-            {project.environment.mode==='live'&&<><label>Forecast instant (local time)<input type="datetime-local"
+            {project.environment.mode==='live'&&<><label>Forecast instant (UTC)<input type="datetime-local"
               value={new Date(project.environment.timestamp).toISOString().slice(0,16)}
-              onChange={e=>{const ms=Date.parse(e.target.value);if(Number.isFinite(ms))changeEnv({timestamp:new Date(ms).toISOString(),fetchedAt:undefined});}}/></label>
+              onChange={e=>{const ms=Date.parse(e.target.value+'Z');if(Number.isFinite(ms))changeEnv({timestamp:new Date(ms).toISOString(),fetchedAt:undefined});}}/></label>
               <button className="forecast-button" onClick={fetchWeather} disabled={weatherBusy}><CloudSun size={15}/>{weatherBusy?'Loading…':'Fetch live forecast'}</button>
               {weatherError&&<div className="hint warn" role="alert">{weatherError}</div>}
             </>}
@@ -405,7 +400,7 @@ export default function App(){
               <label>Temperature (°C)<input type="number" step=".5" value={project.environment.temperature}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({temperature:asNum(e.target.value,project.environment.temperature)})}/></label></div>
             <div className="hint weather-source"><Wind size={14}/><span>{project.environment.source}<br/>{project.environment.fetchedAt?'Fetched: '+project.environment.fetchedAt:''}</span></div>
-            <div className="hint warn">Weather is used for analytical air-relative speed only. It is NOT injected into the planner or Gazebo. Gust and vertical winds are not simulated.</div>
+            <div className="hint warn">Weather is used for analytical air-relative speed only. It is NOT injected into the planner or Gazebo. Gust and vertical winds are not simulated.</div></>}
           </div>
           <div className="inspector-section">
             <div className="group-title">SELECTED POINT</div>
