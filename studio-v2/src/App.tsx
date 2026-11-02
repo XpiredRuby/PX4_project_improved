@@ -404,6 +404,8 @@ export default function App(){
           <div><span>PEAK AIR-RELATIVE</span><strong>{display(stats.air,'m/s')}</strong></div>
           <div><span>PEAK ACCEL.</span><strong>{display(stats.accel,'m/s²')}</strong></div>
           <div><span>PEAK JERK</span><strong>{display(stats.jerk,'m/s³')}</strong></div>
+          <div><span>EST. DRY AIR DENSITY</span><strong>{display(stats.density,'kg/m³',3)}</strong></div>
+          <div><span>PEAK DYNAMIC PRESSURE</span><strong>{display(stats.peakDynamicPressure,'Pa',1)}</strong></div>
         </section>}
         {result&&<section className="data-section">
           <div className="section-heading"><div><strong>Verification & artifact exports</strong><span>Mathematical reference — not simulated or physically measured flight</span></div>
@@ -473,8 +475,10 @@ export default function App(){
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({gust:asNum(e.target.value,project.environment.gust)})}/></label>
               <label>Temperature (°C)<input type="number" step=".5" value={project.environment.temperature}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({temperature:asNum(e.target.value,project.environment.temperature)})}/></label></div>
+            <label>Surface pressure (hPa)<input type="number" step=".5" min="100" max="1100" value={project.environment.pressure}
+              disabled={project.environment.mode==='live'} onChange={e=>changeEnv({pressure:asNum(e.target.value,project.environment.pressure)})}/></label>
             <div className="hint weather-source"><Wind size={14}/><span>{project.environment.source}<br/>{project.environment.fetchedAt?'Fetched: '+project.environment.fetchedAt:''}</span></div>
-            <div className="hint warn">Weather is used for analytical air-relative speed only. It is NOT injected into the planner or Gazebo. Gust and vertical winds are not simulated.</div></>}
+            <div className="hint warn">Weather is used for analytical air-relative speed only. It is NOT injected into the planner or Gazebo. Dry-air density is a near-surface approximation. Gust and vertical winds are not simulated.</div></>}
           </div>
           <div className="inspector-section">
             <div className="group-title">SELECTED POINT</div>
