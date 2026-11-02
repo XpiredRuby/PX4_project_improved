@@ -19,7 +19,7 @@ export type Sample = {
 };
 export type Preview = {
   accepted: boolean; error?: string; trajectory_csv?: string;
-  full_mission_csv?: string; summary?: Record<string,unknown>;
+  full_mission_csv?: string; mission?: {trajectory_csv?:string; phases?:unknown[]}; summary?: Record<string,unknown>;
   verification?: Record<string,unknown>;
   adjustments?: unknown; interpretation?: unknown;
   planning_adjustments?: { adjusted?:boolean; adjustments?:Array<{code:string;message:string}>;
