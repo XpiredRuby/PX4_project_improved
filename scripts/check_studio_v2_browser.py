@@ -113,6 +113,40 @@ def main():
             page.screenshot(path=str(options.output / "desktop-synthetic-ui.png"), full_page=True)
             results.append("Synchronized 3D/result panels, five plots and adjustment disclosures")
 
+            # Test location and hourly-weather UI against deterministic responses.
+            # This tests parsing and provenance only, not live forecast accuracy.
+            page.evaluate("""() => {
+              const original = window.fetch;
+              window.fetch = async (input, options) => {
+                const url = typeof input === 'string' ? input : input.url;
+                if (url.startsWith('https://geocoding-api.open-meteo.com/')) {
+                  return new Response(JSON.stringify({results:[{
+                    id:101,name:'College Station',admin1:'Texas',country:'United States',
+                    latitude:30.628,longitude:-96.334}]}),
+                    {status:200,headers:{'Content-Type':'application/json'}});
+                }
+                if (url.startsWith('https://api.open-meteo.com/')) {
+                  return new Response(JSON.stringify({hourly:{
+                    time:[new Date().toISOString().slice(0,16)],
+                    wind_speed_10m:[4],wind_direction_10m:[270],
+                    wind_gusts_10m:[7],temperature_2m:[25],surface_pressure:[1005]
+                  }}),{status:200,headers:{'Content-Type':'application/json'}});
+                }
+                return original(input, options);
+              };
+            }""")
+            page.get_by_role("button", name="Live forecast").click()
+            page.get_by_role("textbox", name="Search location").fill("College Station")
+            page.get_by_role("button", name="Find").click()
+            page.locator(".place-matches button").first.click()
+            assert abs(float(page.get_by_label("Latitude (°)").input_value()) - 30.628) < 1e-6
+            page.get_by_role("button", name="Fetch live forecast").click()
+            page.get_by_text("Open-Meteo forecast", exact=False).wait_for()
+            assert float(page.get_by_label("Wind speed (m/s)").input_value()) == 4
+            assert float(page.get_by_label("Wind from (°)").input_value()) == 270
+            assert float(page.get_by_label("Surface pressure (hPa)").input_value()) == 1005
+            results.append("Mock geocoding, timestamped forecast parsing and meteorological wind settings")
+
             page.get_by_role("button", name="Geometry", exact=True).click()
             page.get_by_role("button", name="New blank mission").click()
             assert page.locator(".point-table tbody tr").count() == 0
