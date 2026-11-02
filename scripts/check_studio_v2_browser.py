@@ -1,0 +1,159 @@
+"""Browser interaction smoke checks for Studio V2.
+
+The first suite uses a SYNTHETIC, clearly labeled planner fixture to validate
+React interactions. It is not flight/simulation evidence and does not validate
+trajectory dynamics. Optional --real-planner runs the actual Pyodide planner.
+No native PX4, Gazebo, or hardware command is used.
+"""
+from __future__ import annotations
+
+import argparse
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+import json
+from pathlib import Path
+import threading
+import time
+
+ROOT = Path(__file__).resolve().parents[1]
+PREVIEW = ROOT / "studio-v2/preview"
+
+
+def synthetic_reference():
+    header = "time,x,y,z,vx,vy,vz,ax,ay,az,jx,jy,jz,yaw"
+    samples = [
+        "0,0,0,-12,0,0,0,0,0,0,0,0,0,0",
+        "0.5,1,0,-12,1.5,0,0,0.2,0,0,0.1,0,0,0",
+        "1,2,0,-12,1,0,0,-0.3,0,0,-0.1,0,0,0",
+        "1.5,3,0,-12,0,0,0,-0.3,0,0,0,0,0,0",
+    ]
+    return {
+        "accepted": True,
+        "release_class": "SITL_ONLY",
+        "campaign_ran": False,
+        "trajectory_csv": header + "\n" + "\n".join(samples) + "\n",
+        "summary": {"speed_preferences": {"planning_cap_m_s": 2.7}},
+        "verification": {"accepted": True, "source": "synthetic test fixture ONLY"},
+        "planning_adjustments": {
+            "adjusted": True,
+            "original_rounding_met": False,
+            "requested_rounding_m": 0.5,
+            "curve_error_bound_from_requested_m": 0.75,
+            "adjustments": [{"code": "example", "message": "SYNTHETIC UI TEST ONLY"}],
+        },
+    }
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--real-planner", action="store_true")
+    options = parser.parse_args()
+    if not (PREVIEW / "index.html").exists():
+        raise SystemExit("Build preview before browser smoke checks")
+    options.output.mkdir(parents=True, exist_ok=True)
+
+    class Handler(SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=str(PREVIEW), **kwargs)
+
+        def log_message(self, *_args):
+            pass
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    runner = threading.Thread(target=server.serve_forever, daemon=True)
+    runner.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+    results = []
+    page_errors = []
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=True, args=["--disable-dev-shm-usage"])
+            context = browser.new_context(viewport={"width": 1440, "height": 940}, device_scale_factor=1)
+            page = context.new_page()
+            page.on("pageerror", lambda error: page_errors.append(str(error)))
+            page.goto(base, wait_until="domcontentloaded", timeout=30000)
+            page.get_by_role("heading", name="Mission geometry").wait_for()
+            assert page.get_by_text("ENGINEERING WORKSPACE / 2.0 PREVIEW").count() == 1
+            assert page.locator(".point-table tbody tr").count() == 4
+            assert "SITL ONLY" in page.locator(".status-tag").inner_text()
+            results.append("React shell, editing surface and flight-safety scope")
+
+            page.get_by_role("button", name="Add row").click()
+            assert page.locator(".point-table tbody tr").count() == 5
+            page.get_by_role("button", name="Undo").click()
+            assert page.locator(".point-table tbody tr").count() == 4
+            page.get_by_role("button", name="L-shaped route").click()
+            assert page.locator(".point-table tbody tr").count() == 4
+            results.append("Waypoint creation, undo, and route preset")
+
+            # Stub only the analysis UI. This explicitly does NOT certify a real plan.
+            fixture = synthetic_reference()
+            page.evaluate(
+                """fixture => {
+                  window.__plannerFetch = window.fetch;
+                  window.fetch = async (input, options) => {
+                    if (typeof input === 'string' && input === '/api/preview') {
+                      return new Response(JSON.stringify(fixture), {
+                        status: 200, headers: {'Content-Type': 'application/json'}});
+                    }
+                    return window.__plannerFetch(input, options);
+                  };
+                }""", fixture
+            )
+            page.get_by_role("button", name="Plan & verify").click()
+            page.get_by_role("heading", name="Engineering post-processing").wait_for()
+            page.get_by_text("ACCEPTED REFERENCE").wait_for()
+            assert page.locator(".plot-grid .plot-box").count() == 5
+            assert "SYNTHETIC UI TEST ONLY" in page.locator(".adjustments").inner_text()
+            assert "NOT RUN" in page.locator(".verification-grid").inner_text()
+            assert "0.00 s" in page.locator(".sample-readout").inner_text()
+            page.screenshot(path=str(options.output / "desktop-synthetic-ui.png"), full_page=True)
+            results.append("Synchronized 3D/result panels, five plots and adjustment disclosures")
+
+            page.get_by_role("button", name="Geometry", exact=True).click()
+            page.get_by_role("button", name="New blank mission").click()
+            assert page.locator(".point-table tbody tr").count() == 0
+            assert page.get_by_role("button", name="Plan & verify").is_disabled()
+            results.append("New blank mission invalidates prior verified artifact")
+
+            # Exercise responsive layout at a narrow viewport, without mock results.
+            page.set_viewport_size({"width": 390, "height": 844})
+            page.screenshot(path=str(options.output / "mobile-empty-ui.png"), full_page=True)
+            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
+            results.append("390px responsive workspace horizontal overflow check")
+            assert not page_errors, page_errors
+            context.close()
+
+            if options.real_planner:
+                real = browser.new_context(viewport={"width": 1440, "height": 940})
+                live = real.new_page()
+                live.on("pageerror", lambda error: page_errors.append(str(error)))
+                live.goto(base, wait_until="domcontentloaded", timeout=30000)
+                live.get_by_role("button", name="Straight path").click()
+                live.get_by_role("button", name="Plan & verify").click()
+                live.get_by_text("ACCEPTED REFERENCE").wait_for(timeout=150000)
+                assert "NOT RUN" in live.locator(".verification-grid").inner_text()
+                results.append("REAL Pyodide Python planner accepted a straight trajectory, no Gazebo")
+                live.screenshot(path=str(options.output / "real-planner-result.png"), full_page=True)
+                real.close()
+            browser.close()
+    finally:
+        server.shutdown()
+        server.server_close()
+        runner.join(timeout=4)
+        (options.output / "report.json").write_text(json.dumps({
+            "smoke_passed": len(results) >= 5 and not page_errors,
+            "simulation_ran": False,
+            "synthetic_ui_fixture": True,
+            "actual_planner_attempted": options.real_planner,
+            "results": results,
+            "page_errors": page_errors,
+        }, indent=2) + "\n")
+
+    print("\n".join("PASS " + label for label in results))
+
+
+if __name__ == "__main__":
+    main()
