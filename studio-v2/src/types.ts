@@ -21,6 +21,9 @@ export type Preview = {
   full_mission_csv?: string; summary?: Record<string,unknown>;
   verification?: Record<string,unknown>;
   adjustments?: unknown; interpretation?: unknown;
+  planning_adjustments?: { adjusted?:boolean; adjustments?:Array<{code:string;message:string}>;
+    original_rounding_met?:boolean; curve_error_bound_from_requested_m?:number;
+    requested_rounding_m?:number; verification_scope?:string; };
   requested_document?: unknown; intent?: unknown;
   release_class?: string; campaign_ran?: boolean;
 };
