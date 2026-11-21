@@ -12,7 +12,6 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import json
 from pathlib import Path
 import threading
-import time
 
 ROOT = Path(__file__).resolve().parents[1]
 PREVIEW = ROOT / "studio-v2/preview"
@@ -45,6 +44,7 @@ def synthetic_reference():
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--chromium", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--real-planner", action="store_true")
     options = parser.parse_args()
@@ -70,7 +70,7 @@ def main():
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=["--disable-dev-shm-usage"])
+            browser = playwright.chromium.launch(headless=True, executable_path=options.chromium, args=["--disable-dev-shm-usage"])
             context = browser.new_context(viewport={"width": 1440, "height": 940}, device_scale_factor=1)
             page = context.new_page()
             page.on("pageerror", lambda error: page_errors.append(str(error)))
@@ -141,7 +141,7 @@ def main():
                 if (url.startsWith('https://api.open-meteo.com/')) {
                   return new Response(JSON.stringify({hourly:{
                     time:[new Date().toISOString().slice(0,16)],
-                    wind_speed_10m:[4],wind_direction_10m:[270],
+                    relative_humidity_2m:[58],wind_speed_10m:[4],wind_direction_10m:[270],
                     wind_gusts_10m:[7],temperature_2m:[25],surface_pressure:[1005]
                   }}),{status:200,headers:{'Content-Type':'application/json'}});
                 }

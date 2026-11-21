@@ -5,6 +5,8 @@ and compare it with retained simulator measurements. Browser planning and CSV
 playback are available without PX4. Connected execution requires a separately
 configured local simulator; the public page does not run Gazebo.
 
+For the localhost React workbench, see the [offline research studio](studio-v2/README.md).
+
 Start with the [studio quickstart](docs/trajectory_studio_quickstart.md).
 The [25 October engineering audit](docs/conference_engineering_audit.md) records
 the speed-cap fix, independent constructive-artifact adapter, test evidence and

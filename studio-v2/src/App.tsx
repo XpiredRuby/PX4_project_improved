@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowDownToLine, Box as BoxIcon, CheckCircle2, ChevronDown, CircleDot, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Trash2, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
 import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, parseCsv, projectFromJson, sampleProject, validateProject } from './engineering';
+import FlightReplay from './FlightReplay';
+import Sweep from './Sweep';
+import Prediction from './Prediction';
+import WindStudy from './WindStudy';
 import Viewport from './Viewport';
 import Plot, { type Field } from './Plot';
 
@@ -24,10 +28,10 @@ const asNum=(value:string,current:number)=>value.trim()===''?current:Number(valu
 function ErrorPanel({message,onClose}:{message:string;onClose:()=>void}){
   return <div className="notice error" role="alert"><TriangleAlert size={16}/><span>{message}</span><button aria-label="Dismiss error" onClick={onClose}><X size={16}/></button></div>;
 }
-function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDraw,range,setRange}:{
+function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDraw,range,setRange,radius}:{
   points:Point[];selected:number;onSelect:(index:number)=>void;onChange:(index:number,point:Point)=>void;
   tool:Tool;onAdd:(north:number,east:number)=>void;onDraw:(north:number,east:number,first:boolean)=>void;
-  onFinishDraw:()=>void;range:number;setRange:(v:number)=>void;
+  onFinishDraw:()=>void;radius:number;range:number;setRange:(v:number)=>void;
 }){
   const ref=useRef<SVGSVGElement>(null);
   const dragging=useRef<number|null>(null);
@@ -64,8 +68,8 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
     if(panning.current&&tool==='pan'){
       const dx=e.clientX-panning.current.x,dy=e.clientY-panning.current.y;
       panning.current={x:e.clientX,y:e.clientY};
-      setCenter(c=>({east:c.east-dx*view/e.currentTarget.getBoundingClientRect().width,
-        north:c.north+dy*visibleHeight/e.currentTarget.getBoundingClientRect().height}));
+      const bounds=e.currentTarget.getBoundingClientRect();
+      setCenter(c=>({east:c.east-dx*view/bounds.width, north:c.north+dy*visibleHeight/bounds.height}));
     }
   };
   const onUp=()=>{dragging.current=null;panning.current=null;if(drawing.current)onFinishDraw();drawing.current=false;};
@@ -86,7 +90,7 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
           <text x={v+0.6} y={-center.north-visibleHeight/2+2} fill="#7290a5" fontSize="1.7">{v}</text>
         </g>;
       })}
-      <circle cx="0" cy="0" r="40" fill="none" stroke="#bca068" strokeWidth=".2" strokeDasharray="1 1.5"/>
+      <circle cx="0" cy="0" r={radius} fill="none" stroke="#bca068" strokeWidth=".2" strokeDasharray="1 1.5"/>
       <path d={path} stroke="#56bcd0" strokeWidth=".65" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       {points.filter((_,i)=>points.length<80||i%Math.ceil(points.length/60)===0||i===points.length-1).map(p=>{
         const index=points.indexOf(p);
@@ -98,7 +102,7 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
         </g>;
       })}
     </svg>
-    <div className="viewport-status"><span>{points.length.toLocaleString()} input points</span><span>XY · local NED · meters</span><span>Reference radius 40 m</span></div>
+    <div className="viewport-status"><span>{points.length.toLocaleString()} input points</span><span>XY · local NED · meters</span><span>Model radius {radius} m</span></div>
   </div>;
 }
 
@@ -114,6 +118,8 @@ export default function App(){
   const [paneWidths,setPaneWidths]=useState({left:235,right:288});
   const resizing=useRef<{edge:'left'|'right';pointerX:number;start:number}|null>(null);
   const [busy,setBusy]=useState(false);
+  const [sweeping,setSweeping]=useState(false);
+  const [profileBusy,setProfileBusy]=useState(false);
   const [error,setError]=useState('');
   const [notice,setNotice]=useState('');
   const [result,setResult]=useState<Preview|null>(null);
@@ -157,12 +163,29 @@ export default function App(){
     setProject(prev=>{const next=f(prev);if(next!==prev){history.current=[...history.current.slice(-19),prev];}return next;});
     setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setCursor(0);setPlaying(false);setDirty(true);setError('');setNotice('');
   },[]);
+  const selectAircraft=async(preset:string)=>{
+    if(preset==='baseline'){update(p=>({...p,aircraft:undefined}));return;}
+    setProfileBusy(true);
+    try{
+      const response=await fetch('/api/aircraft/example/'+preset);
+      if(!response.ok)throw Error('Aircraft preset unavailable');
+      const profile=await response.json();
+      const assessed=await fetch('/api/aircraft/assess',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile)});
+      const setup=await assessed.json();
+      if(!assessed.ok||!setup.ready)throw Error('Aircraft profile could not be assessed');
+      update(p=>({...p,aircraft:{preset,profile,sha256:setup.profile_sha256}}));
+    }catch(e){setError((e as Error).message);}finally{setProfileBusy(false);}
+  };
   const changeValue=(key:keyof Project,value:number|string)=>{
     update(p=>({...p,[key]:value}));
   };
+  const currentEnvironment=useRef(project.environment);
+  currentEnvironment.current=project.environment;
+  const weatherVersion=useRef(0);
   const changeEnv=(patch:Partial<Environment>)=>{
+    weatherVersion.current++;
     const stale=project.environment.mode==='live' && ['latitude','longitude','timestamp'].some(k=>Object.prototype.hasOwnProperty.call(patch,k));
-    setProject(p=>({...p,environment:{...p.environment,...(stale?{windSpeed:0,windDirection:0,gust:0,source:'Awaiting new location/time forecast',fetchedAt:undefined}:{}),...patch}}));
+    setProject(p=>({...p,environment:{...p.environment,...(stale?{forecastValidAt:undefined,humidity:undefined,source:'Awaiting new location/time forecast',fetchedAt:undefined}:{}),...patch}}));
     setDirty(true);
     if(patch.mode!==undefined)setWeatherError('');
   };
@@ -190,7 +213,10 @@ export default function App(){
   const stats=useMemo(()=>metrics(samples,project.environment),[samples,project.environment]);
   const current=useMemo(()=>interpolate(samples,cursor),[samples,cursor]);
   const duration=stats?.duration||0;
-  const cap=Math.min(project.speedCap,3);
+  const modelCap=project.aircraft?.profile.maximum_speed_m_s??3;
+  const cap=Math.min(project.speedCap,modelCap);
+  const weatherReady=project.environment.mode==='manual'||!!project.environment.fetchedAt;
+  const visibleField=field==='airspeed'&&!weatherReady?'speed':field;
 
   useEffect(()=>{
     if(!playing||samples.length<2)return;
@@ -227,11 +253,12 @@ export default function App(){
   const fetchWeather=async()=>{
     setWeatherBusy(true);setWeatherError('');
     try{
+      const version=++weatherVersion.current;
       const env=project.environment;
       if(!Number.isFinite(env.latitude)||!Number.isFinite(env.longitude)||Math.abs(env.latitude)>90||Math.abs(env.longitude)>180)
         throw Error('Enter valid latitude and longitude');
       const q=new URLSearchParams({latitude:String(env.latitude),longitude:String(env.longitude),timezone:'GMT',wind_speed_unit:'ms',
-        hourly:'wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,surface_pressure',forecast_days:'7'});
+        hourly:'relative_humidity_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,surface_pressure',forecast_days:'7'});
       const response=await fetch('https://api.open-meteo.com/v1/forecast?'+q.toString());
       if(!response.ok)throw Error('Forecast service returned '+response.status);
       const json=await response.json();
@@ -243,11 +270,12 @@ export default function App(){
       times.forEach((s,j)=>{const t=Date.parse(s+'Z'),d=Math.abs(t-target);if(d<best){i=j;best=d;}});
       if(i<0||best>3600000)throw Error('Selected time is outside the available seven-day forecast');
       const h=json.hourly;
-      const vals=['wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m','surface_pressure'];
+      const vals=['relative_humidity_2m','wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m','surface_pressure'];
       if(vals.some(k=>!Number.isFinite(h[k]?.[i])))throw Error('Forecast contains missing required weather values');
-      changeEnv({windSpeed:h.wind_speed_10m[i],windDirection:h.wind_direction_10m[i],gust:h.wind_gusts_10m[i],
+      if(version!==weatherVersion.current || env!==currentEnvironment.current)return;
+      changeEnv({humidity:h.relative_humidity_2m[i], forecastValidAt:times[i]+'Z', windSpeed:h.wind_speed_10m[i],windDirection:h.wind_direction_10m[i],gust:h.wind_gusts_10m[i],
         temperature:h.temperature_2m[i],pressure:h.surface_pressure[i],
-        timestamp:new Date(Date.parse(times[i]+'Z')).toISOString(),fetchedAt:new Date().toISOString(),
+        fetchedAt:new Date().toISOString(),
         source:'Open-Meteo forecast · 10 m modeled wind · hourly UTC snapshot'});
     }catch(e){setWeatherError((e as Error).message);}finally{setWeatherBusy(false);}
   };
@@ -339,7 +367,7 @@ export default function App(){
           <div className="tree-root"><ChevronDown size={14}/><FolderOpen size={15}/> {project.title}</div>
           <div className="tree-child"><CircleDot size={14}/> Geometry <span>{project.points.length}</span></div>
           <div className="tree-sub">Waypoints / path strokes</div>
-          <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(false)}><BoxIcon size={14}/> Aircraft <span>x500</span></button>
+          <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(false)}><BoxIcon size={14}/> Aircraft <span>{project.aircraft?.profile.profile_id??'x500'}</span></button>
           <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(true)}><CloudSun size={14}/> Environment <span>{project.environment.mode}</span></button>
           <div className="tree-child"><Activity size={14}/> Reference <span>{result?.accepted?'Verified':'Not verified'}</span></div>
           <div className="tree-sub">PX4 / Gazebo <span className="pending">Milestone 3</span></div>
@@ -366,7 +394,7 @@ export default function App(){
             :active==='trajectory'?'Review the original request, verified reference and moving vehicle marker.'
             :'Inspect time-synchronized numerical results and environmental sensitivity.'}</p></div>
           <div className="workspace-actions"><button className="ghost" onClick={undo} disabled={history.current.length===0}><RotateCcw size={15}/> Undo</button>
-            <button className="primary" onClick={run} disabled={busy||project.points.length<2}>
+            <button className="primary" onClick={run} disabled={busy||sweeping||profileBusy||project.points.length<2}>
               {busy?<span className="spinner"/>:<ShieldCheck size={16}/>} {busy?'Verifying…':'Plan & verify'}</button>
             {busy&&<button className="ghost" onClick={()=>abort.current?.abort()}>Cancel</button>}
           </div></div>
@@ -382,8 +410,8 @@ export default function App(){
         <div className="viewport-panel">
           {active==='geometry'?
             <TopMap points={project.points} selected={selected} onSelect={setSelected} onChange={editPoint} tool={tool}
-              onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} range={range} setRange={setRange}/>
-          : <Viewport points={project.points} samples={samples} cursor={cursor} field={field} environment={project.environment}/>}
+              onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} radius={Number(project.aircraft?.profile.max_radius_m??40)} range={range} setRange={setRange}/>
+          : <Viewport points={project.points} samples={samples} cursor={cursor} field={visibleField} environment={project.environment}/>}
         </div>
         {active==='geometry'?<section className="data-section">
           <div className="section-heading"><div><strong>Waypoint definition</strong><span>Double-check positions and required stops</span></div>
@@ -405,11 +433,11 @@ export default function App(){
           <div className="scrubber"><input aria-label="Reference time" type="range" min={samples[0]?.time||0} max={samples[samples.length-1]?.time||1} step=".01" value={cursor} disabled={!samples.length} onChange={e=>{setPlaying(false);setCursor(Number(e.target.value));}}/>
             <span>{display(cursor,'s')} / {display(duration,'s')}</span></div>
           {active==='analysis'&&<><div className="field-select">
-              <label>Scalar</label><select value={field} onChange={e=>setField(e.target.value as Field)}>
-                <option value="speed">Groundspeed</option><option value="airspeed">Wind-relative airspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
+              <label>Scalar</label><select value={visibleField} onChange={e=>setField(e.target.value as Field)}>
+                <option value="speed">Groundspeed</option><option disabled={!weatherReady} value="airspeed">Wind-relative airspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
                 <option value="altitude">Altitude</option><option value="yaw">Yaw</option></select>
               <span>Computed field, not an FEA stress solution</span></div>
-            <div className="plot-grid">{(['speed','airspeed','acceleration','jerk','altitude','yaw'] as const).map(metric=>
+            <div className="plot-grid">{(['speed','airspeed','acceleration','jerk','altitude','yaw'] as const).filter(metric=>metric!=='airspeed'||weatherReady).map(metric=>
               <Plot key={metric} samples={samples} field={metric} environment={project.environment} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
                 ceiling={metric==='speed'?cap:metric==='acceleration'?1:metric==='jerk'?1.5:undefined}/>)}</div>
           </>}
@@ -421,6 +449,10 @@ export default function App(){
             <div><span>WIND-RELATIVE</span><strong>{display(airspeed(current,project.environment),'m/s')}</strong></div>
           </div>}
         </section>}
+        {active==='analysis'&&result?.vehicle_model&&routeSamples.length>0&&<Prediction key={JSON.stringify([geometryRevision.current,project.environment,result.summary?.controller_trajectory_sha256])} samples={routeSamples} environment={project.environment} vehicle={result.vehicle_model} digest={result.summary?.controller_trajectory_sha256}/>}
+        {active==='analysis'&&<WindStudy samples={routeSamples} environment={project.environment} digest={result?.summary?.controller_trajectory_sha256}/>}
+        {active==='analysis'&&<FlightReplay local={engine==='local'}/>}
+        {active==='analysis'&&<Sweep key={geometryRevision.current} project={project} disabled={busy||profileBusy} onBusy={setSweeping}/>}
         {stats&&<section className="metrics-row">
           <div><span>REFERENCE DURATION</span><strong>{display(stats.duration,'s',1)}</strong></div>
           <div><span>PATH DISTANCE</span><strong>{display(stats.distance,'m',1)}</strong></div>
@@ -435,15 +467,18 @@ export default function App(){
           <div className="section-heading"><div><strong>Verification & artifact exports</strong><span>Mathematical reference — not simulated or physically measured flight</span></div>
             <div className="section-actions"><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
               {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
-              <button onClick={()=>downloadJson('planner-evidence.json',{result:{...result,trajectory_csv:undefined},environment:project.environment,scope:'planned reference; environment used only for air-relative analysis'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
+              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
             <div><span>RESULT</span><strong className="pass-label">ACCEPTED REFERENCE</strong></div>
             <div><span>RELEASE CLASS</span><strong>{result.release_class||'SITL_ONLY'}</strong></div>
-            <div><span>MODEL CAP</span><strong>3.00 m/s</strong></div>
+            <div><span>REQUESTED CRUISE</span><strong>{display(project.cruise,'m/s')}</strong></div>
+            <div><span>PLANNED ROUTE PEAK</span><strong>{display(Number(summary.speed.planned_route_peak_sampled_m_s),'m/s')}</strong></div>
+            <div><span>MODEL CAP</span><strong>{display(modelCap,'m/s')}</strong></div>
             <div><span>REQUESTED NEVER-EXCEED</span><strong>{display(project.speedCap,'m/s')}</strong></div>
             <div><span>PLANNED CAP</span><strong>{String(summary.speed.planning_cap_m_s??'—')} m/s</strong></div>
             <div><span>GAZEBO CAMPAIGN</span><strong>NOT RUN</strong></div>
           </div>
+          {Array.isArray(summary.speed.reasons)&&<p>Speed limits reported by the planner · {summary.speed.reasons.map(String).join(', ').replaceAll('_',' ')||'No adjustment'}</p>}
           {result.planning_adjustments&&<div className="adjustments"><strong>Requested vs accepted trajectory</strong>
             <p>Original drawing tolerance: {display(result.planning_adjustments.requested_rounding_m??0,'m')}. Maximum documented requested-path bound: {display(result.planning_adjustments.curve_error_bound_from_requested_m??0,'m')}. Fidelity criterion: {result.planning_adjustments.original_rounding_met?'Met':'Not met; modified route requires review'}.</p>
             <ul>{(result.planning_adjustments.adjustments||[]).map((a,i)=><li key={i}><strong>{a.code}</strong> — {a.message}</li>)}</ul>
@@ -457,16 +492,18 @@ export default function App(){
         <div className="inspector-content">
           <div className="inspector-section">
             <div className="group-title">VEHICLE MODEL <ChevronDown size={14}/></div>
-            <label>Aircraft preset</label><select aria-label="Aircraft model" value="x500" disabled><option value="x500">PX4 x500 / multirotor</option></select>
-            <div className="hint">Simplified SITL model. Verified hard speed limit: 3.00 m/s. Other profiles require qualified model binding.</div>
+            <label>Aircraft preset</label><select aria-label="Aircraft model" value={project.aircraft?.preset??'baseline'} disabled={busy||profileBusy||sweeping} onChange={e=>selectAircraft(e.target.value)}>
+              <option value="baseline">X500 · reference model</option><option value="x500">X500 · Gazebo SDF profile</option>
+              <option value="quad">Illustrative quadrotor</option><option value="hex">Illustrative hexacopter</option><option value="octo">Illustrative octocopter</option></select>
+            <div className="hint">{project.aircraft?.profile.name??'X500 reference model'} · modeled speed limit {display(modelCap,'m/s')}.</div>
             <div className="form-row"><label>Reference altitude (m)<input type="number" min=".1" max="30" step=".5" value={project.altitude}
               onChange={e=>{const value=asNum(e.target.value,project.altitude);update(p=>({...p,altitude:value,points:p.points.map(q=>({...q,altitude:value}))}));}}/></label></div>
           </div>
           <div className="inspector-section">
             <div className="group-title">TRAJECTORY SETTINGS <ChevronDown size={14}/></div>
-            <div className="form-row"><label>Preferred cruise (m/s)<input type="number" min=".01" max="20" step=".1" value={project.cruise} onChange={e=>changeValue('cruise',asNum(e.target.value,project.cruise))}/></label>
-              <label>Never exceed (m/s)<input type="number" min=".01" max="20" step=".1" value={project.speedCap} onChange={e=>changeValue('speedCap',asNum(e.target.value,project.speedCap))}/></label></div>
-            {project.speedCap>3&&<div className="hint warn">Research request above x500's 3 m/s model limit. The planner will enforce its actual vehicle limit and disclose adjustments. No 20 m/s flight capability is implied.</div>}
+            <div className="form-row"><label>Preferred cruise (m/s)<input type="number" min="0" step="any" value={project.cruise} onChange={e=>changeValue('cruise',asNum(e.target.value,project.cruise))}/></label>
+              <label>Never exceed (m/s)<input type="number" min="0" step="any" value={project.speedCap} onChange={e=>changeValue('speedCap',asNum(e.target.value,project.speedCap))}/></label></div>
+            {project.cruise>cap&&<div className="hint warn">Requested {project.cruise} m/s. The selected cap is {cap} m/s before the planner margin, turns and stops.</div>}
             <label>Maximum geometric deviation (m)<input type="number" step=".05" min=".01" max="10" value={project.tolerance} onChange={e=>changeValue('tolerance',asNum(e.target.value,project.tolerance))}/></label>
             <label>Fixed yaw (degrees)<input type="number" step="5" value={project.yaw} onChange={e=>changeValue('yaw',asNum(e.target.value,project.yaw))}/></label>
             <button className="advanced-toggle" onClick={()=>setAdvanced(!advanced)}><ChevronDown size={13}/> {advanced?'Hide':'Show'} numerical context</button>
@@ -475,8 +512,8 @@ export default function App(){
           <div className="inspector-section">
             <button className="group-title group-click" aria-expanded={environmentTab} onClick={()=>setEnvironmentTab(!environmentTab)}><Wind size={15}/> ENVIRONMENT <ChevronDown size={14}/></button>
             {environmentTab&&<><div className="mode-switch">
-              <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>changeEnv({mode:'manual',source:'User-specified manual scenario',fetchedAt:undefined})}>Manual</button>
-              <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>changeEnv({mode:'live',source:'Awaiting forecast; last values are not current',fetchedAt:undefined})}>Live forecast</button>
+              <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>changeEnv({mode:'manual',forecastValidAt:undefined,source:'User-specified manual scenario',fetchedAt:undefined})}>Manual</button>
+              <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>changeEnv({mode:'live',forecastValidAt:undefined,source:'Awaiting forecast; last values are not current',fetchedAt:undefined})}>Live forecast</button>
             </div>
             <label>Search city or place name</label>
             <div className="place-search"><input aria-label="Search location" value={placeQuery} placeholder="e.g. College Station, Texas" onChange={e=>setPlaceQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchPlace();}}/><button disabled={searchingPlace} onClick={searchPlace}>{searchingPlace?'...':'Find'}</button></div>
@@ -492,18 +529,19 @@ export default function App(){
               <button className="forecast-button" onClick={fetchWeather} disabled={weatherBusy}><CloudSun size={15}/>{weatherBusy?'Loading…':'Fetch live forecast'}</button>
               {weatherError&&<div className="hint warn" role="alert">{weatherError}</div>}
             </>}
-            <div className="form-row"><label>Wind from (°)<input type="number" min="0" max="360" step="5" value={project.environment.windDirection}
+            <div className="form-row"><label>Wind from (°)<input type="number" min="0" max="360" step="5" value={weatherReady?project.environment.windDirection:''}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({windDirection:asNum(e.target.value,project.environment.windDirection)})}/></label>
-              <label>Wind speed (m/s)<input type="number" min="0" step=".1" value={project.environment.windSpeed}
+              <label>Wind speed (m/s)<input type="number" min="0" step=".1" value={weatherReady?project.environment.windSpeed:''}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({windSpeed:asNum(e.target.value,project.environment.windSpeed)})}/></label></div>
-            <div className="form-row"><label>Gust (m/s)<input type="number" min="0" step=".1" value={project.environment.gust}
+            <div className="form-row"><label>Gust (m/s)<input type="number" min="0" step=".1" value={weatherReady?project.environment.gust:''}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({gust:asNum(e.target.value,project.environment.gust)})}/></label>
-              <label>Temperature (°C)<input type="number" step=".5" value={project.environment.temperature}
+              <label>Temperature (°C)<input type="number" step=".5" value={weatherReady?project.environment.temperature:''}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({temperature:asNum(e.target.value,project.environment.temperature)})}/></label></div>
-            <label>Surface pressure (hPa)<input type="number" step=".5" min="100" max="1100" value={project.environment.pressure}
+            <label>Relative humidity (%)<input type="number" min="0" max="100" step="any" value={weatherReady?(project.environment.humidity??''):''} placeholder="Unknown" disabled={project.environment.mode==='live'} onChange={e=>changeEnv({humidity:e.target.value===''?undefined:Number(e.target.value)})}/></label>
+            <label>Surface pressure (hPa)<input type="number" step=".5" min="100" max="1100" value={weatherReady?project.environment.pressure:''}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({pressure:asNum(e.target.value,project.environment.pressure)})}/></label>
-            <div className="hint weather-source"><Wind size={14}/><span>{project.environment.source}<br/>{project.environment.fetchedAt?'Fetched: '+project.environment.fetchedAt:''}</span></div>
-            <div className="hint warn">Weather is used for analytical air-relative speed only. It is NOT injected into the planner or Gazebo. Dry-air density is a near-surface approximation. Gust and vertical winds are not simulated.</div></>}
+            <div className="hint weather-source"><Wind size={14}/><span>{project.environment.source}<br/>{project.environment.forecastValidAt?'Valid '+project.environment.forecastValidAt+' · ':''}{project.environment.fetchedAt?'Fetched: '+project.environment.fetchedAt:''}</span></div>
+            <div className="hint warn">Steady wind drives airspeed analysis and the offline tracking estimate. The planner checks its selected vehicle envelope. Density assumes dry air. Gust and humidity are retained with the scenario.</div></>}
           </div>
           <div className="inspector-section">
             <div className="group-title">SELECTED POINT</div>

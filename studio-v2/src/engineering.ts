@@ -21,10 +21,14 @@ export function finite(value:number, label:string, min=-Infinity, max=Infinity) 
 }
 export function validateProject(project: Project) {
   if (!project.points||project.points.length<2||project.points.length>8192) throw Error('Add 2–8,192 route points');
+  if (project.aircraft && (!project.aircraft.profile?.profile_id || !/^[0-9a-f]{64}$/.test(project.aircraft.sha256) ||
+      !(Number.isFinite(project.aircraft.profile.maximum_speed_m_s) && project.aircraft.profile.maximum_speed_m_s > 0))) {
+    throw Error('Invalid aircraft profile or digest');
+  }
   finite(project.altitude,'Altitude',0.1,30);
-  finite(project.cruise,'Preferred cruise',0.01,20);
-  finite(project.speedCap,'Never-exceed speed',0.01,20);
-  if (project.cruise>project.speedCap) throw Error('Cruise cannot exceed the never-exceed speed limit');
+  for (const [label, value] of [['Preferred cruise', project.cruise], ['Never-exceed speed', project.speedCap]] as const) {
+    if (!Number.isFinite(value) || value <= 0) throw Error(label + ' must be a finite positive speed');
+  }
   finite(project.tolerance,'Path tolerance',0.01,10);
   finite(project.yaw,'Yaw',-3600,3600);
   if (!project.environment || !Number.isFinite(project.environment.windSpeed) || project.environment.windSpeed<0 || !Number.isFinite(project.environment.windDirection)) throw Error('Environment wind must be finite and nonnegative');
@@ -34,6 +38,7 @@ export function validateProject(project: Project) {
   finite(project.environment.windSpeed,'Wind speed',0,75);
   finite(project.environment.gust,'Wind gust',0,100);
   finite(project.environment.windDirection,'Wind from',-3600,3600);
+  if(project.environment.humidity!==undefined) finite(project.environment.humidity,'Relative humidity',0,100);
   finite(project.environment.temperature,'Temperature',-100,80);
   finite(project.environment.pressure,'Pressure',100,1100);
   for(const p of project.points) {
@@ -46,9 +51,10 @@ export function validateProject(project: Project) {
 }
 export function buildRequest(project:Project) {
   validateProject(project);
-  return { source:'drawing', planning_mode:'closest', document:{
+  return { source:'drawing', planning_mode:'closest', ...(project.aircraft ? {aircraft_profile:project.aircraft.profile} : {}), document:{
     schema_version:1, release_class:'SITL_ONLY', mission_id:'studio-v2-draft',
-    vehicle_model_id:'px4-x500-sitl-v1', environment_id:'empty-world-v1',
+    vehicle_model_id:project.aircraft?.profile.profile_id??'px4-x500-sitl-v1',
+    environment_id:project.aircraft?'profile-env-'+project.aircraft.sha256.slice(0,16):'empty-world-v1',
     frame:{name:'LOCAL_NED',units:'m',altitude_datum:'launch',origin_id:'launch-001'},
     objective_priority:['legal_and_safety','vehicle_and_environment','intent_fidelity','tracking_margin_and_energy','duration'],
     path:{kind:'polyline',closure:'open_stop',maximum_deviation_m:project.tolerance,
@@ -98,9 +104,11 @@ export function windNE(speed:number, directionFromDeg:number) {
 // Dry ideal-gas approximation using the supplied near-surface pressure and temperature.
 // Not a vertical atmosphere model, pitot measurement or dynamic flight simulator.
 export function dryAirDensity(environment:Environment) {
+  if(environment.mode==='live' && !environment.fetchedAt)return NaN;
   return environment.pressure*100/(287.05*(environment.temperature+273.15));
 }
 export function airspeed(sample:Sample, environment:Environment) {
+  if(environment.mode==='live' && !environment.fetchedAt)return NaN;
   const w=windNE(environment.windSpeed,environment.windDirection);
   return Math.hypot(sample.vx-w.north,sample.vy-w.east,sample.vz);
 }

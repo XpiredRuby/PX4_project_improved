@@ -71,7 +71,7 @@ test('all marked stops override incompatible exact-flythrough requests',()=>{
  assert.equal(req.document.path.points[1].hard,true);
  assert.equal(req.document.path.points[1].exact,false);
 });
-test('invalid geometry and conflicting cruise cap are rejected',()=>{
- assert.throws(()=>validateProject({...sampleProject,cruise:5,speedCap:3}),/Cruise cannot/);
+test('positive requests remain intact above aircraft and operator limits',()=>{
+ for(const cruise of [25,50,1e100]) assert.equal(buildRequest({...sampleProject,cruise,speedCap:2}).document.motion.target_speed_m_s,cruise);
  assert.throws(()=>validateProject({...sampleProject,points:[{...sampleProject.points[0],north:999},sampleProject.points[1]]}),/North coordinate/);
 });
