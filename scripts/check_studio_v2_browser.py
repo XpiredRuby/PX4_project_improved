@@ -170,7 +170,10 @@ def main():
             page.set_viewport_size({"width": 390, "height": 844})
             page.screenshot(path=str(options.output / "mobile-empty-ui.png"), full_page=True)
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
-            results.append("390px responsive workspace horizontal overflow check")
+            page.get_by_label("Route operations").select_option("five-stops")
+            assert page.locator(".point-table tbody tr").count() == 7
+            assert page.get_by_label("Preferred cruise").input_value() == "50"
+            results.append("390px responsive workspace and five-stop preset")
             assert not page_errors, page_errors
             context.close()
 

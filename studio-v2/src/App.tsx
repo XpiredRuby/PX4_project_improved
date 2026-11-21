@@ -12,6 +12,10 @@ import WindStudy from './WindStudy';
 import Viewport from './Viewport';
 import Plot, { type Field } from './Plot';
 
+const examples=[
+  ['Straight','Straight path'],['L','L-shaped route'],['five-stops','200 m · five stops'],
+  ['Survey','Survey route'],['Circle','Closed-looking loop']
+] as const;
 const round=(x:number,p=2)=>Number(x.toFixed(p));
 const sid=()=>Math.random().toString(36).slice(2,10);
 const example=(name:string,alt:number):Point[]=>{
@@ -212,7 +216,10 @@ export default function App(){
   const finishDraw=()=>{lastDraw.current=null;setNotice('Sketch added. Run verification; the planner may adjust this route to satisfy constraints.');};
   const clearRoute=()=>{update(p=>({...p,title:'New mission',points:[]}));setTool('draw');setSelected(-1);};
   const undo=()=>{const previous=history.current.pop();if(previous){geometryRevision.current++;abort.current?.abort();setProject(previous);setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setPlaying(false);setDirty(true);}};
-  const applyExample=(name:string)=>{update(p=>({...p,title:name+' study',points:example(name,p.altitude)}));setSelected(-1);};
+  const applyExample=(name:string)=>{
+    update(p=>name==='five-stops'?projectFromJson(structuredClone(fiveStopStudy)):{...p,title:name+' study',points:example(name,p.altitude)});
+    setSelected(-1);
+  };
   const selectedPoint=project.points[selected];
   const stats=useMemo(()=>metrics(samples,project.environment),[samples,project.environment]);
   const current=useMemo(()=>interpolate(samples,cursor),[samples,cursor]);
@@ -381,11 +388,7 @@ export default function App(){
           <button onClick={clearRoute}>+ New blank mission</button>
           <button onClick={()=>pointsCsvRef.current?.click()}>Import waypoint CSV</button>
           <button onClick={exportWaypointCsv}>Export waypoint CSV</button>
-          <button onClick={()=>applyExample('Straight')}>Straight path</button>
-          <button onClick={()=>applyExample('L')}>L-shaped route</button>
-          <button onClick={()=>{update(()=>projectFromJson(structuredClone(fiveStopStudy)));setSelected(-1);}}>200 m · five stops</button>
-          <button onClick={()=>applyExample('Survey')}>Survey route</button>
-          <button onClick={()=>applyExample('Circle')}>Closed-looking loop</button>
+          {examples.map(([id,label])=><button key={id} onClick={()=>applyExample(id)}>{label}</button>)}
         </div>
         <div className="left-footer"><HelpCircle size={15}/><span>Draw or edit route points, then run the verified numerical planner. The shape may be adjusted to obey aircraft limits.</span></div>
         <div className="pane-resizer left-resizer" role="separator" aria-label="Resize model explorer" aria-orientation="vertical" tabIndex={0}
@@ -405,6 +408,18 @@ export default function App(){
           </div></div>
         {error&&<ErrorPanel message={error} onClose={()=>setError('')}/>}
         {notice&&<div className="notice info"><CheckCircle2 size={16}/><span>{notice}</span><button onClick={()=>setNotice('')} aria-label="Dismiss notification"><X size={15}/></button></div>}
+        {active==='geometry'&&<select className="compact-operations" aria-label="Route operations" value=""
+          onChange={e=>{const action=e.target.value;
+            if(action==='blank')clearRoute();
+            else if(action==='import')pointsCsvRef.current?.click();
+            else if(action==='export')exportWaypointCsv();
+            else if(action)applyExample(action);
+          }}>
+          <option value="" disabled>Route operations</option>
+          <option value="blank">New blank mission</option><option value="import">Import waypoint CSV</option>
+          <option value="export">Export waypoint CSV</option>
+          {examples.map(([id,label])=><option key={id} value={id}>{label}</option>)}
+        </select>}
         <div className="toolstrip">
           <div className="tool-group">
             {([{id:'select',icon:MousePointer2,label:'Select / move'},{id:'waypoint',icon:Plus,label:'Add point'},{id:'draw',icon:Grip,label:'Freehand'},{id:'pan',icon:Crosshair,label:'Pan'}] as const).map(t=>

@@ -82,7 +82,7 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
     }catch(e){if(seq===generation.current)setError((e as Error).message);}
     finally{if(seq===generation.current)setBusy(false);}
   }
-  return <section className="data-section"><h3>Mission comparison</h3>
+  return <section className="data-section study-panel"><h3>Mission comparison</h3>
     <p>Compare an exact route CSV with independent position measurements, the route clock, required stops and the landing target.</p>
     <details><summary>Use a saved study case</summary>
       <label>Verified study case JSON <input type="file" accept=".json,application/json" onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)loadCase(file);}}/></label>
@@ -101,12 +101,12 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
     {error&&<p role="alert">{error}</p>}
     {trace&&<p role="status">Synthetic handoff · {trace.state} · no simulator ran. The client checked submission, status and the controller receipt for this route.</p>}
     {report&&<><h4>{label}</h4><p>{report.evidence} · {report.verdict} · route identity from {report.identity}</p>
-      <table className="point-table"><thead><tr><th>Check</th><th>Result</th><th>Measurement</th></tr></thead>
-        <tbody>{report.checks.map(c=><tr key={c.name}><td>{c.name}</td><td>{c.verdict}</td><td>{c.detail}</td></tr>)}</tbody></table>
-      {report.visits.length>0&&<details><summary>Individual stops ({report.visits.length})</summary><table className="point-table"><thead><tr>
+      <div className="study-table"><table className="point-table"><thead><tr><th>Check</th><th>Result</th><th>Measurement</th></tr></thead>
+        <tbody>{report.checks.map(c=><tr key={c.name}><td>{c.name}</td><td>{c.verdict}</td><td>{c.detail}</td></tr>)}</tbody></table></div>
+      {report.visits.length>0&&<details><summary>Individual stops ({report.visits.length})</summary><div className="study-table"><table className="point-table"><thead><tr>
         {['Point','Result','Planned (s)','Error (m)','Speed (m/s)'].map(x=><th key={x}>{x}</th>)}</tr></thead><tbody>
         {report.visits.map((v,i)=><tr key={i}><td>{v.point}</td><td>{v.verdict}</td><td>{v.plannedS?.toFixed(2)??'—'}</td>
-        <td>{v.errorM?.toFixed(3)??'—'}</td><td>{v.speedMs?.toFixed(3)??'—'}</td></tr>)}</tbody></table></details>}
+        <td>{v.errorM?.toFixed(3)??'—'}</td><td>{v.speedMs?.toFixed(3)??'—'}</td></tr>)}</tbody></table></div></details>}
       <p>Study criteria use {report.policy.trackingRmsM} m tracking RMS, ±{report.policy.timingFraction*100}% elapsed route time, and a {report.policy.stopRadiusM} m stop radius at ≤{report.policy.stopSpeedMs} m/s.</p>
       {report.evidence==='retained simulator recording'&&report.runId===archivedManifest.run_id&&<p>The archive identifies the input CSV. Its manifest predates runtime route receipts. The target is the final recorded horizontal landing setpoint.</p>}
       <button onClick={()=>exportBlob('mission-comparison.json',JSON.stringify({title:label,...report},null,2),'application/json')}>Export mission comparison</button>

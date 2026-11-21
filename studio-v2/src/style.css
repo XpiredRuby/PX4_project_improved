@@ -98,3 +98,18 @@ button.ghost:hover{background:#253846}.icon-button{width:34px;height:34px;paddin
 .scope-tabs{display:flex;gap:2px;padding:2px;background:#10232f;border:1px solid #3c5869;border-radius:4px}.scope-tabs button{border:0;background:transparent;color:#91acbc;padding:5px 9px}.scope-tabs button.scope-current{background:#2a5669;color:#d8f3f9}
 
 .pane-resizer{position:absolute;top:0;bottom:0;width:7px;z-index:4;cursor:col-resize;touch-action:none;background:transparent;outline-offset:-2px}.pane-resizer:hover,.pane-resizer:focus-visible{background:#4fc8e255}.left-resizer{right:0}.right-resizer{left:0}@media(max-width:1050px){.pane-resizer{display:none}}
+
+.compact-operations{display:none}
+.study-panel{padding:16px;color:#b8cad6;font-size:13px;line-height:1.5}
+.study-panel h3,.study-panel h4{margin:0 0 6px;color:#e3eff5}
+.study-panel p{margin:7px 0 12px}
+.study-panel label{display:block;margin:10px 0;color:#b6cad8}
+.study-panel input,.study-panel select,.compact-operations{max-width:100%;padding:6px 9px;border:1px solid #425d70;border-radius:4px;background:#10212d;color:#d8e9f1}
+.study-panel input,.study-panel select{display:block;margin-top:4px}
+.study-panel button{margin:3px 3px 3px 0;padding:6px 10px;border:1px solid #4b677b;border-radius:4px;background:#213c4c;color:#dbedf5;font-size:12px}
+.study-panel button:enabled:hover{border-color:#62bdd3}
+.study-panel details{padding:9px 0;margin:8px 0}
+.study-panel summary{cursor:pointer;color:#a1dbe6}
+.study-table{max-width:100%;overflow-x:auto;margin:10px 0}
+.study-panel [role=alert]{color:#ffb8ab}
+@media(max-width:1050px){.compact-operations{display:block;margin-bottom:10px}}

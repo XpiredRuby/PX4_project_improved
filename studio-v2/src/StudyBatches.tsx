@@ -53,7 +53,7 @@ export default function StudyBatches({enabled,project,restore}:{enabled:boolean;
   }
   const save=(name:string,value:unknown)=>exportBlob(name,JSON.stringify(value,null,2),'application/json');
   const current=study?.id===selected?study:null;
-  return <section className="data-section"><h3>Unattended studies</h3>
+  return <section className="data-section study-panel"><h3>Unattended studies</h3>
     {!enabled?<p>For background studies, start the downloaded studio with <code>python start_studio.py</code>.</p>:<>
       <p>Queue the current geometry, aircraft and weather together. The local server continues after this tab closes and resumes unfinished cases after restart.</p>
       <label>Batch speeds (m/s)<input value={speeds} onChange={e=>setSpeeds(e.target.value)}/></label>
@@ -61,10 +61,10 @@ export default function StudyBatches({enabled,project,restore}:{enabled:boolean;
       {entries.length>0&&<label>Saved studies <select value={selected} onChange={e=>setSelected(e.target.value)}>
         {entries.map(v=><option key={v.id} value={v.id}>{v.title} · {new Date(v.created*1000).toLocaleString()} · {v.finished}/{v.total}</option>)}
       </select></label>}
-      {current&&<><table className="point-table"><thead><tr>{['Requested (m/s)','State','Peak ground (m/s)','Peak air (m/s)','Route (s)','Case result'].map(s=><th key={s}>{s}</th>)}</tr></thead>
+      {current&&<><div className="study-table"><table className="point-table"><thead><tr>{['Requested (m/s)','State','Peak ground (m/s)','Peak air (m/s)','Route (s)','Case result'].map(s=><th key={s}>{s}</th>)}</tr></thead>
         <tbody>{current.cases.map(c=><tr key={c.number}><td>{c.speed}</td><td>{c.state}</td><td>{c.metrics?.peak_m_s.toFixed(3)??'—'}</td>
           <td>{c.metrics?.peak_airspeed_m_s?.toFixed(3)??'—'}</td><td>{c.metrics?.route_s.toFixed(2)??'—'}</td><td>{c.metrics?<button onClick={()=>act(async()=>{
-            save('study-'+selected+'-case-'+(c.number+1)+'.json',await api('/'+selected+'/cases/'+c.number));})}>Download case {c.number+1}</button>:c.error}</td></tr>)}</tbody></table>
+            save('study-'+selected+'-case-'+(c.number+1)+'.json',await api('/'+selected+'/cases/'+c.number));})}>Download case {c.number+1}</button>:c.error}</td></tr>)}</tbody></table></div>
         <button disabled={busy||!current.cases.some(c=>['queued','running'].includes(c.state))} onClick={()=>act(async()=>{await api('/'+selected+'/cancel',{});})}>Cancel unfinished</button>{' '}
         <button disabled={busy||!current.cases.some(c=>['failed','timed_out','cancelled'].includes(c.state))} onClick={()=>act(async()=>{await api('/'+selected+'/retry',{});})}>Retry unfinished</button>{' '}
         <button disabled={busy} onClick={()=>act(async()=>{save('study-'+selected+'.json',await api('/'+selected+'/export'));})}>Export study</button>{' '}
