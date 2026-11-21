@@ -56,6 +56,6 @@ python -m playwright install chromium
 python scripts/check_research_studio_browser.py
 ```
 
-The browser check runs the actual native planner, uses a deterministic forecast response, tests exports and imports, replays the retained flight, changes aircraft and verifies a freehand drawing. Supply `--csv PATH` and `--ulog PATH` to exercise external NanoBench and ULog inputs. To produce the separate portable static build, run `python web/build_studio_v2.py` after building React, then serve `studio-v2/preview/` at the root of a static origin. Static mode retrieves the Pyodide runtime on first use and accepts CSV replay. Binary ULog conversion uses the native localhost server.
+The browser check runs the actual native planner, uses a deterministic forecast response, tests exports and imports, replays the retained flight, changes aircraft and verifies a freehand drawing. Supply `--csv PATH` and `--ulog PATH` to exercise external NanoBench and ULog inputs. To produce the separate portable static build, run `python web/build_studio_v2.py` after building React, then serve `studio-v2/preview/` at the root of a static origin. By default, static mode retrieves the Pyodide runtime on first use. For disconnected static planning, package with `python web/build_studio_v2.py --bundle-runtime` while online to include Python and NumPy in the preview directory. Both static modes accept CSV replay. Binary ULog conversion uses the native localhost server.
 
 [Open-Meteo forecast API](https://open-meteo.com/en/docs) · [PX4 ULog parser](https://github.com/PX4/pyulog)

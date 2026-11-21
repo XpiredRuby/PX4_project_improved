@@ -1,3 +1,4 @@
+import {dryAirDensity, windNE} from './engineering.ts';
 import type {Environment, Sample} from './types';
 
 export type AircraftLimits={mass_kg:number; maximum_thrust_n:number; maximum_tilt_deg:number};
@@ -13,9 +14,9 @@ export function predictTrack(samples:Sample[], env:Environment, vehicle:Aircraft
   const {mass_kg:mass,maximum_thrust_n:thrust,maximum_tilt_deg:tilt}=vehicle;
   if(![mass,thrust,tilt,dragArea,responseTime].every(Number.isFinite)||mass<=0||thrust<=0||
       tilt<=0||tilt>=90||dragArea<0||responseTime<=0)throw Error('Check aircraft limits, drag area and response time.');
-  const density=100*env.pressure/(287.05*(env.temperature+273.15));
-  const angle=env.windDirection*Math.PI/180;
-  const wind:Vec=[-env.windSpeed*Math.cos(angle),-env.windSpeed*Math.sin(angle),0];
+  const density=dryAirDensity(env);
+  const horizontal=windNE(env.windSpeed,env.windDirection);
+  const wind:Vec=[horizontal.north,horizontal.east,0];
   const maxAcceleration=thrust/mass, maxSlope=Math.tan(tilt*Math.PI/180);
   const drag=density*dragArea/(2*mass);
   const start=samples[0];

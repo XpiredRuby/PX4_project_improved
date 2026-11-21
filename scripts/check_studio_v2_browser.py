@@ -155,7 +155,7 @@ def main():
             assert abs(float(page.get_by_label("Latitude (°)").input_value()) - 30.628) < 1e-6
             page.get_by_role("button", name="Fetch live forecast").click()
             page.get_by_text("Open-Meteo forecast", exact=False).wait_for()
-            assert float(page.get_by_label("Wind speed (m/s)").input_value()) == 4
+            assert float(page.get_by_label("Wind speed (m/s)", exact=True).input_value()) == 4
             assert float(page.get_by_label("Wind from (°)").input_value()) == 270
             assert float(page.get_by_label("Surface pressure (hPa)").input_value()) == 1005
             results.append("Mock geocoding, timestamped forecast parsing and meteorological wind settings")

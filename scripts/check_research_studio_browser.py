@@ -23,7 +23,7 @@ def check(page, base, csv, ulog, output):
     verified = page.locator(".verification-grid").inner_text()
     assert "50.00 m/s" in verified and "NOT RUN" in verified
     print(verified.replace("\n", " "), flush=True)
-    page.get_by_label("Wind speed (m/s)").fill("5")
+    page.get_by_label("Wind speed (m/s)", exact=True).fill("5")
     page.get_by_role("button", name="Predict tracking").click()
     page.get_by_text("Predicted 3D tracking RMS", exact=False).wait_for()
     with page.expect_download() as prediction:
@@ -77,7 +77,7 @@ def check(page, base, csv, ulog, output):
     page.get_by_text("Open-Meteo forecast", exact=False).wait_for()
     assert page.get_by_label("Relative humidity").input_value() == "76"
     page.get_by_label("Latitude").fill("32")
-    assert page.get_by_label("Wind speed (m/s)").input_value() == ""
+    assert page.get_by_label("Wind speed (m/s)", exact=True).input_value() == ""
     page.get_by_role("button", name="Manual", exact=True).click()
     page.get_by_role("button", name="Geometry", exact=True).click()
     page.get_by_role("button", name="New blank mission", exact=False).click()
