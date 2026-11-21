@@ -16,13 +16,67 @@ from mission_planner.research_studio import research_server  # noqa: E402
 
 def check(page, base, csv, ulog, output):
     from playwright.sync_api import expect
+    page.add_init_script("""
+      const begin = CanvasRenderingContext2D.prototype.moveTo;
+      const line = CanvasRenderingContext2D.prototype.lineTo;
+      CanvasRenderingContext2D.prototype.moveTo = function (x, y) {
+        if (['#ffffff','#d36f73'].includes(this.strokeStyle)) this.vectorStart = [x, y];
+        return begin.call(this, x, y);
+      };
+      CanvasRenderingContext2D.prototype.lineTo = function (x, y) {
+        if (this.vectorStart) {
+          const vector = [x-this.vectorStart[0], y-this.vectorStart[1]];
+          if (this.strokeStyle === '#d36f73') window.northVector = vector;
+          if (this.strokeStyle === '#ffffff' && Math.abs(Math.hypot(...vector)-24)<1e-9)
+            window.headingVector = vector;
+          this.vectorStart = null;
+        }
+        return line.call(this, x, y);
+      };
+    """)
     page.goto(base)
+    page.get_by_label("P02 north").fill("14")
+    page.get_by_role("button", name="Remove selected").click()
+    page.get_by_role("button", name="Add row").click()
+    assert page.get_by_label("P05 north").count() == 1
+    page.get_by_role("button", name="Undo").click()
+    assert page.get_by_label("P05 north").count() == 0
+    assert page.get_by_label("P02 north").count() == 0
+    page.get_by_role("button", name="Undo").click()
+    assert page.get_by_label("P02 north").input_value() == "14"
+    page.get_by_role("button", name="Undo").click()
+    assert page.get_by_label("P02 north").input_value() == "12"
     page.get_by_label("Preferred cruise").fill("50")
     page.get_by_role("button", name="Plan & verify").click()
     page.get_by_text("ACCEPTED REFERENCE", exact=True).wait_for(timeout=150_000)
     verified = page.locator(".verification-grid").inner_text()
     assert "50.00 m/s" in verified and "NOT RUN" in verified
     print(verified.replace("\n", " "), flush=True)
+    page.get_by_text("TAKEOFF", exact=True).wait_for()
+    view = page.get_by_label("3D trajectory orbit visualization", exact=False)
+    view.scroll_into_view_if_needed()
+    page.wait_for_function("window.headingVector")
+    correct_yaw = """() => {
+      const n=window.northVector, h=window.headingVector;
+      return n && h && (n[0]*h[0]+n[1]*h[1])/(Math.hypot(...n)*Math.hypot(...h)) > 1-1e-9;
+    }"""
+    page.wait_for_function(correct_yaw)
+    original_heading = page.evaluate("window.headingVector")
+    bounds = view.bounding_box()
+    x, y = bounds["x"] + bounds["width"] / 2, bounds["y"] + bounds["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x + 110, y, steps=8)
+    page.mouse.up()
+    page.wait_for_function(
+        "(a) => window.headingVector.some((v,i)=>Math.abs(v-a[i])>2)",
+        arg=original_heading,
+    )
+    page.wait_for_function(correct_yaw)
+    page.get_by_role("button", name="Play or pause").click()
+    expect(page.get_by_label("Reference time")).not_to_have_value("0")
+    page.get_by_title("Reset time").click()
+    expect(page.get_by_label("Reference time")).to_have_value("0")
     page.get_by_label("Wind speed (m/s)", exact=True).fill("5")
     page.get_by_role("button", name="Predict tracking").click()
     page.get_by_text("Predicted 3D tracking RMS", exact=False).wait_for()
@@ -79,6 +133,8 @@ def check(page, base, csv, ulog, output):
     page.get_by_label("Latitude").fill("32")
     assert page.get_by_label("Wind speed (m/s)", exact=True).input_value() == ""
     page.get_by_role("button", name="Manual", exact=True).click()
+    assert page.get_by_label("Wind speed (m/s)", exact=True).input_value() == "5"
+    assert page.get_by_label("Wind from (°)", exact=True).input_value() == "0"
     page.get_by_role("button", name="Geometry", exact=True).click()
     page.get_by_role("button", name="New blank mission", exact=False).click()
     canvas = page.get_by_label("Mission coordinate drawing canvas")

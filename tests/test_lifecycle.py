@@ -151,6 +151,31 @@ class LifecycleTests(unittest.TestCase):
             self.assertGreaterEqual(derivative_bound(order), known - 1e-9)
             self.assertLess(derivative_bound(order), known * 1.01)
 
+    def test_operator_speed_cap_applies_to_takeoff_and_landing(self):
+        raw = json.loads(json.dumps(self.result["intent"]))
+        raw["motion"].update(maximum_speed_m_s=.2, target_speed_m_s=.2)
+        route = list(csv.DictReader(self.result["trajectory_csv"].splitlines()))
+        scale = 20
+        for row in route:
+            row["time"] = float(row["time"]) * scale
+            for keys, order in (
+                (("vx", "vy", "vz", "yaw_rate"), 1),
+                (("ax", "ay", "az", "yaw_acceleration"), 2),
+                (("jx", "jy", "jz", "yaw_jerk"), 3),
+            ):
+                for key in keys:
+                    row[key] = float(row[key]) / scale**order
+        stream = io.StringIO()
+        writer = csv.DictWriter(stream, fieldnames=FIELDS, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(route)
+        mission = build_mission(
+            stream.getvalue(), MissionIntent.from_dict(raw), self.vehicle, self.env
+        )
+        for phase in mission["phases"]:
+            if phase["name"] != "ROUTE":
+                self.assertLessEqual(phase["verification"]["speed_bound_m_s"], .2)
+
     def test_fixed_heading_and_closed_route(self):
         r = self.result
         raw = json.loads(json.dumps(r["intent"]))

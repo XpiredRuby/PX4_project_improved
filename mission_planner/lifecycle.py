@@ -142,11 +142,12 @@ def build_mission(route_csv, intent, vehicle, environment, profile=None):
 
     start, finish = pose(first), pose(last)
     ground = [0.0, 0.0, 0.0, start[3]]
+    mission_speed_cap = min(intent.motion.maximum_speed_m_s, vehicle.maximum_speed_m_s)
     climb = (
         min(
             0.8,
             (profile or {}).get("maximum_climb_m_s", 0.8),
-            vehicle.maximum_speed_m_s,
+            mission_speed_cap,
         )
         * 0.9
     )
@@ -154,16 +155,15 @@ def build_mission(route_csv, intent, vehicle, environment, profile=None):
         min(
             0.3,
             (profile or {}).get("maximum_descent_m_s", 0.3),
-            vehicle.maximum_speed_m_s,
+            mission_speed_cap,
         )
         * 0.9
     )
     return_speed = (
         min(
             1.0,
-            intent.motion.maximum_speed_m_s,
             intent.motion.target_speed_m_s or 1.0,
-            vehicle.maximum_speed_m_s,
+            mission_speed_cap,
         )
         * 0.9
     )

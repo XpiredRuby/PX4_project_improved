@@ -94,11 +94,11 @@ export async function compareMission(routeCsv:string,telemetry:string,receipt:Re
   const runtime=receipt?.controller_runtime?.trajectory_sha256,archived=receipt?.source_sha256?.['trajectory.csv'];
   const logId=receipt?.telemetry_sha256;
   // Legacy manifests hash the default source-tree CSV, even if the runner selected another file.
-  for(const digest of [runtime??archived,receipt?.selected_trajectory_sha256])if(digest!==undefined&&digest!==routeSha)
+  for(const digest of [runtime??receipt?.selected_trajectory_sha256??archived,receipt?.selected_trajectory_sha256])if(digest!==undefined&&digest!==routeSha)
     throw Error('Route identity mismatch. The recording manifest names a different route CSV.');
   if(logId!==undefined&&logId!==logSha)throw Error('Telemetry identity mismatch. The manifest names a different recording.');
   const source=receipt?.source??'unspecified';
-  const identity=runtime?'controller runtime':archived?'archived input':'unbound';
+  const identity=runtime?'controller runtime':receipt?.selected_trajectory_sha256?'selected input':archived?'archived input':'unbound';
   const bound=Boolean(runtime&&logId&&receipt?.run_id);
   const plan=parseCsv(routeCsv);
   if(plan.length<2)throw Error('The route needs at least two samples.');
@@ -111,7 +111,11 @@ export async function compareMission(routeCsv:string,telemetry:string,receipt:Re
   const prefix=contact?rows.slice(0,contactIndex+1):rows;
   const frameContinuous=new Set(prefix.map(r=>r.segment)).size===1;
   const phaseContinuous=Boolean(first&&last&&rows.slice(rows.indexOf(first),rows.indexOf(last)+1).length===mission.length);
-  const clockOk=Boolean(first&&last&&first.clock!==null&&last.clock!==null&&
+  const clockGap=mission.reduce((max,r,i)=>{
+    const lastClock=mission[i-1]?.clock;
+    return r.clock===null||lastClock==null?max:Math.max(max,r.clock-lastClock);
+  },0);
+  const clockOk=Boolean(clockGap<=policy.maxGapS&&first&&last&&first.clock!==null&&last.clock!==null&&
     Math.abs(first.clock-start)<=policy.clockEndpointS&&Math.abs(last.clock-end)<=policy.clockEndpointS&&
     mission.every((r,i)=>r.clock!==null&&(i===0||r.clock>=mission[i-1].clock!)));
   const maxGap=(series:typeof rows)=>series.reduce((n,r,i)=>i?Math.max(n,r.elapsed-series[i-1].elapsed):0,0);
@@ -178,7 +182,7 @@ export async function compareMission(routeCsv:string,telemetry:string,receipt:Re
     rows.slice(rows.indexOf(last),contactIndex+1).every((r,i,a)=>i===0||r.elapsed-a[i-1].elapsed<=policy.maxGapS));
   const wall=first&&last?last.elapsed-first.elapsed:null;
   const checks:Check[]=[
-    {name:'Route coverage and frame',verdict:coverage?'pass':'insufficient',detail:routeTruth.length+'/'+mission.length+' route samples with truth; maximum recorded gap '+gap.toFixed(3)+' s'},
+    {name:'Route coverage and frame',verdict:coverage?'pass':'insufficient',detail:routeTruth.length+'/'+mission.length+' route samples with truth · max elapsed gap '+gap.toFixed(3)+' s · max route clock gap '+clockGap.toFixed(3)+' s'},
     {name:'Reference agreement',verdict:!coverage||!agreement||agreement.samples!==mission.length?'insufficient':aligned?'pass':'fail',detail:agreement?'Peak logged command difference '+agreement.peakM.toPrecision(3)+' m after one translation':'No aligned reference'},
     {name:'Tracking',verdict:!aligned||!tracking?'insufficient':tracking.rmsM<=policy.trackingRmsM?'pass':'fail',detail:tracking?'3D RMS '+tracking.rmsM.toFixed(3)+' m · p95 '+tracking.p95M.toFixed(3)+' m · peak '+tracking.peakM.toFixed(3)+' m':'Independent truth unavailable'},
     {name:'Route timing',verdict:!aligned||wall===null?'insufficient':Math.abs(wall-duration)<=policy.timingFraction*duration?'pass':'fail',detail:'Planned '+duration.toFixed(2)+' s · elapsed '+(wall?.toFixed(2)??'—')+' s'},
@@ -193,7 +197,7 @@ export async function compareMission(routeCsv:string,telemetry:string,receipt:Re
   return {schema:'trajectory-studio.mission-comparison.v1',evidence,verdict,runId:receipt?.run_id??null,identity,telemetryBound:Boolean(logId),
     routeSha256:routeSha,telemetrySha256:logSha,policy:{...policy},checks,visits,tracking,clock,translationNedM:offset,
     runPhaseTimeS:{reference:duration,elapsed:wall,missionClockStart:first?.clock??null,missionClockEnd:last?.clock??null},
-    referencePeakDifferenceM:agreement?.peakM??null,coverage:{truthSamples:routeTruth.length,routeSamples:mission.length,maxGapS:gap,clockOk,frameContinuous,phaseContinuous},
+    referencePeakDifferenceM:agreement?.peakM??null,coverage:{truthSamples:routeTruth.length,routeSamples:mission.length,maxGapS:gap,maxRouteClockGapS:clockGap,clockOk,frameContinuous,phaseContinuous},
     landing:{targetLocalNeM:target,targetSource,elapsedS:contact?.elapsed??null,horizontalErrorM:touchdownError,source:'First on-ground sample during native landing'},
     assumptions:['Local NED metres','Linear interpolation between exported route samples','One constant command-derived frame translation',
       'Stop speed uses successive truth positions in elapsed time','Study thresholds are research criteria']};

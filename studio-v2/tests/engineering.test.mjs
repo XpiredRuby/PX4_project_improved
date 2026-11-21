@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { airspeed, dryAirDensity, buildRequest, initialEnvironment, interpolate, metrics, parseCsv, sampleProject, septicAt, validateProject, windNE } from '../src/engineering.ts';
+import { airspeed, dryAirDensity, buildRequest, initialEnvironment, interpolate, metrics, nextWaypointId, parseCsv, sampleProject, septicAt, updateEnvironment, validateProject, windNE } from '../src/engineering.ts';
 
 const rows='time,x,y,z,vx,vy,vz,ax,ay,az,jx,jy,jz,yaw\n0,0,0,-12,0,0,0,0,0,0,0,0,0,0\n0.05,1,0,-12,2,0,0,1,0,0,0.1,0,0,0.2\n0.1,2,0,-12,2,0,0,0,0,0,0,0,0,0.4\n';
 test('first timestamp, NED height and endpoint are preserved',()=>{
@@ -74,4 +74,32 @@ test('all marked stops override incompatible exact-flythrough requests',()=>{
 test('positive requests remain intact above aircraft and operator limits',()=>{
  for(const cruise of [25,50,1e100]) assert.equal(buildRequest({...sampleProject,cruise,speedCap:2}).document.motion.target_speed_m_s,cruise);
  assert.throws(()=>validateProject({...sampleProject,points:[{...sampleProject.points[0],north:999},sampleProject.points[1]]}),/North coordinate/);
+});
+
+test('removing a waypoint and appending another preserves unique IDs',()=>{
+ const points=sampleProject.points.filter(p=>p.id!=='P02');
+ const newId=nextWaypointId(points);
+ assert.equal(newId,'P05');
+ assert.throws(()=>validateProject({...sampleProject,points:[...points,points.at(-1)]}),/identifiers must be unique/);
+ const named=[{...points[0],id:'survey:P1.0'},points[1]];
+ assert.equal(buildRequest({...sampleProject,points:named}).document.path.points[0].point_id,'survey:P1.0');
+});
+
+test('changing the live forecast inputs clears provenance and an unchanged selection preserves it',()=>{
+ const live={...initialEnvironment,mode:'live',humidity:58,fetchedAt:'2026-11-21T00:00:03Z',
+   forecastValidAt:'2026-11-21T00:00:00Z'};
+ assert.equal(updateEnvironment(live,{latitude:live.latitude}).fetchedAt,live.fetchedAt);
+ const moved=updateEnvironment(live,{latitude:live.latitude+1});
+ assert.equal(moved.fetchedAt,undefined);
+ assert.equal(moved.forecastValidAt,undefined);
+ assert.equal(moved.humidity,undefined);
+ assert.ok(Number.isNaN(airspeed(parseCsv(rows)[0],moved)));
+});
+
+test('lifecycle CSV preserves phase boundaries and rejects ambiguous duplicate columns',()=>{
+ const [header,...data]=rows.trim().split('\n');
+ const lifecycle=parseCsv([header+',phase',...data.map((line,i)=>line+(i<2?',TAKEOFF':',ROUTE'))].join('\n'));
+ assert.equal(interpolate(lifecycle,.05).phase,'TAKEOFF');
+ assert.equal(interpolate(lifecycle,.051).phase,'ROUTE');
+ assert.throws(()=>parseCsv(rows.replace('time,x,y','time,x,x')),/Duplicate trajectory CSV columns/);
 });
