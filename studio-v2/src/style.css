@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 :root{font-family:'DM Sans',Inter,system-ui,sans-serif;color:#dbe7ef;background:#0e1720;font-synthesis:none;letter-spacing:.005em}*{box-sizing:border-box}
 body{margin:0;min-width:600px}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.4}
 button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #5bcee8;outline-offset:2px}

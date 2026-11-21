@@ -176,6 +176,16 @@ def main():
 
             if options.real_planner:
                 real = browser.new_context(viewport={"width": 1440, "height": 940})
+                external = []
+                if (PREVIEW / "pyodide").is_dir():
+                    def local_assets(route):
+                        url = route.request.url
+                        if url.startswith((base + "/", "blob:", "data:")):
+                            route.continue_()
+                        else:
+                            external.append(url)
+                            route.abort()
+                    real.route("**/*", local_assets)
                 live = real.new_page()
                 live.on("pageerror", lambda error: page_errors.append(str(error)))
                 live.on("console", lambda msg: runtime_diagnostics.append('console '+msg.type+': '+msg.text) if msg.type == 'error' else None)
@@ -193,6 +203,7 @@ def main():
                     runtime_diagnostics.append('working: '+repr(live.get_by_role('button',name='Verifying…').count()))
                     live.screenshot(path=str(options.output / 'real-planner-diagnostic.png'), full_page=True)
                     raise RuntimeError('Real-browser planner did not accept route: '+repr(runtime_diagnostics[-25:]))
+                assert not external, external
                 assert "NOT RUN" in live.locator(".verification-grid").inner_text()
                 results.append("REAL Pyodide Python planner accepted a straight trajectory, no Gazebo")
                 live.screenshot(path=str(options.output / "real-planner-result.png"), full_page=True)

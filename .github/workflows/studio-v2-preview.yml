@@ -10,6 +10,7 @@ on:
       - 'web/**'
       - 'analysis/planner_rehearsal.py'
       - 'scripts/check_research_studio_browser.py'
+      - 'scripts/check_studio_v2_browser.py'
       - '.github/workflows/studio-v2-preview.yml'
   workflow_dispatch:
 concurrency:
@@ -40,7 +41,7 @@ jobs:
         working-directory: studio-v2
         run: npm run build
       - name: Package verified planner with React
-        run: python web/build_studio_v2.py
+        run: python web/build_studio_v2.py --bundle-runtime
       - name: Verify preview assets
         run: |
           test -s studio-v2/preview/index.html
