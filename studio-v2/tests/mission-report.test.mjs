@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {compareMission,limits,sha256,syntheticRun} from '../src/missionReport.ts';
+import {compareMission,limits,openSavedCase,sha256,syntheticRun} from '../src/missionReport.ts';
 
 const read=p=>readFileSync(new URL(p,import.meta.url));
 const archive='../../validation/2026-10-03/cases/raised-10m-final/';
@@ -73,4 +73,15 @@ test('the same dwell cannot confirm two ordered stops and the selected runtime C
     source_sha256:{'trajectory.csv':'0'.repeat(64)}},[points[0],points[1],points[1],points[2]]);
   assert.equal(r.visits[1].plannedS,null);
   await assert.rejects(compareMission(plan,fixture.telemetry,{...fixture.receipt,selected_trajectory_sha256:'c'.repeat(64)},points),/Route identity mismatch/);
+});
+
+test('a saved case uses its own exact route and declared stops without recompilation',async()=>{
+  const digest=await sha256(plan);
+  const payload={schema:'trajectory-studio.case.v1',project:{title:'frozen 50 m/s'},
+    request:{document:{path:{points:points.map(p=>({point_id:p.id,hard:p.hard,north_m:p.north,east_m:p.east,down_m:-p.altitude}))}}},
+    metrics:{route_sha256:digest},result:{accepted:true,trajectory_csv:plan,summary:{controller_trajectory_sha256:digest}}};
+  const opened=await openSavedCase(JSON.stringify(payload));
+  assert.equal(opened.digest,digest);assert.equal(opened.route,plan);assert.equal(opened.points[1].hard,true);
+  payload.result.trajectory_csv+='\n';
+  await assert.rejects(openSavedCase(JSON.stringify(payload)),/identity mismatch/);
 });

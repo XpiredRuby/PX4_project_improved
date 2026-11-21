@@ -15,6 +15,24 @@ type Verdict='pass'|'fail'|'insufficient'|'not applicable';
 export type Check={name:string; verdict:Verdict; detail:string};
 export const sha256=async(text:string)=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
   new TextEncoder().encode(text))),n=>n.toString(16).padStart(2,'0')).join('');
+export async function openSavedCase(raw:string){
+  const file=JSON.parse(raw);
+  if(file?.schema!=='trajectory-studio.case.v1'||file.result?.accepted!==true||
+     typeof file.result.trajectory_csv!=='string'||typeof file.project?.title!=='string')
+    throw Error('Select a verified JSON file from Download case.');
+  const route=file.result.trajectory_csv as string,digest=await sha256(route);
+  if(digest!==file.metrics?.route_sha256||digest!==file.result.summary?.controller_trajectory_sha256)
+    throw Error('Saved case route identity mismatch.');
+  const points=file.request?.document?.path?.points;
+  if(!Array.isArray(points)||points.length<2)throw Error('Saved case is missing its waypoint request.');
+  const declared:Point[]=points.map((p:Record<string,unknown>)=>{
+    if(!p||typeof p.point_id!=='string'||typeof p.hard!=='boolean'||
+       ![p.north_m,p.east_m,p.down_m].every(Number.isFinite))throw Error('Invalid saved stop declaration.');
+    return {id:p.point_id,north:p.north_m as number,east:p.east_m as number,altitude:-(p.down_m as number),
+      hard:p.hard,exact:p.exact===true};
+  });
+  return {route,digest,points:declared,title:file.project.title as string};
+}
 const pos=(s:Sample):Vec=>[s.north,s.east,-s.altitude];
 const dist=(a:number[],b:number[])=>Math.hypot(...a.map((x,i)=>x-b[i]));
 const hasPair=(v:unknown):v is Pair=>Array.isArray(v)&&v.length===2&&v.every(Number.isFinite);

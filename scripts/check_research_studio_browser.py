@@ -158,6 +158,14 @@ def check_studies(page, base, output):
     assert case["project"]["environment"]["windSpeed"] == 0
     assert abs(case["metrics"]["distance_m"]-200) < 1e-5
     assert case["metrics"]["requested_m_s"] == 50 and abs(case["metrics"]["peak_m_s"]-2.6461693548)<1e-6
+    downloaded = output / "saved-case.json"
+    downloaded.write_text(json.dumps(case))
+    page.get_by_text("Use a saved study case", exact=True).click()
+    page.get_by_label("Verified study case JSON").set_input_files(downloaded)
+    page.get_by_text("Selected saved case", exact=False).wait_for()
+    page.get_by_role("button", name="Test report with synthetic run").click()
+    reopened = read_download(page, "Export mission comparison")
+    assert reopened["routeSha256"] == expected_sha and reopened["verdict"] == "pass"
     saved = read_download(page, "Export study")
     assert saved["snapshot"]["speeds"] == [1,25,50] and saved["id"] == identifier
     selector.select_option(windy)

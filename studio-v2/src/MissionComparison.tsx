@@ -1,6 +1,6 @@
 import {useRef,useState} from 'react';
 import {exportBlob} from './engineering';
-import {compareMission,limits,syntheticRun} from './missionReport';
+import {compareMission,limits,openSavedCase,syntheticRun} from './missionReport';
 import type {Receipt} from './missionReport';
 import {handoffFixture} from './rehearsalHandoff';
 import type {Point,Preview} from './types';
@@ -32,7 +32,19 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
   const [trace,setTrace]=useState<Awaited<ReturnType<typeof handoffFixture>>|null>(null);
   const [log,setLog]=useState<File|null>(null),[receipt,setReceipt]=useState<File|null>(null);
   const generation=useRef(0);
-  const route=result?.trajectory_csv;
+  const [saved,setSaved]=useState<Awaited<ReturnType<typeof openSavedCase>>|null>(null);
+  const route=saved?.route??result?.trajectory_csv;
+  const digest=saved?.digest??result?.summary?.controller_trajectory_sha256;
+  const stops=saved?.points??points;
+  async function loadCase(file:File){
+    invalidate();setSaved(null);const seq=generation.current;setBusy(true);
+    try{
+      if(file.size>64*1024**2)throw Error('Select a saved case up to 64 MiB.');
+      const data=await openSavedCase(await file.text());
+      if(seq===generation.current)setSaved(data);
+    }catch(e){if(seq===generation.current)setError((e as Error).message);}
+    finally{if(seq===generation.current)setBusy(false);}
+  }
   function invalidate(){generation.current++;setReport(null);setTrace(null);setError('');setBusy(false);}
   async function run(mode:'archive'|'fixture'|'import'|'handoff'){
     const seq=++generation.current;setBusy(true);setError('');setReport(null);setTrace(null);
@@ -41,7 +53,7 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
       let r:Report,title:string;
       if(mode==='handoff'){
         if(!route)throw Error('Verify a route first.');
-        const test=await handoffFixture(route,String(result?.summary?.controller_trajectory_sha256));
+        const test=await handoffFixture(route,String(digest));
         if(seq===generation.current)setTrace(test);return;
       }else if(mode==='archive'){
         const [csv,recording]=await Promise.all([asset(routeUrl),asset(recordingUrl,true)]);
@@ -53,7 +65,7 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
         if(!route)throw Error('Verify the active route first.');
         if(mode==='fixture'){
           const mock=await syntheticRun(route);
-          r=await compareMission(route,mock.telemetry,mock.receipt,points,policy);title='Synthetic run of the active route';
+          r=await compareMission(route,mock.telemetry,mock.receipt,stops,policy);title='Synthetic run of '+(saved?saved.title:'the active route');
         }else{
           if(!log)throw Error('Select aligned telemetry CSV.');
           let manifest:Receipt|null=null;
@@ -62,7 +74,7 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
             manifest=JSON.parse(await receipt.text()) as Receipt;
             if(!manifest||typeof manifest!=='object'||Array.isArray(manifest))throw Error('Expected a run manifest object.');
           }
-          r=await compareMission(route,await recordingText(log,log.name.toLowerCase().endsWith('.gz')),manifest,points,policy);
+          r=await compareMission(route,await recordingText(log,log.name.toLowerCase().endsWith('.gz')),manifest,stops,policy);
           title=log.name;
         }
       }
@@ -72,6 +84,10 @@ export default function MissionComparison({result,points}:{result:Preview|null;p
   }
   return <section className="data-section"><h3>Mission comparison</h3>
     <p>Compare an exact route CSV with independent position measurements, the route clock, required stops and the landing target.</p>
+    <details><summary>Use a saved study case</summary>
+      <label>Verified study case JSON <input type="file" accept=".json,application/json" onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)loadCase(file);}}/></label>
+      <p>Opens the original route bytes and stop declarations from a completed study.</p></details>
+    {saved&&<p>Selected saved case · {saved.title} <button onClick={()=>{invalidate();setSaved(null);}}>Use current route</button></p>}
     <label>Landing radius (m)<input type="number" step="any" value={radius} onChange={e=>{invalidate();setRadius(e.target.value);}}/></label>
     <button disabled={busy} onClick={()=>run('archive')}>Review archived X500 run</button>{' '}
     <button disabled={busy||!route} onClick={()=>run('fixture')}>Test report with synthetic run</button>{' '}
