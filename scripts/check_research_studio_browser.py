@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import argparse
-from http.server import ThreadingHTTPServer
 import json
+import math
 from pathlib import Path
 import sys
 import tempfile
@@ -11,7 +11,7 @@ import threading
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from mission_planner.research_studio import ResearchHandler  # noqa: E402
+from mission_planner.research_studio import research_server  # noqa: E402
 
 
 def check(page, base, csv, ulog, output):
@@ -97,6 +97,82 @@ def check(page, base, csv, ulog, output):
     print("PASS freehand hexacopter, replay, scenario round trip, hourly forecast fixture and sweeps", flush=True)
 
 
+def read_download(page, label):
+    with page.expect_download() as item:
+        page.get_by_role("button", name=label, exact=True).click()
+    return json.loads(Path(item.value.path()).read_text())
+
+
+def check_studies(page, base, output):
+    from playwright.sync_api import expect
+    page.goto(base)
+    page.get_by_role("button", name="200 m · five stops").click()
+    page.get_by_role("button", name="Plan & verify").click()
+    page.get_by_text("ACCEPTED REFERENCE", exact=True).wait_for(timeout=150_000)
+    project_report = read_download(page, "Report JSON")
+    expected_sha = project_report["result"]["summary"]["controller_trajectory_sha256"]
+    page.get_by_role("button", name="Test report with synthetic run").click()
+    synthetic = read_download(page, "Export mission comparison")
+    assert synthetic["evidence"] == "synthetic fixture" and synthetic["verdict"] == "pass", synthetic["checks"]
+    assert len(synthetic["visits"]) == 5 and all(s["verdict"] == "pass" for s in synthetic["visits"])
+    assert synthetic["routeSha256"] == expected_sha and abs(synthetic["tracking"]["rmsM"]-.1) < 1e-8
+    print("200 m synthetic report: five ordered stops, 0.100 m injected RMS and landing error", flush=True)
+    page.get_by_role("button", name="Test simulator handoff offline").click()
+    page.get_by_text("Synthetic handoff · assessment matched", exact=False).wait_for()
+    page.get_by_role("button", name="Review archived X500 run").click()
+    archived = read_download(page, "Export mission comparison")
+    assert archived["evidence"] == "retained simulator recording" and archived["verdict"] == "diagnostic only"
+    assert math.isclose(archived["landing"]["horizontalErrorM"], .07827087451620429, abs_tol=1e-7)
+    assert archived["coverage"]["truthSamples"] == 2539
+    assert next(c["verdict"] for c in archived["checks"] if c["name"] == "Route timing") == "fail"
+    print("Archived X500 report: tracking RMS %.4f m, touchdown error %.4f m, elapsed route %.2f s" %
+          (archived["tracking"]["rmsM"], archived["landing"]["horizontalErrorM"], archived["runPhaseTimeS"]["elapsed"]), flush=True)
+    page.get_by_text("Compare an imported run with this plan", exact=True).click()
+    directory = ROOT / "validation/2026-10-03/cases/raised-10m-final"
+    page.get_by_label("Aligned telemetry CSV or CSV.gz").set_input_files(directory / "telemetry_and_truth.csv.gz")
+    page.get_by_label("Run manifest (optional)").set_input_files(next(directory.glob("run_manifest_*.json")))
+    page.get_by_role("button", name="Compare imported run").click()
+    page.get_by_text("Route identity mismatch.", exact=False).wait_for()
+
+    page.get_by_label("Batch speeds").fill("1, 25, 50")
+    with page.expect_response(lambda r: r.url.endswith("/api/studies") and r.request.method == "POST") as response:
+        page.get_by_role("button", name="Queue study").click()
+    identifier = response.value.json()["id"]
+    page.get_by_label("Wind speed (m/s)", exact=True).fill("5")
+    page.get_by_label("Batch speeds").fill("50")
+    with page.expect_response(lambda r: r.url.endswith("/api/studies") and r.request.method == "POST") as response:
+        page.get_by_role("button", name="Queue study").click()
+    windy = response.value.json()["id"]
+    browser = page.context.browser
+    page.close()
+    page = browser.new_page(accept_downloads=True)
+    page.goto(base)
+    page.get_by_role("button", name="Results & Analysis").click()
+    selector = page.get_by_label("Saved studies")
+    expect(selector.locator("option")).to_have_count(2)
+    selector.select_option(identifier)
+    button = page.get_by_role("button", name="Download case 3")
+    button.wait_for(timeout=150_000)
+    case = read_download(page, "Download case 3")
+    assert case["metrics"]["route_sha256"] == expected_sha
+    assert case["project"]["environment"]["windSpeed"] == 0
+    assert abs(case["metrics"]["distance_m"]-200) < 1e-5
+    assert case["metrics"]["requested_m_s"] == 50 and abs(case["metrics"]["peak_m_s"]-2.6461693548)<1e-6
+    saved = read_download(page, "Export study")
+    assert saved["snapshot"]["speeds"] == [1,25,50] and saved["id"] == identifier
+    selector.select_option(windy)
+    expect(page.get_by_role("button", name="Download case 3")).to_have_count(0)
+    page.get_by_role("button", name="Download case 1").wait_for(timeout=150_000)
+    wind = read_download(page, "Download case 1")
+    assert wind["project"]["environment"]["windSpeed"] == 5 and wind["metrics"]["peak_airspeed_m_s"] > 5
+    page.get_by_role("button", name="Restore scenario").click()
+    expect(page.get_by_label("Preferred cruise")).to_have_value("50")
+    expect(page.get_by_label("Wind speed (m/s)", exact=True)).to_have_value("5")
+    (output / "archived-comparison.json").write_text(json.dumps(archived))
+    print("PASS both frozen studies survived tab closure, exact route re-exported, windy scenario restored", flush=True)
+    page.close()
+
+
 def main():
     from playwright.sync_api import sync_playwright
     parser = argparse.ArgumentParser(description=__doc__)
@@ -104,7 +180,7 @@ def main():
     parser.add_argument("--csv", type=Path)
     parser.add_argument("--ulog", type=Path)
     args = parser.parse_args()
-    with ThreadingHTTPServer(("127.0.0.1", 0), ResearchHandler) as server:
+    with tempfile.TemporaryDirectory() as studies, research_server(0, studies) as server:
         threading.Thread(target=server.serve_forever, daemon=True).start()
         try:
             with sync_playwright() as driver, tempfile.TemporaryDirectory() as directory:
@@ -113,6 +189,7 @@ def main():
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 check(page, f"http://127.0.0.1:{server.server_port}", args.csv, args.ulog, Path(directory))
+                check_studies(page, f"http://127.0.0.1:{server.server_port}", Path(directory))
                 assert not errors, errors
                 browser.close()
         finally:

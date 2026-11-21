@@ -8,8 +8,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+from io import BytesIO
 from pathlib import Path
 import sys
+import tempfile
+from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 import numpy as np
 import pandas as pd
@@ -156,6 +159,26 @@ def load_json_stop_turn(path):
     return json.loads(Path(path).read_text()).get('retiming', {}).get('limiting_constraint') == 'stop_and_turn'
 
 
+def studio_recording(df, physical, manifest, plan_digest, selected_digest, source_digests):
+    """Pair aligned simulator truth with the exact runtime-selected plan for offline import."""
+    runtime = manifest.get("controller_runtime", {}).get("trajectory_sha256")
+    if not runtime or runtime != selected_digest or runtime != plan_digest or not manifest.get("run_id"):
+        raise ValueError("Studio export needs the matching plan, selected CSV, and named runner receipt")
+    columns = ["elapsed_s", "phase", "mission_time_s", "desired_x", "desired_y", "desired_z", "landed_state",
+               "native_landing_reference_x", "native_landing_reference_y"]
+    aligned = df[columns + [c for c in ("armed", "segment") if c in df]].copy()
+    aligned[["truth_x", "truth_y", "truth_z"]] = np.asarray(physical, dtype=float)
+    telemetry = aligned.to_csv(index=False, lineterminator="\n").encode()
+    receipt = {"schema": "trajectory-studio.recorded-run.v1", "source": "retained_sitl", "run_id": manifest["run_id"],
+               "controller_runtime": {"trajectory_sha256": runtime}, "selected_trajectory_sha256": selected_digest,
+               "telemetry_sha256": hashlib.sha256(telemetry).hexdigest(), "source_artifacts_sha256": source_digests}
+    output = BytesIO()
+    with ZipFile(output, "w") as archive:
+        for name, data in (("telemetry.csv", telemetry), ("run-manifest.json", json.dumps(receipt, sort_keys=True).encode())):
+            archive.writestr(ZipInfo(name), data, compress_type=ZIP_DEFLATED)
+    return output.getvalue()
+
+
 def assess_case(folder):
     from pyulog import ULog
     folder = Path(folder)
@@ -235,7 +258,8 @@ def assess_case(folder):
     selected_digest = hashlib.sha256((run / "selected_trajectory.csv").read_bytes()).hexdigest()
     binding = manifest["controller_runtime"].get("trajectory_sha256") == plan_digest == selected_digest
     result["checks"].append({"name": "Executed CSV digest matches retained plan and runner manifest",
-                              "passed": binding, "detail": {"sha256": plan_digest}})
+                              "passed": binding, "detail": {"sha256": plan_digest, "selected_sha256": selected_digest,
+                                                            "controller_sha256": manifest["controller_runtime"].get("trajectory_sha256")}})
     result["sampled_rehearsal_passed"] &= binding
     intent_path = folder / "plan/intent.json"
     if intent_path.is_file():
@@ -290,6 +314,19 @@ def assess_case(folder):
     result["evidence_sha256"] = {str(path.relative_to(folder)): hashlib.sha256(path.read_bytes()).hexdigest()
                                   for path in (csv_path, ulog_path, plan_path, run / "audit.json", folder / "final_ground.json",
                                                unique(run.glob("run_manifest_*.json")), run / "scenario.json")}
+    if binding and manifest.get("run_id"):
+        bundle = studio_recording(df, physical, manifest, plan_digest, selected_digest, dict(result["evidence_sha256"]))
+        artifact_digest = hashlib.sha256(bundle).hexdigest()
+        name = f"studio-recording-{artifact_digest}.zip"
+        with tempfile.NamedTemporaryFile(dir=folder, delete=False) as out:
+            temporary = Path(out.name)
+        try:
+            temporary.write_bytes(bundle)
+            temporary.replace(folder / name)
+        finally:
+            temporary.unlink(missing_ok=True)
+        result["studio_recording"] = name
+        result["evidence_sha256"][name] = artifact_digest
     import sitl_ground_truth
     result["assessment_implementation_sha256"] = {
         "planner_rehearsal.py": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),

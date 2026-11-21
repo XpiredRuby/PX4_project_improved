@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowDownToLine, Box as BoxIcon, CheckCircle2, ChevronDown, CircleDot, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Trash2, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
 import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, parseCsv, projectFromJson, sampleProject, validateProject } from './engineering';
+import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
+import MissionComparison from './MissionComparison';
+import StudyBatches from './StudyBatches';
 import FlightReplay from './FlightReplay';
 import Sweep from './Sweep';
 import Prediction from './Prediction';
@@ -129,6 +132,7 @@ export default function App(){
   const [viewScope,setViewScope]=useState<'route'|'full'>('full');
   const [cursor,setCursor]=useState(0);
   const [playing,setPlaying]=useState(false);
+  const [hasQueue,setHasQueue]=useState(false);
   const [engine,setEngine]=useState<'unknown'|'browser'|'local'>('unknown');
   const [weatherBusy,setWeatherBusy]=useState(false);
   const [weatherError,setWeatherError]=useState('');
@@ -155,7 +159,7 @@ export default function App(){
     setPaneWidths(p=>({...p,[r.edge]:Math.max(r.edge==='left'?180:230,Math.min(r.edge==='left'?400:440,r.start+delta))}));
   };
   const onResizeEnd=()=>{resizing.current=null;};
-  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>setEngine(d.execution_location==='browser'?'browser':'local')).catch(()=>setEngine('unknown'));},[]);
+  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);}).catch(()=>setEngine('unknown'));},[]);
   useEffect(()=>()=>{abort.current?.abort();cancelAnimationFrame(frame.current);},[]);
   const update=useCallback((f:(p:Project)=>Project)=>{
     geometryRevision.current++;
@@ -379,6 +383,7 @@ export default function App(){
           <button onClick={exportWaypointCsv}>Export waypoint CSV</button>
           <button onClick={()=>applyExample('Straight')}>Straight path</button>
           <button onClick={()=>applyExample('L')}>L-shaped route</button>
+          <button onClick={()=>{update(()=>projectFromJson(structuredClone(fiveStopStudy)));setSelected(-1);}}>200 m · five stops</button>
           <button onClick={()=>applyExample('Survey')}>Survey route</button>
           <button onClick={()=>applyExample('Circle')}>Closed-looking loop</button>
         </div>
@@ -451,6 +456,8 @@ export default function App(){
         </section>}
         {active==='analysis'&&result?.vehicle_model&&routeSamples.length>0&&<Prediction key={JSON.stringify([geometryRevision.current,project.environment,result.summary?.controller_trajectory_sha256])} samples={routeSamples} environment={project.environment} vehicle={result.vehicle_model} digest={result.summary?.controller_trajectory_sha256}/>}
         {active==='analysis'&&<WindStudy samples={routeSamples} environment={project.environment} digest={result?.summary?.controller_trajectory_sha256}/>}
+        {active==='analysis'&&<StudyBatches enabled={hasQueue} project={project} restore={p=>{update(()=>p);setSelected(-1);}}/>}
+        {active==='analysis'&&<MissionComparison key={String(result?.summary?.controller_trajectory_sha256??geometryRevision.current)} points={project.points} result={result}/>}
         {active==='analysis'&&<FlightReplay local={engine==='local'}/>}
         {active==='analysis'&&<Sweep key={geometryRevision.current} project={project} disabled={busy||profileBusy} onBusy={setSweeping}/>}
         {stats&&<section className="metrics-row">
@@ -467,7 +474,7 @@ export default function App(){
           <div className="section-heading"><div><strong>Verification & artifact exports</strong><span>Mathematical reference — not simulated or physically measured flight</span></div>
             <div className="section-actions"><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
               {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
-              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
+              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
             <div><span>RESULT</span><strong className="pass-label">ACCEPTED REFERENCE</strong></div>
             <div><span>RELEASE CLASS</span><strong>{result.release_class||'SITL_ONLY'}</strong></div>

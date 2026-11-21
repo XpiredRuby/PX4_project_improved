@@ -21,7 +21,23 @@ Open **http://127.0.0.1:8767**. Once dependencies are installed, local planning,
 2. Enter a preferred cruise speed and a separate never-exceed speed. Any finite positive speed request is accepted as input. **Plan & verify** reports the requested speed, model and user limits, verified route peak, route duration and adjustments. The reference planner applies tracking margin and time scaling. The result is a feasible profile under its model assumptions. Global minimum time and physical flight accuracy require separate evidence.
 3. In **Results & Analysis**, run the same route at several requested speeds. Export the sweep to retain the original inputs, result digest, speed, duration and limiting reasons for each case. Use **Compare steady winds** to compare airspeed at the same route velocities under calm and four horizontal wind directions.
 4. Save the editable project for repeat runs. **Report JSON** exports inputs, profile, solver-source digest, model and verification results, route identity, and the weather snapshot. **Route CSV** exports the exact verified route reference.
-5. To inspect flight evidence, select **Load recorded x500 flight** or import a recording. Replay follows the recording's own timeline and setpoints. An overlay against a newly drawn route would require a common origin, clock and verified route identity.
+5. To inspect flight evidence, select **Load recorded x500 flight** or import a recording. Replay follows the recording's own timeline and setpoints. Use **Mission comparison** for a recording with a common origin, clock and a matching route.
+
+### Unattended studies
+
+**200 m · five stops** loads a closed 200 m X500 study with five interior full stops and a preferred cruise of 50 m/s. **Queue study** freezes the current project, requested speeds, aircraft and weather. You can edit the drawing, queue another weather scenario, close the tab and return to the batch. Keep the native server running for work to continue. Restarting it recovers unfinished work from SQLite. Use `--studies-dir PATH` to select a saved collection. One studio owns each collection at a time.
+
+**Download case** contains the exact route CSV, compiler request and result, case metrics and Python, NumPy and compiler versions. **Export study** contains the original project and a row for each case, including failures and attempt counts. Retry acts on failed, cancelled or timed-out cases. If the compiler changes, restore the scenario and start a new study to retain separate provenance.
+
+### Mission comparison
+
+The report measures 3D tracking error against the selected route, elapsed time on that phase, ordered stops and horizontal touchdown error. The route clock aligns positions to path progress. The elapsed clock measures how long the maneuver took. A stop requires position and speed to satisfy their respective limits at the same observation. The default thresholds are 0.5 m tracking RMS, 10% elapsed-time error, and 0.5 m at 0.25 m/s within one mission-clock second of each planned stop. The landing band defaults to a 5 m radius in the local horizontal plane. The report records the chosen criteria.
+
+The retained X500 example uses its original 90.06 s route and 2,539 route-phase truth samples. It yields 0.1601 m tracking RMS, 126.90 s elapsed on the route and 0.0783 m horizontal error at the first on-ground indication during native landing. The longer elapsed time exceeds the 10% study threshold. The target is the last recorded horizontal landing setpoint. This historical manifest identifies the archived route input and lacks a controller runtime receipt. Interior stop declarations are unavailable for this run.
+
+For an imported run, select the aligned telemetry CSV (or CSV.gz) and its JSON receipt. Use NED metres in `truth_x/y/z` and `desired_x/y/z`, elapsed seconds in `elapsed_s`, a `phase` column and a route clock in `mission_time_s` or `phase_clock_s`. A `segment` change marks a coordinate reset. Landing uses the transition to `landed_state=1` inside `PX4_LAND` or `PX4_FAILSAFE`, with a recorded `native_landing_reference_x/y` or a declared `landing_target_local_ne_m` pair. The latter uses absolute local N/E metres.
+
+The receipt identifies the source (`retained_sitl`, `hardware` or `synthetic`), `run_id`, `controller_runtime.trajectory_sha256` and `telemetry_sha256` of the uncompressed CSV bytes. Digests preserve line endings. When the existing rehearsal assessment has matching plan, selected file and controller digests, it writes a `studio-recording-*.zip` containing both import files. Recording origin and independent truth remain responsibilities of the data producer. Missing evidence remains visible. **Test report with synthetic run** injects 0.100 m of position error to exercise the active plan. **Test simulator handoff offline** exercises the request and receipt protocol with a synthetic response.
 
 ### Weather
 
@@ -56,6 +72,12 @@ python -m playwright install chromium
 python scripts/check_research_studio_browser.py
 ```
 
-The browser check runs the actual native planner, uses a deterministic forecast response, tests exports and imports, replays the retained flight, changes aircraft and verifies a freehand drawing. Supply `--csv PATH` and `--ulog PATH` to exercise external NanoBench and ULog inputs. To produce the separate portable static build, run `python web/build_studio_v2.py` after building React, then serve `studio-v2/preview/` at the root of a static origin. By default, static mode retrieves the Pyodide runtime on first use. For disconnected static planning, package with `python web/build_studio_v2.py --bundle-runtime` while online to include Python and NumPy in the preview directory. Both static modes accept CSV replay. Binary ULog conversion uses the native localhost server.
+The browser check runs the actual native planner, uses a deterministic forecast response, tests exports and imports, replays the retained flight, changes aircraft and verifies a freehand drawing. Supply `--csv PATH` and `--ulog PATH` to exercise external NanoBench and ULog inputs. To produce the separate portable static build, run `python web/build_studio_v2.py` after building React, then serve `studio-v2/preview/` at the root of a static origin. By default, static mode retrieves the Pyodide runtime on first use. For disconnected static planning, package with `python web/build_studio_v2.py --bundle-runtime` while online to include Python and NumPy in the preview directory. Both static modes accept CSV replay. Binary ULog conversion and unattended studies use the native localhost server. To create the downloadable package with both launch modes and the worked example, run:
+
+```bash
+python web/build_studio_v2.py --bundle-runtime --archive PX4_Trajectory_Studio_Offline.zip
+```
+
+Extract the ZIP and run `python start_studio.py` in its root. This needs Python 3.10+ and NumPy. Install pyulog for binary ULog import. Browser-only planning also works with `python -m http.server 8767 --bind 127.0.0.1`.
 
 [Open-Meteo forecast API](https://open-meteo.com/en/docs) · [PX4 ULog parser](https://github.com/PX4/pyulog)

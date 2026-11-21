@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
+import json
+from pathlib import Path
+import re
 import csv
 from http.server import ThreadingHTTPServer
 from io import BytesIO, StringIO
@@ -10,7 +14,8 @@ from urllib.parse import urlsplit
 
 import numpy as np
 
-from .editor import PreviewHandler, ROOT
+from .editor import MAX_REQUEST_BYTES, PreviewHandler, ROOT
+from .study_queue import StudyQueue
 
 
 def recording_csv(raw: bytes) -> bytes:
@@ -52,13 +57,32 @@ class ResearchHandler(PreviewHandler):
         if not self._local_request():
             return self._json(403, {"error": "local origin required"})
         path = urlsplit(self.path).path
+        queue = getattr(self.server, "study_queue", None)
+        if path == "/api/capabilities":
+            return self._json(200, {"execution_location": "local", "study_queue": queue is not None,
+                                    "sitl_enabled": False, "hardware_enabled": False})
+        if queue and path == "/api/studies":
+            return self._json(200, {"studies": queue.list()})
+        match = re.fullmatch(r"/api/studies/([a-f0-9-]{36})(?:/(export|cases/([0-9]+)))?", path)
+        if queue and match:
+            identifier, action, index = match.groups()
+            try:
+                if index is not None:
+                    return self._reply(200, queue.artifact(identifier, int(index)), "application/json")
+                return self._json(200, queue.status(identifier, snapshot=action == "export"))
+            except KeyError as exc:
+                return self._json(404, {"error": exc.args[0]})
         if path.startswith("/api/"):
             return super().do_GET()
         if path == "/browser-api.js":
             return self._reply(200, b"// Native localhost planner.", "text/javascript")
-        dist = ROOT / "studio-v2/dist"
+        if path not in {"/", "/index.html", "/favicon.ico"} and not path.startswith("/assets/"):
+            return self._json(404, {"error": "Unknown workspace asset"})
+        dist = getattr(self.server, "assets", ROOT / "studio-v2/dist")
         asset = (dist / (path.lstrip("/") or "index.html")).resolve()
-        if not asset.is_relative_to(dist) or not asset.is_file():
+        if asset.suffix not in {".html", ".js", ".css", ".csv", ".gz", ".ico", ".svg", ".png", ".woff2"}:
+            return self._json(404, {"error": "Unknown workspace asset"})
+        if (not asset.is_relative_to(dist / "assets") and asset != dist / "index.html" and asset != dist / "favicon.ico") or not asset.is_file():
             return self._json(404, {"error": "Unknown workspace asset"})
         body = asset.read_bytes()
         self.send_response(200)
@@ -69,6 +93,33 @@ class ResearchHandler(PreviewHandler):
         self.wfile.write(body)
 
     def do_POST(self):
+        if self.path == "/api/studies" or self.path.startswith("/api/studies/"):
+            if not self._local_request():
+                return self._json(403, {"error": "local origin required"})
+            queue = getattr(self.server, "study_queue", None)
+            if queue is None:
+                return self._json(409, {"error": "Start the native studio to run a durable study"})
+            try:
+                size = int(self.headers.get("Content-Length", 0))
+                if size > MAX_REQUEST_BYTES:
+                    return self._json(413, {"error": "Study submission exceeds the request budget"})
+                if size < 0 or self.headers.get_content_type() != "application/json":
+                    raise ValueError("Expected a JSON request")
+                self.connection.settimeout(10)
+                body = self.rfile.read(size)
+                if len(body) != size:
+                    raise ValueError("Incomplete request")
+                payload = json.loads(body)
+                if self.path == "/api/studies":
+                    return self._json(202, queue.submit(payload))
+                match = re.fullmatch(r"/api/studies/([a-f0-9-]{36})/(cancel|retry)", self.path)
+                if not match:
+                    return self._json(404, {"error": "Unknown study action"})
+                return self._json(200, queue.change(*match.groups()))
+            except KeyError as exc:
+                return self._json(404, {"error": str(exc.args[0])})
+            except (ValueError, TypeError, OverflowError) as exc:
+                return self._json(400, {"error": str(exc)})
         if self.path != "/api/recording":
             return super().do_POST()
         if not self._local_request():
@@ -84,15 +135,31 @@ class ResearchHandler(PreviewHandler):
         self._reply(200, body, "text/csv; charset=utf-8")
 
 
-def main():
+@contextmanager
+def research_server(port, directory, assets=None):
+    with ThreadingHTTPServer(("127.0.0.1", port), ResearchHandler) as server:
+        server.assets = Path(assets or ROOT / "studio-v2/dist").resolve()
+        server.study_queue = StudyQueue(directory)
+        try:
+            yield server
+        finally:
+            server.study_queue.close()
+
+
+def main(default_assets=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8767)
+    parser.add_argument("--studies-dir", type=Path, default=Path.home() / ".px4-trajectory-studio/studies")
     args = parser.parse_args()
-    if not (ROOT / "studio-v2/dist/index.html").exists():
+    assets = Path(default_assets or ROOT / "studio-v2/dist")
+    if not (assets / "index.html").exists():
         parser.error("Build the frontend in studio-v2 with npm install and npm run build.")
-    with ThreadingHTTPServer(("127.0.0.1", args.port), ResearchHandler) as server:
+    with research_server(args.port, args.studies_dir, assets) as server:
         print(f"Trajectory Studio: http://127.0.0.1:{server.server_port}", flush=True)
-        server.serve_forever()
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == "__main__":

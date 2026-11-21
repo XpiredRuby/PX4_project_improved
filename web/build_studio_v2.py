@@ -13,6 +13,7 @@ import json
 import shutil
 import sys
 import tempfile
+from zipfile import ZipFile, ZIP_DEFLATED
 from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,7 +61,7 @@ def bundle_runtime(staged: Path) -> None:
                       .replace("'" + RUNTIME_URL + "'", "new URL('/pyodide/', location.href).href"))
 
 
-def build(include_runtime: bool = False) -> None:
+def build(include_runtime: bool = False, archive: Path | None = None) -> None:
     if not (SOURCE / "index.html").is_file():
         raise ValueError("Build React first: cd studio-v2 && npm install && npm run build")
     with tempfile.TemporaryDirectory(prefix="px4-studio-v2-") as temp:
@@ -85,6 +86,15 @@ def build(include_runtime: bool = False) -> None:
                 shutil.copy2(item, destination)
         if include_runtime:
             bundle_runtime(staged)
+        if archive is not None:
+            if not include_runtime:
+                raise ValueError("An offline archive requires --bundle-runtime")
+            # Native entry points stay outside the verified browser runtime manifest.
+            for name in ("editor", "research_studio", "study_queue"):
+                shutil.copyfile(ROOT / "mission_planner" / f"{name}.py", staged / "python/mission_planner" / f"{name}.py")
+            shutil.copyfile(ROOT / "web/start_studio.py", staged / "start_studio.py")
+            shutil.copyfile(ROOT / "studio-v2/START_HERE.txt", staged / "START_HERE.txt")
+            shutil.copytree(ROOT / "studio-v2/examples", staged / "examples")
         html = (staged / "index.html").read_text()
         html = html.replace('<meta name="theme-color"', '<meta name="px4-build" content="' + information["build_id"] + '"><meta name="theme-color"', 1)
         if "<script src=\"/browser-api.js\"></script>" not in html:
@@ -94,12 +104,24 @@ def build(include_runtime: bool = False) -> None:
         (staged / "studio-v2-info.json").write_text(json.dumps({
             "schema_version": 1,
             "planner_build_id": information["build_id"],
-            "execution": "browser planner only",
+            "execution": "browser and optional native offline planner" if archive else "browser planner only",
             "simulation": "not run",
             "weather": "analytical airspeed and uncalibrated point-mass tracking",
             "runtime": "bundled" if include_runtime else "CDN",
             "physical_flight_approval": False
         }, indent=2) + "\n")
+        if archive is not None:
+            archive.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=archive.parent, delete=False, suffix=".zip") as temp_zip:
+                temporary = Path(temp_zip.name)
+            try:
+                with ZipFile(temporary, "w", ZIP_DEFLATED, compresslevel=8) as output:
+                    for member in sorted(staged.rglob("*")):
+                        if member.is_file():
+                            output.write(member, member.relative_to(staged))
+                temporary.replace(archive)
+            finally:
+                temporary.unlink(missing_ok=True)
         if PREVIEW.exists():
             if PREVIEW.is_symlink():
                 raise ValueError("Refusing to replace symlink")
@@ -111,4 +133,6 @@ def build(include_runtime: bool = False) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle-runtime", action="store_true", help="Include the pinned Python and NumPy runtime for disconnected use")
-    build(parser.parse_args().bundle_runtime)
+    parser.add_argument("--archive", type=Path, help="Write an extractable bundle with optional native background studies")
+    args = parser.parse_args()
+    build(args.bundle_runtime, args.archive)
