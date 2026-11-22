@@ -4,7 +4,7 @@ import csv
 import io
 import json
 import math
-import threading
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -209,15 +209,27 @@ class ClosestPreviewTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             preview(request)
 
-    def test_retained_stop_turn_plan_is_refused_before_startup(self):
-        state=SimpleNamespace(_lock=threading.RLock(),folder=lambda _:Path("unused"))
-        summary=json.dumps({"retiming":{"limiting_constraint":"stop_and_turn"}})
-        with patch.object(Path,"read_text",return_value=summary),patch("mission_planner.studio_jobs.subprocess.Popen") as launch:
-            with self.assertRaisesRegex(ValueError,"connected playback"):
-                StudioJobs.start(state,dict(plan_id="test",controller_trajectory_sha256="digest",confirm_interpretation=True))
-            launch.assert_not_called()
+    def test_fixed_heading_constructive_plan_starts_checked_research_adapter(self):
+        request = drawing([(0, 0), (0, 2)])
+        request["document"]["motion"].update(yaw_mode="fixed", fixed_yaw_deg=0.)
+        result = closest_preview(request, refused)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            binary = root / "build/px4_sitl_default/bin/px4"
+            binary.parent.mkdir(parents=True)
+            binary.touch()
+            jobs = StudioJobs(root / "plans", root, gui=False)
+            self.assertTrue(jobs.compatible(result))
+            plan_id = jobs.retain(result)
+            confirmation = dict(plan_id=plan_id, confirm_interpretation=True,
+                                controller_trajectory_sha256=result["summary"]["controller_trajectory_sha256"])
+            with patch("mission_planner.studio_jobs.subprocess.Popen") as launch:
+                launch.return_value.poll.return_value = None
+                jobs.start(confirmation)
+                self.assertIn("--experimental-stop-turn", launch.call_args.args[0])
+                jobs.log.close()
 
-    def test_new_preview_certificate_cannot_enter_the_spline_only_runner(self):
+    def test_tangent_constructive_plan_is_preview_only(self):
         result=closest_preview(drawing([(0,0),(0,1)]),refused)
         self.assertFalse(StudioJobs.compatible(SimpleNamespace(binding=None),result))
 
