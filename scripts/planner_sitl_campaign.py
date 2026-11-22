@@ -289,6 +289,8 @@ def run_one(name, args):
         parameters["MPC_LAND_SPEED"] = min(parameters["MPC_LAND_SPEED"], binding["profile"]["maximum_descent_m_s"])
         if case.get("controller_overrides", {}).get("sitl_x500_native_land"):
             parameters["MPC_LAND_SPEED"] = .6
+            # AUTO LAND blends toward the normal downward speed above LAND_ALT2.
+            parameters["MPC_Z_VEL_MAX_DN"] = .6
         parameters["MPC_LAND_CRWL"] = min(parameters["MPC_LAND_CRWL"], parameters["MPC_LAND_SPEED"])
     runtime = folder / "runtime"
     runtime.mkdir()
