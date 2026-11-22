@@ -14,7 +14,7 @@ import json
 import math
 from pathlib import Path
 
-from .aircraft import assess_profile, mission_budget
+from .aircraft import assess_profile, mission_budget, rehearsal_volume
 from .contracts import (
     EnvironmentSnapshot, MissionIntent, VehicleModel, canonical_sha256,
     load_contract, validate_planning_inputs,
@@ -53,8 +53,9 @@ def _models(payload):
     if setup:
         p = setup["profile"]
         vehicle = VehicleModel.from_dict(setup["vehicle_model"])
+        radius, height = rehearsal_volume(p)
         env.update(environment_id="profile-env-" + setup["profile_sha256"][:16],
-                   max_radius_m=p["max_radius_m"], max_height_above_launch_m=p["max_height_m"],
+                   max_radius_m=radius, max_height_above_launch_m=height,
                    max_wind_m_s=p["expected_wind_m_s"])
     return vehicle, EnvironmentSnapshot.from_dict(env), setup
 
