@@ -25,7 +25,13 @@ export default function ConnectedRehearsal({plan,onJob}:{plan:Preview|null;onJob
           throw Error('The simulator returned a different plan.');
         setJob(result);onJob(result);setError('');
         if(!['STARTING','RUNNING'].includes(result.stage))return;
-      }catch(e){if(controller.signal.aborted)return;setError(String(e));}
+      }catch(e){
+        if(controller.signal.aborted)return;
+        setError(String(e));
+        if(e instanceof Error&&e.message.includes('plan is unavailable')){
+          sessionStorage.removeItem(key);setBinding(null);setJob(null);return;
+        }
+      }
       timer=setTimeout(poll,1500);
     }
     void poll();
@@ -47,7 +53,7 @@ export default function ConnectedRehearsal({plan,onJob}:{plan:Preview|null;onJob
     <button disabled={pending||running||!plan?.simulation_compatible||!plan.plan_id||plan.plan_id===job?.plan_id}
       onClick={()=>void submit(false)}>Run verified route in Gazebo</button>
     {running&&<button disabled={pending||job?.cancel_requested} onClick={()=>void submit(true)}>Request landing</button>}
-    {job&&<p role="status">Run {job.plan_id.slice(0,8)} · {job.stage==='COMPLETED'&&assessmentMatches(job,job.controller_trajectory_sha256)?'Verified rehearsal passed':job.stage} {job.phase||''}</p>}
+    {job&&<p role="status">Run {job.plan_id.slice(0,8)} · {job.stage==='COMPLETED'&&assessmentMatches(job,job.controller_trajectory_sha256)?'Verified rehearsal passed':job.stage} {running?job.phase:''}</p>}
     {job?.assessment&&<details><summary>View simulator checks</summary><ul>{job.assessment.checks?.map(c=><li key={c.name}>{c.passed?'Pass':'Fail'} · {c.name}</li>)}</ul></details>}
     {(error||job?.error)&&<p role="alert">{error||job?.error}</p>}
   </section>;

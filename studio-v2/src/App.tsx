@@ -149,6 +149,7 @@ export default function App(){
   const [viewScope,setViewScope]=useState<'route'|'full'>('full');
   const [cursor,setCursor]=useState(0);
   const [playing,setPlaying]=useState(false);
+  const [registered,setRegistered]=useState(false);
   const [sitl,setSitl]=useState(false);
   const [job,setJob]=useState<Job|null>(null);
   const selectedJob=job&&result?.plan_id===job.plan_id?job:null;
@@ -179,7 +180,7 @@ export default function App(){
     setPaneWidths(p=>({...p,[r.edge]:Math.max(r.edge==='left'?180:230,Math.min(r.edge==='left'?400:440,r.start+delta))}));
   };
   const onResizeEnd=()=>{resizing.current=null;};
-  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);setSitl(d.sitl_enabled===true);}).catch(()=>setEngine('unknown'));},[]);
+  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);setSitl(d.sitl_enabled===true);setRegistered(d.registered_aircraft===true);}).catch(()=>setEngine('unknown'));},[]);
   useEffect(()=>()=>{abort.current?.abort();cancelAnimationFrame(frame.current);},[]);
   const projectRef=useRef(project);
   const manualWeather=useRef(initialEnvironment);
@@ -205,9 +206,10 @@ export default function App(){
     setProfileBusy(true);
     const revision=geometryRevision.current;
     try{
-      const response=await fetch('/api/aircraft/example/'+preset);
+      const response=await fetch(preset==='registered'?'/api/aircraft/binding':'/api/aircraft/example/'+preset);
       if(!response.ok)throw Error('Aircraft preset unavailable');
-      const profile=await response.json();
+      const data=await response.json();
+      const profile=preset==='registered'?data.profile:data;
       const assessed=await fetch('/api/aircraft/assess',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile)});
       const setup=await assessed.json();
       if(!assessed.ok||!setup.ready)throw Error('Aircraft profile could not be assessed');
@@ -434,7 +436,7 @@ export default function App(){
           <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(false)}><BoxIcon size={14}/> Aircraft <span>{project.aircraft?.profile.profile_id??'x500'}</span></button>
           <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(true)}><CloudSun size={14}/> Environment <span>{project.environment.mode}</span></button>
           <div className="tree-child"><Activity size={14}/> Reference <span>{result?.accepted?'Verified':'Not verified'}</span></div>
-          <div className="tree-sub">PX4 / Gazebo <span className="pending">Milestone 3</span></div>
+          <div className="tree-sub">PX4 / Gazebo <span className="pending">{sitl?'Connected':'Offline'}</span></div>
         </div>
         <div className="pane-title second-title"><SlidersHorizontal size={14}/> OPERATIONS</div>
         <div className="operations">
@@ -577,7 +579,7 @@ export default function App(){
           <div className="inspector-section">
             <div className="group-title">VEHICLE MODEL <ChevronDown size={14}/></div>
             <label>Aircraft preset</label><select aria-label="Aircraft model" value={project.aircraft?.preset??'baseline'} disabled={busy||profileBusy||sweeping} onChange={e=>selectAircraft(e.target.value)}>
-              <option value="baseline">X500 · reference model</option><option value="x500">X500 · Gazebo SDF profile</option>
+              <option value="baseline">X500 · reference model</option>{registered&&<option value="registered">Registered Gazebo aircraft</option>}<option value="x500">X500 · Gazebo SDF profile</option>
               <option value="quad">Illustrative quadrotor</option><option value="hex">Illustrative hexacopter</option><option value="octo">Illustrative octocopter</option></select>
             <div className="hint">{project.aircraft?.profile.name??'X500 reference model'} · modeled speed limit {display(modelCap,'m/s')}.</div>
             <div className="form-row"><label>Reference altitude (m)<input type="number" min=".1" max="30" step=".5" value={project.altitude}
