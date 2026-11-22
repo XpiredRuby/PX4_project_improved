@@ -4,6 +4,8 @@ import type { Environment, Point, Preview, Project, Sample, Tool } from './types
 import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, nextWaypointId, parseCsv, projectFromJson, sampleProject, updateEnvironment, validateProject } from './engineering';
 import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
 import {sha256} from './missionReport';
+import ConnectedRehearsal from './ConnectedRehearsal';
+import type {Job} from './rehearsalHandoff';
 import MissionComparison from './MissionComparison';
 import StudyBatches from './StudyBatches';
 import FlightReplay from './FlightReplay';
@@ -147,6 +149,9 @@ export default function App(){
   const [viewScope,setViewScope]=useState<'route'|'full'>('full');
   const [cursor,setCursor]=useState(0);
   const [playing,setPlaying]=useState(false);
+  const [sitl,setSitl]=useState(false);
+  const [job,setJob]=useState<Job|null>(null);
+  const selectedJob=job&&result?.plan_id===job.plan_id?job:null;
   const [hasQueue,setHasQueue]=useState(false);
   const [engine,setEngine]=useState<'unknown'|'browser'|'local'>('unknown');
   const [weatherBusy,setWeatherBusy]=useState(false);
@@ -174,7 +179,7 @@ export default function App(){
     setPaneWidths(p=>({...p,[r.edge]:Math.max(r.edge==='left'?180:230,Math.min(r.edge==='left'?400:440,r.start+delta))}));
   };
   const onResizeEnd=()=>{resizing.current=null;};
-  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);}).catch(()=>setEngine('unknown'));},[]);
+  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);setSitl(d.sitl_enabled===true);}).catch(()=>setEngine('unknown'));},[]);
   useEffect(()=>()=>{abort.current?.abort();cancelAnimationFrame(frame.current);},[]);
   const projectRef=useRef(project);
   const manualWeather=useRef(initialEnvironment);
@@ -538,11 +543,12 @@ export default function App(){
           <div><span>EST. DRY AIR DENSITY</span><strong>{display(stats.density,'kg/m³',3)}</strong></div>
           <div><span>PEAK DYNAMIC PRESSURE</span><strong>{display(stats.peakDynamicPressure,'Pa',1)}</strong></div>
         </section>}
+        {sitl&&<ConnectedRehearsal plan={result} onJob={setJob}/>}
         {result&&<section className="data-section">
           <div className="section-heading"><div><strong>Verification & artifact exports</strong><span>Mathematical reference — not simulated or physically measured flight</span></div>
             <div className="section-actions"><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
               {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
-              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
+              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:selectedJob||{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
             <div><span>RESULT</span><strong className="pass-label">ACCEPTED REFERENCE</strong></div>
             <div><span>RELEASE CLASS</span><strong>{result.release_class||'SITL_ONLY'}</strong></div>
@@ -551,7 +557,7 @@ export default function App(){
             <div><span>MODEL CAP</span><strong>{display(modelCap,'m/s')}</strong></div>
             <div><span>REQUESTED NEVER-EXCEED</span><strong>{display(project.speedCap,'m/s')}</strong></div>
             <div><span>PLANNED CAP</span><strong>{String(summary.speed.planning_cap_m_s??'—')} m/s</strong></div>
-            <div><span>GAZEBO CAMPAIGN</span><strong>NOT RUN</strong></div>
+            <div><span>GAZEBO CAMPAIGN</span><strong>{selectedJob?.stage||'NOT RUN'}</strong></div>
           </div>
           {result.simulation_compatible===false&&<p>{result.preview_settings?.planner_backend==='stop_turn'
             ?'Connected stop-and-turn rehearsal requires a level route starting over launch, a fixed heading, and a matching local simulator.'

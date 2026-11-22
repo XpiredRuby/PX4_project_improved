@@ -28,7 +28,7 @@ export type Preview = {
     requested_rounding_m?:number; verification_scope?:string; };
   requested_document?: unknown; intent?: unknown;
   preview_settings?: {planner_backend?:string};
-  release_class?: string; campaign_ran?: boolean; simulation_compatible?:boolean;
+  plan_id?: string; release_class?: string; campaign_ran?: boolean; simulation_compatible?:boolean;
 };
 export type AircraftSetup = {
   preset: string; sha256: string;

@@ -1,7 +1,7 @@
 import {sha256} from './missionReport.ts';
 
 export type Binding={plan_id:string;controller_trajectory_sha256:string};
-type Job=Binding & {stage:string;cancel_confirmed?:boolean;error?:string;assessment?:{
+export type Job=Binding & {stage:string;phase?:string;cancel_requested?:boolean;cancel_confirmed?:boolean;error?:string;assessment?:{
   sampled_rehearsal_passed?:boolean;checks?:{name:string;passed:boolean;detail?:{
     sha256?:string; selected_sha256?:string; controller_sha256?:string}}[]}};
 export type Transport=(path:string,payload:object|null,signal:AbortSignal)=>Promise<Job>;
@@ -13,6 +13,13 @@ export const localRehearsalTransport:Transport=async(path,payload,signal)=>{
   if(!res.ok)throw Error(data.error||'Rehearsal request failed');
   return data;
 };
+export function assessmentMatches(job:Job,digest:string){
+    const proof=job.assessment?.checks?.find(c=>c.name===digestCheck);
+    const detail=proof?.detail;
+    const verified=job.assessment?.sampled_rehearsal_passed===true&&proof?.passed===true&&
+      detail?.sha256===digest&&detail.selected_sha256===digest&&detail.controller_sha256===digest;
+    return verified;
+}
 export async function checkHandoff(input:{routeCsv:string;binding:Binding},send:Transport,
     {signal=new AbortController().signal,timeoutMs=30000,pollMs=300}:{signal?:AbortSignal;timeoutMs?:number;pollMs?:number}={}){
   const binding=input.binding,digest=await sha256(input.routeCsv);
@@ -45,11 +52,7 @@ export async function checkHandoff(input:{routeCsv:string;binding:Binding},send:
     if(job.stage==='CANCELLED')return {state:job.cancel_confirmed===true?'cancelled':'outcome unknown',digest};
     if(job.stage==='FAILED')return {state:'failed',digest};
     if(job.stage!=='COMPLETED')throw Error('Unknown rehearsal stage '+job.stage);
-    const proof=job.assessment?.checks?.find(c=>c.name===digestCheck);
-    const detail=proof?.detail;
-    const verified=job.assessment?.sampled_rehearsal_passed===true&&proof?.passed===true&&
-      detail?.sha256===digest&&detail.selected_sha256===digest&&detail.controller_sha256===digest;
-    return {state:verified?'assessment matched':'execution unverified',digest};
+    return {state:assessmentMatches(job,digest)?'assessment matched':'execution unverified',digest};
   }catch(e){
     if(!controller.signal.aborted)throw e;
     let confirmed=false;
