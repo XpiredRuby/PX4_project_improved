@@ -18,6 +18,7 @@ PHASE_COLORS = {
     "TRAJECTORY": "#dcfce7",
     "RETURN_HOME": "#fef3c7",
     "ALIGN": "#ede9fe",
+    "APPROACH": "#dbeafe",
     "HANDOFF": "#fce7f3",
     "PX4_LAND": "#fee2e2",
     "PX4_FAILSAFE": "#fecaca",
@@ -91,6 +92,8 @@ def build_safety_audit(df):
         if index == 0 or phase != phases[index - 1]
     ]
     expected = list(NOMINAL_PHASE_SEQUENCE)
+    if "APPROACH" in observed_phases:
+        expected[4:4] = ["APPROACH", "ALIGN"]
     add(
         "Nominal phase sequence",
         observed_phases == expected,
@@ -135,7 +138,7 @@ def build_safety_audit(df):
     }
     command_inputs = command_columns | {"phase"}
     if command_inputs.issubset(df.columns):
-        external_rows = df["phase"].isin(NOMINAL_PHASE_SEQUENCE[:-1])
+        external_rows = df["phase"].isin(expected[:-1])
         command_frame = df.loc[external_rows, list(command_columns)].apply(finite)
         finite_rows = command_frame.dropna()
         if command_frame.empty:

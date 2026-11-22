@@ -76,7 +76,7 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=
     add("Truth covers every recorded mission sample through contact", len(contacts) > 0 and np.all(coverage[active]),
         {"required_rows": int(active.sum()), "covered_rows": int(coverage[active].sum()),
          "post_contact_rows_excluded": int((~active).sum())})
-    offboard = df.phase.isin(["TAKEOFF", "TRAJECTORY", "RETURN_HOME", "ALIGN"]).to_numpy()
+    offboard = df.phase.isin(["TAKEOFF", "TRAJECTORY", "RETURN_HOME", "APPROACH", "ALIGN"]).to_numpy()
     desired = df[["desired_x", "desired_y", "desired_z"]].to_numpy(dtype=float)
     errors = np.linalg.norm(physical - desired, axis=1)
     yaw_error = np.degrees(np.arctan2(np.sin(yaw - df.target_yaw), np.cos(yaw - df.target_yaw)))
@@ -122,7 +122,7 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=
             "hardware_approval": False, "checks": checks,
             "per_phase": {str(phase): {"position_error_m": distribution(errors[df.phase.eq(phase)]),
                                        "heading_error_deg": distribution(yaw_error[df.phase.eq(phase)])}
-                          for phase in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME", "ALIGN")},
+                          for phase in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME", "APPROACH", "ALIGN")},
             "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
             "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
             "remaining_qualification": ["pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
@@ -228,6 +228,20 @@ def assess_case(folder):
                            json.loads((run / "audit.json").read_text()),
                            json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count,
                            constructive_phases=constructive_phases)
+    approach_speed = configuration["case"].get("controller_overrides", {}).get("approach_speed_m_s", 0.)
+    if approach_speed:
+        rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())
+        elapsed = df.elapsed_s.to_numpy()
+        duration = float(elapsed[rows[-1]] - elapsed[rows[0]]) if len(rows) > 1 else 0.
+        valid = duration >= 5. and np.all(np.diff(rows) == 1) and np.isfinite(physical[rows]).all()
+        descent = float(physical[rows[-1], 2] - physical[rows[0], 2]) if valid else None
+        mean = descent / duration if valid else None
+        passed = valid and abs(mean - approach_speed) <= .02
+        result["checks"].append(dict(name="Measured slow approach before native LAND", passed=bool(passed),
+                                     detail=dict(target_m_s=approach_speed, mean_down_m_s=mean,
+                                                 descent_m=descent, duration_s=duration,
+                                                 tolerance_m_s=.02, minimum_duration_s=5.)))
+        result["sampled_rehearsal_passed"] &= bool(passed)
     if constructive_audit is not None:
         result["constructive_reference_audit"] = constructive_audit
     model_file = folder / "plan/vehicle_model.json"
