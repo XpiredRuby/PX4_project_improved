@@ -257,6 +257,20 @@ def run_one(name, args):
         if (summary.get("aircraft_profile_sha256") != binding["profile_sha256"]
                 or summary["vehicle_model_sha256"] != binding["vehicle_model_sha256"]):
             raise ValueError("aircraft does not match the registered simulator")
+    world_path = args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"
+    world_digest = digest(world_path)
+    if case.get("experimental_stop_turn") and binding is None:
+        vehicle = load_contract(folder / "plan/vehicle_model.json", dict)
+        intent = load_contract(folder / "plan/intent.json", dict)
+        motion = intent["motion"]
+        cap = min(vehicle["maximum_speed_m_s"], motion["maximum_speed_m_s"],
+                  motion["target_speed_m_s"] or vehicle["maximum_speed_m_s"])
+        overrides = case.setdefault("controller_overrides", {})
+        overrides.update(cruise_reference_speed_m_s=.9 * cap,
+                         cruise_command_speed_limit_m_s=cap)
+        # The archived validation world has a single level collision plane at launch.
+        if world_digest == digest(ROOT / "validation/2026-10-03/worlds/afvl_validation.sdf"):
+            overrides.update(ground_offset_min_m=0., ground_offset_max_m=0.)
     rotor_count = len(binding["rotors"]) if binding else 4
     parameters = dict(PARAMETERS)
     if binding is not None:
@@ -283,7 +297,7 @@ def run_one(name, args):
     config = {"release_class": "SITL_ONLY", "case": case, "parameters": parameters,
               "flight_release_source_sha256": source_digest(),
               "world": args.world, "simulation_speed_factor": 1,
-              "world_sha256": digest(args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"),
+              "world_sha256": world_digest,
               "px4_executable_sha256": digest(binary),
               "controller_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "controller_batch_sha256": digest(ROOT / "scripts/sitl_scenario_batch.py"),
