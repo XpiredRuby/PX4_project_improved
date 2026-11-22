@@ -274,6 +274,9 @@ def run_one(name, args):
         # The archived validation world has a single level collision plane at launch.
         if world_digest == digest(ROOT / "validation/2026-10-03/worlds/afvl_validation.sdf"):
             overrides.update(ground_offset_min_m=0., ground_offset_max_m=0.)
+            if binding and binding["model"] == "x500" and binding["airframe_id"] == 4001:
+                overrides["approach_speed_m_s"] = min(.1, overrides["max_vertical_speed_m_s"])
+                overrides["mission_timeout_s"] = 240. + case["cruise_height_m"] / overrides["approach_speed_m_s"]
     rotor_count = len(binding["rotors"]) if binding else 4
     parameters = dict(PARAMETERS)
     if binding and binding["model"] == "x500" and binding["airframe_id"] == 4001:

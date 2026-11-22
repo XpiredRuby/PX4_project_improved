@@ -164,6 +164,7 @@ class PositionController:
         self.land_yaw_unwrapped = None
         self.return_segment = None
         self.return_yaw_start = None
+        self.approach_started = False
         self.align_ready_since = None
 
         self.log_file = None
@@ -1259,6 +1260,7 @@ class PositionController:
         self.land_yaw_unwrapped = None
         self.return_segment = None
         self.return_yaw_start = None
+        self.approach_started = False
         self.align_ready_since = None
         self.navigation_unhealthy_since = None
         self.navigation_recovered_since = None
@@ -1650,7 +1652,26 @@ class PositionController:
                 and now_mono - self.align_ready_since
                 >= self.config.align_hold_s
             ):
-                self._transition(MissionPhase.HANDOFF, now_mono)
+                if self.config.approach_speed_m_s and not self.approach_started and not self.return_request_reason:
+                    self.approach_started = True
+                    self.approach_start_z = self.target_z
+                    self._transition(MissionPhase.APPROACH, now_mono)
+                else:
+                    self._transition(MissionPhase.HANDOFF, now_mono)
+
+        elif self.phase == MissionPhase.APPROACH:
+            # Finish above the measured GNSS clearance budget. Native LAND owns
+            # the remaining descent and the contact transition.
+            floor = self._required_cruise_height(snapshot["gps_vertical_accuracy_m"])
+            floor += self.config.clearance_budget_hysteresis_m
+            limit_z = self.z0 - floor
+            next_z = self.approach_start_z + self.phase_clock_s * self.config.approach_speed_m_s
+            if self.navigation_state != NavigationState.HEALTHY or next_z >= limit_z or z >= limit_z:
+                self.target_z = min(self.target_z, limit_z)
+                self.align_ready_since = None
+                self._transition(MissionPhase.ALIGN, now_mono)
+            else:
+                self.target_z = next_z
 
     @staticmethod
     def _zero_pid_terms():
@@ -1843,6 +1864,10 @@ class PositionController:
         self._set_navigation_state(NavigationState.HEALTHY, snapshot)
 
     def _advance_phase_clock(self, loop_dt):
+        if self.phase == MissionPhase.APPROACH:
+            if self.navigation_state == NavigationState.HEALTHY:
+                self.phase_clock_s += clamp(loop_dt, 0., self.max_trajectory_clock_step_s)
+            return
         self.trajectory_clock_limited = False
         if self.phase not in (
             MissionPhase.TAKEOFF,
@@ -2073,10 +2098,11 @@ class PositionController:
         correction_x = self.pid_x.update(x, dt)
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
+        descent = self.config.approach_speed_m_s if self.phase == MissionPhase.APPROACH else 0.
         command, limited = self._limit_velocity_command(
             correction_x,
             correction_y,
-            correction_z,
+            correction_z + descent,
         )
         target = TrajectoryPoint(
             time=0.0,
@@ -2085,7 +2111,7 @@ class PositionController:
             z=self.target_z - self.z0,
             vx=0.0,
             vy=0.0,
-            vz=0.0,
+            vz=descent,
             yaw=wrapped_angle(
                 self.land_yaw_unwrapped - self.yaw0
             ),
@@ -2094,7 +2120,7 @@ class PositionController:
         return self._control_result(
             target=target,
             desired=(self.land_x, self.land_y, self.target_z),
-            planned=(0.0, 0.0, 0.0),
+            planned=(0.0, 0.0, descent),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
@@ -2374,6 +2400,7 @@ class PositionController:
             )
 
         active_phases = (
+            MissionPhase.APPROACH,
             MissionPhase.TAKEOFF,
             MissionPhase.TRAJECTORY,
             MissionPhase.RETURN_HOME,
@@ -2505,6 +2532,7 @@ class PositionController:
                         effective_dt,
                     )
                 elif self.phase in (
+                    MissionPhase.APPROACH,
                     MissionPhase.ALIGN,
                     MissionPhase.HANDOFF,
                 ):
