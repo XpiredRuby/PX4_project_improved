@@ -266,7 +266,7 @@ def run_one(name, args):
         cap = min(vehicle["maximum_speed_m_s"], motion["maximum_speed_m_s"],
                   motion["target_speed_m_s"] or vehicle["maximum_speed_m_s"])
         overrides = case.setdefault("controller_overrides", {})
-        overrides.update(cruise_reference_speed_m_s=.9 * cap,
+        overrides.update(trajectory_velocity_lead_s=.45, cruise_reference_speed_m_s=.9 * cap,
                          cruise_command_speed_limit_m_s=cap)
         # The archived validation world has a single level collision plane at launch.
         if world_digest == digest(ROOT / "validation/2026-10-03/worlds/afvl_validation.sdf"):

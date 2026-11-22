@@ -1989,9 +1989,14 @@ class PositionController:
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
 
+        # Compensate measured horizontal velocity response lag on the SITL X500.
+        # Route acceleration scales quadratically under constant clock scaling.
+        lead = self.config.trajectory_velocity_lead_s * speed_scale**2
+        lead_x = lead * target.ax if lead and math.isfinite(target.ax) else 0.
+        lead_y = lead * target.ay if lead and math.isfinite(target.ay) else 0.
         command, limited = self._limit_velocity_command(
-            target.vx * speed_scale + correction_x,
-            target.vy * speed_scale + correction_y,
+            target.vx * speed_scale + correction_x + lead_x,
+            target.vy * speed_scale + correction_y + lead_y,
             target.vz * speed_scale + correction_z,
         )
 
