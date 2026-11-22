@@ -554,7 +554,7 @@ export default function App(){
             <div><span>GAZEBO CAMPAIGN</span><strong>NOT RUN</strong></div>
           </div>
           {result.simulation_compatible===false&&<p>{result.preview_settings?.planner_backend==='stop_turn'
-            ?'The rehearsal runner needs a stop-and-turn adapter for this verified route.'
+            ?'Connected stop-and-turn rehearsal requires a fixed heading and a matching local simulator.'
             :'Rehearsal requires a simulator configuration matched to this aircraft profile.'}</p>}
           {Array.isArray(summary.speed.reasons)&&<p>Speed limits reported by the planner · {summary.speed.reasons.map(String).join(', ').replaceAll('_',' ')||'No adjustment'}</p>}
           {result.planning_adjustments&&<div className="adjustments"><strong>Requested vs accepted trajectory</strong>
