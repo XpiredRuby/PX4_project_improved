@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import math
 import json
 from io import BytesIO
 from pathlib import Path
@@ -228,6 +229,15 @@ def assess_case(folder):
                            json.loads((run / "audit.json").read_text()),
                            json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count,
                            constructive_phases=constructive_phases)
+    if configuration["case"].get("controller_overrides", {}).get("align_planned_heading"):
+        route = df.phase.eq("TRAJECTORY").to_numpy()
+        heading = math.radians(json.loads((folder / "plan/intent.json").read_text())["motion"]["fixed_yaw_deg"])
+        delta = yaw[route] - heading
+        stats = distribution(np.degrees(np.arctan2(np.sin(delta), np.cos(delta))))
+        passed = bool(stats and stats["p95"] <= 5. and stats["max_abs"] <= 10.)
+        result["checks"].append(dict(name="Ground truth holds requested NED heading", passed=passed,
+                                     detail=dict(target_deg=math.degrees(heading), error_deg=stats)))
+        result["sampled_rehearsal_passed"] &= passed
     approach_speed = configuration["case"].get("controller_overrides", {}).get("approach_speed_m_s", 0.)
     if approach_speed:
         rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())

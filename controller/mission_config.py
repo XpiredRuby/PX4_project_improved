@@ -37,6 +37,7 @@ class MissionConfig:
     position_prediction_max_age_s: float = 0.075
     position_prediction_max_displacement_m: float = 0.15
     # Retimed cruise reference leaves feedback room inside the normal cap.
+    align_planned_heading: bool = False
     approach_speed_m_s: float = 0.0
     trajectory_velocity_lead_s: float = 0.0
     cruise_reference_speed_m_s: float = 1.0
@@ -135,7 +136,7 @@ class MissionConfig:
         import math
         from dataclasses import fields
 
-        booleans = {"tracking_governor_enabled", "position_prediction_enabled"}
+        booleans = {"align_planned_heading", "tracking_governor_enabled", "position_prediction_enabled"}
         signed = {"ground_offset_min_m", "ground_offset_max_m", "bootstrap_pitch_deg",
                   "bootstrap_thrust_bias"}
         nonnegative = {"approach_speed_m_s", "trajectory_velocity_lead_s", "bootstrap_min_thrust", "navigation_degraded_entry_s",

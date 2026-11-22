@@ -1236,13 +1236,19 @@ class PositionController:
             segment_start = (self.x0, self.y0, self.z0)
             start_velocity = (0.0, 0.0, 0.0)
 
+        heading_duration = 0.
+        if self.config.align_planned_heading:
+            turn = abs(math.degrees(wrapped_angle(self.trajectory_origin.yaw - self.yaw0)))
+            heading_duration = max(1.875 * turn / self.config.max_yaw_rate_deg_s,
+                                   math.sqrt(5.78 * turn / self.config.max_yaw_acceleration_deg_s2),
+                                   (60. * turn / self.config.max_yaw_jerk_deg_s3) ** (1/3))
         self.takeoff_segment = MinimumJerkSegment.from_limits(
             segment_start,
             (self.target_x, self.target_y, self.target_z),
             max_speed=self.config.takeoff_max_speed_m_s,
             max_accel=self.config.max_accel_m_s2,
             max_jerk=self.config.max_jerk_m_s3,
-            minimum_duration=self.config.minimum_segment_duration_s,
+            minimum_duration=max(self.config.minimum_segment_duration_s, heading_duration),
             start_velocity=start_velocity,
         )
 
@@ -1547,7 +1553,7 @@ class PositionController:
     def _start_return_home(self, x, y, z, snapshot, now_mono):
         self.land_x = self.x0
         self.land_y = self.y0
-        self.land_yaw_unwrapped = self.yaw0
+        self.land_yaw_unwrapped = self.trajectory_origin.yaw if self.config.align_planned_heading else self.yaw0
         self.return_yaw_start = snapshot["yaw"]
         start_velocity = (
             snapshot["vx"],
@@ -1980,6 +1986,11 @@ class PositionController:
             target.vz * speed_scale + correction_z,
         )
 
+        heading = self.yaw0
+        if self.config.align_planned_heading:
+            ratio = clamp(elapsed / self.takeoff_segment.duration, 0., 1.)
+            blend = ratio**3 * (10. - 15.*ratio + 6.*ratio**2)
+            heading += blend * wrapped_angle(self.trajectory_origin.yaw - self.yaw0)
         return self._control_result(
             target=target,
             desired=(target.x, target.y, target.z),
@@ -1995,7 +2006,7 @@ class PositionController:
             ),
             command=command,
             limited=limited,
-            yaw_unwrapped=self.yaw0,
+            yaw_unwrapped=heading,
         )
 
     def trajectory_controller(self, x, y, z, dt):
@@ -2025,9 +2036,8 @@ class PositionController:
             target.vz * speed_scale + correction_z,
         )
 
-        yaw_unwrapped = (
-            self.yaw0 + target.yaw - self.trajectory_origin.yaw
-        )
+        yaw_unwrapped = (target.yaw if self.config.align_planned_heading
+                         else self.yaw0 + target.yaw - self.trajectory_origin.yaw)
         return self._control_result(
             target=target,
             desired=(desired_x, desired_y, desired_z),
