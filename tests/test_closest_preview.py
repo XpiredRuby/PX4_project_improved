@@ -220,6 +220,9 @@ class ClosestPreviewTests(unittest.TestCase):
             binary.touch()
             jobs = StudioJobs(root / "plans", root, gui=False)
             self.assertTrue(jobs.compatible(result))
+            sloped = deepcopy(result)
+            sloped["intent"]["path"]["points"][-1]["down_m"] += 1.
+            self.assertFalse(jobs.compatible(sloped))
             plan_id = jobs.retain(result)
             confirmation = dict(plan_id=plan_id, confirm_interpretation=True,
                                 controller_trajectory_sha256=result["summary"]["controller_trajectory_sha256"])

@@ -81,6 +81,12 @@ class StudioJobs:
     def compatible(self, result):
         if result["intent"]["motion"]["yaw_mode"] != "fixed":
             return False
+        if result.get("preview_settings", {}).get("planner_backend") == "stop_turn":
+            points = result["intent"]["path"]["points"]
+            height = result["summary"]["controller_cruise_height_m"]
+            if (abs(points[0]["north_m"]) + abs(points[0]["east_m"]) > 1e-9
+                    or any(abs(p["down_m"] + height) > 1e-9 for p in points)):
+                return False
         if self.binding is None:
             default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
             return (result.get("aircraft_setup") is None
