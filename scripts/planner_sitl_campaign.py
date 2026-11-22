@@ -276,6 +276,9 @@ def run_one(name, args):
             overrides.update(ground_offset_min_m=0., ground_offset_max_m=0.)
     rotor_count = len(binding["rotors"]) if binding else 4
     parameters = dict(PARAMETERS)
+    if binding and binding["model"] == "x500" and binding["airframe_id"] == 4001:
+        # Gazebo publishes timestamped GNSS directly in this SITL configuration.
+        parameters["EKF2_GPS_DELAY"] = 0.
     if binding is not None:
         parameters.update(binding["controller_parameters"])
         parameters["MPC_LAND_SPEED"] = min(parameters["MPC_LAND_SPEED"], binding["profile"]["maximum_descent_m_s"])
