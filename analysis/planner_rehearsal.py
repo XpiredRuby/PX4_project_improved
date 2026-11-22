@@ -193,7 +193,7 @@ def assess_case(folder):
     ulog_path = unique((folder / "runtime").rglob("*.ulg"))
     names = ["vehicle_global_position_groundtruth", "vehicle_local_position",
              "vehicle_attitude_groundtruth", "vehicle_local_position_groundtruth"]
-    datasets = {d.name: d.data for d in ULog(str(ulog_path), message_name_filter_list=names).data_list}
+    datasets = {d.name: d.data for d in ULog(str(ulog_path), message_name_filter_list=names + ["trajectory_setpoint"]).data_list}
     df = pd.read_csv(csv_path, low_memory=False)
     truth_audit, physical = audit_ground_truth(df, datasets[names[0]], datasets[names[1]])
     samples = df.position_time_boot_ms.to_numpy(dtype=float) * 1000.
@@ -253,16 +253,34 @@ def assess_case(folder):
                                                  tolerance_m_s=.02, minimum_duration_s=5.)))
         result["sampled_rehearsal_passed"] &= bool(passed)
     if configuration["case"].get("controller_overrides", {}).get("sitl_x500_native_land"):
-        readback = json.loads((folder / "effective_parameters.json").read_text())["verified"]["MPC_LAND_SPEED"]
+        parameters = json.loads((folder / "effective_parameters.json").read_text())["verified"]
+        readback = parameters["MPC_LAND_SPEED"]
+        upper_readback = parameters.get("MPC_Z_VEL_MAX_DN")
         native = (df.phase.eq("PX4_LAND") & df.heartbeat_main_mode.eq(4)
                   & df.heartbeat_sub_mode.eq(6) & df.landed_state.eq(4))
         native_rows = np.flatnonzero(native.to_numpy())
         approach_rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())
-        passed = (math.isclose(readback, .6, abs_tol=1e-6) and len(native_rows) > 1
+        setpoints = datasets.get("trajectory_setpoint", {})
+        stamp = np.asarray(setpoints.get("timestamp", []), dtype=float)
+        down = np.asarray(setpoints.get("velocity[2]", []))
+        commands = np.array([])
+        covered = False
+        if len(native_rows) > 1 and len(stamp) == len(down):
+            start, end = samples[native_rows[[0, -1]]]
+            active = (stamp >= start) & (stamp <= end)
+            commands = down[active]
+            covered = len(commands) > 1 and np.max(np.diff(np.r_[start, stamp[active], end])) <= 500000
+        peak = float(np.max(commands)) if len(commands) and np.isfinite(commands).all() else None
+        passed = (math.isclose(readback, .6, abs_tol=1e-6)
+                  and upper_readback is not None and math.isclose(upper_readback, .6, abs_tol=1e-6)
+                  and covered and peak is not None and 0 < peak <= .600001
                   and len(approach_rows) > 1 and native_rows[0] > approach_rows[-1])
         result["checks"].append(dict(name="PX4 AUTO LAND confirmed after the slow approach",
                                      passed=bool(passed), detail=dict(
                                          land_setting_readback_m_s=readback,
+                                         upper_descent_setting_readback_m_s=upper_readback,
+                                         peak_logged_down_command_m_s=peak,
+                                         logged_command_samples=len(commands),
                                          auto_land_descending_samples=len(native_rows),
                                          ground_truth_down_speed_m_s=distribution(velocity[native_rows, 2]))))
         result["sampled_rehearsal_passed"] &= bool(passed)
