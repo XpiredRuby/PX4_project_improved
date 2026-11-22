@@ -137,7 +137,7 @@ class MissionConfig:
         import math
         from dataclasses import fields
 
-        booleans = {"align_planned_heading", "tracking_governor_enabled", "position_prediction_enabled"}
+        booleans = {"align_planned_heading", "sitl_x500_native_land", "tracking_governor_enabled", "position_prediction_enabled"}
         signed = {"ground_offset_min_m", "ground_offset_max_m", "bootstrap_pitch_deg",
                   "bootstrap_thrust_bias"}
         nonnegative = {"approach_speed_m_s", "trajectory_velocity_lead_s", "bootstrap_min_thrust", "navigation_degraded_entry_s",
