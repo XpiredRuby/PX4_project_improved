@@ -23,6 +23,22 @@ from trajectory_quality import distribution
 from simulation_physics import assess_simulation_physics, interpolate_quaternions, quaternion_tilt_deg
 
 
+def native_land_commands(setpoints, native_times_us):
+    """Return peak downward demand and coverage over the observed AUTO LAND interval."""
+    stamp = np.asarray(setpoints.get("timestamp", []), dtype=float)
+    down = np.asarray(setpoints.get("velocity[2]", []))
+    if len(native_times_us) < 2 or len(stamp) != len(down):
+        return None, 0, False
+    start, end = native_times_us[[0, -1]]
+    active = (stamp >= start) & (stamp <= end)
+    commands = down[active]
+    if len(commands) < 2 or not np.isfinite(commands).all():
+        return None, len(commands), False
+    gaps = np.diff(np.r_[start, stamp[active], end])
+    covered = np.all(np.diff(stamp[active]) > 0) and np.max(gaps) <= 500000
+    return float(np.max(commands)), len(commands), bool(covered)
+
+
 def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4, constructive_phases=None):
     checks = []
 
@@ -260,17 +276,8 @@ def assess_case(folder):
                   & df.heartbeat_sub_mode.eq(6) & df.landed_state.eq(4))
         native_rows = np.flatnonzero(native.to_numpy())
         approach_rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())
-        setpoints = datasets.get("trajectory_setpoint", {})
-        stamp = np.asarray(setpoints.get("timestamp", []), dtype=float)
-        down = np.asarray(setpoints.get("velocity[2]", []))
-        commands = np.array([])
-        covered = False
-        if len(native_rows) > 1 and len(stamp) == len(down):
-            start, end = samples[native_rows[[0, -1]]]
-            active = (stamp >= start) & (stamp <= end)
-            commands = down[active]
-            covered = len(commands) > 1 and np.max(np.diff(np.r_[start, stamp[active], end])) <= 500000
-        peak = float(np.max(commands)) if len(commands) and np.isfinite(commands).all() else None
+        peak, count, covered = native_land_commands(
+            datasets.get("trajectory_setpoint", {}), samples[native_rows])
         passed = (math.isclose(readback, .6, abs_tol=1e-6)
                   and upper_readback is not None and math.isclose(upper_readback, .6, abs_tol=1e-6)
                   and covered and peak is not None and 0 < peak <= .600001
@@ -280,7 +287,7 @@ def assess_case(folder):
                                          land_setting_readback_m_s=readback,
                                          upper_descent_setting_readback_m_s=upper_readback,
                                          peak_logged_down_command_m_s=peak,
-                                         logged_command_samples=len(commands),
+                                         logged_command_samples=count,
                                          auto_land_descending_samples=len(native_rows),
                                          ground_truth_down_speed_m_s=distribution(velocity[native_rows, 2]))))
         result["sampled_rehearsal_passed"] &= bool(passed)
