@@ -484,6 +484,10 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
         environment_sha256=canonical_sha256(environment), verification_report_sha256=canonical_sha256(verification),
         point_count=len(rows), controller_cruise_height_m=-points[0][2],
         route_phases=spans, duration_scope="verified constructive trajectory; global optimality not established")
+    if setup:
+        summary.update(aircraft_profile_sha256=setup["profile_sha256"],
+                       mission_budget_sha256=canonical_sha256(budget),
+                       path_error_budget_sha256=canonical_sha256(error_budget))
     stride = max(1,math.ceil((len(rows)-1)/1000))
     indices = {0,len(rows)-1,*range(0,len(rows),stride)}
     # Keep exact stops/turns visible in the plotted path.
