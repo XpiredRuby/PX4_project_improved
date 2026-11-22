@@ -252,6 +252,20 @@ def assess_case(folder):
                                                  descent_m=descent, duration_s=duration,
                                                  tolerance_m_s=.02, minimum_duration_s=5.)))
         result["sampled_rehearsal_passed"] &= bool(passed)
+    if configuration["case"].get("controller_overrides", {}).get("sitl_x500_native_land"):
+        readback = json.loads((folder / "effective_parameters.json").read_text())["verified"]["MPC_LAND_SPEED"]
+        native = (df.phase.eq("PX4_LAND") & df.heartbeat_main_mode.eq(4)
+                  & df.heartbeat_sub_mode.eq(6) & df.landed_state.eq(4))
+        native_rows = np.flatnonzero(native.to_numpy())
+        approach_rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())
+        passed = (math.isclose(readback, .6, abs_tol=1e-6) and len(native_rows) > 1
+                  and len(approach_rows) > 1 and native_rows[0] > approach_rows[-1])
+        result["checks"].append(dict(name="PX4 AUTO LAND confirmed after the slow approach",
+                                     passed=bool(passed), detail=dict(
+                                         land_setting_readback_m_s=readback,
+                                         auto_land_descending_samples=len(native_rows),
+                                         ground_truth_down_speed_m_s=distribution(velocity[native_rows, 2]))))
+        result["sampled_rehearsal_passed"] &= bool(passed)
     if constructive_audit is not None:
         result["constructive_reference_audit"] = constructive_audit
     model_file = folder / "plan/vehicle_model.json"
@@ -338,6 +352,9 @@ def assess_case(folder):
     result["evidence_sha256"] = {str(path.relative_to(folder)): hashlib.sha256(path.read_bytes()).hexdigest()
                                   for path in (csv_path, ulog_path, plan_path, run / "audit.json", folder / "final_ground.json",
                                                unique(run.glob("run_manifest_*.json")), run / "scenario.json")}
+    if configuration["case"].get("controller_overrides", {}).get("sitl_x500_native_land"):
+        for filename in ("effective_parameters.json", "simulation_configuration.json"):
+            result["evidence_sha256"][filename] = hashlib.sha256((folder / filename).read_bytes()).hexdigest()
     if binding and manifest.get("run_id"):
         bundle = studio_recording(df, physical, manifest, plan_digest, selected_digest, dict(result["evidence_sha256"]))
         artifact_digest = hashlib.sha256(bundle).hexdigest()
