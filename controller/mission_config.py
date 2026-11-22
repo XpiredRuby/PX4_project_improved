@@ -38,6 +38,7 @@ class MissionConfig:
     position_prediction_max_displacement_m: float = 0.15
     # Retimed cruise reference leaves feedback room inside the normal cap.
     align_planned_heading: bool = False
+    sitl_x500_native_land: bool = False
     approach_speed_m_s: float = 0.0
     trajectory_velocity_lead_s: float = 0.0
     cruise_reference_speed_m_s: float = 1.0

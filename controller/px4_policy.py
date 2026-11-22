@@ -113,6 +113,7 @@ def check_px4_safety_config(
     landing_timeout_s=180.0,
     max_descent_m=40.0,
     gps_outage_recovery_budget_s=4.0,
+    sitl_x500_native_land=False,
 ):
     """Verify that command loss lands and confirmed landing auto-disarms."""
     missing = sorted(set(PX4_SAFETY_PARAMETERS) - parameters.keys())
@@ -160,8 +161,10 @@ def check_px4_safety_config(
                 f"EKF2_NOAID_TOUT needs at least {required_s:g}s for the requested "
                 f"{gps_outage_recovery_budget_s:g}s GPS recovery budget; "
                 "the supported maximum remains 10s")
-    if not 0.0 < crawl_speed <= land_speed <= .5:
-        mismatch.append("MPC_LAND_CRWL <= MPC_LAND_SPEED must lie in (0, 0.5] m/s")
+    valid_land_speed = (math.isclose(land_speed, .6, abs_tol=1e-6)
+                        if sitl_x500_native_land else 0.0 < land_speed <= .5)
+    if not valid_land_speed or not 0.0 < crawl_speed <= min(.5, land_speed):
+        mismatch.append("MPC_LAND_CRWL or MPC_LAND_SPEED is outside the configured landing envelope")
     elif max_descent_m <= 0 or landing_timeout_s < max_descent_m / crawl_speed + auto_disarm_s + 10.:
         mismatch.append("landing timeout cannot cover the bounded descent, settling, and disarm")
     if battery_action not in (2.0, 3.0):
@@ -257,6 +260,7 @@ def audit_px4_configuration(controller, attempts=3, timeout_s=0.7):
         max_descent_m=(controller.config.max_height_above_launch_m
                        - controller.config.ground_offset_min_m),
         gps_outage_recovery_budget_s=controller.config.gps_outage_recovery_budget_s,
+        sitl_x500_native_land=controller.config.sitl_x500_native_land,
     )
     hover_thrust = float(parameters["MPC_THR_HOVER"])
     max_thrust = float(parameters["MPC_THR_MAX"])
