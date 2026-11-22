@@ -259,15 +259,18 @@ def run_one(name, args):
             raise ValueError("aircraft does not match the registered simulator")
     world_path = args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"
     world_digest = digest(world_path)
-    if case.get("experimental_stop_turn") and binding is None:
+    if case.get("experimental_stop_turn") and (binding is None or binding["model"] == "x500"):
         vehicle = load_contract(folder / "plan/vehicle_model.json", dict)
         intent = load_contract(folder / "plan/intent.json", dict)
         motion = intent["motion"]
         cap = min(vehicle["maximum_speed_m_s"], motion["maximum_speed_m_s"],
                   motion["target_speed_m_s"] or vehicle["maximum_speed_m_s"])
         overrides = case.setdefault("controller_overrides", {})
+        cap = min(cap, overrides.get("max_horizontal_speed_m_s", cap))
         overrides.update(trajectory_velocity_lead_s=.45, cruise_reference_speed_m_s=.9 * cap,
                          cruise_command_speed_limit_m_s=cap)
+    if name == "reviewed-plan" or case.get("experimental_stop_turn"):
+        overrides = case.setdefault("controller_overrides", {})
         # The archived validation world has a single level collision plane at launch.
         if world_digest == digest(ROOT / "validation/2026-10-03/worlds/afvl_validation.sdf"):
             overrides.update(ground_offset_min_m=0., ground_offset_max_m=0.)
