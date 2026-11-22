@@ -263,11 +263,11 @@ def run_one(name, args):
         vehicle = load_contract(folder / "plan/vehicle_model.json", dict)
         intent = load_contract(folder / "plan/intent.json", dict)
         motion = intent["motion"]
-        cap = min(vehicle["maximum_speed_m_s"], motion["maximum_speed_m_s"],
-                  motion["target_speed_m_s"] or vehicle["maximum_speed_m_s"])
+        cap = min(vehicle["maximum_speed_m_s"], motion["maximum_speed_m_s"])
         overrides = case.setdefault("controller_overrides", {})
         cap = min(cap, overrides.get("max_horizontal_speed_m_s", cap))
-        overrides.update(trajectory_velocity_lead_s=.45, cruise_reference_speed_m_s=.9 * cap,
+        reference_speed = min(.9 * cap, motion["target_speed_m_s"] or cap)
+        overrides.update(trajectory_velocity_lead_s=.45, cruise_reference_speed_m_s=reference_speed,
                          cruise_command_speed_limit_m_s=cap)
     if name == "reviewed-plan" or case.get("experimental_stop_turn"):
         overrides = case.setdefault("controller_overrides", {})

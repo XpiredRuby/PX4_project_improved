@@ -358,9 +358,8 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     heading_mode = intent["motion"]["yaw_mode"]
     fixed = heading_mode == "fixed" or hold_heading
     heading = math.radians(intent["motion"]["fixed_yaw_deg"] or 0.) if fixed else 0.
-    speed = .9 * min(intent["motion"]["maximum_speed_m_s"],
-                      intent["motion"]["target_speed_m_s"] or vehicle.maximum_speed_m_s,
-                      vehicle.maximum_speed_m_s)
+    speed = min(.9 * min(intent["motion"]["maximum_speed_m_s"], vehicle.maximum_speed_m_s),
+                intent["motion"]["target_speed_m_s"] or vehicle.maximum_speed_m_s)
     if setup and any(a[2] != b[2] for a, b in zip(points, points[1:], strict=False)):
         speed = min(speed, .9*min(setup["profile"]["maximum_climb_m_s"], setup["profile"]["maximum_descent_m_s"]))
     phases, row_estimate = [], 0

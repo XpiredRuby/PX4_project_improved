@@ -205,10 +205,9 @@ def audit_stop_turn_artifacts(
         delta = end - start
         if intent.motion.yaw_mode == "fixed" and abs(delta[3]) > 1e-10:
             raise ValueError("Fixed heading adapter cannot execute a changing heading")
-        requested_cap = 0.9 * min(
-            intent.motion.maximum_speed_m_s,
+        requested_cap = min(
+            0.9 * min(intent.motion.maximum_speed_m_s, vehicle.maximum_speed_m_s),
             intent.motion.target_speed_m_s or vehicle.maximum_speed_m_s,
-            vehicle.maximum_speed_m_s,
         )
         if phase["speed_limit_m_s"] > requested_cap + 1e-9:
             raise ValueError("Phase speed cap exceeds the verified intent")
