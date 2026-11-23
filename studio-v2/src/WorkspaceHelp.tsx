@@ -9,7 +9,7 @@ const guide = {
     entries: [
       ['Build a route', 'Try an example or choose Add point and click the map. Select / move lets you drag an existing point. Undo restores the previous edit.'],
       ['Check and preview it', 'Select Plan & verify. Review any changes, then open Preview flight to play the planned motion in 3D.'],
-      ['Review or simulate', 'Review results shows what passed and what the planner changed. A connected PX4 / Gazebo installation can rehearse the verified route.'],
+      ['Review or simulate', 'Review results has separate views for the checks, simulator, charts, and recordings. On a narrow screen, open Project or Settings from the command bar.'],
     ],
   },
   map: {
