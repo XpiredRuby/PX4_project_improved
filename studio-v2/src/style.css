@@ -66,7 +66,7 @@ h1, h2, h3, p { margin: 0; }
   height: 100dvh;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   overflow: hidden;
 }
 .topbar {
@@ -137,6 +137,37 @@ h1, h2, h3, p { margin: 0; }
 .compact-pane { display: none; }
 button.primary { font-weight: 650; background: var(--accent); color: #251c15; border-color: #f9bf8c; }
 button.primary:enabled:hover { background: #f7c898; }
+.practice-guide {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px 18px;
+  padding: 9px 12px 10px; border-bottom: 1px solid #8d6747;
+  border-left: 4px solid var(--accent); background: #393029;
+}
+.practice-progress { display: flex; align-items: center; gap: 5px; font-weight: 650; color: var(--accent); }
+.practice-copy h2 { font-size: 16px; margin: 2px 0; }
+.practice-copy p { color: #e5dad0; max-width: 74ch; }
+.practice-actions { display: flex; align-items: center; gap: 5px; flex: none; }
+.practice-actions button { min-height: 31px; }
+.practice-actions .skip-guide { background: transparent; border-color: transparent; text-decoration: underline; text-underline-offset: 2px; }
+.help-footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 7px; }
+[data-practice-step=map] .tool-group,
+[data-practice-step=waypoints] .waypoint-dock,
+[data-practice-step=settings] .inspector,
+[data-practice-step=check] .command-actions .primary,
+[data-practice-step=results] .result-next,
+[data-practice-step=camera] .viewer-tools,
+[data-practice-step=playback] .playback-dock,
+[data-practice-step=tools] .result-tabs button[aria-controls] {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+@media (max-width: 730px) {
+  .practice-guide { flex-wrap: wrap; padding: 6px 8px; gap: 5px; }
+  .practice-progress, .practice-copy p { font-size: 12px; }
+  .practice-copy h2 { font-size: 14px; }
+  .practice-actions { width: 100%; justify-content: flex-end; }
+  .practice-actions button { min-height: 29px; font-size: 12px; }
+  .practice-actions .skip-guide { margin-right: auto; }
+}
 .spinner { width: 14px; height: 14px; border: 2px solid; border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 

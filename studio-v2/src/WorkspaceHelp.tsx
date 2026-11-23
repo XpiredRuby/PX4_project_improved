@@ -7,7 +7,7 @@ const guide = {
   start: {
     title: 'Get started',
     entries: [
-      ['Choose where to start', 'On Start, try a practice flight, start a blank route, or open a saved route. With a blank route, click the map to add points in order.'],
+      ['Choose where to start', 'Try a practice flight opens a step-by-step tutorial with an example route. With a blank route, click the map to add points in order.'],
       ['Check and watch', 'Choose Check route and review any changes. Watch flight preview starts playback in 3D.'],
       ['Find more tools', 'Review results includes checks, charts, and the simulator. More tools opens recordings and flight studies. On a narrow screen, Project and Settings open their own panels.'],
     ],
@@ -39,10 +39,11 @@ const guide = {
   },
 } satisfies Record<HelpTopic, {title: string; entries: string[][]}>;
 
-export default function WorkspaceHelp({dialog, topic, onTopic}: {
+export default function WorkspaceHelp({dialog, topic, onTopic, onPractice}: {
   dialog: RefObject<HTMLDialogElement | null>;
   topic: HelpTopic;
   onTopic: (topic: HelpTopic) => void;
+  onPractice: () => void;
 }) {
   return <dialog ref={dialog} className="help-dialog" aria-labelledby="help-title">
     <div className="help-header">
@@ -57,7 +58,8 @@ export default function WorkspaceHelp({dialog, topic, onTopic}: {
     <dl className="help-entries">
       {guide[topic].entries.map(([term, text]) => <div key={term}><dt>{term}</dt><dd>{text}</dd></div>)}
     </dl>
-    <div className="help-footer"><a href="https://github.com/XpiredRuby/PX4_project_improved/blob/feature/offline-research-studio/docs/trajectory_studio_handbook.md"
+    <div className="help-footer"><button onClick={onPractice}><BookOpen size={16} aria-hidden="true"/> Start practice tutorial</button>
+      <a href="https://github.com/XpiredRuby/PX4_project_improved/blob/feature/offline-research-studio/docs/trajectory_studio_handbook.md"
       target="_blank" rel="noreferrer"><BookOpen size={16} aria-hidden="true"/> Open the full handbook</a></div>
   </dialog>;
 }
