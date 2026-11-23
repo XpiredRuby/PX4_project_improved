@@ -55,6 +55,9 @@ def check_navigation(page, base):
                 target = page.get_by_role("region", name=label, exact=True)
             bounds = target.bounding_box()
             assert bounds and bounds["height"] > 0 and bounds["y"]+bounds["height"] <= height
+        for label in ("Open project", "Save editable project", "Help"):
+            bounds = page.get_by_role("button", name=label, exact=True).bounding_box()
+            assert bounds and bounds["x"] >= 0 and bounds["x"]+bounds["width"] <= width + .5
     page.get_by_role("button", name="Settings", exact=True).click()
     expect(page.get_by_label("Height above launch (m)")).to_be_visible()
     page.get_by_role("button", name="Project", exact=True).click()
@@ -78,13 +81,14 @@ def check(page, base, csv, ulog, output):
       const begin = CanvasRenderingContext2D.prototype.moveTo;
       const line = CanvasRenderingContext2D.prototype.lineTo;
       CanvasRenderingContext2D.prototype.moveTo = function (x, y) {
-        if (['#ffffff','#d36f73'].includes(this.strokeStyle)) this.vectorStart = [x, y];
+        if (['#ffffff','#d36f73','#56c18f'].includes(this.strokeStyle)) this.vectorStart = [x, y];
         return begin.call(this, x, y);
       };
       CanvasRenderingContext2D.prototype.lineTo = function (x, y) {
         if (this.vectorStart) {
           const vector = [x-this.vectorStart[0], y-this.vectorStart[1]];
           if (this.strokeStyle === '#d36f73') window.northVector = vector;
+          if (this.strokeStyle === '#56c18f') window.eastVector = vector;
           if (this.strokeStyle === '#ffffff' && Math.abs(Math.hypot(...vector)-24)<1e-9)
             window.headingVector = vector;
           this.vectorStart = null;
@@ -119,6 +123,13 @@ def check(page, base, csv, ulog, output):
       const n=window.northVector, h=window.headingVector;
       return n && h && (n[0]*h[0]+n[1]*h[1])/(Math.hypot(...n)*Math.hypot(...h)) > 1-1e-9;
     }"""
+    page.wait_for_function(correct_yaw)
+    page.get_by_role("button", name="Top view", exact=True).click()
+    page.wait_for_function("""() => {
+      const n = window.northVector, e = window.eastVector;
+      return n && e && Math.abs(n[0]) < .01 && n[1] < -1 && e[0] > 1 && Math.abs(e[1]) < .01;
+    }""")
+    page.get_by_role("button", name="Orbit", exact=True).click()
     page.wait_for_function(correct_yaw)
     original_heading = page.evaluate("window.headingVector")
     bounds = view.bounding_box()
