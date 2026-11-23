@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, ArrowDownToLine, ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Ruler, Settings2, ShieldCheck, Trash2, TriangleAlert, Wind, X } from 'lucide-react';
+import { Activity, ArrowDownToLine, ArrowLeft, ArrowRight, ChevronDown, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Ruler, Settings2, ShieldCheck, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
 import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, nextWaypointId, parseCsv, projectFromJson, sampleProject, updateEnvironment, validateProject } from './engineering';
 import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
 import {sha256} from './missionReport';
 import WorkspaceHelp, {type HelpTopic} from './WorkspaceHelp';
+import WaypointDock from './WaypointDock';
 import ConnectedRehearsal from './ConnectedRehearsal';
 import type {Job} from './rehearsalHandoff';
 import MissionComparison from './MissionComparison';
@@ -26,6 +27,13 @@ const workspaceSteps=[
   {id:'analysis',label:'Review results',icon:Activity},
 ] as const;
 type WorkspaceStep = typeof workspaceSteps[number]['id'];
+const resultPanels=[
+  ['checks','Checks'],['simulation','Simulator'],['charts','Charts'],['weather','Wind analysis'],
+  ['studies','Saved studies'],['speeds','Speed sweep'],['recordings','Recordings'],['comparison','Compare flights'],
+] as const;
+type ResultPanel = typeof resultPanels[number][0];
+const propertyPanels=[['setup','Aircraft'],['weather','Weather'],['point','Point']] as const;
+type PropertyPanel = typeof propertyPanels[number][0];
 const drawingHints: Record<Tool,string> = {
   select:'Drag a point to move it, or click it to edit its coordinates.',
   waypoint:'Click the map to add a point at the end of the route.',
@@ -66,8 +74,9 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   const scaleDistance = view >= 400 ? 100 : view >= 150 ? 50 : view >= 65 ? 20 : 10;
   const gridSpacing = view >= 400 ? 100 : view >= 160 ? 25 : 10;
   // Maintain an equal physical map scale on rectangular and square viewports.
+  const [mapWidth,setMapWidth]=useState(600);
   const [aspect,setAspect]=useState(1.65);
-  useEffect(()=>{if(!ref.current)return;const obs=new ResizeObserver(es=>{const e=es[0];if(e.contentRect.height>0)setAspect(e.contentRect.width/e.contentRect.height);});obs.observe(ref.current);return()=>obs.disconnect();},[]);
+  useEffect(()=>{if(!ref.current)return;const obs=new ResizeObserver(es=>{const e=es[0];if(e.contentRect.height>0&&e.contentRect.width>0){setAspect(e.contentRect.width/e.contentRect.height);setMapWidth(e.contentRect.width);}});obs.observe(ref.current);return()=>obs.disconnect();},[]);
   const visibleHeight=view/aspect;
   const fitRoute=()=>{
     let minNorth=0,maxNorth=0,minEast=0,maxEast=0;
@@ -116,7 +125,7 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   };
   const onUp=()=>{dragging.current=null;panning.current=null;if(drawing.current)onFinishDraw();drawing.current=false;};
   return <div className="map-frame">
-    <div className="map-controls"><span>TOP / N ↑ / E →</span><div>
+    <div className="map-controls"><span>N ↑ &nbsp; E →</span><div>
       <button onClick={()=>setRange(Math.max(12,range/1.25))} title="Zoom in" aria-label="Zoom in">+</button>
       <button onClick={()=>setRange(Math.min(Math.max(1200,1200*aspect),range*1.25))} title="Zoom out" aria-label="Zoom out">−</button>
       <button onClick={fitRoute} title="Fit route to map">Fit route</button>
@@ -124,24 +133,24 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
     </div></div>
     <svg ref={ref} className={'map-svg tool-'+tool} viewBox={[center.east-range,-center.north-visibleHeight/2,view,visibleHeight].join(' ')}
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label="Mission coordinate drawing canvas">
-      <rect x={center.east-range} y={-center.north-visibleHeight/2} width={view} height={visibleHeight} fill="#10212e"/>
+      <rect x={center.east-range} y={-center.north-visibleHeight/2} width={view} height={visibleHeight} fill="#f2f5f7"/>
       {[...Array(Math.ceil(Math.max(view,visibleHeight)/gridSpacing)+2)].map((_,i)=>{
         const east=(Math.floor((center.east-range)/gridSpacing)+i)*gridSpacing;
         const north=(Math.floor((center.north-visibleHeight/2)/gridSpacing)+i)*gridSpacing;
         return <g key={i} aria-hidden="true">
-          <path d={`M${east} ${-center.north-visibleHeight/2}v${visibleHeight}`} stroke={east===0?'#49677a':'#273c4c'} strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-          <path d={`M${center.east-range} ${-north}h${view}`} stroke={north===0?'#49677a':'#273c4c'} strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+          <path d={`M${east} ${-center.north-visibleHeight/2}v${visibleHeight}`} stroke={east===0?'#8b9ba8':'#d8e0e6'} strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+          <path d={`M${center.east-range} ${-north}h${view}`} stroke={north===0?'#8b9ba8':'#d8e0e6'} strokeWidth="1" vectorEffect="non-scaling-stroke"/>
         </g>;
       })}
-      <circle cx="0" cy="0" r={radius} fill="none" stroke="#bca068" strokeWidth=".2" strokeDasharray="1 1.5"/>
-      <path d={path} stroke="#56bcd0" strokeWidth="2.5" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+      <circle cx="0" cy="0" r={radius} fill="none" stroke="#92662c" strokeWidth="1.4" strokeDasharray="5 5" vectorEffect="non-scaling-stroke"/>
+      <path d={path} stroke="#1760a5" strokeWidth="2.5" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       {points.filter((_,i)=>points.length<80||i%Math.ceil(points.length/60)===0||i===points.length-1).map(p=>{
         const index=points.indexOf(p);
         return <g key={p.id+'-'+index} onPointerDown={e=>{if(tool!=='select')return;e.stopPropagation();dragging.current=index;onSelect(index);e.currentTarget.closest('svg')?.setPointerCapture(e.pointerId);}}>
-          <circle cx={p.east} cy={-p.north} r={selected===index?.95:.65} stroke={selected===index?'#ffffff':p.hard?'#f2b96f':'#9ce0ef'}
-            fill={selected===index?'#2198b4':'#162d3b'} strokeWidth=".22" vectorEffect="non-scaling-stroke"/>
+          <circle cx={p.east} cy={-p.north} r={(selected===index?5:3.7)*view/mapWidth} stroke={p.hard?'#875924':'#1e5790'}
+            fill={selected===index?'#1467b0':'#ffffff'} strokeWidth="1.5" vectorEffect="non-scaling-stroke"/>
           {(p.hard||selected===index||index===0||index===points.length-1)&&
-            <text x={p.east+1.0} y={-p.north-1} fontSize="2.1" fill="#cfe0ec" pointerEvents="none">{p.id}</text>}
+            <text x={p.east+8*view/mapWidth} y={-p.north-6*view/mapWidth} fontSize={12*view/mapWidth} fill="#263f54" pointerEvents="none">{p.id}</text>}
         </g>;
       })}
     </svg>
@@ -160,10 +169,13 @@ export default function App(){
   const [mapFitRequest,requestMapFit]=useState(0);
   const [active,setActive]=useState<WorkspaceStep>('geometry');
   const [field,setField]=useState<Field>('speed');
-  const [environmentTab,setEnvironmentTab]=useState(false);
+  const [resultPanel,setResultPanel]=useState<ResultPanel>('checks');
+  const [windPanel,setWindPanel]=useState<'estimate'|'compare'>('estimate');
+  const [showChartStats,setShowChartStats]=useState(false);
+  const [propertyPanel,setPropertyPanel]=useState<PropertyPanel>('setup');
+  const [utilityPane,setUtilityPane]=useState<'workspace'|'project'|'properties'>('workspace');
   const [helpTopic,setHelpTopic]=useState<HelpTopic>('start');
   const helpDialog=useRef<HTMLDialogElement>(null);
-  const mainPane=useRef<HTMLElement>(null);
   const stepHeading=useRef<HTMLHeadingElement>(null);
   const openHelp=(topic:HelpTopic)=>{
     setHelpTopic(topic);
@@ -171,10 +183,8 @@ export default function App(){
   };
   const openStep=(step:WorkspaceStep)=>{
     setActive(step);
-    requestAnimationFrame(()=>{
-      mainPane.current?.scrollTo({top:0});
-      stepHeading.current?.focus();
-    });
+    setUtilityPane('workspace');
+    requestAnimationFrame(()=>stepHeading.current?.focus({preventScroll:true}));
   };
   const [advanced,setAdvanced]=useState(false);
   const [paneWidths,setPaneWidths]=useState({left:235,right:288});
@@ -371,7 +381,7 @@ export default function App(){
       controller.signal.throwIfAborted();
       if(submittedRevision!==geometryRevision.current){setNotice('Edited during compilation; discarded the obsolete result. Run verification again.');return;}
       if(!parsed.length)throw Error('Verified plan returned no usable samples');
-      setResult(data);setRouteSamples(parsed);setFullMissionSamples(full);setViewScope(full.length?'full':'route');setSamples(full.length?full:parsed);setCursor(0);openStep('analysis');setDirty(false);
+      setResult(data);setRouteSamples(parsed);setFullMissionSamples(full);setViewScope(full.length?'full':'route');setSamples(full.length?full:parsed);setCursor(0);setResultPanel('checks');openStep('analysis');setDirty(false);
       setNotice('Route verified. Review the results or preview the planned motion.');
     }catch(e){if((e as Error).name!=='AbortError')setError((e as Error).message);else setNotice('Planning cancelled or invalidated by an edit. Your mission was kept.');}
     finally{setBusy(false);abort.current=null;}
@@ -466,30 +476,40 @@ export default function App(){
   const summary=getPreviewSummary(result||{accepted:false});
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><div className="brand-mark"><Activity size={21} aria-hidden="true"/></div>
-        <div><strong>PX4 <span>Trajectory Studio</span></strong></div></div>
-      <div className="top-center">{project.title}{dirty&&<span className="changed-dot">· Edits to check</span>}</div>
+      <div className="brand"><Activity size={19} aria-hidden="true"/><strong>PX4 Trajectory Studio</strong></div>
+      <span className="project-title" title={project.title}>{project.title}{dirty?' *':''}</span>
       <div className="top-actions">
-        <button className="ghost project-action" aria-label="Open project" title="Open project" onClick={()=>fileRef.current?.click()}><FolderOpen size={17}/><span>Open</span></button>
-        <button className="ghost project-action" aria-label="Save editable project" title="Save editable project" onClick={saveProject}><Save size={17}/><span>Save</span></button>
-        <button className="ghost help-button" aria-haspopup="dialog" onClick={()=>openHelp('start')}><HelpCircle size={18}/> Help</button>
+        <button aria-label="Open project" title="Open project" onClick={()=>fileRef.current?.click()}><FolderOpen size={16}/><span>Open</span></button>
+        <button aria-label="Save editable project" title="Save editable project" onClick={saveProject}><Save size={16}/><span>Save</span></button>
+        <button className="help-button" aria-haspopup="dialog" onClick={()=>openHelp('start')}><HelpCircle size={16}/> Help</button>
         <input ref={fileRef} hidden type="file" accept=".json" onChange={importProject}/>
         <input ref={pointsCsvRef} hidden type="file" accept=".csv,text/csv" onChange={importWaypointCsv}/>
       </div>
     </header>
-    <nav className="menubar" aria-label="Mission workflow">
-      <ol className="menu-buttons">
-        {workspaceSteps.map((step,index)=><li key={step.id}>
-          <button className={active===step.id?'nav-active':''} aria-current={active===step.id?'step':undefined} onClick={()=>openStep(step.id)}>
-            <span className="step-number" aria-hidden="true">{index+1}</span>{step.label}
-          </button>
-        </li>)}
-      </ol>
-      <span className={`connection-status ${sitl?'connected':''}`}><span aria-hidden="true"/> {sitl?'Simulator connected':engine==='unknown'?'Connecting to planner':'Planning mode'}</span>
-    </nav>
-    <div className="workbench" style={{'--left-pane':paneWidths.left+'px','--right-pane':paneWidths.right+'px'} as React.CSSProperties}>
+    <div className="command-bar">
+      <nav className="workflow" aria-label="Mission workflow">
+        {workspaceSteps.map(step=><button key={step.id} aria-current={active===step.id?'step':undefined} onClick={()=>openStep(step.id)}>
+          <step.icon size={15} aria-hidden="true"/>{step.label}
+        </button>)}
+      </nav>
+      <div className="command-actions">
+        <button className="compact-pane project-pane-button" aria-pressed={utilityPane==='project'}
+          onClick={()=>setUtilityPane(p=>p==='project'?'workspace':'project')}><FolderOpen size={15}/> Project</button>
+        <button className="compact-pane properties-pane-button" aria-pressed={utilityPane==='properties'}
+          onClick={()=>setUtilityPane(p=>p==='properties'?'workspace':'properties')}><Settings2 size={15}/> Settings</button>
+        <span className="command-spacer"/>
+        {job&&<button className="run-shortcut" onClick={()=>{setResultPanel('simulation');openStep('analysis');}}>Simulator run</button>}
+        <button className="undo-button" onClick={undo} disabled={history.current.length===0}><RotateCcw size={15}/> Undo</button>
+        <button className="primary" onClick={run} disabled={busy||sweeping||profileBusy||project.points.length<2}>
+          {busy?<span className="spinner"/>:<ShieldCheck size={16}/>} {busy?'Verifying…':'Plan & verify'}
+        </button>
+        {busy&&<button onClick={()=>abort.current?.abort()}>Cancel planning</button>}
+      </div>
+    </div>
+    <div className={`workbench show-${utilityPane}`} style={{'--left-pane':paneWidths.left+'px','--right-pane':paneWidths.right+'px'} as React.CSSProperties}>
       <aside className="left-rail" aria-label="Route library">
-        <div className="pane-title"><FolderOpen size={16}/> Route library</div>
+        <div className="pane-title"><FolderOpen size={15}/> Project</div>
+        <div className="library-body">
         <div className="operations">
           <button className="new-route" onClick={()=>{clearRoute();openStep('geometry');}}><Plus size={17}/> New blank mission</button>
           <button onClick={()=>pointsCsvRef.current?.click()}><FolderOpen size={16}/> Import waypoint CSV</button>
@@ -499,82 +519,51 @@ export default function App(){
         <div className="operations example-list">
           {examples.map(([id,label])=><button key={id} onClick={()=>{applyExample(id);openStep('geometry');}}><MapIcon size={15}/>{label}<ArrowRight size={14}/></button>)}
         </div>
+        </div>
         <div className="pane-resizer left-resizer" role="separator" aria-label="Resize model explorer" aria-orientation="vertical" tabIndex={0}
           onKeyDown={e=>{if(e.key==='ArrowLeft')setPaneWidths(w=>({...w,left:Math.max(180,w.left-15)}));if(e.key==='ArrowRight')setPaneWidths(w=>({...w,left:Math.min(400,w.left+15)}));}}
           onPointerDown={e=>onResizeStart('left',e)} onPointerMove={onResizeMove} onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}/>
       </aside>
-      <main ref={mainPane} className="main-pane" aria-labelledby="workspace-heading">
-        <div className="workspace-header"><div>
+      <main className="main-pane" aria-labelledby="workspace-heading">
+        <div className="dock-bar workspace-heading">
           <h1 id="workspace-heading" ref={stepHeading} tabIndex={-1}>{workspaceSteps.find(step=>step.id===active)?.label}</h1>
-          <p>{active==='geometry'?'Draw a path, add waypoints, or start from an example.'
-            :active==='trajectory'?'Play the planned motion and inspect it from any angle.'
-            :'Check the verified route, run a simulation, or review the data.'}</p></div>
-          <div className="workspace-actions">
-            {active==='geometry'?<>
-              <button className="ghost" onClick={undo} disabled={history.current.length===0}><RotateCcw size={16}/> Undo</button>
-              <button className="primary" onClick={run} disabled={busy||sweeping||profileBusy||project.points.length<2}>
-                {busy?<span className="spinner"/>:<ShieldCheck size={18}/>} {busy?'Verifying…':'Plan & verify'}</button>
-              {busy&&<button className="ghost" onClick={()=>abort.current?.abort()}>Cancel planning</button>}
-            </>:<button className="ghost" onClick={()=>openStep('geometry')}><ArrowLeft size={16}/> Edit route</button>}
-            {active==='analysis'&&<button className="ghost contextual-help" aria-label="Results help" aria-haspopup="dialog" onClick={()=>openHelp('results')}><HelpCircle size={17}/></button>}
-          </div>
+          {active==='geometry'&&<div className="route-summary" aria-label="Draft route dimensions">
+            <span><Ruler size={14} aria-hidden="true"/> <strong>{display(draftDimensions.length,'m',1)}</strong> <span>length</span></span>
+            <span><strong>{draftDimensions.minimum!==draftDimensions.maximum&&project.points.length
+              ?`${draftDimensions.minimum.toFixed(1)}–${draftDimensions.maximum.toFixed(1)} m`
+              :display(draftDimensions.maximum,'m',1)}</strong> <span>height</span></span>
+            <span><strong>{project.points.length.toLocaleString()}</strong> <span>points</span></span>
+          </div>}
+          {active==='analysis'&&<button aria-label="Results help" aria-haspopup="dialog" onClick={()=>openHelp('results')}><HelpCircle size={16}/></button>}
         </div>
         {error&&<ErrorPanel message={error} onClose={()=>setError('')}/>}
-        {notice&&<div className="notice info" role="status"><CheckCircle2 size={16}/><span>{notice}</span><button onClick={()=>setNotice('')} aria-label="Dismiss notification"><X size={15}/></button></div>}
-        {active!=='geometry'&&!result&&<div className="notice neutral">
-          <span>Check a route to see its planned motion and verification results.</span>
-          <button className="ghost" onClick={()=>openStep('geometry')}>Build a route <ArrowRight size={15}/></button>
-        </div>}
-        {active==='geometry'&&project.points.length<2&&<div className="notice neutral">
-          <span>Add at least two points to check the route.</span>
-        </div>}
-        {active==='geometry'&&<div className="mobile-route-actions"><select className="compact-operations" aria-label="Route operations" value=""
-          onChange={e=>{const action=e.target.value;
-            if(action==='blank')clearRoute();
-            else if(action==='import')pointsCsvRef.current?.click();
-            else if(action==='export')exportWaypointCsv();
-            else if(action){applyExample(action);openStep('geometry');}
-          }}>
-          <option value="" disabled>Examples and files</option>
-          <option value="blank">New blank mission</option><option value="import">Import waypoint CSV</option>
-          <option value="export">Export waypoint CSV</option>
-          {examples.map(([id,label])=><option key={id} value={id}>{label}</option>)}
-        </select><a className="settings-jump" href="#flight-settings">Flight settings</a></div>}
-        {active==='geometry'&&<section className="route-workspace" aria-label="Route map">
-          <div className="route-summary" aria-label="Draft route dimensions">
-            <div><span><Ruler size={15} aria-hidden="true"/> Draft route length</span><strong>{display(draftDimensions.length,'m',1)}</strong></div>
-            <div><span>Height above launch</span><strong>{draftDimensions.minimum!==draftDimensions.maximum&&project.points.length
-              ?`${draftDimensions.minimum.toFixed(1)}–${draftDimensions.maximum.toFixed(1)} m`
-              :display(draftDimensions.maximum,'m',1)}</strong></div>
-            <div><span>Route points</span><strong>{project.points.length.toLocaleString()}</strong></div>
-          </div>
-          <div className="toolstrip">
-            <div className="tool-group">
-              {([{id:'select',icon:MousePointer2,label:'Select / move'},{id:'waypoint',icon:Plus,label:'Add point'},{id:'draw',icon:Grip,label:'Freehand'},{id:'pan',icon:Crosshair,label:'Pan'}] as const).map(t=>
-                <button className={tool===t.id?'selected-tool':''} key={t.id} onClick={()=>setTool(t.id)} aria-pressed={tool===t.id} title={t.label}><t.icon size={16}/><span>{t.label}</span></button>)}
+        {active==='geometry'&&<div className="editor-dock">
+          <section className="route-workspace" aria-label="Route map">
+            <div className="route-canvas">
+              <div className="toolstrip">
+                <div className="tool-group">
+                  {([{id:'select',icon:MousePointer2,label:'Select / move'},{id:'waypoint',icon:Plus,label:'Add point'},
+                    {id:'draw',icon:Grip,label:'Freehand'},{id:'pan',icon:Crosshair,label:'Pan'}] as const).map(t=>
+                    <button key={t.id} onClick={()=>setTool(t.id)} aria-pressed={tool===t.id} title={t.label}>
+                      <t.icon size={15}/><span>{t.label}</span>
+                    </button>)}
+                </div>
+                <button className="contextual-help" aria-haspopup="dialog" aria-label="Map help" onClick={()=>openHelp('map')}>
+                  <HelpCircle size={16}/><span>Map help</span>
+                </button>
+              </div>
+              <div className="viewport-panel">
+                <TopMap points={project.points} selected={selected} onSelect={setSelected} onChange={editPoint} tool={tool}
+                  onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} radius={Number.isFinite(modelRadius)?modelRadius:40}
+                  range={range} setRange={setRange} fitRequest={mapFitRequest}/>
+              </div>
             </div>
-            <button className="ghost contextual-help" aria-haspopup="dialog" aria-label="Map help" onClick={()=>openHelp('map')}><HelpCircle size={17}/><span>Map help</span></button>
-          </div>
-          <div className="tool-hint">{drawingHints[tool]}</div>
-          <div className="viewport-panel">
-            <TopMap points={project.points} selected={selected} onSelect={setSelected} onChange={editPoint} tool={tool}
-              onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} radius={Number.isFinite(modelRadius)?modelRadius:40} range={range} setRange={setRange} fitRequest={mapFitRequest}/>
-          </div>
-        </section>}
-        {active==='geometry'&&<section className="data-section">
-          <div className="section-heading"><div><strong>Route points</strong><span>Edit coordinates in metres and choose where to stop.</span></div>
-            <div className="section-actions"><button onClick={()=>newPoint(0,0)}><Plus size={14}/> Add row</button>
-              <button disabled={selected<0||project.points.length<=2} onClick={()=>{update(p=>({...p,points:p.points.filter((_,i)=>i!==selected)}));setSelected(-1);}}><Trash2 size={14}/> Remove selected</button></div></div>
-          <div className="table-scroll"><table className="point-table"><thead><tr><th>POINT</th><th>NORTH (m)</th><th>EAST (m)</th><th>ALT. (m)</th><th>STOP</th><th>EXACT POINT</th></tr></thead>
-          <tbody>{project.points.slice(0,250).map((p,i)=><tr key={p.id+'-'+i} className={selected===i?'row-selected':''} onClick={()=>setSelected(i)} onFocus={()=>setSelected(i)}>
-            <td><span className="point-number">{String(i+1).padStart(2,'0')}</span> {p.id}</td>
-            {(['north','east','altitude'] as const).map(k=><td key={k}><input aria-label={p.id+' '+k} type="number" step=".1" value={p[k]} onChange={e=>editPoint(i,{...p,[k]:asNum(e.target.value,p[k])})}/></td>)}
-            <td><input aria-label={p.id+' hard stop'} type="checkbox" checked={p.hard||i===0||i===project.points.length-1} disabled={i===0||i===project.points.length-1} onChange={e=>editPoint(i,{...p,hard:e.target.checked,exact:e.target.checked?false:p.exact})}/></td>
-            <td><input aria-label={p.id+' exact point'} type="checkbox" checked={i!==0&&i!==project.points.length-1&&!p.hard&&p.exact} disabled={i===0||i===project.points.length-1} onChange={e=>editPoint(i,{...p,exact:e.target.checked,hard:e.target.checked?false:p.hard})}/></td>
-          </tr>)}</tbody></table></div>
-          {project.points.length>250&&<p className="small-note">Displaying the first 250 of {project.points.length} sketch samples. The complete drawing is preserved and submitted to the planner.</p>}
-        </section>}
-        {active==='trajectory'&&<div className="viewport-panel">
+          </section>
+          <WaypointDock points={project.points} selected={selected} select={setSelected} change={editPoint}
+            add={()=>newPoint(0,0)} remove={()=>{update(p=>({...p,points:p.points.filter((_,i)=>i!==selected)}));setSelected(-1);}}/>
+        </div>}
+        {active==='trajectory'&&<div className="preview-dock">
+        <div className="viewport-panel">
           <div className="field-select"><label htmlFor="preview-colour">Colour route by</label>
             <select id="preview-colour" value={visibleField} onChange={e=>setField(e.target.value as Field)}>
               <option value="speed">3D speed</option><option disabled={!weatherReady} value="airspeed">Wind-relative airspeed</option>
@@ -583,9 +572,9 @@ export default function App(){
             </select>
           </div>
           <Viewport points={project.points} samples={samples} cursor={cursor} field={visibleField} environment={project.environment}/>
-        </div>}
-        {active==='trajectory'&&<section className="data-section">
-          <div className="section-heading"><div><strong>Playback</strong><span>Use the slider to move to a moment in the plan.</span></div>
+        </div>
+        <section className="playback-dock">
+          <div className="section-heading"><strong>Playback</strong>
           <div className="timeline-buttons"><div className="scope-tabs"><button className={viewScope==='route'?'scope-current':''} disabled={!routeSamples.length} onClick={()=>changeScope('route')}>Route</button><button className={viewScope==='full'?'scope-current':''} disabled={!fullMissionSamples.length} onClick={()=>changeScope('full')}>Full mission</button></div><button aria-label="Play or pause" onClick={()=>{if(playing){setPlaying(false);return;}
               const start=cursor>=samples[samples.length-1].time?samples[0].time:cursor;
               playbackStart.current=start;setCursor(start);setPlaying(true);}} disabled={!samples.length}>{playing?<Pause size={16}/>:<Play size={16}/>} {playing?'Pause':'Play'}</button>
@@ -600,10 +589,15 @@ export default function App(){
             <div><span>YAW FROM NORTH</span><strong>{display((current.yaw*180/Math.PI%360+360)%360,'°')}</strong></div>
             <div><span>WIND-RELATIVE</span><strong>{display(airspeed(current,project.environment),'m/s')}</strong></div>
           </div>}
-        </section>}
-        {active==='analysis'&&result&&<section className="data-section verification-card">
-          <div className="section-heading"><div><strong>Route verification</strong><span>Checks on the planned reference</span></div>
-            <div className="section-actions"><button className="preview-link" onClick={()=>openStep('trajectory')}><Play size={14}/> Play in 3D</button><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
+        </section>
+        </div>}
+        {active==='analysis'&&<nav className="result-tabs" aria-label="Result views">
+          {resultPanels.map(([id,label])=><button key={id} aria-pressed={resultPanel===id} onClick={()=>setResultPanel(id)}>{label}</button>)}
+        </nav>}
+        {active==='analysis'&&resultPanel==='checks'&&<div className="analysis-panel" aria-label="Verification checks">
+          {result?<section className="data-section verification-card">
+          <div className="section-heading"><strong>Route verification</strong>
+            <div className="section-actions">{sitl&&<button onClick={()=>setResultPanel('simulation')}>Simulator <ArrowRight size={14}/></button>}<button className="preview-link" onClick={()=>openStep('trajectory')}><Play size={14}/> Play in 3D</button><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
               {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
               <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:selectedJob||{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
@@ -625,45 +619,69 @@ export default function App(){
             <ul>{result.planning_adjustments.adjustments?.map((a,i)=><li key={i}>{a.message}</li>)}</ul>
           </div>}
           <details><summary>Raw verification evidence and adjustment report</summary><pre>{JSON.stringify({verification:summary.certificate,adjustments:result.planning_adjustments,interpretation:result.interpretation},null,2)}</pre></details>
-        </section>}
-        {active==='analysis'&&result&&!sitl&&<p className="notice neutral">
-          To fly this route in simulation, connect Studio to a local PX4 / Gazebo installation.
-        </p>}
-        {sitl&&<div hidden={active!=='analysis'&&!job}>
-          <ConnectedRehearsal plan={result} onJob={setJob}/>
+        </section>:<div className="empty-panel">
+            <strong>Check a route to see its planned motion and verification results.</strong>
+            <button onClick={()=>openStep('geometry')}><ArrowLeft size={15}/> Build a route</button>
+          </div>}
         </div>}
-        {active==='analysis'&&<details className="analysis-tools" id="engineering-tools">
-          <summary>Charts, studies & flight recordings</summary>
-          <div className="analysis-contents">
-            <div className="plot-grid">{(['speed','airspeed','acceleration','jerk','altitude','yaw'] as const).filter(metric=>metric!=='airspeed'||weatherReady).map(metric=>
-              <Plot key={metric} samples={samples} field={metric} environment={project.environment} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
-                ceiling={metric==='speed'?(viewScope==='route'?Number(summary.speed.planning_cap_m_s)||cap:cap):
-                  metric==='acceleration'?result?.vehicle_model?.maximum_acceleration_m_s2:
-                  metric==='jerk'?result?.vehicle_model?.maximum_jerk_m_s3:undefined}/>)}</div>
-            {result?.vehicle_model&&routeSamples.length>0&&<Prediction key={JSON.stringify([geometryRevision.current,project.environment,result.summary?.controller_trajectory_sha256])} samples={routeSamples} environment={project.environment} vehicle={result.vehicle_model} digest={result.summary?.controller_trajectory_sha256}/>}
-            <WindStudy samples={routeSamples} environment={project.environment} digest={result?.summary?.controller_trajectory_sha256}/>
-            <StudyBatches enabled={hasQueue} project={project} restore={p=>{update(()=>p);setSelected(-1);}}/>
-            <MissionComparison key={String(result?.summary?.controller_trajectory_sha256??geometryRevision.current)} points={project.points} result={result}/>
-            <FlightReplay local={engine==='local'}/>
-            <Sweep key={geometryRevision.current} project={project} disabled={busy||profileBusy} onBusy={setSweeping}/>
-            {stats&&<section className="metrics-row">
-              <div><span>REFERENCE DURATION</span><strong>{display(stats.duration,'s',1)}</strong></div>
-              <div><span>PATH DISTANCE</span><strong>{display(stats.distance,'m',1)}</strong></div>
-              <div><span>PEAK 3D SPEED</span><strong>{display(stats.peak,'m/s')}</strong></div>
-              <div><span>PEAK AIR-RELATIVE</span><strong>{display(stats.air,'m/s')}</strong></div>
-              <div><span>PEAK ACCEL.</span><strong>{display(stats.accel,'m/s²')}</strong></div>
-              <div><span>PEAK JERK</span><strong>{display(stats.jerk,'m/s³')}</strong></div>
-              <div><span>EST. DRY AIR DENSITY</span><strong>{display(stats.density,'kg/m³',3)}</strong></div>
-              <div><span>PEAK DYNAMIC PRESSURE</span><strong>{display(stats.peakDynamicPressure,'Pa',1)}</strong></div>
-            </section>}
-          </div>
-        </details>}
-      </main>
-      <aside className="inspector" id="flight-settings" aria-label="Flight settings" tabIndex={-1}>
-        <div className="pane-title settings-title"><Settings2 size={16}/> Flight settings
-          <button className="ghost contextual-help" aria-label="Flight settings help" aria-haspopup="dialog" onClick={()=>openHelp('settings')}><HelpCircle size={17}/></button>
+        <div className="analysis-panel" hidden={active!=='analysis'||resultPanel!=='simulation'} aria-label="Simulator results">
+          {sitl?<ConnectedRehearsal plan={result} onJob={setJob}/>:<p className="empty-panel">Connect Studio to a local PX4 / Gazebo installation to run a rehearsal.</p>}
         </div>
-        <div className="inspector-content">
+        {active==='analysis'&&<div className="analysis-panel charts-panel" hidden={resultPanel!=='charts'} aria-label="Reference charts">
+          <div className="dock-bar"><label htmlFor="chart-field">Chart</label>
+            <select id="chart-field" value={visibleField} onChange={e=>setField(e.target.value as Field)}>
+              <option value="speed">3D speed</option><option disabled={!weatherReady} value="airspeed">Wind-relative airspeed</option>
+              <option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
+              <option value="altitude">Altitude</option><option value="yaw">Heading</option>
+            </select>
+            {stats&&<button aria-pressed={showChartStats} onClick={()=>setShowChartStats(v=>!v)}>Statistics</button>}
+          </div>
+          {showChartStats&&stats?<dl className="metric-table">
+            {[
+              ['Duration',display(stats.duration,'s',1)],['Distance',display(stats.distance,'m',1)],['Peak 3D speed',display(stats.peak,'m/s')],
+              ['Peak airspeed',display(stats.air,'m/s')],['Peak acceleration',display(stats.accel,'m/s²')],['Peak jerk',display(stats.jerk,'m/s³')],
+              ['Estimated air density',display(stats.density,'kg/m³',3)],['Peak dynamic pressure',display(stats.peakDynamicPressure,'Pa',1)],
+            ].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+          </dl>:<Plot samples={samples} field={visibleField} environment={project.environment} cursor={cursor}
+            onCursor={t=>{setPlaying(false);setCursor(t);}}
+            ceiling={visibleField==='speed'?(viewScope==='route'?Number(summary.speed.planning_cap_m_s)||cap:cap):
+              visibleField==='acceleration'?result?.vehicle_model?.maximum_acceleration_m_s2:
+              visibleField==='jerk'?result?.vehicle_model?.maximum_jerk_m_s3:undefined}/>}
+        </div>}
+        {active==='analysis'&&<>
+          <div className="analysis-panel" hidden={resultPanel!=='weather'} aria-label="Wind analysis">
+            <nav className="dock-bar" aria-label="Wind views">
+              <button aria-pressed={windPanel==='estimate'} onClick={()=>setWindPanel('estimate')}>Tracking estimate</button>
+              <button aria-pressed={windPanel==='compare'} onClick={()=>setWindPanel('compare')}>Compare winds</button>
+            </nav>
+            <div hidden={windPanel!=='estimate'}>
+              {result?.vehicle_model&&routeSamples.length>0?<Prediction key={geometryRevision.current} samples={routeSamples} environment={project.environment}
+                vehicle={result.vehicle_model} digest={result.summary?.controller_trajectory_sha256}/>:<p className="empty-panel">Verify a route to estimate how wind affects tracking.</p>}
+            </div>
+            <div hidden={windPanel!=='compare'}><WindStudy samples={routeSamples} environment={project.environment}
+              digest={result?.summary?.controller_trajectory_sha256}/></div>
+          </div>
+          <div className="analysis-panel" hidden={resultPanel!=='studies'} aria-label="Saved studies">
+            <StudyBatches enabled={hasQueue} project={project} restore={p=>{update(()=>p);setSelected(-1);}}/>
+          </div>
+          <div className="analysis-panel" hidden={resultPanel!=='comparison'} aria-label="Flight comparison">
+            <MissionComparison key={String(result?.summary?.controller_trajectory_sha256??geometryRevision.current)} points={project.points} result={result}/>
+          </div>
+          <div className="analysis-panel" hidden={resultPanel!=='recordings'} aria-label="Recorded flights"><FlightReplay local={engine==='local'}/></div>
+          <div className="analysis-panel" hidden={resultPanel!=='speeds'} aria-label="Speed sweep">
+            <Sweep key={geometryRevision.current} project={project} disabled={busy||profileBusy} onBusy={setSweeping}/>
+          </div>
+        </>}
+      </main>
+      <aside className="inspector" aria-label="Flight settings">
+        <div className="pane-title settings-title"><Settings2 size={15}/> Settings
+          <button aria-label="Flight settings help" aria-haspopup="dialog" onClick={()=>openHelp('settings')}><HelpCircle size={16}/></button>
+        </div>
+        <nav className="property-tabs" aria-label="Settings views">
+          {propertyPanels.map(([id,label])=><button key={id} aria-label={id==='weather'?'Weather for analysis':label}
+            aria-pressed={propertyPanel===id} onClick={()=>setPropertyPanel(id)}>{label}</button>)}
+        </nav>
+        <div className="inspector-content" hidden={propertyPanel!=='setup'} aria-label="Aircraft settings">
           <div className="inspector-section">
             <div className="group-title">Aircraft and height</div>
             <label htmlFor="aircraft-model">Aircraft model</label><select id="aircraft-model" value={project.aircraft?.preset??'baseline'} disabled={busy||profileBusy||sweeping} onChange={e=>selectAircraft(e.target.value)}>
@@ -688,9 +706,9 @@ export default function App(){
               <div className="hint">0° faces north. 90° faces east.</div>
             </div>
           </div>
-          <div className="inspector-section">
-            <button className="group-title group-click" aria-expanded={environmentTab} onClick={()=>setEnvironmentTab(!environmentTab)}><Wind size={15}/> Weather for analysis <ChevronDown size={14}/></button>
-            {environmentTab&&<><div className="mode-switch">
+        </div>
+        <div className="inspector-content" hidden={propertyPanel!=='weather'} aria-label="Weather settings">
+            <div className="mode-switch">
               <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>setWeatherMode('manual')} aria-pressed={project.environment.mode==='manual'}>Manual</button>
               <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>setWeatherMode('live')} aria-pressed={project.environment.mode==='live'}>Live forecast</button>
             </div>
@@ -720,26 +738,26 @@ export default function App(){
             <label>Surface pressure (hPa)<input type="number" step=".5" min="100" max="1100" value={weatherReady?project.environment.pressure:''}
               disabled={project.environment.mode==='live'} onChange={e=>changeEnv({pressure:asNum(e.target.value,project.environment.pressure)})}/></label>
             <div className="hint weather-source"><Wind size={14}/><span>{project.environment.source}<br/>{project.environment.forecastValidAt?'Valid '+project.environment.forecastValidAt+' · ':''}{project.environment.fetchedAt?'Fetched: '+project.environment.fetchedAt:''}</span></div>
-            <div className="hint warn">Steady wind drives airspeed analysis and the offline tracking estimate. The planner checks its selected vehicle envelope. Density assumes dry air. Gust and humidity are retained with the scenario.</div></>}
-          </div>
-          <div className="inspector-section">
+            <div className="hint warn">Steady wind drives airspeed analysis and the offline tracking estimate. The planner checks its selected vehicle envelope. Density assumes dry air. Gust and humidity are retained with the scenario.</div>
+        </div>
+        <div className="inspector-content inspector-section" hidden={propertyPanel!=='point'} aria-label="Selected waypoint">
             <div className="group-title">SELECTED POINT</div>
             {selectedPoint?<><div className="selected-id">{selectedPoint.id}</div>
               <div className="hint">North {round(selectedPoint.north)} m · East {round(selectedPoint.east)} m · Alt {round(selectedPoint.altitude)} m</div>
               <label className="checkbox-row"><input type="checkbox" checked={selectedPoint.hard||selected===0||selected===project.points.length-1} disabled={selected===0||selected===project.points.length-1} onChange={e=>editPoint(selected,{...selectedPoint,hard:e.target.checked,exact:e.target.checked?false:selectedPoint.exact})}/> Required full stop</label>
               <label className="checkbox-row"><input type="checkbox" checked={selected!==0&&selected!==project.points.length-1&&!selectedPoint.hard&&selectedPoint.exact} disabled={selected===0||selected===project.points.length-1} onChange={e=>editPoint(selected,{...selectedPoint,exact:e.target.checked,hard:e.target.checked?false:selectedPoint.hard})}/> Exact point</label>
             </>:<div className="hint">Select a point on the map or in the table.</div>}
-          </div>
         </div>
         <div className="pane-resizer right-resizer" role="separator" aria-label="Resize properties inspector" aria-orientation="vertical" tabIndex={0}
           onKeyDown={e=>{if(e.key==='ArrowLeft')setPaneWidths(w=>({...w,right:Math.min(440,w.right+15)}));if(e.key==='ArrowRight')setPaneWidths(w=>({...w,right:Math.max(230,w.right-15)}));}}
           onPointerDown={e=>onResizeStart('right',e)} onPointerMove={onResizeMove} onPointerUp={onResizeEnd} onPointerCancel={onResizeEnd}/>
+
       </aside>
     </div>
-    <footer className="statusbar">
+    <footer className="statusbar" role="status">
       <span><span className={`status-indicator ${result?.accepted?'verified':''}`}/>{result?.accepted?'Reference verified':'No active verified result'}</span>
-      <span>Metres · north and east relative to launch</span>
-      <span>{sitl?'Local simulation only':'Planning and playback'}</span>
+      <span className="activity-note">{notice||(active==='geometry'?(project.points.length<2?'Add at least two points to check the route.':drawingHints[tool]):'')}</span>
+      <span className="connection-status">{sitl?'Simulator connected':engine==='unknown'?'Connecting to planner':'Planning mode'}</span>
     </footer>
     <WorkspaceHelp dialog={helpDialog} topic={helpTopic} onTopic={setHelpTopic}/>
   </div>;
