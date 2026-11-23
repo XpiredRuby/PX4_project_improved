@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Environment, Sample } from './types';
 import { airspeed } from './engineering';
 
@@ -28,9 +28,23 @@ function extremaPreserving(samples:Sample[],field:Field,env:Environment,width:nu
 export default function Plot({samples,field,environment,cursor,onCursor,ceiling}:{
   samples:Sample[];field:Field;environment:Environment;cursor:number;onCursor:(time:number)=>void;ceiling?:number
 }){
-  const W=680,H=198,L=60,R=15,T=17,B=37;
+  const svgRef=useRef<SVGSVGElement>(null);
+  const [{width:W,height:H},setSize]=useState({width:680,height:320});
   const fillId=useId();
-  const data=useMemo(()=>extremaPreserving(samples,field,environment,Math.round(W-L-R)),[samples,field,environment]);
+  const L=W<430?45:60,R=26,T=23,B=40;
+  const xSteps=Math.max(3,Math.min(8,Math.floor((W-L-R)/100)));
+  const ySteps=Math.max(3,Math.min(7,Math.floor((H-T-B)/55)));
+  useEffect(()=>{
+    const svg=svgRef.current;
+    if(!svg)return;
+    const observer=new ResizeObserver(([entry])=>{
+      const {width,height}=entry.contentRect;
+      if(width&&height)setSize({width:Math.max(165,Math.round(width)),height:Math.max(105,Math.round(height))});
+    });
+    observer.observe(svg);
+    return ()=>observer.disconnect();
+  },[]);
+  const data=useMemo(()=>extremaPreserving(samples,field,environment,Math.round(W-L-R)),[samples,field,environment,W,L,R]);
   const first=samples[0]?.time??0, last=samples[samples.length-1]?.time??1;
   const duration=Math.max(0.001,last-first);
   const bounds=useMemo(()=>{
@@ -42,7 +56,7 @@ export default function Plot({samples,field,environment,cursor,onCursor,ceiling}
   const {min,max,spread}=bounds;
   const X=(t:number)=>L+(t-first)/duration*(W-L-R);
   const Y=(v:number)=>T+(max-v)/(max-min)*(H-T-B);
-  const path=useMemo(()=>data.map((s,i)=>(i?'L':'M')+X(s.time).toFixed(2)+' '+Y(fieldValue(s,field,environment)).toFixed(2)).join(' '),[data,field,environment,min,max,first,duration]);
+  const path=useMemo(()=>data.map((s,i)=>(i?'L':'M')+X(s.time).toFixed(2)+' '+Y(fieldValue(s,field,environment)).toFixed(2)).join(' '),[data,field,environment,min,max,first,duration,W,H,L,R]);
   const area=samples.length>0?`${path} L ${X(last)} ${H-B} H ${L} Z`:'';
   const mouse=(event:React.PointerEvent<SVGSVGElement>)=>{
     const transform=event.currentTarget.getScreenCTM();
@@ -53,18 +67,18 @@ export default function Plot({samples,field,environment,cursor,onCursor,ceiling}
   };
   return <div className="plot-box">
     <div className="plot-heading"><strong>{fields[field].label}</strong><span>{fields[field].unit} · planned reference</span></div>
-    <svg viewBox={'0 0 '+W+' '+H} role="img" aria-label={fields[field].label+' against time'} onPointerDown={mouse} onPointerMove={e=>{if(e.buttons===1)mouse(e);}}>
+    <svg ref={svgRef} viewBox={'0 0 '+W+' '+H} role="img" aria-label={fields[field].label+' against time'} onPointerDown={mouse} onPointerMove={e=>{if(e.buttons===1)mouse(e);}}>
       <defs><linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
         <stop stopColor="var(--blue)" stopOpacity=".20"/><stop offset="1" stopColor="var(--blue)" stopOpacity="0"/>
       </linearGradient></defs>
       <rect className="plot-grid-frame" x={L} y={T} width={W-L-R} height={H-T-B}/>
-      {Array.from({length:5},(_,i)=>{
-        const v=min+(max-min)*i/4,y=Y(v);
+      {Array.from({length:ySteps+1},(_,i)=>{
+        const v=min+(max-min)*i/ySteps,y=Y(v);
         return <g key={i}><path className="plot-grid-line" d={'M'+L+' '+y+'H'+(W-R)}/>
         <text x={L-8} y={y+4} fontSize="10" textAnchor="end">{v.toFixed(spread<2?2:1)}</text></g>;
       })}
-      {Array.from({length:6},(_,i)=>{
-        const t=first+duration*i/5,x=X(t);
+      {Array.from({length:xSteps+1},(_,i)=>{
+        const t=first+duration*i/xSteps,x=X(t);
         return <g key={i}><path className="plot-grid-line" d={'M'+x+' '+T+'V'+(H-B)}/>
         <text x={x} y={H-16} fontSize="10" textAnchor="middle">{t.toFixed(1)}</text></g>;
       })}
