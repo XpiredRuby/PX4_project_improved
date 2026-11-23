@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, ArrowDownToLine, ArrowLeft, ArrowRight, ChevronDown, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Ruler, Settings2, ShieldCheck, TriangleAlert, Wind, X } from 'lucide-react';
+import { Activity, ArrowDownToLine, ArrowLeft, ArrowRight, ChevronDown, CircleDashed, CloudSun, CornerUpRight, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, MoveUp, Navigation, Pause, Play, Plus, RotateCcw, Route, Save, ScanLine, Settings2, ShieldCheck, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
 import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, nextWaypointId, parseCsv, projectFromJson, sampleProject, updateEnvironment, validateProject } from './engineering';
 import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
@@ -18,8 +18,8 @@ import Viewport from './Viewport';
 import Plot, { type Field } from './Plot';
 
 const examples=[
-  ['Straight','Straight path'],['L','L-shaped route'],['five-stops','200 m · five stops'],
-  ['Survey','Survey route'],['Circle','Loop route']
+  ['Straight','Straight path',MoveUp],['L','L-shaped route',CornerUpRight],['five-stops','200 m · five stops',Route],
+  ['Survey','Survey route',ScanLine],['Circle','Loop route',CircleDashed]
 ] as const;
 const workspaceSteps=[
   {id:'geometry',label:'Build route',icon:MapIcon},
@@ -78,6 +78,13 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   const [aspect,setAspect]=useState(1.65);
   useEffect(()=>{if(!ref.current)return;const obs=new ResizeObserver(es=>{const e=es[0];if(e.contentRect.height>0&&e.contentRect.width>0){setAspect(e.contentRect.width/e.contentRect.height);setMapWidth(e.contentRect.width);}});obs.observe(ref.current);return()=>obs.disconnect();},[]);
   const visibleHeight=view/aspect;
+  const unitsPerPixel=view/mapWidth;
+  const left=center.east-range;
+  const top=-center.north-visibleHeight/2;
+  const bottom=top+visibleHeight;
+  const heavyGrid=gridSpacing*2;
+  const eastLines=Array.from({length:Math.ceil(view/gridSpacing)+1},(_,i)=>(Math.floor(left/gridSpacing)+i)*gridSpacing);
+  const northLines=Array.from({length:Math.ceil(visibleHeight/gridSpacing)+1},(_,i)=>-(Math.floor(-bottom/gridSpacing)+i)*gridSpacing);
   const fitRoute=()=>{
     let minNorth=0,maxNorth=0,minEast=0,maxEast=0;
     for(const p of points){
@@ -125,39 +132,47 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   };
   const onUp=()=>{dragging.current=null;panning.current=null;if(drawing.current)onFinishDraw();drawing.current=false;};
   return <div className="map-frame">
-    <div className="map-controls"><span>N ↑ &nbsp; E →</span><div>
+    <div className="map-controls"><span><Crosshair size={13} aria-hidden="true"/> N / E <span className="map-frame-label">· Local metres</span></span><div>
       <button onClick={()=>setRange(Math.max(12,range/1.25))} title="Zoom in" aria-label="Zoom in">+</button>
       <button onClick={()=>setRange(Math.min(Math.max(1200,1200*aspect),range*1.25))} title="Zoom out" aria-label="Zoom out">−</button>
       <button onClick={fitRoute} title="Fit route to map">Fit route</button>
       <button onClick={()=>{setRange(45);setCenter({north:0,east:0});}} title="Reset view" aria-label="Reset map view"><Crosshair size={13}/></button>
     </div></div>
-    <svg ref={ref} className={'map-svg tool-'+tool} viewBox={[center.east-range,-center.north-visibleHeight/2,view,visibleHeight].join(' ')}
+    <svg ref={ref} className={'map-svg tool-'+tool} viewBox={[left,top,view,visibleHeight].join(' ')}
       onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} aria-label="Mission coordinate drawing canvas">
-      <rect x={center.east-range} y={-center.north-visibleHeight/2} width={view} height={visibleHeight} fill="#f2f5f7"/>
-      {[...Array(Math.ceil(Math.max(view,visibleHeight)/gridSpacing)+2)].map((_,i)=>{
-        const east=(Math.floor((center.east-range)/gridSpacing)+i)*gridSpacing;
-        const north=(Math.floor((center.north-visibleHeight/2)/gridSpacing)+i)*gridSpacing;
-        return <g key={i} aria-hidden="true">
-          <path d={`M${east} ${-center.north-visibleHeight/2}v${visibleHeight}`} stroke={east===0?'#8b9ba8':'#d8e0e6'} strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-          <path d={`M${center.east-range} ${-north}h${view}`} stroke={north===0?'#8b9ba8':'#d8e0e6'} strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-        </g>;
-      })}
-      <circle cx="0" cy="0" r={radius} fill="none" stroke="#92662c" strokeWidth="1.4" strokeDasharray="5 5" vectorEffect="non-scaling-stroke"/>
-      <path d={path} stroke="#1760a5" strokeWidth="2.5" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-      {points.filter((_,i)=>points.length<80||i%Math.ceil(points.length/60)===0||i===points.length-1).map(p=>{
-        const index=points.indexOf(p);
-        return <g key={p.id+'-'+index} onPointerDown={e=>{if(tool!=='select')return;e.stopPropagation();dragging.current=index;onSelect(index);e.currentTarget.closest('svg')?.setPointerCapture(e.pointerId);}}>
-          <circle cx={p.east} cy={-p.north} r={(selected===index?5:3.7)*view/mapWidth} stroke={p.hard?'#875924':'#1e5790'}
-            fill={selected===index?'#1467b0':'#ffffff'} strokeWidth="1.5" vectorEffect="non-scaling-stroke"/>
-          {(p.hard||selected===index||index===0||index===points.length-1)&&
-            <text x={p.east+8*view/mapWidth} y={-p.north-6*view/mapWidth} fontSize={12*view/mapWidth} fill="#263f54" pointerEvents="none">{p.id}</text>}
+      <g className="map-grid" aria-hidden="true">
+        {eastLines.map(east=><path key={east} d={`M${east} ${top}v${visibleHeight}`} className={east===0?'map-axis':undefined} vectorEffect="non-scaling-stroke"/>)}
+        {northLines.map(y=><path key={y} d={`M${left} ${y}h${view}`} className={y===0?'map-axis':undefined} vectorEffect="non-scaling-stroke"/>)}
+      </g>
+      <g className="map-ticks" fontSize={10*unitsPerPixel} aria-hidden="true">
+        {eastLines.filter(east=>east%heavyGrid===0&&east>left+20*unitsPerPixel&&east<left+view-42*unitsPerPixel)
+          .map(east=><text key={east} x={east} y={top+17*unitsPerPixel} textAnchor="middle">{east}</text>)}
+        {northLines.filter(y=>y%heavyGrid===0&&y>top+37*unitsPerPixel&&y<bottom-30*unitsPerPixel)
+          .map(y=><text key={y} x={left+8*unitsPerPixel} y={y-4*unitsPerPixel}>{String(-y)}</text>)}
+      </g>
+      <circle className="map-radius" cx="0" cy="0" r={radius} fill="none" strokeWidth="1" strokeDasharray="5 5" vectorEffect="non-scaling-stroke"/>
+      <path className="route-halo" d={path} strokeWidth="7" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+      <path className="route-trace" d={path} strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+      {points.map((p,index)=>{
+        const isEndpoint=index===0||index===points.length-1;
+        const isStop=p.hard||isEndpoint;
+        const isSelected=selected===index;
+        if(points.length>=80&&index%Math.ceil(points.length/60)!==0&&!isStop&&!isSelected)return null;
+        return <g key={p.id+'-'+index} className={`map-point${isStop?' map-stop':''}${isSelected?' map-selected':''}`}
+          transform={`translate(${p.east} ${-p.north}) scale(${unitsPerPixel})`}
+          onPointerDown={e=>{if(tool!=='select')return;e.stopPropagation();dragging.current=index;onSelect(index);e.currentTarget.closest('svg')?.setPointerCapture(e.pointerId);}}>
+          <circle r="11" fill="transparent"/>
+          {isSelected&&<circle className="map-selection-ring" r="9" strokeWidth="1" fill="none"/>}
+          {isStop?<path className="map-node" d="M 0 -5 L 5 0 L 0 5 L -5 0 Z"/>:<circle className="map-node" r="3.5"/>}
+          {(isStop||isSelected)&&<text x="10" y="-7">{p.id}</text>}
         </g>;
       })}
     </svg>
+    <div className="map-compass" aria-label="North is up"><span>N</span><Navigation size={22} aria-hidden="true"/></div>
     <div className="map-ruler" aria-label={`Map scale ${scaleDistance} metres`}>
       <span style={{width:`${100*scaleDistance/view}%`}}><i aria-hidden="true"/>{scaleDistance} m</span>
     </div>
-    <div className="viewport-status"><span>Grid every {gridSpacing} m</span><span>Dashed line · {radius} m operating radius</span></div>
+    <div className="viewport-status"><span>Grid every {gridSpacing} m</span><span><i aria-hidden="true"/> {radius} m operating radius</span></div>
   </div>;
 }
 
@@ -476,8 +491,8 @@ export default function App(){
   const summary=getPreviewSummary(result||{accepted:false});
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><Activity size={19} aria-hidden="true"/><strong>PX4 Trajectory Studio</strong></div>
-      <span className="project-title" title={project.title}>{project.title}{dirty?' *':''}</span>
+      <div className="brand"><span className="brand-mark"><Route size={17} aria-hidden="true"/></span><strong>PX4 <span>Trajectory Studio</span></strong></div>
+      <span className="project-title" title={project.title}><FolderOpen size={14} aria-hidden="true"/><span>{project.title}{dirty?' *':''}</span></span>
       <div className="top-actions">
         <button aria-label="Open project" title="Open project" onClick={()=>fileRef.current?.click()}><FolderOpen size={16}/><span>Open</span></button>
         <button aria-label="Save editable project" title="Save editable project" onClick={saveProject}><Save size={16}/><span>Save</span></button>
@@ -517,7 +532,7 @@ export default function App(){
         </div>
         <div className="pane-title second-title">Example routes</div>
         <div className="operations example-list">
-          {examples.map(([id,label])=><button key={id} onClick={()=>{applyExample(id);openStep('geometry');}}><MapIcon size={15}/>{label}<ArrowRight size={14}/></button>)}
+          {examples.map(([id,label,Icon])=><button key={id} onClick={()=>{applyExample(id);openStep('geometry');}}><Icon size={15}/>{label}<ArrowRight size={14}/></button>)}
         </div>
         </div>
         <div className="pane-resizer left-resizer" role="separator" aria-label="Resize model explorer" aria-orientation="vertical" tabIndex={0}
@@ -528,11 +543,11 @@ export default function App(){
         <div className="dock-bar workspace-heading">
           <h1 id="workspace-heading" ref={stepHeading} tabIndex={-1}>{workspaceSteps.find(step=>step.id===active)?.label}</h1>
           {active==='geometry'&&<div className="route-summary" aria-label="Draft route dimensions">
-            <span><Ruler size={14} aria-hidden="true"/> <strong>{display(draftDimensions.length,'m',1)}</strong> <span>length</span></span>
-            <span><strong>{draftDimensions.minimum!==draftDimensions.maximum&&project.points.length
+            <span><span>Length</span><strong>{display(draftDimensions.length,'m',1)}</strong></span>
+            <span><span>Height</span><strong>{draftDimensions.minimum!==draftDimensions.maximum&&project.points.length
               ?`${draftDimensions.minimum.toFixed(1)}–${draftDimensions.maximum.toFixed(1)} m`
-              :display(draftDimensions.maximum,'m',1)}</strong> <span>height</span></span>
-            <span><strong>{project.points.length.toLocaleString()}</strong> <span>points</span></span>
+              :display(draftDimensions.maximum,'m',1)}</strong></span>
+            <span><span>Points</span><strong>{project.points.length.toLocaleString()}</strong></span>
           </div>}
           {active==='analysis'&&<button aria-label="Results help" aria-haspopup="dialog" onClick={()=>openHelp('results')}><HelpCircle size={16}/></button>}
         </div>
@@ -601,7 +616,7 @@ export default function App(){
               {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
               <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:selectedJob||{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
-            <div><span>Planner result</span><strong className="pass-label">Verified</strong></div>
+            <div><span>Planner result</span><strong className="pass-label"><ShieldCheck size={16} aria-hidden="true"/> Verified</strong></div>
             <div><span>Planned route length</span><strong>{display(Number(summary.speed.route_distance_sampled_m),'m',1)}</strong></div>
             <div><span>REQUESTED CRUISE</span><strong>{display(project.cruise,'m/s')}</strong></div>
             <div><span>PLANNED ROUTE PEAK</span><strong>{display(Number(summary.speed.planned_route_peak_sampled_m_s),'m/s')}</strong></div>
@@ -757,7 +772,7 @@ export default function App(){
     <footer className="statusbar" role="status">
       <span><span className={`status-indicator ${result?.accepted?'verified':''}`}/>{result?.accepted?'Reference verified':'No active verified result'}</span>
       <span className="activity-note">{notice||(active==='geometry'?(project.points.length<2?'Add at least two points to check the route.':drawingHints[tool]):'')}</span>
-      <span className="connection-status">{sitl?'Simulator connected':engine==='unknown'?'Connecting to planner':'Planning mode'}</span>
+      <span className={`connection-status${sitl?' connected':''}`}><i aria-hidden="true"/>{sitl?'Simulator connected':engine==='unknown'?'Connecting to planner':'Planning mode'}</span>
     </footer>
     <WorkspaceHelp dialog={helpDialog} topic={helpTopic} onTopic={setHelpTopic}/>
   </div>;

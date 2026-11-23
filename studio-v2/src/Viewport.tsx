@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Environment, Point,Sample } from './types';
-import { fieldValue, type Field } from './Plot';
+import { Box, Navigation, RotateCcw } from 'lucide-react';
+import { fields, fieldValue, type Field } from './Plot';
 import { interpolate } from './engineering';
 
 function project(n:number,e:number,h:number,az:number,el:number,scale:number,cx:number,cy:number){
@@ -12,9 +13,11 @@ const col=(t:number)=>{
   const u=Math.min(1,Math.max(0,t));
   return 'hsl('+(196-175*u)+', 85%, '+(62-7*u)+'%)';
 };
+const orbit={az:-.65,el:.57,zoom:1};
+const overhead={az:0,el:-Math.PI/2,zoom:1};
 export default function Viewport({points,samples,cursor,field,environment}:{points:Point[];samples:Sample[];cursor:number;field:Field;environment:Environment}){
   const ref=useRef<HTMLCanvasElement>(null);
-  const [camera,setCamera]=useState({az:-0.65,el:0.57,zoom:1});
+  const [camera,setCamera]=useState(orbit);
   const [size,setSize]=useState({width:800,height:480});
   const drag=useRef<{x:number;y:number}|null>(null);
   const scene=useMemo(()=>{
@@ -53,7 +56,9 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
     const ctx=canvas.getContext('2d');if(!ctx)return;
     ctx.scale(pixelRatio,pixelRatio);
     const W=size.width,H=size.height;
-    ctx.fillStyle='#0c1923';ctx.fillRect(0,0,W,H);
+    const surface=ctx.createRadialGradient(W*.5,H*.55,0,W*.5,H*.55,Math.max(W,H)*.68);
+    surface.addColorStop(0,'#162938');surface.addColorStop(1,'#0d151e');
+    ctx.fillStyle=surface;ctx.fillRect(0,0,W,H);
     const {extreme,low,span}=scene;
     const {minX,maxX,minY,maxY}=bounds;
     const scale=Math.min(W*.82/Math.max(16,maxX-minX),H*.76/Math.max(16,maxY-minY))*camera.zoom;
@@ -106,17 +111,21 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
         }
       }
     }
-    ctx.fillStyle='#b7ccd8';ctx.font='12px ui-monospace, monospace';
-    ctx.fillText('NED frame · UP = −Down · equal axis scaling',16,H-16);
   },[size,camera,points,samples,cursor,field,environment,scene,bounds]);
   return <div className="viewer">
-    <div className="viewer-tools"><span>3D ORBIT / REFERENCE FIELD</span>
-      <button type="button" title="Reset 3D view" onClick={()=>setCamera({az:-.65,el:.57,zoom:1})}>Reset</button></div>
+    <div className="viewer-tools"><span><Box size={15} aria-hidden="true"/> Reference path</span>
+      <div className="camera-tools">
+        <button type="button" onClick={()=>setCamera(overhead)}><Navigation size={13}/> Top view</button>
+        <button type="button" title="Reset 3D view" onClick={()=>setCamera(orbit)}><RotateCcw size={13}/> Orbit</button>
+      </div></div>
     <canvas ref={ref} aria-label="3D trajectory orbit visualization; drag to rotate and scroll to zoom"
       onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY};e.currentTarget.setPointerCapture(e.pointerId);}}
       onPointerMove={e=>{if(!drag.current)return;const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y;drag.current={x:e.clientX,y:e.clientY};
-        setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(.05,Math.min(1.5,c.el+dy*.008))}));}}
+        setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(-Math.PI/2,Math.min(Math.PI/2,c.el+dy*.008))}));}}
       onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}/>
-    <div className="field-legend"><span>{field}</span><span>{Number.isFinite(scene.low)?scene.low.toFixed(2):'—'}</span><div className="gradient-bar"/><span>{Number.isFinite(scene.high)?scene.high.toFixed(2):'—'}</span></div>
+    <div className="scene-units">N / E / UP · m</div>
+    {samples.length>0&&<div className="field-legend" aria-label={fields[field].label+' scale'}>
+      <span>{scene.low.toFixed(2)}</span><div className="gradient-bar"/><span>{scene.high.toFixed(2)} {fields[field].unit}</span>
+    </div>}
   </div>;
 }
