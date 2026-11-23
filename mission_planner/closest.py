@@ -369,7 +369,13 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     def add(name, start, finish):
         nonlocal row_estimate
         phase = _phase(name, start, finish, speed, vehicle, environment)
-        row_estimate += math.ceil(phase["duration_s"]/PERIOD)
+        if setup and fixed and name == "LEG" and start[2] == finish[2]:
+            candidate = _phase(name, start, finish, speed, vehicle, environment, cruise=True)
+            if candidate["duration_s"] < phase["duration_s"]:
+                phase = candidate
+        cruise = phase.get("progress") == "mirrored_ramp"
+        count = math.ceil(phase["duration_s"] / PERIOD)
+        row_estimate += count + (count % 2 if cruise else 0)
         if row_estimate > MAX_ROUTE_ROWS:
             raise PreviewBudgetError("Route sample budget requires a smaller preview.")
         if not phase["verification"]["accepted"]:
@@ -396,11 +402,14 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
         start, finish = clock, clock + phase["duration_s"]
         if rows and any(abs(rows[-1][key]-v) > 1e-9 for key,v in zip(("x","y","z","yaw"), phase["start"], strict=True)):
             raise ValueError("Discontinuous polynomial phase join")
+        cruise = phase.get("progress") == "mirrored_ramp"
         count = math.ceil(phase["duration_s"]/PERIOD)
+        if cruise:
+            count += count % 2
         for i in range(count+1):
             if rows and i == 0:
                 continue
-            row = _evaluate(phase["start"], phase["end"], phase["duration_s"], phase["duration_s"]*i/count)
+            row = _evaluate(phase["start"], phase["end"], phase["duration_s"], phase["duration_s"]*i/count, cruise=cruise)
             row.update(time=clock + phase["duration_s"]*i/count, planner_contract_version=1)
             rows.append(row)
         spans.append(dict(name=phase["name"], start_time_s=start, end_time_s=finish))
@@ -453,7 +462,8 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
         raise ValueError("Polynomial route failed continuous verification")
     verification = dict(
         schema_version=1, accepted=True, release_class="SITL_ONLY",
-        method="stop_turn_septic_bernstein",
+        method=("stop_turn_mixed_bernstein" if any("progress" in p for p in phases)
+                else "stop_turn_septic_bernstein"),
         checks=[dict(requirement_id="INT-007",status="PASS",units="m",
                      margin=intent["path"]["maximum_deviation_m"],detail="Exact ordered segment geometry; polynomial progress is monotone."),
                 dict(requirement_id="ORDER",status="PASS",detail="Vertices and laps visited in order; stationary turns add no geometric deviation."),

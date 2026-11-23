@@ -19,12 +19,22 @@ MAX_ROWS = 150_000
 PEAKS = (2.1875, 7.513188404399301, 52.5)
 
 
-def _evaluate(start, end, duration, t):
+def _evaluate(start, end, duration, t, *, cruise=False):
     u = t / duration
     q = 35 * u**4 - 84 * u**5 + 70 * u**6 - 20 * u**7
     d1 = (140 * u**3 - 420 * u**4 + 420 * u**5 - 140 * u**6) / duration
     d2 = (420 * u**2 - 1680 * u**3 + 2100 * u**4 - 840 * u**5) / duration**2
     d3 = (840 * u - 5040 * u**2 + 8400 * u**3 - 4200 * u**4) / duration**3
+    if cruise:
+        # Two mirrored ramps join at maximum speed with zero acceleration and
+        # jerk. The join is exported explicitly for exact Hermite interpolation.
+        first_half = u <= .5
+        x = 2 * min(u, 1 - u)
+        half = x**4 * (2.5 - 3*x + x*x)
+        q = half if first_half else 1 - half
+        d1 = 2 * x**3 * (10 - 15*x + 6*x*x) / duration
+        d2 = (1 if first_half else -1) * 120 * x*x * (1 - x)**2 / duration**2
+        d3 = 480 * x * (1 - x) * (1 - 2*x) / duration**3
     if t == 0.0:
         q, d1, d2, d3 = 0.0, 0.0, 0.0, 0.0
     if t == duration:
@@ -41,12 +51,13 @@ def _evaluate(start, end, duration, t):
     return row
 
 
-def _phase(name, start, end, speed, vehicle, environment):
+def _phase(name, start, end, speed, vehicle, environment, *, cruise=False):
     distance, turn = math.dist(start[:3], end[:3]), abs(end[3] - start[3])
-    a_num, j_num = distance * PEAKS[1], distance * PEAKS[2]
+    peaks = (2., 7.5, 80 / math.sqrt(3)) if cruise else PEAKS
+    a_num, j_num = distance * peaks[1], distance * peaks[2]
     duration = max(
         1.0,
-        distance * PEAKS[0] / speed,
+        distance * peaks[0] / speed,
         math.sqrt(a_num / (vehicle.maximum_acceleration_m_s2 * 0.9)),
         (j_num / (vehicle.maximum_jerk_m_s3 * 0.9)) ** (1 / 3),
         turn * PEAKS[0] / math.radians(vehicle.maximum_yaw_rate_deg_s * 0.9),
@@ -79,6 +90,8 @@ def _phase(name, start, end, speed, vehicle, environment):
         phase = dict(
             name=name, start=start, end=end, duration_s=duration, speed_limit_m_s=speed
         )
+        if cruise:
+            phase["progress"] = "mirrored_ramp"
         report = verify_phase(phase, vehicle, environment)
         if report["accepted"]:
             phase["verification"] = report
