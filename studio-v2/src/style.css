@@ -447,8 +447,10 @@ button.landing-button:enabled:hover { background: #644528; }
   .verification-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 370px) {
+  .brand, .top-actions { gap: 3px; }
   .brand-mark { width: 22px; height: 23px; margin-right: 0; }
   .brand strong { font-size: 12px; }
+  .top-actions .help-button { gap: 3px; padding-inline: 4px; }
   .map-frame-label { display: none; }
 }
 @media (max-height: 550px) {

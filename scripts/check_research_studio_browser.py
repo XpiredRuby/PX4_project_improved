@@ -57,7 +57,7 @@ def check_navigation(page, base):
             assert bounds and bounds["height"] > 0 and bounds["y"]+bounds["height"] <= height
         for label in ("Open project", "Save editable project", "Help"):
             bounds = page.get_by_role("button", name=label, exact=True).bounding_box()
-            assert bounds and bounds["x"] >= 0 and bounds["x"]+bounds["width"] <= width + .5
+            assert bounds and bounds["x"] >= 0 and bounds["x"]+bounds["width"] <= width + .5, (label, width, bounds)
     page.get_by_role("button", name="Settings", exact=True).click()
     expect(page.get_by_label("Height above launch (m)")).to_be_visible()
     page.get_by_role("button", name="Project", exact=True).click()
