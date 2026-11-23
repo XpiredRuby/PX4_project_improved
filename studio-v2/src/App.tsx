@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, ArrowDownToLine, ArrowLeft, ArrowRight, ChevronDown, CircleDashed, CloudSun, CornerUpRight, Crosshair, FolderOpen, Grip, HelpCircle, House, Layers, Map as MapIcon, MousePointer2, MoveUp, Navigation, Pause, Play, Plus, RotateCcw, Route, Save, ScanLine, Settings2, ShieldCheck, TriangleAlert, Wind, X } from 'lucide-react';
+import { Activity, Eraser, ArrowDownToLine, ArrowLeft, ArrowRight, ChevronDown, CircleDashed, CloudSun, CornerUpRight, Crosshair, FolderOpen, Grip, HelpCircle, House, Layers, Map as MapIcon, MousePointer2, MoveUp, Navigation, Pause, Play, Plus, RotateCcw, Route, Save, ScanLine, Settings2, ShieldCheck, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
 import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, nextWaypointId, parseCsv, projectFromJson, sampleProject, updateEnvironment, validateProject } from './engineering';
 import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
@@ -355,6 +355,13 @@ export default function App(){
     setTool('waypoint');
     openStep('geometry');
   };
+  const [confirmClear,setConfirmClear]=useState(false);
+  const eraseRoute=()=>{
+    // Undoable: update() pushes the current project onto the undo history first.
+    update(p=>p.points.length?{...p,points:[]}:p);
+    setSelected(-1);setConfirmClear(false);
+    setNotice('Route cleared. Use Undo to bring it back.');
+  };
   const undo=()=>{
     const previous=history.current.pop();
     if(!previous)return;
@@ -610,6 +617,14 @@ export default function App(){
         {job&&<button className="run-shortcut" onClick={()=>{setResultPanel('simulation');openStep('analysis');}}>Simulator run</button>}
         {!isStart&&<>
         <button className="undo-button" onClick={undo} disabled={history.current.length===0}><RotateCcw size={15}/> Undo</button>
+        {confirmClear
+          ?<span className="clear-confirm" role="group" aria-label="Confirm clearing the route">
+              <span>Clear all {project.points.length} points?</span>
+              <button className="danger" onClick={eraseRoute} autoFocus>Clear</button>
+              <button onClick={()=>setConfirmClear(false)}>Cancel</button>
+            </span>
+          :<button className="clear-button" onClick={()=>setConfirmClear(true)} disabled={project.points.length===0}
+              title="Remove every point from the route (Undo restores it)"><Eraser size={15}/> Clear</button>}
         <button className={active==='geometry'?'primary':undefined} onClick={run} disabled={busy||sweeping||profileBusy||fewPoints}>
           {busy?<span className="spinner"/>:<ShieldCheck size={16}/>} {busy?'Checking…':'Check route'}
         </button>

@@ -623,3 +623,9 @@ table.credibility th, table.credibility td { text-align: left; padding: 5px 6px;
 .drift-bar::after { content: ''; position: absolute; inset: 0; transform-origin: left; transform: scaleX(var(--drift)); background: linear-gradient(90deg, var(--verified), var(--warning), #ef8a7a); transition: transform .5s ease; }
 .gnss-steps { margin: 6px 0; padding-left: 18px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .drift-bar::after { transition: none; } }
+
+.clear-button { gap: 6px; }
+.clear-confirm { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px 2px 10px; border: 1px solid #8b4c43;
+  border-radius: 6px; background: #3d2826; color: #f1c4bc; animation: pop-in .15s ease both; }
+button.danger { background: #b5473a; border-color: #b5473a; color: #fff; }
+button.danger:hover { background: #c95647; }
