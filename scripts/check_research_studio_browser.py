@@ -14,6 +14,47 @@ sys.path.insert(0, str(ROOT))
 from mission_planner.research_studio import research_server  # noqa: E402
 
 
+def check_navigation(page, base):
+    from playwright.sync_api import expect
+
+    page.goto(base)
+    workflow = page.get_by_role("navigation", name="Mission workflow")
+    expect(workflow.get_by_role("button", name="Build route")).to_have_attribute("aria-current", "step")
+    help_button = page.get_by_role("button", name="Help", exact=True)
+    help_button.focus()
+    page.keyboard.press("Enter")
+    dialog = page.get_by_role("dialog", name="Studio help")
+    expect(dialog.get_by_role("button", name="Close help")).to_be_focused()
+    dialog.get_by_role("button", name="Read the route map").click()
+    expect(dialog.get_by_text("North and east", exact=True)).to_be_visible()
+    page.keyboard.press("Escape")
+    expect(dialog).to_be_hidden()
+    expect(help_button).to_be_focused()
+
+    page.get_by_role("button", name="Map help", exact=True).click()
+    expect(dialog.get_by_text("North and east", exact=True)).to_be_visible()
+    dialog.get_by_role("button", name="Close help").click()
+    expect(page.get_by_role("button", name="Map help", exact=True)).to_be_focused()
+
+    workflow.get_by_role("button", name="Review results").click()
+    expect(page.get_by_role("heading", name="Review results", exact=True)).to_be_focused()
+    expect(page.get_by_text("Check a route to see its planned motion", exact=False)).to_be_visible()
+    expect(page.locator("#engineering-tools")).not_to_have_attribute("open", "")
+    workflow.get_by_role("button", name="Build route").click()
+    expect(page.get_by_role("button", name="Plan & verify")).to_be_enabled()
+
+    for width in (390, 320):
+        page.set_viewport_size({"width": width, "height": 844})
+        assert page.evaluate("document.documentElement.scrollWidth") == width
+        box = page.get_by_role("button", name="Help", exact=True).bounding_box()
+        assert box and box["width"] >= 44 and box["height"] >= 44
+        expect(page.get_by_role("link", name="Flight settings")).to_be_visible()
+    page.get_by_label("Route operations").select_option("five-stops")
+    expect(page.get_by_label("Draft route dimensions").get_by_text("200.0 m")).to_be_visible()
+    page.set_viewport_size({"width": 1440, "height": 920})
+    print("PASS first-use workflow, keyboard help and focus return, mobile navigation and example dimensions", flush=True)
+
+
 def check(page, base, csv, ulog, output):
     from playwright.sync_api import expect
     page.add_init_script("""
@@ -48,10 +89,11 @@ def check(page, base, csv, ulog, output):
     assert page.get_by_label("P02 north").input_value() == "12"
     page.get_by_label("Preferred cruise").fill("50")
     page.get_by_role("button", name="Plan & verify").click()
-    page.get_by_text("ACCEPTED REFERENCE", exact=True).wait_for(timeout=150_000)
+    page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
     verified = page.locator(".verification-grid").inner_text()
-    assert "50.00 m/s" in verified and "NOT RUN" in verified
+    assert "50.00 m/s" in verified
     print(verified.replace("\n", " "), flush=True)
+    page.get_by_role("button", name="Play in 3D").click()
     page.get_by_text("TAKEOFF", exact=True).wait_for()
     view = page.get_by_label("3D trajectory orbit visualization", exact=False)
     view.scroll_into_view_if_needed()
@@ -77,7 +119,14 @@ def check(page, base, csv, ulog, output):
     expect(page.get_by_label("Reference time")).not_to_have_value("0")
     page.get_by_title("Reset time").click()
     expect(page.get_by_label("Reference time")).to_have_value("0")
+    page.get_by_role("button", name="Review results", exact=True).click()
+    page.locator("#engineering-tools > summary").click()
+    page.get_by_role("button", name="Weather for analysis", exact=True).click()
     page.get_by_label("Wind speed (m/s)", exact=True).fill("5")
+    page.get_by_role("button", name="Build route", exact=True).click()
+    page.get_by_role("button", name="Plan & verify").click()
+    page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
+    page.locator("#engineering-tools > summary").click()
     page.get_by_role("button", name="Predict tracking").click()
     page.get_by_text("Predicted 3D tracking RMS", exact=False).wait_for()
     with page.expect_download() as prediction:
@@ -120,6 +169,8 @@ def check(page, base, csv, ulog, output):
     download.value.save_as(output / "project.json")
     page.locator('input[accept=".json"]').set_input_files(output / "project.json")
     page.get_by_text("No active verified result", exact=True).wait_for()
+    if not page.get_by_role("button", name="Live forecast", exact=True).is_visible():
+        page.get_by_role("button", name="Weather for analysis", exact=True).click()
     page.get_by_role("button", name="Live forecast", exact=True).click()
     target = "2026-11-21T12:00"
     page.get_by_label("Forecast instant").fill(target)
@@ -135,7 +186,7 @@ def check(page, base, csv, ulog, output):
     page.get_by_role("button", name="Manual", exact=True).click()
     assert page.get_by_label("Wind speed (m/s)", exact=True).input_value() == "5"
     assert page.get_by_label("Wind from (°)", exact=True).input_value() == "0"
-    page.get_by_role("button", name="Geometry", exact=True).click()
+    page.get_by_role("button", name="Build route", exact=True).click()
     page.get_by_role("button", name="New blank mission", exact=False).click()
     canvas = page.get_by_label("Mission coordinate drawing canvas")
     canvas.scroll_into_view_if_needed()
@@ -149,7 +200,7 @@ def check(page, base, csv, ulog, output):
     page.get_by_label("Aircraft model").select_option("hex")
     expect(page.get_by_label("Aircraft model")).to_have_value("hex", timeout=60_000)
     page.get_by_role("button", name="Plan & verify").click()
-    page.get_by_text("ACCEPTED REFERENCE", exact=True).wait_for(timeout=150_000)
+    page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
     print("PASS freehand hexacopter, replay, scenario round trip, hourly forecast fixture and sweeps", flush=True)
 
 
@@ -164,8 +215,9 @@ def check_studies(page, base, output):
     page.goto(base)
     page.get_by_role("button", name="200 m · five stops").click()
     page.get_by_role("button", name="Plan & verify").click()
-    page.get_by_text("ACCEPTED REFERENCE", exact=True).wait_for(timeout=150_000)
+    page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
     project_report = read_download(page, "Report JSON")
+    page.locator("#engineering-tools > summary").click()
     expected_sha = project_report["result"]["summary"]["controller_trajectory_sha256"]
     page.get_by_role("button", name="Test report with synthetic run").click()
     synthetic = read_download(page, "Export mission comparison")
@@ -194,6 +246,7 @@ def check_studies(page, base, output):
     with page.expect_response(lambda r: r.url.endswith("/api/studies") and r.request.method == "POST") as response:
         page.get_by_role("button", name="Queue study").click()
     identifier = response.value.json()["id"]
+    page.get_by_role("button", name="Weather for analysis", exact=True).click()
     page.get_by_label("Wind speed (m/s)", exact=True).fill("5")
     page.get_by_label("Batch speeds").fill("50")
     with page.expect_response(lambda r: r.url.endswith("/api/studies") and r.request.method == "POST") as response:
@@ -203,7 +256,8 @@ def check_studies(page, base, output):
     page.close()
     page = browser.new_page(accept_downloads=True)
     page.goto(base)
-    page.get_by_role("button", name="Results & Analysis").click()
+    page.get_by_role("button", name="Review results", exact=True).click()
+    page.locator("#engineering-tools > summary").click()
     selector = page.get_by_label("Saved studies")
     expect(selector.locator("option")).to_have_count(2)
     selector.select_option(identifier)
@@ -231,6 +285,7 @@ def check_studies(page, base, output):
     assert wind["project"]["environment"]["windSpeed"] == 5 and wind["metrics"]["peak_airspeed_m_s"] > 5
     page.get_by_role("button", name="Restore scenario").click()
     expect(page.get_by_label("Preferred cruise")).to_have_value("50")
+    page.get_by_role("button", name="Weather for analysis", exact=True).click()
     expect(page.get_by_label("Wind speed (m/s)", exact=True)).to_have_value("5")
     (output / "archived-comparison.json").write_text(json.dumps(archived))
     print("PASS both frozen studies survived tab closure, exact route re-exported, windy scenario restored", flush=True)
@@ -241,10 +296,11 @@ def main():
     from playwright.sync_api import sync_playwright
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--chromium", type=Path)
+    parser.add_argument("--assets", type=Path, help="Test an alternate production build")
     parser.add_argument("--csv", type=Path)
     parser.add_argument("--ulog", type=Path)
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory() as studies, research_server(0, studies) as server:
+    with tempfile.TemporaryDirectory() as studies, research_server(0, studies, args.assets) as server:
         threading.Thread(target=server.serve_forever, daemon=True).start()
         try:
             with sync_playwright() as driver, tempfile.TemporaryDirectory() as directory:
@@ -252,6 +308,7 @@ def main():
                 page = browser.new_page(viewport={"width": 1440, "height": 920}, accept_downloads=True)
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
+                check_navigation(page, f"http://127.0.0.1:{server.server_port}")
                 check(page, f"http://127.0.0.1:{server.server_port}", args.csv, args.ulog, Path(directory))
                 check_studies(page, f"http://127.0.0.1:{server.server_port}", Path(directory))
                 assert not errors, errors

@@ -1,4 +1,5 @@
 import {useEffect, useState} from 'react';
+import { CircleCheck, Play, ShieldCheck } from 'lucide-react';
 import {assessmentMatches,localRehearsalTransport,type Binding,type Job} from './rehearsalHandoff';
 import type {Preview} from './types';
 
@@ -49,12 +50,27 @@ export default function ConnectedRehearsal({plan,onJob}:{plan:Preview|null;onJob
       setJob(result);onJob(result);setBinding({...target});sessionStorage.setItem(key,JSON.stringify(target));
     }catch(e){setError(String(e));}finally{setPending(false);}
   }
-  return <section className="data-section"><h3>PX4 / Gazebo rehearsal</h3>
-    <button disabled={pending||running||!plan?.simulation_compatible||!plan.plan_id||plan.plan_id===job?.plan_id}
-      onClick={()=>void submit(false)}>Run verified route in Gazebo</button>
-    {running&&<button disabled={pending||job?.cancel_requested} onClick={()=>void submit(true)}>Request landing</button>}
-    {job&&<p role="status">Run {job.plan_id.slice(0,8)} · {job.stage==='COMPLETED'&&assessmentMatches(job,job.controller_trajectory_sha256)?'Verified rehearsal passed':job.stage} {running?job.phase:''}</p>}
+  const passed=job?.stage==='COMPLETED'&&assessmentMatches(job,job.controller_trajectory_sha256);
+  const status=passed?'Verified rehearsal passed'
+    :job?.stage==='FAILED'?'Rehearsal failed'
+    :job?.stage==='CANCELLED'?'Rehearsal cancelled'
+    :job?.stage==='COMPLETED'?'Review the simulator checks'
+    :job?.cancel_requested?'Landing requested'
+    :job?.stage==='STARTING'?'Starting simulator':'Simulation in progress';
+  return <section className="data-section rehearsal-card" aria-labelledby="rehearsal-title">
+    <div className="section-heading">
+      <div><strong id="rehearsal-title">Test in Gazebo</strong><span>Run a recorded flight in the local simulator.</span></div>
+      <div className="section-actions">
+        <button className="simulate-button" disabled={pending||running||!plan?.simulation_compatible||!plan.plan_id||plan.plan_id===job?.plan_id}
+          onClick={()=>void submit(false)}><Play size={16}/> Run verified route in Gazebo</button>
+        {running&&<button className="landing-button" disabled={pending||job?.cancel_requested} onClick={()=>void submit(true)}><ShieldCheck size={16}/> Request landing</button>}
+      </div>
+    </div>
+    {!job&&!plan&&<p className="rehearsal-status">Build a route and choose Plan &amp; verify to continue.</p>}
+    {job&&<p className={`rehearsal-status ${passed?'passed':''}`} role="status">
+      {passed&&<CircleCheck size={18}/>} <strong>{status}</strong> · Run {job.plan_id.slice(0,8)} {running&&job.phase? '· '+job.phase.replaceAll('_',' ').toLowerCase():''}
+    </p>}
     {job?.assessment&&<details><summary>View simulator checks</summary><ul>{job.assessment.checks?.map(c=><li key={c.name}>{c.passed?'Pass':'Fail'} · {c.name}</li>)}</ul></details>}
-    {(error||job?.error)&&<p role="alert">{error||job?.error}</p>}
+    {(error||job?.error)&&<p className="rehearsal-status rehearsal-error" role="alert">{error||job?.error}</p>}
   </section>;
 }
