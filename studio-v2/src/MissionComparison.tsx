@@ -4,7 +4,7 @@ import {compareMission,limits,openSavedCase,syntheticRun} from './missionReport'
 import type {Receipt} from './missionReport';
 import {handoffFixture} from './rehearsalHandoff';
 import type {Point,Preview} from './types';
-import routeUrl from '../../session_2_robust_landing/05_Evidence/Post_Disarm_Proof/trajectory.csv?url';
+import routeUrl from '../../evidence/archived-x500-flight/trajectory.csv?url';
 import recordingUrl from '../../validation/2026-10-03/cases/raised-10m-final/telemetry_and_truth.csv.gz?url';
 import archivedManifest from '../../validation/2026-10-03/cases/raised-10m-final/run_manifest_20261003T062757218606Z.json';
 type Report=Awaited<ReturnType<typeof compareMission>>;

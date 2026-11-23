@@ -1,4 +1,0 @@
-[injector] Connected to PX4 system=1 component=0
-[injector] Airborne gate passed (baseline_z=0.04m, z=-7.97m)
-[injector] Gazebo GPS outage injected for 4.00s
-[injector] SIM_GPS_USED restored to 10

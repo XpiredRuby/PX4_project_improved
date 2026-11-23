@@ -27,5 +27,4 @@ rebuilding because its server may hold the old output directory open.
 Speed policy is explicit: Aircraft model cap by default, optional Custom Never
 exceed in Advanced. Legacy draft caps are retained and flagged for review;
 conflicting custom caps cannot silently rewrite cruise in the browser. Editable
-projects carry geometry/preferences only. See `docs/app_release_audit.md` and
-`validation/2026-10-25-app-audit/README.md` for verification and known limits.
+projects carry geometry/preferences only.

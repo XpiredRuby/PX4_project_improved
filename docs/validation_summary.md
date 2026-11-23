@@ -73,8 +73,7 @@ the recorded twelve-second outage, but it uses asynchronous telemetry and is not
 closed-loop controller validation. No inertial bridge was added to flight code on
 that evidence alone.
 
-See `validation/2026-10-04-code-logic` for the current compact evidence and
-`validation/2026-10-04` for the reproduced prolonged-outage failure.
+The October 4 evidence folders were archived out of the working tree; they remain in git history.
 
 ## Deferred aircraft integration
 
@@ -248,6 +247,6 @@ A short GPS outage can recover or require failsafe landing depending on whether
 PX4 retains a valid estimate. Duration alone does not determine the outcome.
 Both outcomes require actual touchdown, automatic disarm, and zero propulsion.
 
-Evidence and reproduction details are in `validation/2026-10-01/`.
+Evidence for this run is archived in git history (folder `validation/2026-10-01/`).
 These are SITL results; slope, obstacle contact, combined failures, and physical
 flight remain separate validation work.

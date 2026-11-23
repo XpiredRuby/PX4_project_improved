@@ -6,7 +6,7 @@ import {compareMission,limits,openSavedCase,sha256,syntheticRun} from '../src/mi
 
 const read=p=>readFileSync(new URL(p,import.meta.url));
 const archive='../../validation/2026-10-03/cases/raised-10m-final/';
-const route=read('../../session_2_robust_landing/05_Evidence/Post_Disarm_Proof/trajectory.csv').toString();
+const route=read('../../evidence/archived-x500-flight/trajectory.csv').toString();
 const telemetry=gunzipSync(read(archive+'telemetry_and_truth.csv.gz')).toString();
 const receipt={...JSON.parse(read(archive+'run_manifest_20261003T062757218606Z.json')),source:'retained_sitl',
   telemetry_sha256:'129b0b24f49291b1668d546da65e5be0397e85e8891172fea7e279b5fe4bcd6d',landing_target_local_ne_m:[.0375346475,.0921971667]};

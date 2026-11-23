@@ -1,251 +1,174 @@
-# PX4 Trajectory Studio and Research Controller
+# PX4 Trajectory Studio
 
-Draw an arbitrary path or use named waypoint missions, verify the reference,
-and compare it with retained simulator measurements. Browser planning and CSV
-playback are available without PX4. Connected execution requires a separately
-configured local simulator; the public page does not run Gazebo.
+**Draw a drone route, check it, preview the flight, and see how accurately a real X500 would fly it, before anyone goes outside.**
 
-## Start here
+Built for the Holybro X500 V2 on PX4 v1.17 with Gazebo 8.15. The planner and safety checks are independent of the simulator; Gazebo is used to fly the result.
 
-| Goal | Guide |
+![Route with accuracy corridor, animated wind and live conditions](docs/img/route-weather.png)
+
+| | |
 |---|---|
-| Install, plan, connect to Gazebo, and interpret results | [Trajectory Studio handbook](docs/trajectory_studio_handbook.md) |
-| Reproduce the three verified 200 m X500 routes | [Benchmark files and results](validation/2026-11-22-full-200m/README.md) |
-| Explore the React workspace, saved studies, or offline packaging | [Studio reference](studio-v2/README.md) |
-| Find the original implementation and legacy CLI | [Legacy controller configuration](#legacy-controller-configuration) and [waypoint missions](#waypoint-missions) |
+| **Plan** | Draw or type waypoints; the planner builds a smooth, speed/acceleration/jerk-limited trajectory and an independent verifier checks it. |
+| **Predict** | Every route gets a 95% accuracy corridor scored on **real X500 V2 flights** it never saw (public PX4 logs). |
+| **Weather** | Live conditions (Open-Meteo + nearest NOAA station), wind at flight altitude, turbulence, forecast uncertainty, animated wind. |
+| **Simulate** | One click flies the verified plan in PX4 SITL + Gazebo and compares plan vs simulated flight. |
+| **Be honest** | A badge shows *Calibrated / Extrapolating / Uncalibrated*; the Accuracy evidence tab shows the data behind every number. |
 
-The registered Gazebo X500 completed the out-and-back, square, and triangle at
-the full 200 m reference distance. Each passed 22 checks, including ground-truth
-tracking, slow approach, native LAND, and disarm. The benchmark is local SITL.
+---
 
-Planning supports 4–16 parallel rotors. The current PX4 execution adapter
-supports 4–12. Connected evidence in this repository covers the simulated X500.
-Fixed-wing, VTOL, other autopilots, and physical-aircraft qualification are
-outside the demonstrated workflow.
+## Run it in your browser (about 5 minutes)
 
-The validated software envelope includes a four-second GNSS-outage recovery budget;
-combined gusts and a 12-second outage still fail touchdown position limits.
-See [validation status](docs/validation_summary.md) and
-[five-stop mission evidence](validation/2026-10-05-waypoint).
-The latest bounded-recovery and lifecycle evidence is in
-[`validation/2026-10-04-code-logic`](validation/2026-10-04-code-logic).
-The researched architecture, requirements, trade study, and staged delivery plan
-for drawn and parameter-driven missions are in the
-[physics-constrained trajectory planner plan](docs/trajectory_planner_architecture.md).
-Milestone 0 contract coverage is tracked in the
-[planner requirements traceability matrix](docs/trajectory_planner_traceability.md).
-
-Computed-command
-expiry, arming/control ownership, stale shutdown evidence, pre-arm plan validation,
-and bounded asynchronous evidence writing are described in
-[code logic](docs/code-logic.md). Physical identification and bench/flight
-qualification remain required for each loaded aircraft configuration.
-
-GPS/IMU mission control for smooth takeoff, trajectory tracking, return, and
-landing without a supplied ground height. PX4 owns the final descent and
-automatic disarm.
-
-- Strict local-NED waypoint missions with named stops and optional dwell times
-- C3 stop boundaries: zero velocity, acceleration, and jerk at every stop
-- Analytic retiming against horizontal, vertical, acceleration, jerk, and yaw limits
-- Smooth reference motion and bounded velocity-command changes
-- GPS/estimator health and source-clock checks, last-trusted-position hold, and failsafe handoff
-- Short, bounded position prediction for feedback; raw measurements govern safety
-- Runtime touchdown checks, followed by ground, disarm, and zero-output confirmation
-- Recorded configuration, source hashes, telemetry, and independent SITL truth audits
-
-| Directory | Contents |
-|---|---|
-| `controller/` | Current mission controller |
-| `trajectory_generator/` | Trajectory generation |
-| `analysis/` | Tracking, touchdown, and command-smoothness audits |
-| `tests/` | Regression and MAVLink replay tests |
-| `validation/` | SITL evidence and reproduction details |
-| `reference/original_baseline/` | Original implementation |
-| `session_2_robust_landing/` | Earlier validated implementation and evidence |
-
-## Historical trajectory and simulation acceptance
-
-The default studio uses the configured reference simulator so you can draw and
-rehearse without completing an aircraft questionnaire. Advanced profiles remain
-optional. The [acceptance record](validation/2026-10-19-trajectory-acceptance/README.md)
-contains the expanded offline/Gazebo/browser results; follow the
-[manual trial](docs/trajectory_simulation_acceptance.md#manual-trial) to test your own drawings.
-
-## Legacy controller configuration
-
-Motion, navigation, and terrain bounds are in `controller/mission_config.py`.
-The default ground-height range is -10 to +10 m relative to takeoff.
-It is a bounded terrain assumption; GPS/IMU cannot identify a clear landing site.
-The connected reference simulator is the x500 quadrotor. Reusable profiles
-and registered simulator bindings support other multicopter configurations.
-Physical output mapping and disarmed values come from reviewed bench evidence.
-
-Horizontal velocity commands normally change at no more than 1.5 m/s².
-During navigation HOLD, the default bound is 3.0 m/s² to brake the inherited
-cruise command sooner; vertical slew remains 1.0 m/s². Fresh local velocity
-damping (gain 0.8) reduces momentum and oscillation during HOLD. This is a braking
-tradeoff, not an increase to reference-trajectory acceleration or speed caps.
-The path clock stays frozen in HOLD and the last trusted reference is retained.
-The standalone baseline retimes cruise to at most 1.0 m/s horizontally, with a
-1.25 m/s normal command cap. HOLD retains confidence-limited feedback inside
-the baseline 3.0 m/s hard envelope. Four October 4 trials verify recovery at a
-four-second GPS outage. The combined wind and prolonged GPS loss remains a
-failed case. The registered benchmark has its own verified speed settings.
-[Current connected configuration](docs/trajectory_studio_handbook.md#4-run-the-current-benchmark)
-
-For PX4 v1.17, configure `EKF2_GPS_CTRL=7` (15 with dual-GPS heading),
-`EKF2_HGT_REF=1`, `EKF2_MAG_TYPE=5`, and disable `EKF2_BARO_CTRL`,
-`EKF2_OF_CTRL`, `EKF2_EV_CTRL`, `EKF2_RNG_CTRL`, and `EKF2_AGP_CTRL`.
-Reboot after estimator changes. Single-GPS yaw initialization requires movement.
-The runner also checks Offboard-loss landing, automatic landing disarm, and
-ordered battery thresholds with a native landing response.
-
-The runner reads and validates native landing parameters. Historical baseline
-trials used a 0.4 m/s LAND setting and a 0.3 m/s crawl setting. The registered
-flat-world X500 benchmark separately uses a nominal 0.1 m/s approach and
-limits the PX4 AUTO LAND descent command to 0.6 m/s.
-[Landing validation](validation/2026-11-22-native-land/README.md)
-
-`EKF2_NOAID_TOUT` must remain inside its supported 0.5–10 s range. For the
-default four-second recovery budget, the runner requires at least 6 s: the outage,
-PX4's post-outage GNSS health window, and one second of sampling/fusion reserve.
-The final recovery trials use 6 s. This timing budget is not a position guarantee;
-an earlier 10 s experiment did not solve the 12-second gust/outage failure.
-
-Touchdown quality includes a frozen XY reference (1.5 m maximum displacement),
-0.5 m/s horizontal and vertical speed limits, and 10° combined body tilt.
-The runner retains any detected contact violation while waiting for PX4 ground,
-automatic disarm, and fresh zero propulsion outputs, then reports the failure.
-Detecting a violation is evidence of a failed landing, not proof it was avoided.
-
-## Drawn-path research baseline
-
-The first `SITL_ONLY` general-planner slice accepts a strict `LOCAL_NED`
-polyline, constructs clamped quintic B-spline geometry, proves a conservative
-symmetric deviation bound against the source stroke, applies analytic
-speed/acceleration/jerk retiming, independently verifies the candidate, and
-exports the existing controller CSV format.
+Needs **Python 3.10+** and **Node.js 22+**. No PX4 or Gazebo needed for planning.
 
 ```bash
-python -m mission_planner.plan_drawn_path \
-  --intent missions/drawn_path_example.json \
-  --vehicle config/planner/x500_sitl_vehicle_model.json \
-  --environment config/planner/empty_world_environment.json \
-  --trajectory drawn-path.csv \
-  --report drawn-path.verification.json \
-  --summary drawn-path.summary.json
+git clone https://github.com/XpiredRuby/PX4_project_improved.git
+cd PX4_project_improved
+git checkout docs/clean-readme            # this branch
 
-python controller/offboard_runner.py \
-  --trajectory drawn-path.csv \
-  --planner-summary drawn-path.summary.json \
-  --sitl-acknowledgement drawn-path.acknowledgement.json
+python -m pip install -r requirements.txt
+cd studio-v2 && npm ci && npm run build && cd ..
+
+python -m mission_planner.research_studio --port 8767 --studies-dir ~/px4-studio-studies
 ```
 
-The acknowledgement must be issued for the exact displayed CSV/report after
-review. The studio manages that SITL review flow; the low-level runner is a
-research/SITL entrypoint. Use the separate physical-release workflow for a real
-aircraft.
+Open **http://127.0.0.1:8767**, choose **Build route → 200 m · five stops**, then **Check route**.
+Live weather needs an internet connection; everything else runs locally.
 
-The compiler flies open paths and closed laps rest-to-rest. A periodic curve
-starts and stops at its seam; extra laps repeat that loop. Interior hard points
-are full stops. Yaw is either a fixed heading or a tangent profile whose error
-against the true horizontal heading is certified. Tilt, thrust, and body rate
-are bounded from the acceleration the timing already certified, and the duration
-is stretched until those bounds fit. An interview for waypoints, a circle, or a
-survey lawnmower compiles through the same path. The review page shows the
-route and the binding constraint and states that the artifact is not a clearance
-to fly.
+<details><summary>Optional: connect PX4 SITL + Gazebo (Linux / WSL2)</summary>
 
-Look-at yaw, exact fly-through points, a hashed occupancy map, and a paired-rotor
-yaw-torque check are included. A drawn-path execution requires an unexpired
-SITL acknowledgement, which is not a flight clearance. A circle interview can
-add an entry, an exit, or both: the laps are one open path, the lead-in meets
-the seam without stopping, and the path stops at the exit or back on the seam.
-The speed on a flown-through seam is the certified schedule. Yaw can follow an
-explicit heading profile, certified to the requested samples on one
-rest-to-rest piece. A path that ends while still moving remains unsupported.
-Profile-based power/time/reserve budgets, registered local Gazebo campaigns
-and a separate human-qualified physical-release workflow are implemented.
-The x500 model is a simulator configuration, not an identified physical aircraft.
-The compiler binds the expected controller cruise height into its summary.
-The runner checks both that summary's trajectory hash and the live
-uncertainty-adjusted cruise height before execution; a mismatch is rejected.
+Follow [`docs/trajectory_studio_handbook.md`](docs/trajectory_studio_handbook.md): build PX4 v1.17 SITL, register the
+aircraft with `mission_planner.simulation_binding`, then start the studio with `--sitl-autopilot` and `--sim-binding`.
+Optional extras: `--sitl-tuning-params your.params` (use your aircraft's own PX4 tuning) and
+`scripts/install_x500_cal.py` (calibrated Gazebo x500).
+</details>
 
-## Waypoint missions
+---
 
-Waypoint plans use a strict, versioned JSON contract. Coordinates are metres in
-`LOCAL_NED`: north, east, and down. At runtime the first stop is aligned to the
-recovered launch XY, selected cruise altitude, and captured heading, so the flown
-geometry and yaw are defined by offsets from that first stop. Each stop has a unique name, yaw, and
-optional hold time. The compiler rejects unknown or missing fields, non-finite
-values, coincident stops, envelope violations, and missions whose retimed
-duration exceeds the declared budget.
+## How it is built
 
-```bash
-python trajectory_generator/plan_waypoint_mission.py \
-  --plan missions/five_stop_example.json \
-  --output five_stop.csv \
-  --summary five_stop.summary.json
+```mermaid
+flowchart LR
+    subgraph Browser["Browser (React + TypeScript)"]
+        UI["Studio UI<br/>map · 3D preview · results"]
+        ACC["Accuracy model<br/>corridor · badge · GNSS what-if"]
+        WX["Live conditions<br/>wind · turbulence · density alt."]
+    end
+    subgraph Server["Local Python server (research_studio)"]
+        API["HTTP API"]
+        PLAN["Planner<br/>geometry + timing"]
+        VER["Independent verifier"]
+        Q["Study queue"]
+    end
+    subgraph Sim["Simulation (Linux / WSL2)"]
+        RUN["Offboard runner<br/>pymavlink · 20 Hz"]
+        PX4["PX4 v1.17 SITL"]
+        GZ["Gazebo 8.15<br/>x500 / x500_cal"]
+    end
+    subgraph Data["Public data (offline scoring)"]
+        FR["PX4 Flight Review<br/>real X500 V2 logs"]
+        NB["NanoBench<br/>motion capture"]
+    end
+    OM["Open-Meteo · NOAA/NWS"]
 
-python controller/offboard_runner.py \
-  --trajectory five_stop.csv \
-  --planner-summary five_stop.summary.json
-
-python analysis/waypoint_mission_audit.py \
-  --log RUN/research_log_ID.csv \
-  --summary five_stop.summary.json \
-  --manifest RUN/run_manifest_ID.json \
-  --output RUN/waypoint_audit.json
+    UI <--> API
+    API --> PLAN --> VER --> Q --> RUN
+    RUN <-->|MAVLink| PX4 <--> GZ
+    WX <-->|HTTPS| OM
+    FR & NB --> FID["fidelity/ + scripts/<br/>fit · gate · score"]
+    FID -->|"config/fidelity/*.json"| ACC
 ```
 
-Every transit is a seventh-order stop-to-stop polynomial. Its position,
-velocity, acceleration, and jerk join continuously to a stationary hold, and
-the exact endpoint is included. Segment duration is chosen analytically so all
-declared translation and yaw limits are respected. The controller independently
-rechecks the compiled CSV against its own operating radius, height, speed,
-acceleration, jerk, and terrain-clearance limits before any transport connection
-or arming request.
+### From a drawing to a flight
 
-This is route planning over explicitly supplied local coordinates, not obstacle
-avoidance or terrain mapping. GPS/IMU alone does not provide an obstacle map;
-clearance between stops remains the operator's responsibility.
+```mermaid
+flowchart TD
+    A["Waypoints / drawn path<br/>(MissionIntent)"] --> B["Smooth path<br/>quintic B-spline in a deviation tube"]
+    B --> C["Time law<br/>speed · acceleration · jerk limits"]
+    C --> D{"Independent verifier<br/>limits · tube · stops"}
+    D -- fails --> E["Show why + feasible speed"]
+    D -- passes --> F["Signed plan artifact<br/>SHA-256 bound, SITL_ONLY"]
+    F --> G["Offboard runner"]
+    G --> H["Gazebo flight + ground truth"]
+    H --> I["Plan vs flight report"]
+```
 
-The post-run audit fails unless every named stop has stationary-reference
-evidence, bounded 95th-percentile position error and vehicle speed, the entire
-route clock was consumed, and touchdown, automatic disarm, and shutdown were
-recorded successfully.
+### What the aircraft does in a mission
 
-The checked-in five-stop example completed an isolated x500 SITL mission on
-October 5, 2026. All five stop audits passed; estimated trajectory XY error was
-0.109 m p95, independent simulator-truth XY error was 0.194 m p95, and physical
-touchdown error was 0.062 m. PX4 then confirmed ground contact, automatic
-disarm, and zero propulsion. These results validate the named-stop route in
-SITL, not obstacle avoidance or unattended physical flight.
+```mermaid
+stateDiagram-v2
+    [*] --> TAKEOFF
+    TAKEOFF --> TRAJECTORY
+    TRAJECTORY --> RETURN_HOME
+    RETURN_HOME --> ALIGN
+    ALIGN --> HANDOFF
+    HANDOFF --> PX4_LAND
+    PX4_LAND --> [*]
+    TRAJECTORY --> HOLD: navigation degraded
+    HOLD --> TRAJECTORY: recovered
+    HOLD --> PX4_FAILSAFE: position lost
+```
 
-## Validation commands
+### How the accuracy numbers are earned
+
+```mermaid
+flowchart LR
+    L["Public X500 logs<br/>Offboard flights"] --> Q1["Quality gates<br/>duplicates · corrupt setpoints"]
+    Q1 --> S["Split by aircraft<br/>(never train and test on the same drone)"]
+    S --> FIT["Fit closed-loop model"]
+    FIT --> ENV["95% error envelope<br/>per speed band"]
+    ENV --> CHK["Check coverage on<br/>held-out aircraft"]
+    CHK --> UI2["Corridor + badge in Studio"]
+    W["Live weather<br/>Dryden turbulence"] --> WT["Gust term (modelled)"] --> UI2
+    R["Real setpoints replayed<br/>in Gazebo"] --> GAP["Sim-to-real gap"]
+```
+
+---
+
+## Results so far
+
+| Question | Answer | Evidence |
+|---|---|---|
+| How well does Studio predict a real X500 from its setpoints? | Median error **0.13 m** vs 0.22 m if you assume the plan is flown exactly | [x500 public logs](validation/2026-11-23-x500-public-logs/README.md) |
+| Does the 95% bound hold on drones it never saw? | Yes below 2 m/s (held-out coverage ~99%); faster flight is flagged | same |
+| What is the biggest simulator-vs-reality gap? | **Controller tuning.** Using the real aircraft's PX4 tuning cuts Gazebo's p95 error from 3.1 m to 1.2 m | same, section 2 |
+| Is the Gazebo x500 physically right? | Close but optimistic: motors respond 4-15x faster than real ones; calibrated `x500_cal` provided | same, sections 3 and 5 |
+| What if GPS drops for 12 s in 6.7 m/s wind? | PX4 failsafe descent drifts **32-55 m**; reproduced on three SITL cases | Accuracy evidence tab |
+
+| ![Accuracy evidence panel](docs/img/evidence.png) | ![GNSS outage what-if](docs/img/gnss.png) |
+|---|---|
+| Accuracy evidence tab | GNSS-outage what-if |
+
+**Honest limits.** Public X500 logs carry the drone's own GPS-based estimate, not independent truth, and no measured wind.
+The wind term in the corridor is modelled, not yet checked against measured wind. Nothing here has flown a physical aircraft; all output is `SITL_ONLY`.
+The next step is a few supervised X500 flights with RTK GPS and a ground anemometer.
+
+---
+
+## Repository map
+
+| Folder | What is inside |
+|---|---|
+| `studio-v2/` | The Studio web app (React + TypeScript) |
+| `mission_planner/` | Planner, verifier, HTTP server, aircraft profiles, SITL binding |
+| `controller/` | PX4 Offboard runner (pymavlink), mission phases, safety checks |
+| `fidelity/` | Real-flight loaders, identification and scoring (public datasets) |
+| `scripts/` | Command-line tools: SITL campaigns, log mining, replay, scoring |
+| `analysis/` | Post-flight analysis and plotting |
+| `config/`, `schemas/`, `missions/` | Planner settings, JSON schemas, example missions; `config/fidelity` drives the accuracy UI |
+| `validation/` | Dated evidence folders, each with a README |
+| `evidence/` | Retained plan artifacts and the archived X500 flight |
+| `docs/` | Handbook, architecture, safety, reproducibility |
+| `tests/` | 469 Python tests (plus 40 frontend tests in `studio-v2/tests`) |
+| `web/`, `trajectory_generator/` | Portable browser planner build; original trajectory generator |
+
+## Check everything
 
 ```bash
 python -m pip install -r requirements-dev.txt
-python -m ruff check controller mission_planner analysis scripts tests trajectory_generator
-python scripts/validate.py
+python -m pytest -q                 # 469 tests
+python -m ruff check mission_planner controller analysis scripts tests fidelity
+cd studio-v2 && npm test            # 40 tests
 ```
 
-`scripts/validate.py` generates the trajectory, compiles the modules, and runs
-all regression tests. For an already configured, isolated x500 SITL instance,
-the mission entrypoint is `python controller/offboard_runner.py`; it uses
-MAVLink UDP 14540. Fault and surface tests additionally use UDP 14601, so only
-one monitor/injector may own that receiver during a trial. Do not run these
-fault scripts against an aircraft.
-
-`python analysis/analyze_run.py RUN_DIRECTORY` produces the tracking plots and
-safety audit. Acceleration tracking uses derivatives of the emitted, retimed
-velocity reference against actual elapsed time; raw path-clock derivatives
-remain available separately. `analysis/sitl_ground_truth.py` projects simulator
-truth into the estimator's contemporaneous local frame for offline checking. It
-rejects long interpolation gaps, treats estimator-origin changes as discrete, and
-independently gates touchdown and every HOLD episode. Simulator truth never enters
-the control loop.
-
-[Validation results](docs/validation_summary.md) describe the tested cases and
-remaining gaps. SITL evidence does not establish unattended physical-flight readiness.
+Safety: see [`docs/SAFETY.md`](docs/SAFETY.md). Physical flights require the supervised release process in
+[`docs/physical_flight_release.md`](docs/physical_flight_release.md).
