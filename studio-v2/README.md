@@ -2,6 +2,11 @@
 
 Use the localhost workbench to draw a route, calculate a time-parameterized reference, compare requested speeds, and replay recorded flights. The default vehicle is the X500 reference model. The aircraft selector also includes the repository's Gazebo X500 SDF profile and three illustrative multicopter profiles. Selecting a different model sends its assessed limits to the planner and invalidates the old result.
 
+For installation through simulator verification and troubleshooting, start with
+the [Trajectory Studio handbook](../docs/trajectory_studio_handbook.md).
+The [three full 200 m projects](../validation/2026-11-22-full-200m/README.md)
+include the registered aircraft profile, measured results, and evidence hashes.
+
 ## Run locally
 
 From the repository root, with Python 3.10+ and Node 22.13+ installed, run:
@@ -69,7 +74,7 @@ The [benchmark evidence](benchmarks/nanobench.json) includes input SHA-256 diges
 | Route drawing and verified speed | Exercise the straight route, sharp turn, handwriting, reversal, tiny route, explicit stops and multiple profiles. Preferred cruise is retained separately from the operator cap. The hard speed cap applies throughout the ground-to-ground reference. |
 | Playback and artifact identity | The 3D arrow uses NED yaw and the same camera as the route. The timeline uses the reference clock and shows the lifecycle phase. The UI checks the route digest and the full mission digest before presenting either reference. |
 | Recorded evidence | Both clocks, frame resets, required stops, target radius and runtime digests are checked by the scorer. An archived run without a runtime receipt remains diagnostic. |
-| Runner compatibility | The offline handoff fixture verifies client-side submission and receipt handling. The connected runner still needs a constructive-plan adapter and a phase-ownership check. Before the first connected test, exercise both supported plan shapes against recorded or fake transport, including phase seams, cancellation, mismatched receipts, and explicit ready/fail results. Use [PX4 v1.17 Offboard](https://docs.px4.io/v1.17/en/flight_modes/offboard) and the [NED setpoint schema](https://docs.px4.io/main/en/msg_docs/TrajectorySetpoint) to define the adapter boundary. |
+| Runner compatibility | The local React workbench executes checked fixed-heading routes on the registered X500. The constructive adapter checks constant altitude, geometry, timing, and artifact hashes. The current benchmark passed the browser-to-Gazebo route and reload workflow. See the [connected setup](../docs/trajectory_studio_handbook.md#4-run-the-current-benchmark). |
 | Reference versus measured motion | Weather tracking is a point-mass analysis. Controller timing, actual landing, and X500 hardware prediction error require separate measurements. Keep the 200 m route and published metrics fixed for the first comparison. Benchmark [fixed-path retiming](https://arxiv.org/abs/2309.11637) only if it improves route time under the same verified bounds and stop constraints. |
 
 ## Validation and static packaging
