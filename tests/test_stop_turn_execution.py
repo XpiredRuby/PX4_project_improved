@@ -159,7 +159,7 @@ class StopTurnExecutionTests(unittest.TestCase):
 
         request = json.loads((ROOT / "validation/2026-11-22-native-land/request.json").read_text())
         result = preview(request)
-        self.assertEqual(result["intent"]["path"]["points"], request["document"]["path"]["points"])
+        self.assertEqual(list(result["intent"]["path"]["points"]), request["document"]["path"]["points"])
         self.assertAlmostEqual(result["summary"]["speed_preferences"]["route_distance_sampled_m"], 200.)
         self.assertTrue(result["mission_budget"]["passed"])
         self.write(result)
