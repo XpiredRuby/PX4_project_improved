@@ -11,9 +11,6 @@
 
 </div>
 
-> [!TIP]
-> **Professors / reviewers:** run it on your laptop in two minutes with [Option A](#option-a-ready-to-run-zip-no-nodejs).
-> Then click **Try a practice flight → Check route → Watch flight preview**. No PX4, Gazebo or drone needed.
 
 ## Contents
 
