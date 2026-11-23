@@ -286,6 +286,8 @@ def run_one(name, args):
         parameters["EKF2_GPS_DELAY"] = 0.
     if binding is not None:
         parameters.update(binding["controller_parameters"])
+        # Optional real-aircraft multicopter tuning (allow-listed, SITL only).
+        parameters.update(binding.get("sitl_tuning_parameters", {}))
         parameters["MPC_LAND_SPEED"] = min(parameters["MPC_LAND_SPEED"], binding["profile"]["maximum_descent_m_s"])
         if case.get("controller_overrides", {}).get("sitl_x500_native_land"):
             parameters["MPC_LAND_SPEED"] = .6

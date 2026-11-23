@@ -12,7 +12,7 @@ from mission_planner.aircraft import assess_profile, import_px4_parameters, miss
 from mission_planner.allocation import allocation_margin, right_inverse, vehicle_rotor_duration_s
 from mission_planner.contracts import VehicleModel, canonical_sha256
 from mission_planner.editor import preview
-from mission_planner.simulation_binding import create_binding, inspect_model, validate_binding
+from mission_planner.simulation_binding import create_binding, inspect_model, parse_px4_params, validate_binding
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -204,6 +204,20 @@ class SimulationBindingTests(unittest.TestCase):
         (self.modeldir / "model.sdf").write_text((self.modeldir / "model.sdf").read_text()+'\n')
         with self.assertRaisesRegex(ValueError, "assets"):
             validate_binding(binding, self.autopilot)
+
+    def test_sitl_tuning_is_allow_listed_hash_bound_and_optional(self):
+        plain = create_binding(profile(), self.autopilot, "test_quad", 4001)
+        self.assertNotIn("sitl_tuning_parameters", plain)
+        text = ("# Onboard parameters\n1\t1\tMPC_XY_P\t1.2\t9\n1\t1\tMC_ROLLRATE_P\t0.18\t9\n"
+                "1\t1\tMPC_THR_HOVER\t0.4\t9\n1\t1\tCA_ROTOR0_PX\t0.3\t9\n")
+        tuned = create_binding(profile(), self.autopilot, "test_quad", 4001, parse_px4_params(text))
+        self.assertEqual(tuned["sitl_tuning_parameters"], {"MC_ROLLRATE_P": 0.18, "MPC_XY_P": 1.2})
+        self.assertEqual(validate_binding(tuned, self.autopilot), tuned)
+        tampered = dict(tuned, sitl_tuning_parameters={**tuned["sitl_tuning_parameters"], "MPC_THR_HOVER": 0.4})
+        with self.assertRaisesRegex(ValueError, "changed"):
+            validate_binding(tampered, self.autopilot)
+        with self.assertRaisesRegex(ValueError, "none of the supported"):
+            create_binding(profile(), self.autopilot, "test_quad", 4001, {"CA_ROTOR0_PX": 0.3})
 
     def test_browser_paths_and_unhandled_transforms_are_refused(self):
         with self.assertRaises(ValueError):

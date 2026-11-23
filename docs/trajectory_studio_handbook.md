@@ -63,6 +63,13 @@ python -m mission_planner.simulation_binding \
   --output "$HOME/px4-x500-cruise-binding.json"
 ```
 
+**Optional: simulate with your aircraft's own tuning.** Export the real aircraft's parameters from QGroundControl
+(Vehicle Setup > Parameters > Tools > Save to file) and add `--sitl-tuning-params my-x500.params` to the command above.
+Only multicopter controller tuning (position, velocity, attitude and rate gains, limits and gyro filters) is copied, and only into
+SITL runs. Hover thrust, allocation and airframe geometry still come from the simulator model. On 30 public X500 V2 flights this cut
+the simulator's 95th-percentile error against the real aircraft from 3.1 m to 1.2 m
+([evidence](../validation/2026-11-23-x500-public-logs/README.md)).
+
 The binding records the profile, resolved model and airframe, and their content hashes. Generate a fresh binding for each PX4 checkout. A modified simulator model may fail profile verification. This profile declares a 6.5 m/s horizontal limit and the registered test's power, reserve, and flight-time allowances. The runner applies its operating volume of at most 80 m horizontal radius and 30 m above launch.
 
 ## 4. Run the current benchmark

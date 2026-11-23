@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
@@ -109,7 +110,43 @@ def inspect_model(autopilot, model):
                 rotors=rotors, model_files_sha256=files)
 
 
-def create_binding(profile, autopilot, model, airframe_id):
+# Multicopter tuning that may be copied from a real aircraft into SITL runs. Physics parameters
+# (hover thrust, allocation, airframe geometry) are deliberately excluded: they come from the model.
+SITL_TUNING_KEYS = frozenset({
+    "MPC_XY_P", "MPC_XY_VEL_P_ACC", "MPC_XY_VEL_I_ACC", "MPC_XY_VEL_D_ACC", "MPC_Z_P", "MPC_Z_VEL_P_ACC",
+    "MPC_Z_VEL_I_ACC", "MPC_Z_VEL_D_ACC", "MPC_TILTMAX_AIR", "MPC_ACC_HOR_MAX", "MPC_ACC_UP_MAX",
+    "MPC_ACC_DOWN_MAX", "MPC_XY_VEL_MAX", "MPC_Z_VEL_MAX_UP", "MPC_Z_VEL_MAX_DN", "MPC_JERK_AUTO",
+    "MC_ROLL_P", "MC_PITCH_P", "MC_YAW_P", "MC_ROLLRATE_P", "MC_PITCHRATE_P", "MC_YAWRATE_P",
+    "MC_ROLLRATE_I", "MC_PITCHRATE_I", "MC_YAWRATE_I", "MC_ROLLRATE_D", "MC_PITCHRATE_D", "MC_YAWRATE_D",
+    "MC_ROLLRATE_K", "MC_PITCHRATE_K", "MC_YAWRATE_K", "IMU_GYRO_CUTOFF", "IMU_DGYRO_CUTOFF",
+})
+
+
+def parse_px4_params(text):
+    """Parse a QGroundControl .params export (vehicle, component, name, value, type) into {name: float}."""
+    values = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        fields = line.split()
+        if len(fields) >= 4:
+            try:
+                values[fields[2]] = float(fields[3])
+            except ValueError:
+                continue
+    return values
+
+
+def sitl_tuning_from(params):
+    """Keep only allow-listed tuning keys with finite values; refuse an empty result."""
+    tuning = {k: float(v) for k, v in params.items() if k in SITL_TUNING_KEYS and math.isfinite(float(v))}
+    if not tuning:
+        raise ValueError("parameter file contains none of the supported multicopter tuning parameters")
+    return dict(sorted(tuning.items()))
+
+
+def create_binding(profile, autopilot, model, airframe_id, sitl_tuning=None):
     setup = assess_profile(profile)
     if not setup["ready"]:
         raise ValueError("complete the aircraft profile before binding its simulator")
@@ -149,16 +186,20 @@ def create_binding(profile, autopilot, model, airframe_id):
         # torque/thrust ratios used for the physical feasibility calculation.
         # The exact installed startup script is fingerprinted above.
         controller_parameters = {"CA_AIRFRAME": 0, "CA_ROTOR_COUNT": len(inspection["rotors"])}
-    return dict(schema_version=1, profile=setup["profile"], profile_sha256=setup["profile_sha256"],
-                vehicle_model_sha256=setup["vehicle_model_sha256"], airframe_id=airframe_id,
-                controller_parameters=controller_parameters, **inspection)
+    binding = dict(schema_version=1, profile=setup["profile"], profile_sha256=setup["profile_sha256"],
+                   vehicle_model_sha256=setup["vehicle_model_sha256"], airframe_id=airframe_id,
+                   controller_parameters=controller_parameters, **inspection)
+    if sitl_tuning is not None:
+        # SITL-only: applied by the simulator harness, never part of a physical release.
+        binding["sitl_tuning_parameters"] = sitl_tuning_from(sitl_tuning)
+    return binding
 
 
 def validate_binding(binding, autopilot):
     if not isinstance(binding, dict) or binding.get("schema_version") != 1:
         raise ValueError("invalid simulation binding")
     expected = create_binding(binding["profile"], Path(autopilot).resolve(),
-                              binding["model"], binding["airframe_id"])
+                              binding["model"], binding["airframe_id"], binding.get("sitl_tuning_parameters"))
     if canonical_sha256(expected) != canonical_sha256(binding):
         raise ValueError("simulation binding changed or simulator assets no longer match; register again")
     return expected
@@ -171,11 +212,15 @@ def main():
     parser.add_argument("--profile", type=Path)
     parser.add_argument("--airframe-id", type=int)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--sitl-tuning-params", type=Path,
+                        help="QGroundControl .params export of the real aircraft; its multicopter tuning is applied to SITL runs only")
     args = parser.parse_args()
     if args.profile:
         if args.airframe_id is None or args.output is None:
             parser.error("registration requires --airframe-id and --output")
-        result = create_binding(load_contract(args.profile, dict), args.autopilot.resolve(), args.model, args.airframe_id)
+        tuning = parse_px4_params(args.sitl_tuning_params.read_text()) if args.sitl_tuning_params else None
+        result = create_binding(load_contract(args.profile, dict), args.autopilot.resolve(), args.model,
+                                args.airframe_id, tuning)
         args.output.write_text(json.dumps(result, indent=2) + "\n")
     else:
         result = inspect_model(args.autopilot, args.model)
