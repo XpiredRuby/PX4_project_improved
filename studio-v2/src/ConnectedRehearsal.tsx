@@ -66,7 +66,7 @@ export default function ConnectedRehearsal({plan,onJob}:{plan:Preview|null;onJob
         {running&&<button className="landing-button" disabled={pending||job?.cancel_requested} onClick={()=>void submit(true)}><ShieldCheck size={16}/> Request landing</button>}
       </div>
     </div>
-    {!job&&!plan&&<p className="rehearsal-status">Build a route and choose Plan &amp; verify to continue.</p>}
+    {!job&&!plan&&<p className="rehearsal-status">Build a route and choose Check route to continue.</p>}
     {job&&<p className={`rehearsal-status ${passed?'passed':''}`} role="status">
       {passed&&<CircleCheck size={18}/>} <strong>{status}</strong> · Run {job.plan_id.slice(0,8)} {running&&job.phase? '· '+job.phase.replaceAll('_',' ').toLowerCase():''}
     </p>}

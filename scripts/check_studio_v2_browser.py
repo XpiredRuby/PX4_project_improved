@@ -8,6 +8,7 @@ No native PX4, Gazebo, or hardware command is used.
 from __future__ import annotations
 
 import argparse
+from hashlib import sha256
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import json
 from pathlib import Path
@@ -25,12 +26,16 @@ def synthetic_reference():
         "1,2,0,-12,1,0,0,-0.3,0,0,-0.1,0,0,0",
         "1.5,3,0,-12,0,0,0,-0.3,0,0,0,0,0,0",
     ]
+    trajectory = header + "\n" + "\n".join(samples) + "\n"
     return {
         "accepted": True,
         "release_class": "SITL_ONLY",
         "campaign_ran": False,
-        "trajectory_csv": header + "\n" + "\n".join(samples) + "\n",
-        "summary": {"speed_preferences": {"planning_cap_m_s": 2.7}},
+        "trajectory_csv": trajectory,
+        "summary": {
+            "controller_trajectory_sha256": sha256(trajectory.encode()).hexdigest(),
+            "speed_preferences": {"planning_cap_m_s": 2.7, "route_distance_sampled_m": 3},
+        },
         "verification": {"accepted": True, "source": "synthetic test fixture ONLY"},
         "planning_adjustments": {
             "adjusted": True,
@@ -75,11 +80,11 @@ def main():
             page = context.new_page()
             page.on("pageerror", lambda error: page_errors.append(str(error)))
             page.goto(base, wait_until="domcontentloaded", timeout=30000)
-            page.get_by_role("heading", name="Mission geometry").wait_for()
-            assert page.get_by_text("ENGINEERING WORKSPACE / 2.0 PREVIEW").count() == 1
+            page.get_by_role("heading", name="Plan a drone route").wait_for()
+            page.get_by_role("button", name="Try a practice flight").click()
+            page.get_by_role("heading", name="Build route", exact=True).wait_for()
             assert page.locator(".point-table tbody tr").count() == 4
-            assert "SITL ONLY" in page.locator(".status-tag").inner_text()
-            results.append("React shell, editing surface and flight-safety scope")
+            results.append("Start screen and practice route")
             # Dock-like pane resizing stays accessible without a mouse.
             initial = float(page.evaluate("parseFloat(getComputedStyle(document.querySelector('.inspector')).width)"))
             page.get_by_role("separator", name="Resize properties inspector").focus()
@@ -116,15 +121,17 @@ def main():
                   };
                 }""", fixture
             )
-            page.get_by_role("button", name="Plan & verify").click()
-            page.get_by_role("heading", name="Engineering post-processing").wait_for()
-            page.get_by_text("ACCEPTED REFERENCE").wait_for()
-            assert page.locator(".plot-grid .plot-box").count() == 6
+            page.get_by_role("button", name="Check route", exact=True).click()
+            page.get_by_role("heading", name="Route ready to preview").wait_for()
             assert "SYNTHETIC UI TEST ONLY" in page.locator(".adjustments").inner_text()
-            assert "NOT RUN" in page.locator(".verification-grid").inner_text()
-            assert "0.00 s" in page.locator(".sample-readout").inner_text()
+            page.get_by_role("button", name="Charts", exact=True).click()
+            page.get_by_role("img", name="3D speed against time").wait_for()
+            page.get_by_role("button", name="Checks", exact=True).click()
+            page.get_by_role("button", name="Watch flight preview", exact=True).click()
+            page.get_by_role("button", name="Pause preview", exact=True).click()
+            assert float(page.get_by_label("Reference time").input_value()) >= 0
             page.screenshot(path=str(options.output / "desktop-synthetic-ui.png"), full_page=True)
-            results.append("Synchronized 3D/result panels, five plots and adjustment disclosures")
+            results.append("Route checks, adjustment disclosure, chart and 3D preview")
 
             # Test location and hourly-weather UI against deterministic responses.
             # This tests parsing and provenance only, not live forecast accuracy.
@@ -148,6 +155,7 @@ def main():
                 return original(input, options);
               };
             }""")
+            page.get_by_role("button", name="Weather for analysis", exact=True).click()
             page.get_by_role("button", name="Live forecast").click()
             page.get_by_role("textbox", name="Search location").fill("College Station")
             page.get_by_role("button", name="Find").click()
@@ -160,18 +168,21 @@ def main():
             assert float(page.get_by_label("Surface pressure (hPa)").input_value()) == 1005
             results.append("Mock geocoding, timestamped forecast parsing and meteorological wind settings")
 
-            page.get_by_role("button", name="Geometry", exact=True).click()
+            page.get_by_role("button", name="Build route", exact=True).click()
             page.get_by_role("button", name="New blank mission").click()
             assert page.locator(".point-table tbody tr").count() == 0
-            assert page.get_by_role("button", name="Plan & verify").is_disabled()
+            assert page.get_by_role("button", name="Check route", exact=True).is_disabled()
             results.append("New blank mission invalidates prior verified artifact")
 
             # Exercise responsive layout at a narrow viewport, without mock results.
             page.set_viewport_size({"width": 390, "height": 844})
             page.screenshot(path=str(options.output / "mobile-empty-ui.png"), full_page=True)
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
-            page.get_by_label("Route operations").select_option("five-stops")
-            assert page.locator(".point-table tbody tr").count() == 7
+            page.get_by_role("button", name="Project", exact=True).click()
+            page.get_by_role("button", name="200 m · five stops", exact=True).click()
+            assert "200.0 m" in page.get_by_label("Draft route dimensions").inner_text()
+            page.get_by_role("button", name="Settings", exact=True).click()
+            page.get_by_role("button", name="Aircraft", exact=True).click()
             assert page.get_by_label("Preferred cruise").input_value() == "50"
             results.append("390px responsive workspace and five-stop preset")
             assert not page_errors, page_errors
@@ -194,20 +205,21 @@ def main():
                 live.on("console", lambda msg: runtime_diagnostics.append('console '+msg.type+': '+msg.text) if msg.type == 'error' else None)
                 live.on("requestfailed", lambda req: runtime_diagnostics.append('request failed: '+req.url+' '+str(req.failure)))
                 live.goto(base, wait_until="domcontentloaded", timeout=30000)
+                live.get_by_role("button", name="Build route", exact=True).click()
                 live.get_by_role("button", name="Straight path").click()
-                live.get_by_role("button", name="Plan & verify").click()
+                live.get_by_role("button", name="Check route", exact=True).click()
                 try:
                     live.wait_for_function("""() => Boolean(document.querySelector('.pass-label')) || Boolean(document.querySelector('.notice.error'))""", timeout=137000)
                 except Exception:
                     runtime_diagnostics.append('timeout; no verified reference or explicit UI refusal')
                 if not live.locator('.pass-label').count():
                     runtime_diagnostics.append('UI notices: '+repr(live.locator('.notice').all_inner_texts()))
-                    runtime_diagnostics.append('engine status: '+repr(live.locator('.menu-right').all_inner_texts()))
-                    runtime_diagnostics.append('working: '+repr(live.get_by_role('button',name='Verifying…').count()))
+                    runtime_diagnostics.append('engine status: '+repr(live.locator('.connection-status').all_inner_texts()))
+                    runtime_diagnostics.append('working: '+repr(live.get_by_role('button',name='Checking…').count()))
                     live.screenshot(path=str(options.output / 'real-planner-diagnostic.png'), full_page=True)
                     raise RuntimeError('Real-browser planner did not accept route: '+repr(runtime_diagnostics[-25:]))
                 assert not external, external
-                assert "NOT RUN" in live.locator(".verification-grid").inner_text()
+                assert "Verified" in live.locator(".verification-grid").inner_text()
                 results.append("REAL Pyodide Python planner accepted a straight trajectory, no Gazebo")
                 live.screenshot(path=str(options.output / "real-planner-result.png"), full_page=True)
                 real.close()

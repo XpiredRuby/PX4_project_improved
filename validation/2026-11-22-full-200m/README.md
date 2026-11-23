@@ -34,4 +34,4 @@ python -m mission_planner.research_studio \
   --sim-binding ~/px4-x500-cruise-binding.json
 ```
 
-Use **Open project** to load the [out-and-back](out-and-back.px4-project.json), [square](square.px4-project.json), or [triangle](triangle.px4-project.json). Select **Plan & verify** and check that the route distance is 200 m. Select **Run verified route in Gazebo**. Expand **View simulator checks** when the run finishes.
+Use **Open project** to load the [out-and-back](out-and-back.px4-project.json), [square](square.px4-project.json), or [triangle](triangle.px4-project.json). Select **Check route** and check that the route distance is 200 m. Select **Run verified route in Gazebo**. Expand **View simulator checks** when the run finishes.

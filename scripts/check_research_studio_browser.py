@@ -14,11 +14,32 @@ sys.path.insert(0, str(ROOT))
 from mission_planner.research_studio import research_server  # noqa: E402
 
 
+def open_extra_result(page, label):
+    tools = page.get_by_role("button", name="More tools", exact=True)
+    if tools.get_attribute("aria-expanded") == "false":
+        tools.click()
+    page.get_by_role("button", name=label, exact=True).click()
+
+
 def check_navigation(page, base):
     from playwright.sync_api import expect
 
     page.goto(base)
     workflow = page.get_by_role("navigation", name="Mission workflow")
+    expect(workflow.get_by_role("button", name="Start", exact=True)).to_have_attribute("aria-current", "step")
+    expect(page.get_by_role("heading", name="Plan a drone route")).to_be_visible()
+    expect(page.get_by_role("button", name="Try a practice flight")).to_be_visible()
+    expect(page.get_by_role("button", name="Open saved route")).to_be_visible()
+    page.get_by_role("button", name="Start a blank route").click()
+    expect(page.get_by_text("Click the map to add at least two points.")).to_be_visible()
+    expect(page.get_by_role("button", name="Check route", exact=True)).to_be_disabled()
+    canvas = page.get_by_label("Mission coordinate drawing canvas")
+    canvas.click(position={"x": 85, "y": 100})
+    canvas.click(position={"x": 145, "y": 100})
+    expect(page.get_by_role("button", name="Check route", exact=True)).to_be_enabled()
+    workflow.get_by_role("button", name="Start", exact=True).click()
+    expect(page.get_by_role("button", name="Continue current route")).to_be_visible()
+    page.get_by_role("button", name="Try a practice flight").click()
     expect(workflow.get_by_role("button", name="Build route")).to_have_attribute("aria-current", "step")
     help_button = page.get_by_role("button", name="Help", exact=True)
     help_button.focus()
@@ -40,8 +61,13 @@ def check_navigation(page, base):
     expect(page.get_by_role("heading", name="Review results", exact=True)).to_be_focused()
     expect(page.get_by_text("Check a route to see its planned motion", exact=False)).to_be_visible()
     expect(page.get_by_role("navigation", name="Result views").get_by_role("button", name="Checks", exact=True)).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_role("button", name="Wind analysis", exact=True)).to_be_hidden()
+    open_extra_result(page, "Wind analysis")
+    expect(page.get_by_role("button", name="Wind analysis", exact=True)).to_have_attribute("aria-pressed", "true")
+    page.get_by_role("button", name="More tools", exact=True).click()
+    expect(page.get_by_role("button", name="Wind analysis", exact=True)).to_be_hidden()
     workflow.get_by_role("button", name="Build route").click()
-    expect(page.get_by_role("button", name="Plan & verify")).to_be_enabled()
+    expect(page.get_by_role("button", name="Check route", exact=True)).to_be_enabled()
 
     for width, height in ((1366, 768), (1024, 640), (390, 844), (320, 620)):
         page.set_viewport_size({"width": width, "height": height})
@@ -97,6 +123,7 @@ def check(page, base, csv, ulog, output):
       };
     """)
     page.goto(base)
+    page.get_by_role("button", name="Try a practice flight").click()
     page.get_by_label("P02 north").fill("14")
     page.get_by_role("button", name="Remove selected").click()
     page.get_by_role("button", name="Add row").click()
@@ -109,12 +136,12 @@ def check(page, base, csv, ulog, output):
     page.get_by_role("button", name="Undo").click()
     assert page.get_by_label("P02 north").input_value() == "12"
     page.get_by_label("Preferred cruise").fill("50")
-    page.get_by_role("button", name="Plan & verify").click()
+    page.get_by_role("button", name="Check route", exact=True).click()
     page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
     verified = page.locator(".verification-grid").inner_text()
     assert "50.00 m/s" in verified
     print(verified.replace("\n", " "), flush=True)
-    page.get_by_role("button", name="Play in 3D").click()
+    page.get_by_role("button", name="Watch flight preview", exact=True).click()
     page.get_by_text("TAKEOFF", exact=True).wait_for()
     view = page.get_by_label("3D trajectory orbit visualization", exact=False)
     view.scroll_into_view_if_needed()
@@ -143,7 +170,7 @@ def check(page, base, csv, ulog, output):
         arg=original_heading,
     )
     page.wait_for_function(correct_yaw)
-    page.get_by_role("button", name="Play or pause").click()
+    page.get_by_role("button", name="Pause preview", exact=True).click()
     expect(page.get_by_label("Reference time")).not_to_have_value("0")
     page.get_by_title("Reset time").click()
     expect(page.get_by_label("Reference time")).to_have_value("0")
@@ -151,9 +178,9 @@ def check(page, base, csv, ulog, output):
     page.get_by_role("button", name="Weather for analysis", exact=True).click()
     page.get_by_label("Wind speed (m/s)", exact=True).fill("5")
     page.get_by_role("button", name="Build route", exact=True).click()
-    page.get_by_role("button", name="Plan & verify").click()
+    page.get_by_role("button", name="Check route", exact=True).click()
     page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
-    page.get_by_role("button", name="Wind analysis", exact=True).click()
+    open_extra_result(page, "Wind analysis")
     page.get_by_role("button", name="Predict tracking").click()
     page.get_by_text("Predicted 3D tracking RMS", exact=False).wait_for()
     with page.expect_download() as prediction:
@@ -172,7 +199,7 @@ def check(page, base, csv, ulog, output):
     report = json.loads((output / "scenario.json").read_text())
     assert report["project"]["cruise"] == 50 and len(report["solverSourceSha256"]) == 64
     assert float(report["result"]["summary"]["speed_preferences"]["planned_route_peak_sampled_m_s"]) <= 3
-    page.get_by_role("button", name="Recordings", exact=True).click()
+    open_extra_result(page, "Recordings")
     replay = page.locator("section").filter(has=page.get_by_role("heading", name="Recorded flight replay"))
     replay.get_by_role("button", name="Load recorded x500 flight").click()
     replay.get_by_text("Retained x500 SITL", exact=False).wait_for()
@@ -189,7 +216,7 @@ def check(page, base, csv, ulog, output):
         replay.locator("input[type=file]").set_input_files(ulog)
         replay.get_by_text(ulog.name, exact=True).wait_for()
         assert "PX4 position estimate" in replay.inner_text()
-    page.get_by_role("button", name="Speed sweep", exact=True).click()
+    open_extra_result(page, "Speed sweep")
     sweep = page.locator("section").filter(has=page.get_by_role("heading", name="Compare requested speeds"))
     sweep.get_by_role("button", name="Run speed sweep").click()
     sweep.locator("tbody tr").nth(3).wait_for(timeout=300_000)
@@ -231,7 +258,7 @@ def check(page, base, csv, ulog, output):
     page.get_by_role("navigation", name="Settings views").get_by_role("button", name="Aircraft").click()
     page.get_by_label("Aircraft model").select_option("hex")
     expect(page.get_by_label("Aircraft model")).to_have_value("hex", timeout=60_000)
-    page.get_by_role("button", name="Plan & verify").click()
+    page.get_by_role("button", name="Check route", exact=True).click()
     page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
     print("PASS freehand hexacopter, replay, scenario round trip, hourly forecast fixture and sweeps", flush=True)
 
@@ -245,11 +272,12 @@ def read_download(page, label):
 def check_studies(page, base, output):
     from playwright.sync_api import expect
     page.goto(base)
+    page.get_by_role("button", name="Build route", exact=True).click()
     page.get_by_role("button", name="200 m · five stops").click()
-    page.get_by_role("button", name="Plan & verify").click()
+    page.get_by_role("button", name="Check route", exact=True).click()
     page.locator(".verification-grid").get_by_text("Verified", exact=True).wait_for(timeout=150_000)
     project_report = read_download(page, "Report JSON")
-    page.get_by_role("button", name="Compare flights", exact=True).click()
+    open_extra_result(page, "Compare flights")
     expected_sha = project_report["result"]["summary"]["controller_trajectory_sha256"]
     page.get_by_role("button", name="Test report with synthetic run").click()
     synthetic = read_download(page, "Export mission comparison")
@@ -274,7 +302,7 @@ def check_studies(page, base, output):
     page.get_by_role("button", name="Compare imported run").click()
     page.get_by_text("Route identity mismatch.", exact=False).wait_for()
 
-    page.get_by_role("button", name="Saved studies", exact=True).click()
+    open_extra_result(page, "Saved studies")
     page.get_by_label("Batch speeds").fill("1, 25, 50")
     with page.expect_response(lambda r: r.url.endswith("/api/studies") and r.request.method == "POST") as response:
         page.get_by_role("button", name="Queue study").click()
@@ -290,7 +318,7 @@ def check_studies(page, base, output):
     page = browser.new_page(accept_downloads=True)
     page.goto(base)
     page.get_by_role("button", name="Review results", exact=True).click()
-    page.get_by_role("button", name="Saved studies", exact=True).click()
+    open_extra_result(page, "Saved studies")
     selector = page.get_by_role("combobox", name="Saved studies", exact=False)
     expect(selector.locator("option")).to_have_count(2)
     selector.select_option(identifier)
@@ -303,14 +331,14 @@ def check_studies(page, base, output):
     assert case["metrics"]["requested_m_s"] == 50 and abs(case["metrics"]["peak_m_s"]-2.6461693548)<1e-6
     downloaded = output / "saved-case.json"
     downloaded.write_text(json.dumps(case))
-    page.get_by_role("button", name="Compare flights", exact=True).click()
+    open_extra_result(page, "Compare flights")
     page.get_by_text("Use a saved study case", exact=True).click()
     page.get_by_label("Verified study case JSON").set_input_files(downloaded)
     page.get_by_text("Selected saved case", exact=False).wait_for()
     page.get_by_role("button", name="Test report with synthetic run").click()
     reopened = read_download(page, "Export mission comparison")
     assert reopened["routeSha256"] == expected_sha and reopened["verdict"] == "pass"
-    page.get_by_role("button", name="Saved studies", exact=True).click()
+    open_extra_result(page, "Saved studies")
     saved = read_download(page, "Export study")
     assert saved["snapshot"]["speeds"] == [1,25,50] and saved["id"] == identifier
     selector.select_option(windy)

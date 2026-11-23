@@ -22,7 +22,7 @@ Open the same address. The ZIP includes Python and NumPy for the browser.
 In this mode the quick sweep runs while the page stays open. Live forecasts
 and place search need an internet connection.
 
-Choose “200 m · five stops” under Geometry, then “Plan & verify.”
+Choose “200 m · five stops” under Build route, then “Check route.”
 Open Results & Analysis to queue studies, test the mission report with a
 synthetic recording, or inspect the archived X500 flight on its original route.
 The examples directory includes the editable 200 m project and the native
