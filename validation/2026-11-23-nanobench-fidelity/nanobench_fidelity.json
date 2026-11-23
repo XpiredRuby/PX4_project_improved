@@ -1,0 +1,790 @@
+{
+  "dataset": "NanoBench (Crazyflie 2.1, Vicon truth), arXiv:2603.09908",
+  "flights_loaded": 80,
+  "total_minutes": 42.33,
+  "truth": "Vicon position (px,py,pz). Onboard EKF not used: it is fed Vicon pose.",
+  "files_rejected": 25,
+  "quality_log": [
+    {
+      "file": "B2_circle_medium_rep3.csv",
+      "reason": "setpoint leaves arena: max |xy| = 5.61 m"
+    },
+    {
+      "file": "B3_figure8_medium_rep1.csv",
+      "accepted": true,
+      "reason": "1 one-sample setpoint spike(s) repaired"
+    },
+    {
+      "file": "B6_linear_ramp_rep1.csv",
+      "reason": "flight has no airborne setpoint segment"
+    },
+    {
+      "file": "B7_oval_slow_rep1.csv",
+      "reason": "flight has no airborne setpoint segment"
+    },
+    {
+      "file": "B9_trefoil_fast_rep10.csv",
+      "reason": "setpoint leaves arena: max |xy| = 8.10 m"
+    },
+    {
+      "file": "B9_trefoil_fast_rep2.csv",
+      "reason": "setpoint leaves arena: max |xy| = 17.68 m; setpoint altitude out of range [0.38, 10.32] m"
+    },
+    {
+      "file": "B9_trefoil_fast_rep3.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_fast_rep15.csv"
+    },
+    {
+      "file": "B9_trefoil_fast_rep5.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_fast_rep10.csv"
+    },
+    {
+      "file": "B9_trefoil_fast_rep6.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_fast_rep11.csv"
+    },
+    {
+      "file": "B9_trefoil_fast_rep7.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_fast_rep12.csv"
+    },
+    {
+      "file": "B9_trefoil_fast_rep8.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_fast_rep13.csv"
+    },
+    {
+      "file": "B9_trefoil_fast_rep9.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_fast_rep2.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep16.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep13.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep3.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep10.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep4.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep12.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep5.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep13.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep6.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep11.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep7.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep10.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep8.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep2.csv"
+    },
+    {
+      "file": "B9_trefoil_medium_rep9.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_medium_rep1.csv"
+    },
+    {
+      "file": "B9_trefoil_slow_rep3.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_slow_rep18.csv"
+    },
+    {
+      "file": "B9_trefoil_slow_rep4.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_slow_rep11.csv"
+    },
+    {
+      "file": "B9_trefoil_slow_rep5.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_slow_rep10.csv"
+    },
+    {
+      "file": "B9_trefoil_slow_rep7.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_slow_rep12.csv"
+    },
+    {
+      "file": "B9_trefoil_slow_rep8.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_slow_rep2.csv"
+    },
+    {
+      "file": "B9_trefoil_slow_rep9.csv",
+      "reason": "byte-identical duplicate of B9_trefoil_slow_rep6.csv"
+    }
+  ],
+  "protocols": [
+    {
+      "protocol": "A_heldout_repetitions",
+      "train_flights": 59,
+      "test_flights": 21,
+      "model": {
+        "x": {
+          "wn2": 4.163677173905172,
+          "damping": 2.018466232110279,
+          "bias": -0.04461411815319853,
+          "delay_s": 0.029999971389770508,
+          "wn": 2.0405090477391106,
+          "zeta": 0.49459869691505287
+        },
+        "y": {
+          "wn2": 4.247077051581045,
+          "damping": 1.9811706667185318,
+          "bias": -0.01698651705487529,
+          "delay_s": 0.019999980926513672,
+          "wn": 2.06084377175492,
+          "zeta": 0.4806697853257109
+        },
+        "z": {
+          "wn2": 1.2964096072772504,
+          "damping": 0.2907167285881886,
+          "bias": -0.04854870620931043,
+          "delay_s": 0.0,
+          "wn": 1.1385998451068093,
+          "zeta": 0.1276641349625852
+        }
+      },
+      "envelope_95_from_train_m": 0.5305,
+      "test_coverage_at_envelope": 0.9707,
+      "test_model": {
+        "rmse_m": 0.2261,
+        "p50_m": 0.1314,
+        "p95_m": 0.482,
+        "max_m": 1.2591,
+        "samples": 75624
+      },
+      "test_baseline_plan_is_flight": {
+        "rmse_m": 0.4342,
+        "p50_m": 0.3624,
+        "p95_m": 0.7187,
+        "max_m": 1.5239,
+        "samples": 75624
+      },
+      "per_flight": [
+        {
+          "flight": "A1b_multisine_sysid_rep2",
+          "duration_s": 64.51,
+          "peak_speed_m_s": 1.224,
+          "model_rmse_m": 0.2888,
+          "baseline_rmse_m": 0.4339,
+          "coverage_at_bound": 0.946
+        },
+        {
+          "flight": "B11_random_waypoints_rep2",
+          "duration_s": 64.39,
+          "peak_speed_m_s": 1.047,
+          "model_rmse_m": 0.2437,
+          "baseline_rmse_m": 0.3893,
+          "coverage_at_bound": 0.979
+        },
+        {
+          "flight": "B2_circle_fast_rep3",
+          "duration_s": 34.25,
+          "peak_speed_m_s": 1.262,
+          "model_rmse_m": 0.1892,
+          "baseline_rmse_m": 0.5471,
+          "coverage_at_bound": 0.983
+        },
+        {
+          "flight": "B2_circle_medium_rep2",
+          "duration_s": 34.14,
+          "peak_speed_m_s": 1.191,
+          "model_rmse_m": 0.1714,
+          "baseline_rmse_m": 0.4092,
+          "coverage_at_bound": 0.996
+        },
+        {
+          "flight": "B2_circle_slow_rep3",
+          "duration_s": 34.15,
+          "peak_speed_m_s": 1.118,
+          "model_rmse_m": 0.1704,
+          "baseline_rmse_m": 0.3116,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B3_figure8_fast_rep2",
+          "duration_s": 34.12,
+          "peak_speed_m_s": 1.431,
+          "model_rmse_m": 0.2285,
+          "baseline_rmse_m": 0.6619,
+          "coverage_at_bound": 0.983
+        },
+        {
+          "flight": "B3_figure8_medium_rep3",
+          "duration_s": 34.61,
+          "peak_speed_m_s": 1.115,
+          "model_rmse_m": 0.198,
+          "baseline_rmse_m": 0.4437,
+          "coverage_at_bound": 0.98
+        },
+        {
+          "flight": "B3_figure8_slow_rep3",
+          "duration_s": 34.23,
+          "peak_speed_m_s": 0.94,
+          "model_rmse_m": 0.1635,
+          "baseline_rmse_m": 0.3038,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B5_helix_fast_rep3",
+          "duration_s": 33.66,
+          "peak_speed_m_s": 1.284,
+          "model_rmse_m": 0.1982,
+          "baseline_rmse_m": 0.5874,
+          "coverage_at_bound": 0.963
+        },
+        {
+          "flight": "B5_helix_medium_rep3",
+          "duration_s": 33.9,
+          "peak_speed_m_s": 1.232,
+          "model_rmse_m": 0.1169,
+          "baseline_rmse_m": 0.397,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B5_helix_slow_rep2",
+          "duration_s": 33.99,
+          "peak_speed_m_s": 1.156,
+          "model_rmse_m": 0.1231,
+          "baseline_rmse_m": 0.286,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B6_linear_ramp_rep4",
+          "duration_s": 24.7,
+          "peak_speed_m_s": 0.767,
+          "model_rmse_m": 0.2183,
+          "baseline_rmse_m": 0.181,
+          "coverage_at_bound": 0.981
+        },
+        {
+          "flight": "B7_oval_fast_rep3",
+          "duration_s": 34.15,
+          "peak_speed_m_s": 1.38,
+          "model_rmse_m": 0.2547,
+          "baseline_rmse_m": 0.6592,
+          "coverage_at_bound": 0.952
+        },
+        {
+          "flight": "B7_oval_medium_rep3",
+          "duration_s": 34.01,
+          "peak_speed_m_s": 1.181,
+          "model_rmse_m": 0.2007,
+          "baseline_rmse_m": 0.4108,
+          "coverage_at_bound": 0.986
+        },
+        {
+          "flight": "B7_oval_slow_rep3",
+          "duration_s": 34.18,
+          "peak_speed_m_s": 1.094,
+          "model_rmse_m": 0.1579,
+          "baseline_rmse_m": 0.3075,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B8_star_fast_rep3",
+          "duration_s": 34.68,
+          "peak_speed_m_s": 1.204,
+          "model_rmse_m": 0.2336,
+          "baseline_rmse_m": 0.5195,
+          "coverage_at_bound": 0.97
+        },
+        {
+          "flight": "B8_star_medium_rep3",
+          "duration_s": 34.66,
+          "peak_speed_m_s": 1.203,
+          "model_rmse_m": 0.2121,
+          "baseline_rmse_m": 0.3744,
+          "coverage_at_bound": 0.973
+        },
+        {
+          "flight": "B8_star_slow_rep3",
+          "duration_s": 34.78,
+          "peak_speed_m_s": 1.4,
+          "model_rmse_m": 0.1776,
+          "baseline_rmse_m": 0.2811,
+          "coverage_at_bound": 0.978
+        },
+        {
+          "flight": "B9_trefoil_fast_rep4",
+          "duration_s": 34.78,
+          "peak_speed_m_s": 1.278,
+          "model_rmse_m": 0.2592,
+          "baseline_rmse_m": 0.5576,
+          "coverage_at_bound": 0.979
+        },
+        {
+          "flight": "B9_trefoil_medium_rep2",
+          "duration_s": 34.59,
+          "peak_speed_m_s": 1.134,
+          "model_rmse_m": 0.3595,
+          "baseline_rmse_m": 0.2904,
+          "coverage_at_bound": 0.856
+        },
+        {
+          "flight": "B9_trefoil_slow_rep6",
+          "duration_s": 19.7,
+          "peak_speed_m_s": 1.19,
+          "model_rmse_m": 0.3847,
+          "baseline_rmse_m": 0.264,
+          "coverage_at_bound": 0.846
+        }
+      ]
+    },
+    {
+      "protocol": "B_heldout_shapes",
+      "train_flights": 29,
+      "test_flights": 51,
+      "model": {
+        "x": {
+          "wn2": 3.882257842174319,
+          "damping": 1.8646603481701969,
+          "bias": -0.039708482037766,
+          "delay_s": 0.06999993324279785,
+          "wn": 1.9703445998541267,
+          "zeta": 0.47318127709950986
+        },
+        "y": {
+          "wn2": 5.745735469346941,
+          "damping": 2.420249484426814,
+          "bias": -0.017481195200681643,
+          "delay_s": 0.07999992370605469,
+          "wn": 2.3970263806113903,
+          "zeta": 0.5048441485674222
+        },
+        "z": {
+          "wn2": 1.0192706524751178,
+          "damping": 0.21053169004081657,
+          "bias": -0.019459010741589566,
+          "delay_s": 0.019999980926513672,
+          "wn": 1.009589348435847,
+          "zeta": 0.104266001997244
+        }
+      },
+      "envelope_95_from_train_m": 0.5301,
+      "test_coverage_at_envelope": 0.8711,
+      "test_model": {
+        "rmse_m": 0.3231,
+        "p50_m": 0.2032,
+        "p95_m": 0.6374,
+        "max_m": 1.7165,
+        "samples": 161142
+      },
+      "test_baseline_plan_is_flight": {
+        "rmse_m": 0.4063,
+        "p50_m": 0.3208,
+        "p95_m": 0.69,
+        "max_m": 2.2749,
+        "samples": 161142
+      },
+      "per_flight": [
+        {
+          "flight": "B10_lissajous_fast_rep1",
+          "duration_s": 34.14,
+          "peak_speed_m_s": 1.344,
+          "model_rmse_m": 0.2822,
+          "baseline_rmse_m": 0.5477,
+          "coverage_at_bound": 0.938
+        },
+        {
+          "flight": "B10_lissajous_slow_rep1",
+          "duration_s": 34.21,
+          "peak_speed_m_s": 0.894,
+          "model_rmse_m": 0.2107,
+          "baseline_rmse_m": 0.2767,
+          "coverage_at_bound": 0.967
+        },
+        {
+          "flight": "B11_random_waypoints_rep1",
+          "duration_s": 64.27,
+          "peak_speed_m_s": 0.995,
+          "model_rmse_m": 0.2669,
+          "baseline_rmse_m": 0.2676,
+          "coverage_at_bound": 0.942
+        },
+        {
+          "flight": "B11_random_waypoints_rep2",
+          "duration_s": 64.39,
+          "peak_speed_m_s": 1.047,
+          "model_rmse_m": 0.3137,
+          "baseline_rmse_m": 0.3893,
+          "coverage_at_bound": 0.879
+        },
+        {
+          "flight": "B12_staircase_climb_rep1",
+          "duration_s": 39.14,
+          "peak_speed_m_s": 0.381,
+          "model_rmse_m": 0.2097,
+          "baseline_rmse_m": 0.0962,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B5_helix_fast_mell_rep1",
+          "duration_s": 34.66,
+          "peak_speed_m_s": 1.613,
+          "model_rmse_m": 0.214,
+          "baseline_rmse_m": 0.5675,
+          "coverage_at_bound": 0.977
+        },
+        {
+          "flight": "B5_helix_fast_rep1",
+          "duration_s": 33.89,
+          "peak_speed_m_s": 1.626,
+          "model_rmse_m": 0.1629,
+          "baseline_rmse_m": 0.5228,
+          "coverage_at_bound": 0.999
+        },
+        {
+          "flight": "B5_helix_fast_rep2",
+          "duration_s": 33.97,
+          "peak_speed_m_s": 1.299,
+          "model_rmse_m": 0.1565,
+          "baseline_rmse_m": 0.5639,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B5_helix_fast_rep3",
+          "duration_s": 33.66,
+          "peak_speed_m_s": 1.284,
+          "model_rmse_m": 0.2119,
+          "baseline_rmse_m": 0.5874,
+          "coverage_at_bound": 0.954
+        },
+        {
+          "flight": "B5_helix_medium_rep1",
+          "duration_s": 33.93,
+          "peak_speed_m_s": 1.17,
+          "model_rmse_m": 0.1674,
+          "baseline_rmse_m": 0.3964,
+          "coverage_at_bound": 0.972
+        },
+        {
+          "flight": "B5_helix_medium_rep2",
+          "duration_s": 33.8,
+          "peak_speed_m_s": 1.2,
+          "model_rmse_m": 0.1381,
+          "baseline_rmse_m": 0.3781,
+          "coverage_at_bound": 0.999
+        },
+        {
+          "flight": "B5_helix_medium_rep3",
+          "duration_s": 33.9,
+          "peak_speed_m_s": 1.232,
+          "model_rmse_m": 0.1334,
+          "baseline_rmse_m": 0.397,
+          "coverage_at_bound": 0.997
+        },
+        {
+          "flight": "B5_helix_rep1",
+          "duration_s": 33.79,
+          "peak_speed_m_s": 1.164,
+          "model_rmse_m": 0.1137,
+          "baseline_rmse_m": 0.3085,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B5_helix_slow_rep1",
+          "duration_s": 33.88,
+          "peak_speed_m_s": 1.161,
+          "model_rmse_m": 0.1261,
+          "baseline_rmse_m": 0.297,
+          "coverage_at_bound": 1.0
+        },
+        {
+          "flight": "B5_helix_slow_rep2",
+          "duration_s": 33.99,
+          "peak_speed_m_s": 1.156,
+          "model_rmse_m": 0.1389,
+          "baseline_rmse_m": 0.286,
+          "coverage_at_bound": 0.998
+        },
+        {
+          "flight": "B8_star_fast_rep1",
+          "duration_s": 34.3,
+          "peak_speed_m_s": 1.356,
+          "model_rmse_m": 0.2494,
+          "baseline_rmse_m": 0.522,
+          "coverage_at_bound": 0.96
+        },
+        {
+          "flight": "B8_star_fast_rep2",
+          "duration_s": 34.67,
+          "peak_speed_m_s": 1.374,
+          "model_rmse_m": 0.2698,
+          "baseline_rmse_m": 0.532,
+          "coverage_at_bound": 0.945
+        },
+        {
+          "flight": "B8_star_fast_rep3",
+          "duration_s": 34.68,
+          "peak_speed_m_s": 1.204,
+          "model_rmse_m": 0.2826,
+          "baseline_rmse_m": 0.5195,
+          "coverage_at_bound": 0.948
+        },
+        {
+          "flight": "B8_star_medium_rep1",
+          "duration_s": 34.22,
+          "peak_speed_m_s": 0.955,
+          "model_rmse_m": 0.2322,
+          "baseline_rmse_m": 0.3669,
+          "coverage_at_bound": 0.967
+        },
+        {
+          "flight": "B8_star_medium_rep2",
+          "duration_s": 34.64,
+          "peak_speed_m_s": 1.269,
+          "model_rmse_m": 0.2636,
+          "baseline_rmse_m": 0.3737,
+          "coverage_at_bound": 0.948
+        },
+        {
+          "flight": "B8_star_medium_rep3",
+          "duration_s": 34.66,
+          "peak_speed_m_s": 1.203,
+          "model_rmse_m": 0.2642,
+          "baseline_rmse_m": 0.3744,
+          "coverage_at_bound": 0.947
+        },
+        {
+          "flight": "B8_star_slow_rep1",
+          "duration_s": 34.18,
+          "peak_speed_m_s": 1.034,
+          "model_rmse_m": 0.1987,
+          "baseline_rmse_m": 0.276,
+          "coverage_at_bound": 0.976
+        },
+        {
+          "flight": "B8_star_slow_rep2",
+          "duration_s": 34.78,
+          "peak_speed_m_s": 1.39,
+          "model_rmse_m": 0.2219,
+          "baseline_rmse_m": 0.2927,
+          "coverage_at_bound": 0.956
+        },
+        {
+          "flight": "B8_star_slow_rep3",
+          "duration_s": 34.78,
+          "peak_speed_m_s": 1.4,
+          "model_rmse_m": 0.2314,
+          "baseline_rmse_m": 0.2811,
+          "coverage_at_bound": 0.952
+        },
+        {
+          "flight": "B9_trefoil_fast_rep1",
+          "duration_s": 25.19,
+          "peak_speed_m_s": 1.411,
+          "model_rmse_m": 0.3005,
+          "baseline_rmse_m": 0.6265,
+          "coverage_at_bound": 0.94
+        },
+        {
+          "flight": "B9_trefoil_fast_rep11",
+          "duration_s": 34.68,
+          "peak_speed_m_s": 1.629,
+          "model_rmse_m": 0.3225,
+          "baseline_rmse_m": 0.5455,
+          "coverage_at_bound": 0.909
+        },
+        {
+          "flight": "B9_trefoil_fast_rep12",
+          "duration_s": 34.79,
+          "peak_speed_m_s": 1.27,
+          "model_rmse_m": 0.3003,
+          "baseline_rmse_m": 0.551,
+          "coverage_at_bound": 0.921
+        },
+        {
+          "flight": "B9_trefoil_fast_rep13",
+          "duration_s": 34.73,
+          "peak_speed_m_s": 1.26,
+          "model_rmse_m": 0.2961,
+          "baseline_rmse_m": 0.6222,
+          "coverage_at_bound": 0.922
+        },
+        {
+          "flight": "B9_trefoil_fast_rep14",
+          "duration_s": 34.0,
+          "peak_speed_m_s": 1.916,
+          "model_rmse_m": 0.2866,
+          "baseline_rmse_m": 0.6135,
+          "coverage_at_bound": 0.95
+        },
+        {
+          "flight": "B9_trefoil_fast_rep15",
+          "duration_s": 18.24,
+          "peak_speed_m_s": 1.949,
+          "model_rmse_m": 0.4273,
+          "baseline_rmse_m": 0.7023,
+          "coverage_at_bound": 0.829
+        },
+        {
+          "flight": "B9_trefoil_fast_rep4",
+          "duration_s": 34.78,
+          "peak_speed_m_s": 1.278,
+          "model_rmse_m": 0.3011,
+          "baseline_rmse_m": 0.5576,
+          "coverage_at_bound": 0.915
+        },
+        {
+          "flight": "B9_trefoil_medium_rep1",
+          "duration_s": 34.55,
+          "peak_speed_m_s": 1.2,
+          "model_rmse_m": 0.4652,
+          "baseline_rmse_m": 0.2884,
+          "coverage_at_bound": 0.662
+        },
+        {
+          "flight": "B9_trefoil_medium_rep10",
+          "duration_s": 34.56,
+          "peak_speed_m_s": 1.212,
+          "model_rmse_m": 0.4549,
+          "baseline_rmse_m": 0.2942,
+          "coverage_at_bound": 0.691
+        },
+        {
+          "flight": "B9_trefoil_medium_rep11",
+          "duration_s": 34.56,
+          "peak_speed_m_s": 1.155,
+          "model_rmse_m": 0.4535,
+          "baseline_rmse_m": 0.288,
+          "coverage_at_bound": 0.693
+        },
+        {
+          "flight": "B9_trefoil_medium_rep12",
+          "duration_s": 34.09,
+          "peak_speed_m_s": 0.825,
+          "model_rmse_m": 0.4184,
+          "baseline_rmse_m": 0.2659,
+          "coverage_at_bound": 0.728
+        },
+        {
+          "flight": "B9_trefoil_medium_rep13",
+          "duration_s": 34.11,
+          "peak_speed_m_s": 0.74,
+          "model_rmse_m": 0.4203,
+          "baseline_rmse_m": 0.2761,
+          "coverage_at_bound": 0.758
+        },
+        {
+          "flight": "B9_trefoil_medium_rep14",
+          "duration_s": 34.23,
+          "peak_speed_m_s": 0.809,
+          "model_rmse_m": 0.4176,
+          "baseline_rmse_m": 0.2716,
+          "coverage_at_bound": 0.751
+        },
+        {
+          "flight": "B9_trefoil_medium_rep15",
+          "duration_s": 34.34,
+          "peak_speed_m_s": 0.8,
+          "model_rmse_m": 0.4865,
+          "baseline_rmse_m": 0.4193,
+          "coverage_at_bound": 0.686
+        },
+        {
+          "flight": "B9_trefoil_medium_rep2",
+          "duration_s": 34.59,
+          "peak_speed_m_s": 1.134,
+          "model_rmse_m": 0.4532,
+          "baseline_rmse_m": 0.2904,
+          "coverage_at_bound": 0.695
+        },
+        {
+          "flight": "B9_trefoil_slow_rep1",
+          "duration_s": 19.29,
+          "peak_speed_m_s": 0.84,
+          "model_rmse_m": 0.4276,
+          "baseline_rmse_m": 0.2964,
+          "coverage_at_bound": 0.708
+        },
+        {
+          "flight": "B9_trefoil_slow_rep10",
+          "duration_s": 19.74,
+          "peak_speed_m_s": 1.124,
+          "model_rmse_m": 0.4736,
+          "baseline_rmse_m": 0.2798,
+          "coverage_at_bound": 0.621
+        },
+        {
+          "flight": "B9_trefoil_slow_rep11",
+          "duration_s": 19.81,
+          "peak_speed_m_s": 1.124,
+          "model_rmse_m": 0.4568,
+          "baseline_rmse_m": 0.2655,
+          "coverage_at_bound": 0.671
+        },
+        {
+          "flight": "B9_trefoil_slow_rep12",
+          "duration_s": 19.82,
+          "peak_speed_m_s": 1.137,
+          "model_rmse_m": 0.4597,
+          "baseline_rmse_m": 0.2844,
+          "coverage_at_bound": 0.656
+        },
+        {
+          "flight": "B9_trefoil_slow_rep13",
+          "duration_s": 19.22,
+          "peak_speed_m_s": 0.781,
+          "model_rmse_m": 0.4386,
+          "baseline_rmse_m": 0.2804,
+          "coverage_at_bound": 0.673
+        },
+        {
+          "flight": "B9_trefoil_slow_rep14",
+          "duration_s": 19.14,
+          "peak_speed_m_s": 0.799,
+          "model_rmse_m": 0.4246,
+          "baseline_rmse_m": 0.3121,
+          "coverage_at_bound": 0.729
+        },
+        {
+          "flight": "B9_trefoil_slow_rep15",
+          "duration_s": 19.24,
+          "peak_speed_m_s": 0.906,
+          "model_rmse_m": 0.4446,
+          "baseline_rmse_m": 0.2674,
+          "coverage_at_bound": 0.666
+        },
+        {
+          "flight": "B9_trefoil_slow_rep16",
+          "duration_s": 19.25,
+          "peak_speed_m_s": 0.782,
+          "model_rmse_m": 0.4463,
+          "baseline_rmse_m": 0.2572,
+          "coverage_at_bound": 0.659
+        },
+        {
+          "flight": "B9_trefoil_slow_rep17",
+          "duration_s": 19.28,
+          "peak_speed_m_s": 0.945,
+          "model_rmse_m": 0.4423,
+          "baseline_rmse_m": 0.2603,
+          "coverage_at_bound": 0.665
+        },
+        {
+          "flight": "B9_trefoil_slow_rep18",
+          "duration_s": 19.16,
+          "peak_speed_m_s": 0.824,
+          "model_rmse_m": 0.4293,
+          "baseline_rmse_m": 0.2722,
+          "coverage_at_bound": 0.729
+        },
+        {
+          "flight": "B9_trefoil_slow_rep2",
+          "duration_s": 19.68,
+          "peak_speed_m_s": 1.15,
+          "model_rmse_m": 0.4887,
+          "baseline_rmse_m": 0.273,
+          "coverage_at_bound": 0.602
+        },
+        {
+          "flight": "B9_trefoil_slow_rep6",
+          "duration_s": 19.7,
+          "peak_speed_m_s": 1.19,
+          "model_rmse_m": 0.4667,
+          "baseline_rmse_m": 0.264,
+          "coverage_at_bound": 0.659
+        }
+      ]
+    }
+  ]
+}
