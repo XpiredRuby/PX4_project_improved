@@ -21,6 +21,48 @@ def open_extra_result(page, label):
     page.get_by_role("button", name=label, exact=True).click()
 
 
+def check_practice(page, base):
+    from playwright.sync_api import expect
+
+    page.goto(base)
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.get_by_role("button", name="Try a practice flight", exact=True).click()
+    guide = page.get_by_role("region", name="Practice flight tutorial")
+    expect(guide.get_by_role("heading", name="Meet the route map")).to_be_visible()
+    expect(guide.get_by_role("button", name="Back")).to_be_disabled()
+    guide.get_by_role("button", name="Next", exact=True).click()
+    expect(guide.get_by_role("heading", name="Edit a route point")).to_be_visible()
+    guide.get_by_role("button", name="Back", exact=True).click()
+    expect(guide.get_by_role("heading", name="Meet the route map")).to_be_visible()
+    guide.get_by_role("button", name="Next", exact=True).click()
+    guide.get_by_role("button", name="Next", exact=True).click()
+    expect(guide.get_by_role("heading", name="Choose height and speed")).to_be_visible()
+    expect(page.get_by_label("Height above launch (m)")).to_be_visible()
+    guide.get_by_role("button", name="Next", exact=True).click()
+    expect(page.get_by_label("Mission coordinate drawing canvas")).to_be_visible()
+    guide.get_by_role("button", name="Check practice route", exact=True).click()
+    expect(guide.get_by_role("heading", name="Read the route checks")).to_be_visible(timeout=150_000)
+    guide.get_by_role("button", name="Watch preview", exact=True).click()
+    expect(guide.get_by_role("heading", name="Look around in 3D")).to_be_visible()
+    expect(page.get_by_role("button", name="Pause preview", exact=True)).to_be_visible()
+    guide.get_by_role("button", name="Next", exact=True).click()
+    expect(guide.get_by_role("heading", name="Control the preview")).to_be_visible()
+    guide.get_by_role("button", name="Next", exact=True).click()
+    expect(guide.get_by_role("heading", name="Explore results or save your work")).to_be_visible()
+    guide.get_by_role("button", name="Finish tutorial", exact=True).click()
+    expect(guide).to_be_hidden()
+    assert page.evaluate("document.documentElement.scrollHeight") == 844
+
+    page.get_by_role("button", name="Help", exact=True).click()
+    page.get_by_role("dialog", name="Studio help").get_by_role("button", name="Start practice tutorial").click()
+    expect(guide.get_by_role("heading", name="Meet the route map")).to_be_visible()
+    guide.get_by_role("button", name="Skip tutorial").click()
+    expect(guide).to_be_hidden()
+    expect(page.get_by_role("button", name="Check route", exact=True)).to_be_enabled()
+    print("PASS practice tutorial, back, real route check, playback, finish, restart, and skip", flush=True)
+    page.set_viewport_size({"width": 1440, "height": 920})
+
+
 def check_navigation(page, base):
     from playwright.sync_api import expect
 
@@ -371,6 +413,7 @@ def main():
                 page = browser.new_page(viewport={"width": 1440, "height": 920}, accept_downloads=True)
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
+                check_practice(page, f"http://127.0.0.1:{server.server_port}")
                 check_navigation(page, f"http://127.0.0.1:{server.server_port}")
                 check(page, f"http://127.0.0.1:{server.server_port}", args.csv, args.ulog, Path(directory))
                 check_studies(page, f"http://127.0.0.1:{server.server_port}", Path(directory))

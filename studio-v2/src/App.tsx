@@ -5,6 +5,7 @@ import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironme
 import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
 import {sha256} from './missionReport';
 import WorkspaceHelp, {type HelpTopic} from './WorkspaceHelp';
+import PracticeGuide, {practiceLessons, type PracticeLesson} from './PracticeGuide';
 import WaypointDock from './WaypointDock';
 import ConnectedRehearsal from './ConnectedRehearsal';
 import type {Job} from './rehearsalHandoff';
@@ -194,6 +195,7 @@ export default function App(){
   const [propertyPanel,setPropertyPanel]=useState<PropertyPanel>('setup');
   const [utilityPane,setUtilityPane]=useState<'workspace'|'project'|'properties'>('workspace');
   const [helpTopic,setHelpTopic]=useState<HelpTopic>('start');
+  const [lesson,setLesson]=useState<PracticeLesson|null>(null);
   const helpDialog=useRef<HTMLDialogElement>(null);
   const stepHeading=useRef<HTMLHeadingElement>(null);
   const openHelp=(topic:HelpTopic)=>{
@@ -204,6 +206,7 @@ export default function App(){
     setActive(step);
     setUtilityPane('workspace');
     if(step!=='trajectory')setPlaying(false);
+    if(step==='start')setLesson(null);
     requestAnimationFrame(()=>stepHeading.current?.focus({preventScroll:true}));
   };
   const [advanced,setAdvanced]=useState(false);
@@ -328,12 +331,16 @@ export default function App(){
     lastDraw.current=null;
   };
   const clearRoute=()=>{
+    setLesson(null);
     update(p=>({...p,title:'New mission',points:[]}));
     setTool('draw');setSelected(-1);requestMapFit(n=>n+1);
   };
   const startPractice=()=>{
+    helpDialog.current?.close();
     update(()=>({...starterProject(),title:'Practice flight'}));
     setSelected(-1);setTool('select');requestMapFit(n=>n+1);openStep('geometry');
+    setPropertyPanel('setup');
+    setLesson('map');
     setNotice('Practice route loaded. Choose Check route to continue.');
   };
   const startBlank=()=>{
@@ -351,6 +358,7 @@ export default function App(){
     invalidate();
   };
   const applyExample=(name:string)=>{
+    setLesson(null);
     update(p=>name==='five-stops'?projectFromJson(structuredClone(fiveStopStudy)):{...p,title:name+' study',points:example(name,p.altitude)});
     setSelected(-1);requestMapFit(n=>n+1);
   };
@@ -412,6 +420,7 @@ export default function App(){
       if(submittedRevision!==geometryRevision.current){setNotice('Edited during compilation; discarded the obsolete result. Run verification again.');return;}
       if(!parsed.length)throw Error('Verified plan returned no usable samples');
       setResult(data);setRouteSamples(parsed);setFullMissionSamples(full);setViewScope(full.length?'full':'route');setSamples(full.length?full:parsed);setCursor(0);setResultPanel('checks');openStep('analysis');setDirty(false);
+      setLesson(current=>current?'results':null);
       setNotice('Route checked. Choose Watch flight preview to see it in 3D.');
     }catch(e){if((e as Error).name!=='AbortError')setError((e as Error).message);else setNotice('Planning cancelled or invalidated by an edit. Your mission was kept.');}
     finally{setBusy(false);abort.current=null;}
@@ -480,6 +489,7 @@ export default function App(){
       });
       const next={...projectRef.current,title:file.name.replace(/\.csv$/i,''),points:imported};
       validateProject(next);
+      setLesson(null);
       update(()=>next);setSelected(-1);requestMapFit(n=>n+1);openStep('geometry');
       setNotice('Imported '+imported.length+' waypoint rows. Re-run verification to generate a reference.');
     }catch(e){setError((e as Error).message);}
@@ -493,6 +503,7 @@ export default function App(){
     const file=event.target.files?.[0];event.target.value='';if(!file)return;
     try{if(file.size>2_000_000)throw Error('File exceeds 2 MB limit');
       const imported=projectFromJson(JSON.parse(await file.text()));
+      setLesson(null);
       update(()=>imported);setSelected(-1);requestMapFit(n=>n+1);openStep('geometry');
     }catch(e){setError((e as Error).message);}
   };
@@ -508,12 +519,54 @@ export default function App(){
     setCursor(samples[0].time);
     openStep('trajectory');
     setPlaying(true);
+    setLesson(current=>current==='results'?'camera':current);
   };
+  const currentLesson=practiceLessons.find(item=>item.id===lesson);
+  const lessonIndex=practiceLessons.findIndex(item=>item.id===lesson);
+  const guideInPlace=currentLesson?.view===active&&
+    (lesson==='settings'?utilityPane!=='project':utilityPane==='workspace')&&
+    (lesson!=='results'||resultPanel==='checks')&&
+    (currentLesson?.view==='geometry'||lesson==='tools'||!!result);
+  const goToLesson=(next:PracticeLesson)=>{
+    const target=practiceLessons.find(item=>item.id===next);
+    if(!target)return;
+    const needsPlan=next==='results'||next==='camera'||next==='playback';
+    if(needsPlan&&!result){
+      setLesson('check');
+      openStep('geometry');
+      return;
+    }
+    setLesson(next);
+    if(target.view!==active)openStep(target.view);
+    else setUtilityPane('workspace');
+    if(next==='settings'){
+      setPropertyPanel('setup');
+      setUtilityPane('properties');
+    }
+    if(target.view==='analysis')setResultPanel('checks');
+  };
+  const nextLesson=()=>{
+    if(!lesson)return;
+    if(!guideInPlace){goToLesson(lesson);return;}
+    if(lesson==='check'){void run();return;}
+    if(lesson==='results'&&result){watchPreview();return;}
+    const next=practiceLessons[lessonIndex+1];
+    if(next)goToLesson(next.id);
+    else setLesson(null);
+  };
+  const previousLesson=()=>{
+    const previous=practiceLessons[lessonIndex-1];
+    if(previous)goToLesson(previous.id);
+  };
+  const guideAction=!guideInPlace?'Show this step'
+    :lesson==='check'?(busy?'Checking…':'Check practice route')
+    :lesson==='results'&&result?'Watch preview'
+    :lesson==='tools'?'Finish tutorial':'Next';
   const summary=getPreviewSummary(result||{accepted:false});
   const isStart=active==='start';
   const hasWork=dirty||!!result;
   const fewPoints=project.points.length<2;
-  return <div className="app-shell">
+  return <div className="app-shell" data-practice-step={guideInPlace?lesson:undefined}>
     <header className="topbar">
       <div className="brand"><span className="brand-mark"><Route size={17} aria-hidden="true"/></span><strong>PX4 <span>Trajectory Studio</span></strong></div>
       <span className="project-title" title={project.title}><FolderOpen size={14} aria-hidden="true"/><span>{project.title}{dirty?' *':''}</span></span>
@@ -548,6 +601,11 @@ export default function App(){
         </>}
         {busy&&<button onClick={()=>abort.current?.abort()}>Cancel check</button>}
       </div>
+    </div>
+    <div className="practice-slot">
+      {lesson&&<PracticeGuide lesson={lesson} action={guideAction}
+        disabled={guideInPlace&&lesson==='check'&&(busy||sweeping||profileBusy||fewPoints)}
+        onNext={nextLesson} onBack={previousLesson} onSkip={()=>setLesson(null)}/>}
     </div>
     <div className={`workbench show-${utilityPane}${isStart?' start-workbench':''}`} style={{'--left-pane':paneWidths.left+'px','--right-pane':paneWidths.right+'px'} as React.CSSProperties}>
       <aside className="left-rail" aria-label="Route library" hidden={isStart}>
@@ -607,7 +665,7 @@ export default function App(){
             </div>
           </section>
         </div>}
-        {active==='geometry'&&<div className="step-hint" aria-live="polite">
+        {active==='geometry'&&(!lesson||fewPoints)&&<div className="step-hint" aria-live="polite">
           <strong>{fewPoints?'Add points':'Next'}</strong>
           <span>{fewPoints?'Click the map to add at least two points.':result?'Your route is checked. Open Preview flight or keep editing.':'Choose Check route when your path is ready.'}</span>
           {fewPoints&&tool!=='waypoint'&&tool!=='draw'&&<button onClick={()=>setTool('waypoint')}><Plus size={14}/> Add points</button>}
@@ -849,6 +907,6 @@ export default function App(){
       <span className="activity-note">{notice||(active==='geometry'?(project.points.length<2?'Add at least two points to check the route.':drawingHints[tool]):'')}</span>
       <span className={`connection-status${sitl?' connected':''}`}><i aria-hidden="true"/>{sitl?'Simulator connected':engine==='unknown'?'Connecting to planner':'Planning mode'}</span>
     </footer>
-    <WorkspaceHelp dialog={helpDialog} topic={helpTopic} onTopic={setHelpTopic}/>
+    <WorkspaceHelp dialog={helpDialog} topic={helpTopic} onTopic={setHelpTopic} onPractice={startPractice}/>
   </div>;
 }
