@@ -2,9 +2,8 @@
 
 # Vin Trajectory Planner
 
-**by Vinayak (Vin) Nair** · Aerospace Engineering, Texas A&M University
 
-**Draw a drone route, check it, preview the flight, and see how accurately a real Holybro X500 V2 would fly it, before anyone goes outside.**
+**Draw a drone route, check it, preview the flight, and see how accurately a real Holybro X500 V2 would fly it.**
 
 ![PX4](https://img.shields.io/badge/PX4-v1.17-1f6feb) ![Gazebo](https://img.shields.io/badge/Gazebo-8.15-f58113) ![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab) ![React](https://img.shields.io/badge/React-19-61dafb) ![Tests](https://img.shields.io/badge/tests-472%20Python%20%2B%2040%20web-2ea44f) ![Status](https://img.shields.io/badge/output-SITL__ONLY-lightgrey)
 
