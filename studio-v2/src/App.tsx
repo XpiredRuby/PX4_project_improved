@@ -17,6 +17,12 @@ import Prediction from './Prediction';
 import WindStudy from './WindStudy';
 import Viewport from './Viewport';
 import Plot, { type Field } from './Plot';
+import LiveConditions from './LiveConditions';
+import WindParticles from './WindParticles';
+import ConfidenceBadge from './ConfidenceBadge';
+import AccuracyEvidence from './AccuracyEvidence';
+import { corridor as predictCorridor, type Corridor } from './fidelity';
+import { X500_ENVELOPE } from './fidelityData';
 
 const examples=[
   ['Straight','Straight path',MoveUp],['L','L-shaped route',CornerUpRight],['five-stops','200 m · five stops',Route],
@@ -32,7 +38,7 @@ type WorkspaceStep = typeof workspaceSteps[number]['id'];
 const resultPanels=[['checks','Checks'],['charts','Charts'],['simulation','Simulator']] as const;
 const extraResults=[
   ['weather','Wind analysis'],['studies','Saved studies'],['speeds','Speed sweep'],
-  ['recordings','Recordings'],['comparison','Compare flights'],
+  ['recordings','Recordings'],['comparison','Compare flights'],['evidence','Accuracy evidence'],
 ] as const;
 type ResultPanel = typeof resultPanels[number][0] | typeof extraResults[number][0];
 const propertyPanels=[['setup','Aircraft'],['weather','Weather'],['point','Point']] as const;
@@ -63,10 +69,10 @@ const starterProject=():Project=>structuredClone(sampleProject);
 function ErrorPanel({message,onClose}:{message:string;onClose:()=>void}){
   return <div className="notice error" role="alert"><TriangleAlert size={16}/><span>{message}</span><button aria-label="Dismiss error" onClick={onClose}><X size={16}/></button></div>;
 }
-function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDraw,range,setRange,radius,fitRequest}:{
+function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDraw,range,setRange,radius,fitRequest,corridor}:{
   points:Point[];selected:number;onSelect:(index:number)=>void;onChange:(index:number,point:Point)=>void;
   tool:Tool;onAdd:(north:number,east:number)=>void;onDraw:(north:number,east:number,first:boolean)=>void;
-  onFinishDraw:()=>void;radius:number;range:number;setRange:(v:number)=>void;fitRequest:number;
+  onFinishDraw:()=>void;radius:number;range:number;setRange:(v:number)=>void;fitRequest:number;corridor?:Corridor;
 }){
   const ref=useRef<SVGSVGElement>(null);
   const dragging=useRef<number|null>(null);
@@ -155,6 +161,7 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
           .map(y=><text key={y} x={left+8*unitsPerPixel} y={y-4*unitsPerPixel}>{String(-y)}</text>)}
       </g>
       <circle className="map-radius" cx="0" cy="0" r={radius} fill="none" strokeWidth="1" strokeDasharray="5 5" vectorEffect="non-scaling-stroke"/>
+      {corridor&&points.length>1&&<path className={`route-corridor ${corridor.level}`} d={path} strokeWidth={2*corridor.radius} fill="none" strokeLinejoin="round" strokeLinecap="round"><title>{`Expected path accuracy ±${corridor.radius.toFixed(1)} m (95%)`}</title></path>}
       <path className="route-halo" d={path} strokeWidth="7" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       <path className="route-trace" d={path} strokeWidth="2" fill="none" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
       {points.map((p,index)=>{
@@ -382,6 +389,13 @@ export default function App(){
   const modelCap=project.aircraft?.profile.maximum_speed_m_s??3;
   const cap=Math.min(project.speedCap,modelCap);
   const weatherReady=project.environment.mode==='manual'||!!project.environment.fetchedAt;
+  const accuracy=useMemo(()=>{
+    const aircraftMax=Number(project.aircraft?.profile.maximum_speed_m_s)||Infinity;
+    const maxSpeed=samples.length?Math.max(...samples.map(x=>x.speed)):Math.min(project.cruise,project.speedCap||project.cruise,aircraftMax);
+    const env=project.environment;
+    return predictCorridor(X500_ENVELOPE,Number.isFinite(maxSpeed)?maxSpeed:project.cruise,
+      {speed:weatherReady?env.windSpeed:0,gust:weatherReady?env.gust:0,altitude:project.altitude});
+  },[samples,project.environment,project.cruise,project.speedCap,project.altitude,weatherReady]);
   const visibleField=field==='airspeed'&&!weatherReady?'speed':field;
 
   useEffect(()=>{
@@ -570,6 +584,7 @@ export default function App(){
     <header className="topbar">
       <div className="brand"><span className="brand-mark"><Route size={17} aria-hidden="true"/></span><strong>PX4 <span>Trajectory Studio</span></strong></div>
       <span className="project-title" title={project.title}><FolderOpen size={14} aria-hidden="true"/><span>{project.title}{dirty?' *':''}</span></span>
+      {!isStart&&<ConfidenceBadge corridor={accuracy} onEvidence={()=>{setResultPanel('evidence');openStep('analysis');}}/>}
       <div className="top-actions">
         <button aria-label="Open project" title="Open project" onClick={()=>fileRef.current?.click()}><FolderOpen size={16}/><span>Open</span></button>
         <button aria-label="Save editable project" title="Save editable project" onClick={saveProject}><Save size={16}/><span>Save</span></button>
@@ -688,7 +703,8 @@ export default function App(){
               <div className="viewport-panel">
                 <TopMap points={project.points} selected={selected} onSelect={setSelected} onChange={editPoint} tool={tool}
                   onAdd={newPoint} onDraw={drawPoint} onFinishDraw={finishDraw} radius={Number.isFinite(modelRadius)?modelRadius:40}
-                  range={range} setRange={setRange} fitRequest={mapFitRequest}/>
+                  range={range} setRange={setRange} fitRequest={mapFitRequest} corridor={accuracy}/>
+                {weatherReady&&<WindParticles speed={project.environment.windSpeed} directionFrom={project.environment.windDirection}/>}
               </div>
             </div>
           </section>
@@ -796,6 +812,7 @@ export default function App(){
               visibleField==='acceleration'?result?.vehicle_model?.maximum_acceleration_m_s2:
               visibleField==='jerk'?result?.vehicle_model?.maximum_jerk_m_s3:undefined}/>}
         </div>}
+        {active==='analysis'&&resultPanel==='evidence'&&<div className="analysis-panel" aria-label="Accuracy evidence"><AccuracyEvidence/></div>}
         {active==='analysis'&&<>
           <div className="analysis-panel" hidden={resultPanel!=='weather'} aria-label="Wind analysis">
             <nav className="dock-bar" aria-label="Wind views">
@@ -856,6 +873,8 @@ export default function App(){
           </div>
         </div>
         <div className="inspector-content" hidden={propertyPanel!=='weather'} aria-label="Weather settings">
+            <LiveConditions latitude={project.environment.latitude} longitude={project.environment.longitude} altitude={project.altitude}
+              onApply={v=>{changeEnv(v);setNotice('Live conditions applied to the analysis.');}}/>
             <div className="mode-switch">
               <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>setWeatherMode('manual')} aria-pressed={project.environment.mode==='manual'}>Manual</button>
               <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>setWeatherMode('live')} aria-pressed={project.environment.mode==='live'}>Live forecast</button>
