@@ -28,4 +28,4 @@ synthetic recording, or inspect the archived X500 flight on its original route.
 The examples directory includes the editable 200 m project and the native
 reference speed sweep. A physical X500 tracking-accuracy score is still open.
 
-Source and native setup: https://github.com/XpiredRuby/PX4_project_improved/pull/10
+Source code, diagrams and setup: https://github.com/XpiredRuby/PX4_project_improved

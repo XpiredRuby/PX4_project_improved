@@ -74,5 +74,14 @@
  "vehicles": 27,
  "calibrated_speed_max_m_s": 3.3469969040726544,
  "hover_thrust_real_p50": 0.6196516752243042,
- "drag_per_mass_linear_s": 0.4467725944838472
+ "drag_per_mass_linear_s": 0.4467725944838472,
+ "measured_wind": {
+  "coef95_m_per_m_s": 0.24751972333172095,
+  "gps_floor_p95_m": 0.21023908543340666,
+  "legs": 506,
+  "flights": 196,
+  "drag_airspeed_k1_s": 0.08289499287154115,
+  "drag_airspeed_k2_per_m": 0.008450119474209655,
+  "source": "CMU DJI Matrice 100, onboard anemometer"
+ }
 }

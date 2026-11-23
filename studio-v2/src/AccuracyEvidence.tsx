@@ -1,6 +1,7 @@
 import evidence from '../../config/fidelity/x500_evidence.json';
 import errorPlot from '../../validation/2026-11-23-x500-public-logs/x500_prediction_error.png';
 import dragPlot from '../../validation/2026-11-23-x500-public-logs/x500_drag_real_vs_sim.png';
+import windPlot from '../../validation/2026-11-23-measured-wind/measured_wind.png';
 
 import GnssWhatIf from './GnssWhatIf';
 
@@ -14,6 +15,7 @@ export default function AccuracyEvidence({ windAtAlt = 0, altitude = 12 }: { win
     <div className="evidence-cards">{ev.headline.map(r => <div key={r.label} className="evidence-card"><span>{r.label}</span><b>{r.value}</b>{r.note && <small>{r.note}</small>}</div>)}</div>
     <div className="evidence-figures">
       <figure><img src={errorPlot} alt="Prediction error growth on held-out real flights"/><figcaption>Prediction error vs time, held-out real flights</figcaption></figure>
+      <figure><img src={windPlot} alt="Drag against measured airspeed and route deviation against measured turbulence"/><figcaption>Measured wind (onboard anemometer, 196 flights)</figcaption></figure>
       <figure><img src={dragPlot} alt="Drag per mass of the real fleet compared with the simulator"/><figcaption>Real fleet vs simulator drag</figcaption></figure>
     </div>
     <GnssWhatIf windAtAlt={windAtAlt} altitude={altitude}/>

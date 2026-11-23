@@ -34,6 +34,11 @@
    "label": "Calibrated x500_cal, held-out median",
    "value": "0.27 m \u2192 0.24 m",
    "note": "p95 1.10 \u2192 1.12 m; tuning matters more than physics"
+  },
+  {
+   "label": "Measured wind, route deviation",
+   "value": "0.23 m p95",
+   "note": "506 legs, 196 flights with an onboard anemometer"
   }
  ],
  "credibility": [
@@ -54,8 +59,8 @@
   },
   {
    "factor": "Results uncertainty",
-   "score": 2,
-   "why": "Per-speed-band 95% envelopes with held-out coverage; wind term is modelled."
+   "score": 3,
+   "why": "Speed-band envelopes with held-out coverage; gust term calibrated on measured wind (other airframe)."
   },
   {
    "factor": "Results robustness",
@@ -70,9 +75,9 @@
  ],
  "limits": [
   "Absolute touchdown accuracy for your aircraft in real wind (no public X500 data with measured wind).",
-  "Gust response: wind term is modelled from identified dynamics, not validated against measured wind.",
   "GNSS-outage behaviour beyond PX4's documented failsafe logic.",
-  "Speeds above 3.3 m/s: few public X500 Offboard flights exist."
+  "Speeds above 3.3 m/s: few public X500 Offboard flights exist.",
+  "Gust response of this aircraft: calibrated on measured wind from a DJI M100, not an X500."
  ],
  "sources": [
   {
@@ -90,6 +95,10 @@
   {
    "name": "NOAA/NWS",
    "url": "https://www.weather.gov/documentation/services-web-api"
+  },
+  {
+   "name": "CMU DJI Matrice 100 (anemometer)",
+   "url": "https://doi.org/10.1184/R1/12683453"
   }
  ]
 }

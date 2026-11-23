@@ -1,0 +1,46 @@
+{
+ "dataset": "CMU DJI Matrice 100 package delivery (doi:10.1184/R1/12683453, CC BY 4.0)",
+ "anemometer_convention": {
+  "frame": "world",
+  "sense": "cw",
+  "sign": -1
+ },
+ "flights": 196,
+ "drag": {
+  "samples": 52971,
+  "fit_vs_airspeed": {
+   "k1": 0.08289499287154115,
+   "k2": 0.008450119474209655,
+   "r2": 0.9201781437105934
+  },
+  "fit_vs_groundspeed": {
+   "k1": 0.18729734321193997,
+   "k2": 0.0012479915967430974,
+   "r2": 0.4370934638060039
+  }
+ },
+ "crosstrack_vs_measured_wind": {
+  "legs": 506,
+  "flights": 196,
+  "intercept_m": 0.22689980584211994,
+  "slope_m_per_m_s": 0.0150695231785516,
+  "r2": 0.021808666748736938,
+  "resid_sd_m": 0.1297613436374143,
+  "gps_floor_p95_m": 0.21023908543340666,
+  "coef95_m_per_m_s": 0.24751972333172095,
+  "coef50_m_per_m_s": 0.007425627940732118,
+  "crosswind_sigma_range_m_s": [
+   0.1411384571758341,
+   8.589375792185393
+  ],
+  "speed_range_m_s": [
+   3.8832666905606574,
+   11.883443891802212
+  ]
+ },
+ "caveats": [
+  "Different airframe (DJI M100, ~3.6 kg) and autopilot (DJI A3/N1), not PX4.",
+  "Position is standard GNSS (metre-level); the GPS floor is reported separately.",
+  "Anemometer data is uncorrected for rotor-induced flow; convention chosen by wind stability."
+ ]
+}

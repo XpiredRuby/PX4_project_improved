@@ -12,6 +12,7 @@ export type Envelope = {
   calibrated_speed_max_m_s: number;
   loop: { horizontal: { wn_rad_s: number; zeta: number; delay_s: number }; vertical: { wn_rad_s: number; zeta: number; delay_s: number } };
   drag_per_mass_linear_s?: number;
+  measured_wind?: { coef95_m_per_m_s: number; legs: number; flights: number; drag_airspeed_k1_s: number; drag_airspeed_k2_per_m: number };
 };
 
 export const ROUGHNESS_M: Record<Terrain, number> = { open: 0.03, mixed: 0.1, complex: 0.8 };
@@ -83,16 +84,23 @@ export function corridor(env: Envelope, maxSpeed: number, wind: { speed: number;
     level = maxSpeed > 1.5 * calMax ? 'uncalibrated' : 'extrapolating';
     reasons.push(`Planned speed ${maxSpeed.toFixed(1)} m/s exceeds the ${calMax.toFixed(1)} m/s covered by public X500 flights.`);
   }
-  const { su } = dryden(wind.speed, wind.altitude, terrain);
+  const { sv } = dryden(wind.speed, wind.altitude, terrain);
   const uAlt = windAtAltitude(wind.speed, wind.altitude, terrain);
   const gustAlt = windAtAltitude(Math.max(wind.gust, wind.speed), wind.altitude, terrain);
-  const disturbance = Math.max(0, gustAlt - uAlt) + 2 * su;
-  const k = env.drag_per_mass_linear_s ?? 0.45;
-  const wn = env.loop.horizontal.wn_rad_s;
-  const windPart = k * disturbance / (wn * wn);
+  // Crosswind turbulence sigma: Dryden lateral intensity, or the forecast gust spread (peak factor 2.5), whichever is larger.
+  const sigmaCross = Math.max(sv, Math.max(0, gustAlt - uAlt) / 2.5);
+  let windPart: number;
+  if (env.measured_wind) {
+    // Empirical: 95th-percentile extra cross-track per m/s of measured crosswind sigma (506 straight legs, onboard anemometer).
+    windPart = env.measured_wind.coef95_m_per_m_s * sigmaCross;
+  } else {
+    const k = env.drag_per_mass_linear_s ?? 0.45;
+    const wn = env.loop.horizontal.wn_rad_s;
+    windPart = k * 2 * sigmaCross / (wn * wn);
+  }
   if (uAlt > 5) {
     if (level === 'calibrated') level = 'extrapolating';
-    reasons.push(`Wind at flight altitude ${uAlt.toFixed(1)} m/s: wind response is modelled, not validated against measured wind.`);
+    reasons.push(`Wind at flight altitude ${uAlt.toFixed(1)} m/s: gust response is calibrated on measured wind from a different quadcopter (DJI M100), not this aircraft.`);
   }
   if (uAlt > 10) {
     level = 'uncalibrated';
