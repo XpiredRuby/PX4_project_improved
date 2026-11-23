@@ -613,3 +613,13 @@ table.credibility th, table.credibility td { text-align: left; padding: 5px 6px;
 @media (prefers-reduced-motion: reduce) {
   .live-dot, .compass-streak, .spin, .confidence-badge, .confidence-pop, .evidence-card, .route-corridor { animation: none !important; transition: none !important; }
 }
+.gnss-whatif { margin: 14px 0; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.gnss-whatif h4 { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; }
+.gnss-slider { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; align-items: center; }
+.gnss-slider input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.gnss-result { position: relative; margin: 10px 0 6px; padding: 8px 10px 14px; border-radius: 6px; border: 1px solid var(--line); }
+.gnss-result.calibrated { border-color: #5f7d5b; } .gnss-result.extrapolating { border-color: #8a6d45; } .gnss-result.uncalibrated { border-color: #8b4c43; }
+.drift-bar { position: absolute; left: 10px; right: 10px; bottom: 5px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.drift-bar::after { content: ''; position: absolute; inset: 0; transform-origin: left; transform: scaleX(var(--drift)); background: linear-gradient(90deg, var(--verified), var(--warning), #ef8a7a); transition: transform .5s ease; }
+.gnss-steps { margin: 6px 0; padding-left: 18px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .drift-bar::after { transition: none; } }

@@ -21,7 +21,7 @@ import LiveConditions from './LiveConditions';
 import WindParticles from './WindParticles';
 import ConfidenceBadge from './ConfidenceBadge';
 import AccuracyEvidence from './AccuracyEvidence';
-import { corridor as predictCorridor, type Corridor } from './fidelity';
+import { corridor as predictCorridor, windAtAltitude, type Corridor } from './fidelity';
 import { X500_ENVELOPE } from './fidelityData';
 
 const examples=[
@@ -812,7 +812,7 @@ export default function App(){
               visibleField==='acceleration'?result?.vehicle_model?.maximum_acceleration_m_s2:
               visibleField==='jerk'?result?.vehicle_model?.maximum_jerk_m_s3:undefined}/>}
         </div>}
-        {active==='analysis'&&resultPanel==='evidence'&&<div className="analysis-panel" aria-label="Accuracy evidence"><AccuracyEvidence/></div>}
+        {active==='analysis'&&resultPanel==='evidence'&&<div className="analysis-panel" aria-label="Accuracy evidence"><AccuracyEvidence windAtAlt={weatherReady?windAtAltitude(project.environment.windSpeed,project.altitude):0} altitude={project.altitude}/></div>}
         {active==='analysis'&&<>
           <div className="analysis-panel" hidden={resultPanel!=='weather'} aria-label="Wind analysis">
             <nav className="dock-bar" aria-label="Wind views">

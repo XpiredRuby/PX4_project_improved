@@ -105,3 +105,44 @@ export function corridor(env: Envelope, maxSpeed: number, wind: { speed: number;
 export const LEVEL_TEXT: Record<Level, string> = {
   calibrated: 'Calibrated', extrapolating: 'Extrapolating', uncalibrated: 'Uncalibrated',
 };
+
+// --- GNSS outage: predict PX4's documented response instead of a touchdown point -------------------
+
+export type GnssParams = {
+  noaidTimeoutS: number; // EKF2_NOAID_TOUT: dead-reckoning limit before horizontal position is invalid
+  posFsDelayS: number; // COM_POS_FS_DELAY
+  reacquireS: number; // GNSS fix plus EKF2 re-alignment after the outage ends
+  descentSpeed: number; // MPC_Z_V_AUTO_DN, used by the altitude-only Descend failsafe
+  landAlt: number; // MPC_LAND_ALT2
+  landSpeed: number; // MPC_LAND_SPEED
+};
+export const PX4_GNSS_DEFAULTS: GnssParams = { noaidTimeoutS: 5, posFsDelayS: 1, reacquireS: 6, descentSpeed: 1.5, landAlt: 5, landSpeed: 0.4 };
+// Wind coupling (1/s): fitted on the Studio's own SITL gust + 12 s outage case (29.2 m), then scaled by the
+// measured real/simulator drag ratio for the real aircraft. Model-based; not validated against a real outage.
+export const WIND_COUPLING = { simulator: 0.09, realAircraft: 0.09 * (0.4468 / 0.1692) };
+const DEAD_RECKON_M_PER_S = 0.15; // EKF2 inertial drift while still trusted (SITL: 0.6-0.7 m over 4-6 s)
+
+export type GnssPrediction = {
+  failsafe: boolean; failsafeAtS: number | null; recoverAtS: number; touchdownAtS: number | null;
+  driftSimM: number; driftRealM: number; steps: string[];
+};
+
+export function gnssOutage(outageS: number, windAtAlt: number, altitude: number, p: GnssParams = PX4_GNSS_DEFAULTS): GnssPrediction {
+  const recoverAtS = outageS + p.reacquireS;
+  if (outageS <= p.noaidTimeoutS) {
+    const d = DEAD_RECKON_M_PER_S * outageS;
+    return { failsafe: false, failsafeAtS: null, recoverAtS, touchdownAtS: null, driftSimM: d, driftRealM: d,
+      steps: [`0 s: GNSS lost; EKF2 dead-reckons on IMU.`, `${outageS.toFixed(0)} s: GNSS back before the ${p.noaidTimeoutS} s limit; mission continues.`] };
+  }
+  const tFs = p.noaidTimeoutS + p.posFsDelayS;
+  const above = Math.max(0, altitude - p.landAlt);
+  const touchdownAtS = tFs + above / p.descentSpeed + Math.min(altitude, p.landAlt) / p.landSpeed;
+  const window = Math.max(0, Math.min(recoverAtS, touchdownAtS) - tFs);
+  const drift = (k: number) => DEAD_RECKON_M_PER_S * tFs + windAtAlt * (window - (1 - Math.exp(-k * window)) / k);
+  const landsBlind = touchdownAtS <= recoverAtS;
+  return { failsafe: true, failsafeAtS: tFs, recoverAtS, touchdownAtS, driftSimM: drift(WIND_COUPLING.simulator), driftRealM: drift(WIND_COUPLING.realAircraft),
+    steps: [`0 s: GNSS lost; EKF2 dead-reckons on IMU.`,
+      `${p.noaidTimeoutS} s: horizontal position declared invalid.`,
+      `${tFs.toFixed(0)} s: PX4 failsafe: altitude-only Descend, no position hold; the aircraft drifts with the wind.`,
+      landsBlind ? `${touchdownAtS.toFixed(0)} s: touches down before position returns.` : `${recoverAtS.toFixed(0)} s: position re-acquired; PX4 lands where it is (no return to the route).`] };
+}

@@ -38,3 +38,23 @@ test('corridor flags speeds and winds outside the calibrated envelope', () => {
   assert.notEqual(windy.level, 'calibrated');
   assert.ok(windy.radius > calm.radius);
 });
+
+import { gnssOutage } from '../src/fidelity.ts';
+
+test('GNSS outage shorter than EKF2_NOAID_TOUT does not trigger failsafe (SITL gust-gps-4s: 0.63 m)', () => {
+  const r = gnssOutage(4, 6.7, 19.6);
+  assert.equal(r.failsafe, false);
+  assert.ok(Math.abs(r.driftSimM - 0.63) < 0.3);
+});
+
+test('calm 12 s outage triggers Descend with sub-metre drift (SITL calm-gps-12s: 0.69 m)', () => {
+  const r = gnssOutage(12, 0, 19.6);
+  assert.equal(r.failsafe, true);
+  assert.ok(Math.abs(r.driftSimM - 0.69) < 0.5);
+});
+
+test('gust 12 s outage reproduces the calibration case (SITL gust-gps-12s: 29.2 m) and predicts more on a real X500', () => {
+  const r = gnssOutage(12, 6.7, 19.6);
+  assert.ok(Math.abs(r.driftSimM - 29.2) < 4, String(r.driftSimM));
+  assert.ok(r.driftRealM > r.driftSimM);
+});
