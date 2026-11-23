@@ -7,9 +7,9 @@ const guide = {
   start: {
     title: 'Get started',
     entries: [
-      ['Build a route', 'Try an example or choose Add point and click the map. Select / move lets you drag an existing point. Undo restores the previous edit.'],
-      ['Check and preview it', 'Select Plan & verify. Review any changes, then open Preview flight to play the planned motion in 3D.'],
-      ['Review or simulate', 'Review results has separate views for the checks, simulator, charts, and recordings. On a narrow screen, open Project or Settings from the command bar.'],
+      ['Choose where to start', 'On Start, try a practice flight, start a blank route, or open a saved route. With a blank route, click the map to add points in order.'],
+      ['Check and watch', 'Choose Check route and review any changes. Watch flight preview starts playback in 3D.'],
+      ['Find more tools', 'Review results includes checks, charts, and the simulator. More tools opens recordings and flight studies. On a narrow screen, Project and Settings open their own panels.'],
     ],
   },
   map: {
