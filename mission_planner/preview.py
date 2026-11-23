@@ -12,7 +12,7 @@ import tempfile
 from .contracts import EnvironmentSnapshot, MissionIntent, VehicleModel, load_contract, canonical_sha256
 from .plan_drawn_path import compile_drawn_path
 from .plan_interview import intent_from_interview
-from .aircraft import assess_profile, mission_budget
+from .aircraft import assess_profile, mission_budget, rehearsal_volume
 from .lifecycle import build_mission
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -168,9 +168,10 @@ def _preview_strict(payload: dict, *, loops_override=None) -> dict:
             vehicle_path, environment_path = work / "vehicle.json", work / "environment.json"
             vehicle_path.write_text(json.dumps(setup["vehicle_model"], allow_nan=False))
             environment = load_contract(ROOT / "config/planner/empty_world_environment.json", dict)
+            radius, height = rehearsal_volume(profile)
             environment.update(environment_id="profile-env-" + setup["profile_sha256"][:16],
-                               max_radius_m=profile["max_radius_m"],
-                               max_height_above_launch_m=profile["max_height_m"],
+                               max_radius_m=radius,
+                               max_height_above_launch_m=height,
                                max_wind_m_s=profile["expected_wind_m_s"])
             environment_path.write_text(json.dumps(environment, allow_nan=False))
         intent_path = work / "intent.json"

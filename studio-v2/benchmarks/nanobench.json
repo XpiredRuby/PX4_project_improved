@@ -1,0 +1,146 @@
+{
+  "source": "https://github.com/syediu/nanobench",
+  "revision": "934a1ab92c458cad99c9278a5cb63bf68af6e56c",
+  "aircraft": "Crazyflie 2.1",
+  "measurement": "Vicon world XYZ, metres",
+  "model": "First-order closed-loop position lag; initialized once per flight",
+  "tau_s": 0.5636765862528911,
+  "training_maneuver": "medium circle",
+  "runs": [
+    {
+      "flight": "B2_circle_medium_rep1",
+      "split": "train",
+      "sha256": "5f8f254531d3e367eb30f437d7d7b5d4a6a401b8576a5a0196428d97c909aa76",
+      "samples": 2725,
+      "duration_s": 27.250269889831543,
+      "predicted_minus_measured": {
+        "rmse_m": 0.3696108496068479,
+        "p95_m": 1.0254046787047397,
+        "max_m": 1.0481618306314366,
+        "bias_xyz_m": [
+          0.005507528444304866,
+          0.12165994748271997,
+          -0.0032425745964537586
+        ]
+      },
+      "reference_minus_measured": {
+        "rmse_m": 0.5116017176400256,
+        "p95_m": 1.0503996841855008,
+        "max_m": 1.0505838720487763,
+        "bias_xyz_m": [
+          0.0052288859324770695,
+          0.1212846282187156,
+          -0.0043557595060550415
+        ]
+      }
+    },
+    {
+      "flight": "B2_circle_medium_rep2",
+      "split": "train",
+      "sha256": "fc5579b60c791bf9045779c09d480fb81baef99d618a9197475e03afa1a52098",
+      "samples": 4229,
+      "duration_s": 42.292473793029785,
+      "predicted_minus_measured": {
+        "rmse_m": 0.29864422833808973,
+        "p95_m": 0.9697104101871797,
+        "max_m": 1.0718391475869302,
+        "bias_xyz_m": [
+          0.07485604946167176,
+          0.029949193902510787,
+          -0.014264572148787623
+        ]
+      },
+      "reference_minus_measured": {
+        "rmse_m": 0.48344371816485104,
+        "p95_m": 1.0743220235306545,
+        "max_m": 1.0745690457392676,
+        "bias_xyz_m": [
+          0.07445013998817689,
+          0.02973884403759754,
+          -0.014970421698273822
+        ]
+      }
+    },
+    {
+      "flight": "B3_figure8_medium_rep1",
+      "split": "held_out",
+      "sha256": "03713f2e118eff8332e79e6ab497e5d1a09025dbf411f1c8bd503d8af9d9bd98",
+      "samples": 2476,
+      "duration_s": 24.760291576385498,
+      "predicted_minus_measured": {
+        "rmse_m": 0.25901024029386255,
+        "p95_m": 0.5812484116408476,
+        "max_m": 0.590525713777428,
+        "bias_xyz_m": [
+          0.05879331416836605,
+          -0.04477626192565331,
+          0.0007614440381769552
+        ]
+      },
+      "reference_minus_measured": {
+        "rmse_m": 0.4125480031042736,
+        "p95_m": 0.5987821674073134,
+        "max_m": 0.9898540521031906,
+        "bias_xyz_m": [
+          0.05831378498949918,
+          -0.04483670511389337,
+          -0.0004567180617932144
+        ]
+      }
+    },
+    {
+      "flight": "B10_lissajous_slow_rep1",
+      "split": "held_out",
+      "sha256": "c5abd2383d5286c622b5b5d76fee2f277d391c35bebcfa1b789f47c191b346b3",
+      "samples": 4225,
+      "duration_s": 42.24030327796936,
+      "predicted_minus_measured": {
+        "rmse_m": 0.20087426203054728,
+        "p95_m": 0.6049889092310651,
+        "max_m": 0.6765587479590972,
+        "bias_xyz_m": [
+          -0.018103028593331637,
+          -0.03702213101747507,
+          -0.014560781831332685
+        ]
+      },
+      "reference_minus_measured": {
+        "rmse_m": 0.3225337051403543,
+        "p95_m": 0.6782929866215631,
+        "max_m": 0.6950241101875567,
+        "bias_xyz_m": [
+          -0.01831807297183433,
+          -0.03706666575337278,
+          -0.015278974483786982
+        ]
+      }
+    },
+    {
+      "flight": "B10_lissajous_fast_rep1",
+      "split": "held_out",
+      "sha256": "14e6ae607bd6bc507b3a3acc53a7e97df3539f3d2c862a4f5d073f610d18f1d0",
+      "samples": 4221,
+      "duration_s": 42.21027183532715,
+      "predicted_minus_measured": {
+        "rmse_m": 0.2002932542450062,
+        "p95_m": 0.30752642960201865,
+        "max_m": 0.3268493227056381,
+        "bias_xyz_m": [
+          0.02368334365361289,
+          -0.006208243235445725,
+          -0.01882688706476214
+        ]
+      },
+      "reference_minus_measured": {
+        "rmse_m": 0.5055153634677984,
+        "p95_m": 0.7610404833102404,
+        "max_m": 0.875209808446223,
+        "bias_xyz_m": [
+          0.02341570599928927,
+          -0.006269265668561952,
+          -0.01974848868182895
+        ]
+      }
+    }
+  ]
+}

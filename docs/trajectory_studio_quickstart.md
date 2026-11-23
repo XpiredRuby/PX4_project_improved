@@ -1,4 +1,8 @@
-# Plan and inspect a trajectory
+# Legacy editor quickstart
+
+For the current React workspace and connected X500 benchmark, use the
+[Trajectory Studio handbook](trajectory_studio_handbook.md). This page records
+the earlier editor and its simulator limits.
 
 The public studio runs the Python/NumPy planner on your device. It does not run
 Gazebo or connect to aircraft. Draw anywhere, choose an example, or place

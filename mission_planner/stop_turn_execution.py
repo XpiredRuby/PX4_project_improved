@@ -10,6 +10,7 @@ import csv
 import hashlib
 import math
 from pathlib import Path
+from functools import lru_cache
 
 import numpy as np
 from numpy.polynomial import Polynomial
@@ -26,23 +27,30 @@ from .export import FIELDS
 from .lifecycle_verification import verify_phase
 
 
-def progress_polynomial():
-    """Solve rest-to-rest C3 boundary conditions independently of the generator."""
+@lru_cache(maxsize=2)
+def progress_polynomial(mirrored=False):
+    """Solve boundary conditions independently of the generator."""
     matrix, target = [], []
-    for u, position in ((0.0, 0.0), (1.0, 1.0)):
-        for order in range(4):
-            matrix.append(
-                [
-                    0.0
-                    if k < order
-                    else math.factorial(k)
-                    / math.factorial(k - order)
-                    * u ** (k - order)
-                    for k in range(8)
-                ]
-            )
-            target.append(position if order == 0 else 0.0)
+    degree = 6 if mirrored else 7
+    conditions = ((0., (0., 0., 0., 0.)), (1., (.5, 1., 0.) if mirrored else (1., 0., 0., 0.)))
+    for u, values in conditions:
+        for order, value in enumerate(values):
+            matrix.append([
+                0. if k < order else math.factorial(k) / math.factorial(k-order) * u**(k-order)
+                for k in range(degree + 1)
+            ])
+            target.append(value)
     return Polynomial(np.linalg.solve(matrix, target))
+
+
+def sample_progress(phase, u, order):
+    if phase.get("progress") != "mirrored_ramp":
+        return progress_polynomial().deriv(order)(u)
+    left = u <= .5
+    local = np.where(left, 2*u, 2*(1-u))
+    value = progress_polynomial(mirrored=True).deriv(order)(local) * 2**order
+    reflected = 1 - value if order == 0 else (-1)**(order+1) * value
+    return np.where(left, value, reflected)
 
 
 def derivative_peak(poly, order):
@@ -65,13 +73,13 @@ def sample_stop_turn_reference(phases, query):
     """
     query = np.asarray(query, dtype=float)
     states = np.full((len(query), 4), np.nan)
-    q, clock = progress_polynomial(), 0.0
+    clock = 0.0
     for phase in phases:
         duration = phase["duration_s"]
         mask = (query >= clock) & (query <= clock + duration)
         u = (query[mask] - clock) / duration
         start, end = np.asarray(phase["start"]), np.asarray(phase["end"])
-        states[mask] = start + q(u)[:, None] * (end - start)
+        states[mask] = start + sample_progress(phase, u, 0)[:, None] * (end - start)
         clock += duration
     return states
 
@@ -94,7 +102,7 @@ def audit_stop_turn_artifacts(
     if (
         summary.get("release_class") != "SITL_ONLY"
         or verification.get("accepted") is not True
-        or verification.get("method") != "stop_turn_septic_bernstein"
+        or verification.get("method") not in ("stop_turn_septic_bernstein", "stop_turn_mixed_bernstein")
     ):
         raise ValueError(
             "Experimental adapter requires an accepted SITL stop/turn certificate"
@@ -174,7 +182,6 @@ def audit_stop_turn_artifacts(
         ordered, visited, rtol=0.0, atol=1e-9
     ):
         raise ValueError("Stop/turn phases do not visit the effective route in order")
-    q = progress_polynomial()
     clock, previous, max_error = 0.0, None, 0.0
     maximum = np.zeros(3)
     groups = ((1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 15), (12, 13, 14, 16))
@@ -203,17 +210,19 @@ def audit_stop_turn_artifacts(
         ):
             raise ValueError("Stop/turn phase clocks disagree")
         delta = end - start
+        mirrored = phase.get("progress") == "mirrored_ramp"
+        q = progress_polynomial(mirrored=mirrored)
+        time_scale = (2 if mirrored else 1) / duration
         if intent.motion.yaw_mode == "fixed" and abs(delta[3]) > 1e-10:
             raise ValueError("Fixed heading adapter cannot execute a changing heading")
-        requested_cap = 0.9 * min(
-            intent.motion.maximum_speed_m_s,
+        requested_cap = min(
+            0.9 * min(intent.motion.maximum_speed_m_s, vehicle.maximum_speed_m_s),
             intent.motion.target_speed_m_s or vehicle.maximum_speed_m_s,
-            vehicle.maximum_speed_m_s,
         )
         if phase["speed_limit_m_s"] > requested_cap + 1e-9:
             raise ValueError("Phase speed cap exceeds the verified intent")
         yaw_peaks = [
-            derivative_peak(q, k) * abs(delta[3]) / duration**k for k in (1, 2, 3)
+            derivative_peak(q, k) * abs(delta[3]) * time_scale**k for k in (1, 2, 3)
         ]
         yaw_limits = [
             math.radians(getattr(vehicle, name))
@@ -232,7 +241,7 @@ def audit_stop_turn_artifacts(
             )
         peaks = np.array(
             [
-                derivative_peak(q, k) * np.linalg.norm(delta[:3]) / duration**k
+                derivative_peak(q, k) * np.linalg.norm(delta[:3]) * time_scale**k
                 for k in (1, 2, 3)
             ]
         )
@@ -254,9 +263,11 @@ def audit_stop_turn_artifacts(
             raise ValueError(
                 "Every stop/turn boundary must be an exact exported sample"
             )
+        if mirrored and not np.any(np.abs(segment[:, 0] - (clock + duration/2)) <= 1e-9):
+            raise ValueError("The mirrored phase midpoint must be an exact exported sample")
         u = np.clip((segment[:, 0] - clock) / duration, 0.0, 1.0)
         for order, columns in enumerate(groups):
-            expected = q.deriv(order)(u)[:, None] * delta / duration**order
+            expected = sample_progress(phase, u, order)[:, None] * delta / duration**order
             if order == 0:
                 expected += start
             error = float(np.max(np.abs(segment[:, columns] - expected)))

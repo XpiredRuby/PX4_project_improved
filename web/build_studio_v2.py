@@ -7,10 +7,14 @@ legacy site or grants any simulation or hardware execution authority.
 from __future__ import annotations
 
 from pathlib import Path
+import argparse
+import hashlib
 import json
 import shutil
 import sys
 import tempfile
+from zipfile import ZipFile, ZIP_DEFLATED
+from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -20,7 +24,44 @@ SOURCE = ROOT / "studio-v2/dist"
 PREVIEW = ROOT / "studio-v2/preview"
 
 
-def build() -> None:
+RUNTIME_URL = "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/"
+
+
+def bundle_runtime(staged: Path) -> None:
+    directory = staged / "pyodide"
+    directory.mkdir()
+
+    def fetch(name: str):
+        if Path(name).name != name:
+            raise ValueError("Invalid runtime package name")
+        with urlopen(RUNTIME_URL + name, timeout=90) as source, (directory / name).open("wb") as output:
+            shutil.copyfileobj(source, output)
+
+    for name in ("pyodide-lock.json", "pyodide.mjs", "pyodide.asm.js", "pyodide.asm.wasm", "python_stdlib.zip"):
+        fetch(name)
+    packages = json.loads((directory / "pyodide-lock.json").read_text())["packages"]
+    pending = ["numpy"]
+    seen = set()
+    while pending:
+        key = pending.pop()
+        if key in seen:
+            continue
+        seen.add(key)
+        package = packages[key]
+        wheel = package["file_name"]
+        fetch(wheel)
+        if hashlib.sha256((directory / wheel).read_bytes()).hexdigest() != package["sha256"]:
+            raise ValueError(f"Runtime package digest mismatch for {wheel}")
+        pending.extend(package["depends"])
+    worker = staged / "planner-worker.js"
+    script = worker.read_text()
+    if script.count(RUNTIME_URL) != 2:
+        raise ValueError("Planner worker runtime differs from the bundle version")
+    worker.write_text(script.replace(RUNTIME_URL + "pyodide.mjs", "/pyodide/pyodide.mjs")
+                      .replace("'" + RUNTIME_URL + "'", "new URL('/pyodide/', location.href).href"))
+
+
+def build(include_runtime: bool = False, archive: Path | None = None) -> None:
     if not (SOURCE / "index.html").is_file():
         raise ValueError("Build React first: cd studio-v2 && npm install && npm run build")
     with tempfile.TemporaryDirectory(prefix="px4-studio-v2-") as temp:
@@ -43,6 +84,17 @@ def build() -> None:
                 if destination.exists():
                     raise ValueError(f"React dist conflicts with planner asset: {item.name}")
                 shutil.copy2(item, destination)
+        if include_runtime:
+            bundle_runtime(staged)
+        if archive is not None:
+            if not include_runtime:
+                raise ValueError("An offline archive requires --bundle-runtime")
+            # Native entry points stay outside the verified browser runtime manifest.
+            for name in ("editor", "research_studio", "study_queue"):
+                shutil.copyfile(ROOT / "mission_planner" / f"{name}.py", staged / "python/mission_planner" / f"{name}.py")
+            shutil.copyfile(ROOT / "web/start_studio.py", staged / "start_studio.py")
+            shutil.copyfile(ROOT / "studio-v2/START_HERE.txt", staged / "START_HERE.txt")
+            shutil.copytree(ROOT / "studio-v2/examples", staged / "examples")
         html = (staged / "index.html").read_text()
         html = html.replace('<meta name="theme-color"', '<meta name="px4-build" content="' + information["build_id"] + '"><meta name="theme-color"', 1)
         if "<script src=\"/browser-api.js\"></script>" not in html:
@@ -52,11 +104,24 @@ def build() -> None:
         (staged / "studio-v2-info.json").write_text(json.dumps({
             "schema_version": 1,
             "planner_build_id": information["build_id"],
-            "execution": "browser planner only",
+            "execution": "browser and optional native offline planner" if archive else "browser planner only",
             "simulation": "not run",
-            "weather": "Open-Meteo forecast for airspeed analysis only",
+            "weather": "analytical airspeed and uncalibrated point-mass tracking",
+            "runtime": "bundled" if include_runtime else "CDN",
             "physical_flight_approval": False
         }, indent=2) + "\n")
+        if archive is not None:
+            archive.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=archive.parent, delete=False, suffix=".zip") as temp_zip:
+                temporary = Path(temp_zip.name)
+            try:
+                with ZipFile(temporary, "w", ZIP_DEFLATED, compresslevel=8) as output:
+                    for member in sorted(staged.rglob("*")):
+                        if member.is_file():
+                            output.write(member, member.relative_to(staged))
+                temporary.replace(archive)
+            finally:
+                temporary.unlink(missing_ok=True)
         if PREVIEW.exists():
             if PREVIEW.is_symlink():
                 raise ValueError("Refusing to replace symlink")
@@ -66,4 +131,8 @@ def build() -> None:
 
 
 if __name__ == "__main__":
-    build()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--bundle-runtime", action="store_true", help="Include the pinned Python and NumPy runtime for disconnected use")
+    parser.add_argument("--archive", type=Path, help="Write an extractable bundle with optional native background studies")
+    args = parser.parse_args()
+    build(args.bundle_runtime, args.archive)

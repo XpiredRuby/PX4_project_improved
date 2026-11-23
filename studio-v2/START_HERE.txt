@@ -1,0 +1,31 @@
+PX4 Trajectory Studio
+
+Extract the entire ZIP. Open a terminal in the folder containing this file.
+On Windows, py can be used in place of python.
+
+For unattended studies and recording imports, use Python 3.10+.
+
+  python -m pip install numpy pyulog
+  python start_studio.py
+
+Open http://127.0.0.1:8767. The server runs locally without PX4, Gazebo or WSL.
+Dependencies only need to be installed once. Keep the server running to process
+the queue. Reopening it resumes unfinished work. The default study directory
+is .px4-trajectory-studio/studies under your home folder. To change it, use
+python start_studio.py --studies-dir PATH.
+
+For browser-only planning with no dependency installation, use
+
+  python -m http.server 8767 --bind 127.0.0.1
+
+Open the same address. The ZIP includes Python and NumPy for the browser.
+In this mode the quick sweep runs while the page stays open. Live forecasts
+and place search need an internet connection.
+
+Choose “200 m · five stops” under Build route, then “Check route.”
+Open Results & Analysis to queue studies, test the mission report with a
+synthetic recording, or inspect the archived X500 flight on its original route.
+The examples directory includes the editable 200 m project and the native
+reference speed sweep. A physical X500 tracking-accuracy score is still open.
+
+Source and native setup: https://github.com/XpiredRuby/PX4_project_improved/pull/10

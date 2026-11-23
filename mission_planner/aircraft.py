@@ -212,12 +212,18 @@ def mission_budget(setup, duration_s, initial_height_m, final_height_m):
     return result
 
 
+def rehearsal_volume(profile):
+    """Intersect the declared volume with the PX4 rehearsal runner limits."""
+    return min(80., profile["max_radius_m"]), min(30., profile["max_height_m"])
+
+
 def controller_overrides(p):
     """Bound the existing PX4 runner by this profile, including non-route phases."""
     horizontal = p["maximum_speed_m_s"] * .9
     vertical = min(p["maximum_climb_m_s"], p["maximum_descent_m_s"]) * .9
     acceleration = min(1.5, p["maximum_acceleration_m_s2"] * .9)
     command = min(1.25, horizontal)
+    radius, height = rehearsal_volume(p)
     tilt = min(25., p["maximum_tilt_deg"])
     return dict(max_horizontal_speed_m_s=horizontal, max_vertical_speed_m_s=vertical,
                 takeoff_max_speed_m_s=min(.8, vertical), return_max_speed_m_s=min(2., horizontal),
@@ -228,8 +234,8 @@ def controller_overrides(p):
                 max_yaw_rate_deg_s=min(45., p["maximum_yaw_rate_deg_s"]*.9),
                 max_yaw_acceleration_deg_s2=min(60., p["maximum_yaw_acceleration_deg_s2"]*.9),
                 max_yaw_jerk_deg_s3=min(120., p["maximum_yaw_jerk_deg_s3"]*.9),
-                max_operating_radius_m=min(80., p["max_radius_m"]),
-                max_height_above_launch_m=min(30., p["max_height_m"]),
+                max_operating_radius_m=radius,
+                max_height_above_launch_m=height,
                 bootstrap_max_tilt_deg=tilt, bootstrap_pitch_deg=-min(10., tilt*.5))
 
 

@@ -1,5 +1,9 @@
 """Independent truth and missing-evidence regressions for rehearsal scoring."""
 from copy import deepcopy
+import hashlib
+from io import BytesIO
+import json
+from zipfile import ZipFile
 from pathlib import Path
 import sys
 import unittest
@@ -8,10 +12,22 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
-from planner_rehearsal import assess_frames, assess_aircraft_envelope  # noqa: E402
+from planner_rehearsal import assess_frames, assess_aircraft_envelope, native_land_commands, studio_recording  # noqa: E402
 
 
 class RehearsalTests(unittest.TestCase):
+    def test_native_land_commands_require_ordered_finite_coverage(self):
+        interval = np.array([100000, 900000])
+        for stamps, speeds, expected in (
+            ([100000, 500000, 900000], [.3, .6, .4], (.6, 3, True)),
+            ([100000, 900000], [.6, .6], (.6, 2, False)),
+            ([100000, 500000, 400000, 900000], [.6]*4, (.6, 4, False)),
+            ([100000, 500000, 900000], [.6, np.nan, .6], (None, 3, False)),
+        ):
+            with self.subTest(stamps=stamps, speeds=speeds):
+                self.assertEqual(native_land_commands(
+                    {"timestamp": stamps, "velocity[2]": speeds}, interval), expected)
+
     def evidence(self):
         time = np.arange(0., 2.01, .05)
         phase = ["TRAJECTORY"] * 21 + ["PX4_LAND"] * 20
@@ -43,6 +59,23 @@ class RehearsalTests(unittest.TestCase):
         legacy = assess_frames(df,plan,physical,yaw,velocity,audit,ground)
         check = next(c for c in legacy['checks'] if c['name']=='Runtime reference follows exact CSV with one translation')
         self.assertFalse(check['passed'])
+
+    def test_offline_studio_export_binds_selected_input_and_preserves_missing_truth(self):
+        df, _, physical, *_ = self.evidence()
+        physical[3] = np.nan
+        digest = "a" * 64
+        manifest = {"run_id": "unit", "controller_runtime": {"trajectory_sha256": digest},
+                    "source_sha256": {"trajectory.csv": "b"*64}}
+        bundle = studio_recording(df, physical, manifest, digest, digest, {"source.csv": "c"*64})
+        self.assertEqual(bundle, studio_recording(df, physical, manifest, digest, digest, {"source.csv": "c"*64}))
+        with ZipFile(BytesIO(bundle)) as archive:
+            receipt = json.loads(archive.read("run-manifest.json"))
+            csv = archive.read("telemetry.csv")
+            self.assertEqual(receipt["telemetry_sha256"], hashlib.sha256(csv).hexdigest())
+            self.assertEqual(receipt["controller_runtime"]["trajectory_sha256"], receipt["selected_trajectory_sha256"])
+            self.assertTrue(pd.read_csv(BytesIO(csv)).loc[3, ["truth_x", "truth_y", "truth_z"]].isna().all())
+        with self.assertRaisesRegex(ValueError, "matching plan"):
+            studio_recording(df, physical, manifest, digest, "b"*64, {})
 
     def test_complete_truth_and_lifecycle_pass_only_sampled_sitl_scope(self):
         result = assess_frames(*self.evidence())

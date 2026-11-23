@@ -5,16 +5,23 @@ and compare it with retained simulator measurements. Browser planning and CSV
 playback are available without PX4. Connected execution requires a separately
 configured local simulator; the public page does not run Gazebo.
 
-Start with the [studio quickstart](docs/trajectory_studio_quickstart.md).
-The [25 October engineering audit](docs/conference_engineering_audit.md) records
-the speed-cap fix, independent constructive-artifact adapter, test evidence and
-remaining connected-SITL qualification. The experimental adapter is opt-in;
-the ordinary studio guard remains closed for stop/turn plans pending real tests.
+## Start here
 
-Planning supports 4–16 parallel rotors; the current PX4 execution adapter
-supports 4–12. Fixed-wing, VTOL and other autopilots are explicitly unsupported.
-Only x500 has connected simulator evidence; no physical aircraft is qualified
-by the checked-in examples.
+| Goal | Guide |
+|---|---|
+| Install, plan, connect to Gazebo, and interpret results | [Trajectory Studio handbook](docs/trajectory_studio_handbook.md) |
+| Reproduce the three verified 200 m X500 routes | [Benchmark files and results](validation/2026-11-22-full-200m/README.md) |
+| Explore the React workspace, saved studies, or offline packaging | [Studio reference](studio-v2/README.md) |
+| Find the original implementation and legacy CLI | [Legacy controller configuration](#legacy-controller-configuration) and [waypoint missions](#waypoint-missions) |
+
+The registered Gazebo X500 completed the out-and-back, square, and triangle at
+the full 200 m reference distance. Each passed 22 checks, including ground-truth
+tracking, slow approach, native LAND, and disarm. The benchmark is local SITL.
+
+Planning supports 4–16 parallel rotors. The current PX4 execution adapter
+supports 4–12. Connected evidence in this repository covers the simulated X500.
+Fixed-wing, VTOL, other autopilots, and physical-aircraft qualification are
+outside the demonstrated workflow.
 
 The validated software envelope includes a four-second GNSS-outage recovery budget;
 combined gusts and a 12-second outage still fail touchdown position limits.
@@ -57,7 +64,7 @@ automatic disarm.
 | `reference/original_baseline/` | Original implementation |
 | `session_2_robust_landing/` | Earlier validated implementation and evidence |
 
-## Trajectory and simulation acceptance
+## Historical trajectory and simulation acceptance
 
 The default studio uses the configured reference simulator so you can draw and
 rehearse without completing an aircraft questionnaire. Advanced profiles remain
@@ -65,7 +72,7 @@ optional. The [acceptance record](validation/2026-10-19-trajectory-acceptance/RE
 contains the expanded offline/Gazebo/browser results; follow the
 [manual trial](docs/trajectory_simulation_acceptance.md#manual-trial) to test your own drawings.
 
-## Configuration
+## Legacy controller configuration
 
 Motion, navigation, and terrain bounds are in `controller/mission_config.py`.
 The default ground-height range is -10 to +10 m relative to takeoff.
@@ -80,12 +87,12 @@ cruise command sooner; vertical slew remains 1.0 m/s². Fresh local velocity
 damping (gain 0.8) reduces momentum and oscillation during HOLD. This is a braking
 tradeoff, not an increase to reference-trajectory acceleration or speed caps.
 The path clock stays frozen in HOLD and the last trusted reference is retained.
-The cruise reference is retimed to at most 1.0 m/s horizontally, with a
-1.25 m/s normal command cap. HOLD retains the confidence-limited feedback
-authority inside the existing 3.0 m/s hard envelope. The slower cruise trades
-mission duration for braking distance. Four independent October 4 gust/outage
-trials verify recovery at the declared four-second boundary; combined wind and
-prolonged GPS loss remain a failed case.
+The standalone baseline retimes cruise to at most 1.0 m/s horizontally, with a
+1.25 m/s normal command cap. HOLD retains confidence-limited feedback inside
+the baseline 3.0 m/s hard envelope. Four October 4 trials verify recovery at a
+four-second GPS outage. The combined wind and prolonged GPS loss remains a
+failed case. The registered benchmark has its own verified speed settings.
+[Current connected configuration](docs/trajectory_studio_handbook.md#4-run-the-current-benchmark)
 
 For PX4 v1.17, configure `EKF2_GPS_CTRL=7` (15 with dual-GPS heading),
 `EKF2_HGT_REF=1`, `EKF2_MAG_TYPE=5`, and disable `EKF2_BARO_CTRL`,
@@ -94,11 +101,12 @@ Reboot after estimator changes. Single-GPS yaw initialization requires movement.
 The runner also checks Offboard-loss landing, automatic landing disarm, and
 ordered battery thresholds with a native landing response.
 
-The runner reads and checks `MPC_LAND_SPEED` and `MPC_LAND_CRWL`; it does not
-change them during a mission. Both must be positive, crawl must not exceed
-landing speed, and landing speed must be at most 0.5 m/s. The final x500 SITL
-trials use 0.4 and 0.3 m/s respectively. A 180 s native-landing timeout covers
-the configured 40 m maximum descent plus settling and disarm allowance.
+The runner reads and validates native landing parameters. Historical baseline
+trials used a 0.4 m/s LAND setting and a 0.3 m/s crawl setting. The registered
+flat-world X500 benchmark separately uses a nominal 0.1 m/s approach and
+limits the PX4 AUTO LAND descent command to 0.6 m/s.
+[Landing validation](validation/2026-11-22-native-land/README.md)
+
 `EKF2_NOAID_TOUT` must remain inside its supported 0.5–10 s range. For the
 default four-second recovery budget, the runner requires at least 6 s: the outage,
 PX4's post-outage GNSS health window, and one second of sampling/fusion reserve.

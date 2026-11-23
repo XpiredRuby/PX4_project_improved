@@ -1,4 +1,4 @@
-import type { Environment, Preview, Project, Sample } from './types';
+import type { Environment, Point, Preview, Project, Sample } from './types';
 
 export const initialEnvironment: Environment = {
   mode:'manual', latitude:30.62, longitude:-96.34,
@@ -20,11 +20,15 @@ export function finite(value:number, label:string, min=-Infinity, max=Infinity) 
   return value;
 }
 export function validateProject(project: Project) {
-  if (!project.points||project.points.length<2||project.points.length>8192) throw Error('Add 2–8,192 route points');
+  if (!Array.isArray(project.points)||project.points.length<2||project.points.length>8192) throw Error('Add 2–8,192 route points');
+  if (project.aircraft && (!project.aircraft.profile?.profile_id || !/^[0-9a-f]{64}$/.test(project.aircraft.sha256) ||
+      !(Number.isFinite(project.aircraft.profile.maximum_speed_m_s) && project.aircraft.profile.maximum_speed_m_s > 0))) {
+    throw Error('Invalid aircraft profile or digest');
+  }
   finite(project.altitude,'Altitude',0.1,30);
-  finite(project.cruise,'Preferred cruise',0.01,20);
-  finite(project.speedCap,'Never-exceed speed',0.01,20);
-  if (project.cruise>project.speedCap) throw Error('Cruise cannot exceed the never-exceed speed limit');
+  for (const [label, value] of [['Preferred cruise', project.cruise], ['Never-exceed speed', project.speedCap]] as const) {
+    if (!Number.isFinite(value) || value <= 0) throw Error(label + ' must be a finite positive speed');
+  }
   finite(project.tolerance,'Path tolerance',0.01,10);
   finite(project.yaw,'Yaw',-3600,3600);
   if (!project.environment || !Number.isFinite(project.environment.windSpeed) || project.environment.windSpeed<0 || !Number.isFinite(project.environment.windDirection)) throw Error('Environment wind must be finite and nonnegative');
@@ -34,9 +38,16 @@ export function validateProject(project: Project) {
   finite(project.environment.windSpeed,'Wind speed',0,75);
   finite(project.environment.gust,'Wind gust',0,100);
   finite(project.environment.windDirection,'Wind from',-3600,3600);
+  if(project.environment.humidity!==undefined) finite(project.environment.humidity,'Relative humidity',0,100);
   finite(project.environment.temperature,'Temperature',-100,80);
   finite(project.environment.pressure,'Pressure',100,1100);
-  for(const p of project.points) {
+  const ids=new Set<string>();
+  for(const [index,p] of project.points.entries()) {
+    const id=p?.id||'point-'+index;
+    if(!p||typeof id!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/.test(id))
+      throw Error('Invalid waypoint identifier at row '+(index+1));
+    if(ids.has(id))throw Error('Waypoint identifiers must be unique: '+id);
+    ids.add(id);
     finite(p.north,'North coordinate',-500,500); finite(p.east,'East coordinate',-500,500);
     finite(p.altitude,'Waypoint altitude',0.1,30);
     // The closest-feasible planner can project oversize requests into the model envelope.
@@ -46,9 +57,10 @@ export function validateProject(project: Project) {
 }
 export function buildRequest(project:Project) {
   validateProject(project);
-  return { source:'drawing', planning_mode:'closest', document:{
+  return { source:'drawing', planning_mode:'closest', ...(project.aircraft ? {aircraft_profile:project.aircraft.profile} : {}), document:{
     schema_version:1, release_class:'SITL_ONLY', mission_id:'studio-v2-draft',
-    vehicle_model_id:'px4-x500-sitl-v1', environment_id:'empty-world-v1',
+    vehicle_model_id:project.aircraft?.profile.profile_id??'px4-x500-sitl-v1',
+    environment_id:project.aircraft?'profile-env-'+project.aircraft.sha256.slice(0,16):'empty-world-v1',
     frame:{name:'LOCAL_NED',units:'m',altitude_datum:'launch',origin_id:'launch-001'},
     objective_priority:['legal_and_safety','vehicle_and_environment','intent_fidelity','tracking_margin_and_energy','duration'],
     path:{kind:'polyline',closure:'open_stop',maximum_deviation_m:project.tolerance,
@@ -62,10 +74,29 @@ export function buildRequest(project:Project) {
       yaw_profile:null,look_at_north_m:null,look_at_east_m:null,look_at_down_m:null}
   }};
 }
+export function nextWaypointId(points:Point[]) {
+  const ids=new Set(points.map(p=>p.id));
+  for(let i=points.length+1;;i++){
+    const id='P'+String(i).padStart(2,'0');
+    if(!ids.has(id))return id;
+  }
+}
+
+const forecastFields=new Set(['mode','latitude','longitude','timestamp']);
+export function updateEnvironment(current:Environment,patch:Partial<Environment>):Environment {
+  const next={...current,...patch};
+  if(next.mode==='live'&&Object.entries(patch).some(([key,value])=>
+    forecastFields.has(key)&&current[key as keyof Environment]!==value)){
+    return {...next,fetchedAt:undefined,forecastValidAt:undefined,humidity:undefined,source:'Awaiting forecast for this location and time'};
+  }
+  return next;
+}
+
 export function parseCsv(text:string):Sample[] {
   const lines=text.trim().split(/\r?\n/);
   if(lines.length<2) throw Error('CSV is empty');
   const headers=lines[0].split(',').map(x=>x.trim());
+  if(new Set(headers).size!==headers.length)throw Error('Duplicate trajectory CSV columns');
   const required=['time','x','y','z','vx','vy','vz'];
   if(required.some(key=>!headers.includes(key))) throw Error('CSV missing required trajectory fields: '+required.join(', '));
   const rows:Sample[]=[];
@@ -82,7 +113,7 @@ export function parseCsv(text:string):Sample[] {
     const vx=get('vx'),vy=get('vy'),vz=get('vz');
     const ax=maybe('ax'),ay=maybe('ay'),az=maybe('az');
     const jx=maybe('jx'),jy=maybe('jy'),jz=maybe('jz');
-    rows.push({time,north,east,altitude,vx,vy,vz,ax,ay,az,jx,jy,jz,
+    rows.push({time,north,east,altitude,vx,vy,vz,ax,ay,az,jx,jy,jz,phase:values[headers.indexOf('phase')]?.trim(),
       yaw:maybe('yaw'),yawRate:maybe('yaw_rate'),yawAcceleration:maybe('yaw_acceleration'),yawJerk:maybe('yaw_jerk'),speed:Math.hypot(vx,vy,vz),
       acceleration:Math.hypot(ax,ay,az),jerk:Math.hypot(jx,jy,jz)});
     if(rows.length>250000)throw Error('CSV exceeds 250,000 sample display budget');
@@ -98,9 +129,11 @@ export function windNE(speed:number, directionFromDeg:number) {
 // Dry ideal-gas approximation using the supplied near-surface pressure and temperature.
 // Not a vertical atmosphere model, pitot measurement or dynamic flight simulator.
 export function dryAirDensity(environment:Environment) {
+  if(environment.mode==='live' && !environment.fetchedAt)return NaN;
   return environment.pressure*100/(287.05*(environment.temperature+273.15));
 }
 export function airspeed(sample:Sample, environment:Environment) {
+  if(environment.mode==='live' && !environment.fetchedAt)return NaN;
   const w=windNE(environment.windSpeed,environment.windDirection);
   return Math.hypot(sample.vx-w.north,sample.vy-w.east,sample.vz);
 }
@@ -153,7 +186,7 @@ export function interpolate(samples:Sample[], t:number):Sample|null {
   const up=septicAt(a.altitude,-a.vz,-a.az,-a.jz,b.altitude,-b.vz,-b.az,-b.jz,h,s);
   const yaw=septicAt(a.yaw,a.yawRate,a.yawAcceleration,a.yawJerk,
                      b.yaw,b.yawRate,b.yawAcceleration,b.yawJerk,h,s);
-  return {...a,time:t,north:n.position,east:e.position,altitude:up.position,
+  return {...a,time:t,phase:s===0?a.phase:b.phase,north:n.position,east:e.position,altitude:up.position,
     vx:n.velocity,vy:e.velocity,vz:-up.velocity,
     ax:n.acceleration,ay:e.acceleration,az:-up.acceleration,
     jx:n.jerk,jy:e.jerk,jz:-up.jerk,

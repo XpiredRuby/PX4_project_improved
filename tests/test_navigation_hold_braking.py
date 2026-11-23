@@ -88,7 +88,7 @@ class NavigationHoldBrakingTests(unittest.TestCase):
         controller = PositionController()
         controller.phase = MissionPhase.TRAJECTORY
         controller.phase_clock_s = 10.
-        target = TrajectoryPoint(x=1., vx=2., vy=0.)
+        target = TrajectoryPoint(x=1., vx=2., vy=0., ax=.8, ay=-.4)
         controller.trajectory = Mock()
         controller.trajectory.get_target.return_value = target
         self.assertAlmostEqual(controller._motion_speed_scale(), .5)
@@ -100,12 +100,21 @@ class NavigationHoldBrakingTests(unittest.TestCase):
             controller.target_z-controller.trajectory_origin.z, .05)
         self.assertAlmostEqual(result["planned"][0], 1.)
         self.assertAlmostEqual(result["command"][0], 1.)
+        controller.config = replace(controller.config, trajectory_velocity_lead_s=.45)
+        compensated = controller.trajectory_controller(
+            controller.x0+1.-controller.trajectory_origin.x,
+            controller.y0-controller.trajectory_origin.y,
+            controller.target_z-controller.trajectory_origin.z, .05)
+        self.assertEqual(compensated["planned"], result["planned"])
+        self.assertAlmostEqual(compensated["command"][0], 1. + .45 * .5**2 * .8)
+        self.assertAlmostEqual(compensated["command"][1], -.45 * .5**2 * .4)
         limited, _ = controller._limit_velocity_command(3., 4., 0.)
         self.assertAlmostEqual(math.hypot(*limited[:2]), 1.25)
         controller.navigation_state = NavigationState.HOLD
         limited, _ = controller._limit_velocity_command(3., 4., 0.)
         self.assertAlmostEqual(math.hypot(*limited[:2]), 3.)
-        for changes in ({"cruise_reference_speed_m_s": 0.},
+        for changes in ({"trajectory_velocity_lead_s": .51},
+                        {"cruise_reference_speed_m_s": 0.},
                         {"cruise_command_speed_limit_m_s": .9},
                         {"cruise_command_speed_limit_m_s": 3.1}):
             with self.subTest(changes=changes), self.assertRaises(ValueError):

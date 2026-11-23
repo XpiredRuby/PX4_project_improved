@@ -257,11 +257,40 @@ def run_one(name, args):
         if (summary.get("aircraft_profile_sha256") != binding["profile_sha256"]
                 or summary["vehicle_model_sha256"] != binding["vehicle_model_sha256"]):
             raise ValueError("aircraft does not match the registered simulator")
+    world_path = args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"
+    world_digest = digest(world_path)
+    if case.get("experimental_stop_turn") and (binding is None or binding["model"] == "x500"):
+        vehicle = load_contract(folder / "plan/vehicle_model.json", dict)
+        intent = load_contract(folder / "plan/intent.json", dict)
+        motion = intent["motion"]
+        cap = min(vehicle["maximum_speed_m_s"], motion["maximum_speed_m_s"])
+        overrides = case.setdefault("controller_overrides", {})
+        cap = min(cap, overrides.get("max_horizontal_speed_m_s", cap))
+        reference_speed = min(.9 * cap, motion["target_speed_m_s"] or cap)
+        overrides.update(trajectory_velocity_lead_s=.45, cruise_reference_speed_m_s=reference_speed,
+                         cruise_command_speed_limit_m_s=cap)
+    if name == "reviewed-plan" or case.get("experimental_stop_turn"):
+        overrides = case.setdefault("controller_overrides", {})
+        # The archived validation world has a single level collision plane at launch.
+        if world_digest == digest(ROOT / "validation/2026-10-03/worlds/afvl_validation.sdf"):
+            overrides.update(ground_offset_min_m=0., ground_offset_max_m=0.)
+            if binding and binding["model"] == "x500" and binding["airframe_id"] == 4001:
+                overrides["sitl_x500_native_land"] = True
+                overrides["align_planned_heading"] = True
+                overrides["approach_speed_m_s"] = min(.1, overrides["max_vertical_speed_m_s"])
+                overrides["mission_timeout_s"] = 240. + case["cruise_height_m"] / overrides["approach_speed_m_s"]
     rotor_count = len(binding["rotors"]) if binding else 4
     parameters = dict(PARAMETERS)
+    if binding and binding["model"] == "x500" and binding["airframe_id"] == 4001:
+        # Gazebo publishes timestamped GNSS directly in this SITL configuration.
+        parameters["EKF2_GPS_DELAY"] = 0.
     if binding is not None:
         parameters.update(binding["controller_parameters"])
         parameters["MPC_LAND_SPEED"] = min(parameters["MPC_LAND_SPEED"], binding["profile"]["maximum_descent_m_s"])
+        if case.get("controller_overrides", {}).get("sitl_x500_native_land"):
+            parameters["MPC_LAND_SPEED"] = .6
+            # AUTO LAND blends toward the normal downward speed above LAND_ALT2.
+            parameters["MPC_Z_VEL_MAX_DN"] = .6
         parameters["MPC_LAND_CRWL"] = min(parameters["MPC_LAND_CRWL"], parameters["MPC_LAND_SPEED"])
     runtime = folder / "runtime"
     runtime.mkdir()
@@ -283,7 +312,7 @@ def run_one(name, args):
     config = {"release_class": "SITL_ONLY", "case": case, "parameters": parameters,
               "flight_release_source_sha256": source_digest(),
               "world": args.world, "simulation_speed_factor": 1,
-              "world_sha256": digest(args.autopilot / f"Tools/simulation/gz/worlds/{args.world}.sdf"),
+              "world_sha256": world_digest,
               "px4_executable_sha256": digest(binary),
               "controller_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "controller_batch_sha256": digest(ROOT / "scripts/sitl_scenario_batch.py"),

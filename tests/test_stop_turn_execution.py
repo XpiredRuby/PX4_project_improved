@@ -153,6 +153,37 @@ class StopTurnExecutionTests(unittest.TestCase):
         self.assertEqual(trajectory.get_target(0.0), trajectory.points[0])
         self.assertEqual(trajectory.get_target(clock), trajectory.points[-1])
 
+    def test_registered_x500_keeps_full_route_and_reconstructs_both_cruise_ramps(self):
+        import numpy as np
+        from mission_planner.stop_turn_execution import sample_progress
+
+        request = json.loads((ROOT / "validation/2026-11-22-native-land/request.json").read_text())
+        result = preview(request)
+        self.assertEqual(list(result["intent"]["path"]["points"]), request["document"]["path"]["points"])
+        self.assertAlmostEqual(result["summary"]["speed_preferences"]["route_distance_sampled_m"], 200.)
+        self.assertTrue(result["mission_budget"]["passed"])
+        self.write(result)
+        self.assertTrue(audit_stop_turn_artifacts(self.folder)["accepted"])
+        trajectory = Trajectory(self.folder / "trajectory.csv")
+        trajectory.enable_septic_interpolation()
+        clock = 0.
+        for phase in result["verification"]["phases"]:
+            self.assertEqual(phase["progress"], "mirrored_ramp")
+            duration = phase["duration_s"]
+            delta = np.subtract(phase["end"], phase["start"])
+            # Hermite spans on either side of the midpoint reproduce the two
+            # polynomials, including full state continuity across the join.
+            for fraction in (.179, .4997, .5, .5003, .821):
+                target = trajectory.get_target(clock + fraction * duration)
+                for order, fields in enumerate((("x", "y", "z"), ("vx", "vy", "vz"),
+                                                ("ax", "ay", "az"), ("jx", "jy", "jz"))):
+                    expected = sample_progress(phase, np.array([fraction]), order)[0] * delta[:3] / duration**order
+                    if order == 0:
+                        expected += phase["start"][:3]
+                    np.testing.assert_allclose([getattr(target, field) for field in fields],
+                                               expected, rtol=0, atol=3e-8)
+            clock += duration
+
     def test_experimental_campaign_case_is_audited_and_acknowledged(self):
         target = self.folder / "nominal"
         target.mkdir()

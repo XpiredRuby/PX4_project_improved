@@ -1,0 +1,99 @@
+{
+  "source": "drawing",
+  "planning_mode": "closest",
+  "document": {
+    "schema_version": 1,
+    "release_class": "SITL_ONLY",
+    "mission_id": "studio-v2-draft",
+    "vehicle_model_id": "px4-x500-sitl-v1",
+    "environment_id": "empty-world-v1",
+    "frame": {
+      "name": "LOCAL_NED",
+      "units": "m",
+      "altitude_datum": "launch",
+      "origin_id": "launch-001"
+    },
+    "objective_priority": [
+      "legal_and_safety",
+      "vehicle_and_environment",
+      "intent_fidelity",
+      "tracking_margin_and_energy",
+      "duration"
+    ],
+    "path": {
+      "kind": "polyline",
+      "closure": "open_stop",
+      "maximum_deviation_m": 0.5,
+      "points": [
+        {
+          "point_id": "P1",
+          "north_m": 0,
+          "east_m": 0,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        },
+        {
+          "point_id": "P2",
+          "north_m": 30,
+          "east_m": 0,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        },
+        {
+          "point_id": "P3",
+          "north_m": 30,
+          "east_m": 20,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        },
+        {
+          "point_id": "P4",
+          "north_m": -30,
+          "east_m": 20,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        },
+        {
+          "point_id": "P5",
+          "north_m": -30,
+          "east_m": -20,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        },
+        {
+          "point_id": "P6",
+          "north_m": 0,
+          "east_m": -20,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        },
+        {
+          "point_id": "P7",
+          "north_m": 0,
+          "east_m": 0,
+          "down_m": -12,
+          "hard": true,
+          "exact": false
+        }
+      ]
+    },
+    "motion": {
+      "maximum_speed_m_s": 50,
+      "target_speed_m_s": 50,
+      "time_mode": "minimize",
+      "requested_duration_s": null,
+      "yaw_mode": "fixed",
+      "fixed_yaw_deg": 0,
+      "yaw_profile": null,
+      "look_at_north_m": null,
+      "look_at_east_m": null,
+      "look_at_down_m": null
+    }
+  }
+}

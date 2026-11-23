@@ -129,6 +129,12 @@ class FaultInjectionTests(unittest.TestCase):
             "BAT_EMERGEN_THR": .05,
         }
         check_px4_safety_config(safe)
+        native_land = dict(safe, MPC_LAND_SPEED=0.6000000238418579)
+        check_px4_safety_config(native_land, sitl_x500_native_land=True)
+        with self.assertRaisesRegex(RuntimeError, "MPC_LAND_SPEED"):
+            check_px4_safety_config(native_land)
+        with self.assertRaisesRegex(RuntimeError, "MPC_LAND_SPEED"):
+            check_px4_safety_config(safe, sitl_x500_native_land=True)
         for change, expected in (
             ({"COM_OF_LOSS_T": 2.0}, "COM_OF_LOSS_T"),
             ({"EKF2_NOAID_TOUT": 10_000_001}, "EKF2_NOAID_TOUT"),

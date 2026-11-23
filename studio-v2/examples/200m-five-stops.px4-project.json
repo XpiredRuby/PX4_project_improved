@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "title": "200 m X500 route with five interior stops",
+  "cruise": 50,
+  "speedCap": 50,
+  "altitude": 12,
+  "tolerance": 0.5,
+  "yaw": 0,
+  "environment": {
+    "mode": "manual",
+    "latitude": 30.62,
+    "longitude": -96.34,
+    "timestamp": "2026-11-21T12:00:00Z",
+    "windSpeed": 0,
+    "windDirection": 0,
+    "gust": 0,
+    "temperature": 20,
+    "pressure": 1013.25,
+    "source": "User-specified manual scenario"
+  },
+  "points": [
+    {
+      "id": "P1",
+      "north": 0,
+      "east": 0,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    },
+    {
+      "id": "P2",
+      "north": 30,
+      "east": 0,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    },
+    {
+      "id": "P3",
+      "north": 30,
+      "east": 20,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    },
+    {
+      "id": "P4",
+      "north": -30,
+      "east": 20,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    },
+    {
+      "id": "P5",
+      "north": -30,
+      "east": -20,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    },
+    {
+      "id": "P6",
+      "north": 0,
+      "east": -20,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    },
+    {
+      "id": "P7",
+      "north": 0,
+      "east": 0,
+      "altitude": 12,
+      "hard": true,
+      "exact": false
+    }
+  ]
+}

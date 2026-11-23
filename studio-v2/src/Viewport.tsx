@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Environment, Point,Sample } from './types';
-import { fieldValue, type Field } from './Plot';
+import { Box, Navigation, RotateCcw } from 'lucide-react';
+import { fields, fieldValue, type Field } from './Plot';
 import { interpolate } from './engineering';
 
 function project(n:number,e:number,h:number,az:number,el:number,scale:number,cx:number,cy:number){
@@ -8,13 +9,18 @@ function project(n:number,e:number,h:number,az:number,el:number,scale:number,cx:
   const a=x*Math.cos(az)-y*Math.sin(az),b=x*Math.sin(az)+y*Math.cos(az);
   return {x:cx+a*scale,y:cy+(b*Math.sin(el)-z*Math.cos(el))*scale,depth:b*Math.cos(el)+z*Math.sin(el)};
 }
-const col=(t:number)=>{
-  const u=Math.min(1,Math.max(0,t));
-  return 'hsl('+(196-175*u)+', 85%, '+(62-7*u)+'%)';
-};
+const lowFieldColor=[180,128,105];
+const highFieldColor=[255,232,174];
+function fieldColor(value:number){
+  const t=Math.min(1,Math.max(0,value));
+  const rgb=lowFieldColor.map((channel,i)=>Math.round(channel+(highFieldColor[i]-channel)*t));
+  return `rgb(${rgb.join(', ')})`;
+}
+const orbit={az:-.65,el:.57,zoom:1};
+const overhead={az:0,el:-Math.PI/2,zoom:1};
 export default function Viewport({points,samples,cursor,field,environment}:{points:Point[];samples:Sample[];cursor:number;field:Field;environment:Environment}){
   const ref=useRef<HTMLCanvasElement>(null);
-  const [camera,setCamera]=useState({az:-0.65,el:0.57,zoom:1});
+  const [camera,setCamera]=useState(orbit);
   const [size,setSize]=useState({width:800,height:480});
   const drag=useRef<{x:number;y:number}|null>(null);
   const scene=useMemo(()=>{
@@ -23,12 +29,28 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
     for(const s of samples){extreme=Math.max(extreme,Math.abs(s.north),Math.abs(s.east),Math.abs(s.altitude));const scalar=fieldValue(s,field,environment);low=Math.min(low,scalar);high=Math.max(high,scalar);}
     return {extreme,low,high,span:Math.max(0.01,high-low)};
   },[points,samples,field,environment]);
+  const bounds=useMemo(()=>{
+    let minX=0,maxX=0,minY=0,maxY=0;
+    for(const sequence of [points,samples]){
+      for(const p of sequence){
+        const {x,y}=project(p.north,p.east,p.altitude,camera.az,camera.el,1,0,0);
+        minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+      }
+    }
+    return {minX,maxX,minY,maxY};
+  },[points,samples,camera.az,camera.el]);
   useEffect(()=>{
     const canvas=ref.current;if(!canvas)return;
     const observer=new ResizeObserver(entries=>{
       const el=entries[0].contentRect;setSize({width:Math.max(10,el.width),height:Math.max(10,el.height)});
     });
-    observer.observe(canvas);return ()=>observer.disconnect();
+    observer.observe(canvas);
+    const zoom=(event:WheelEvent)=>{
+      event.preventDefault();
+      setCamera(c=>({...c,zoom:Math.max(.35,Math.min(6,c.zoom*(event.deltaY>0?.9:1.1)))}));
+    };
+    canvas.addEventListener('wheel',zoom,{passive:false});
+    return ()=>{observer.disconnect();canvas.removeEventListener('wheel',zoom);};
   },[]);
   useEffect(()=>{
     const canvas=ref.current;if(!canvas)return;
@@ -37,59 +59,76 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
     const ctx=canvas.getContext('2d');if(!ctx)return;
     ctx.scale(pixelRatio,pixelRatio);
     const W=size.width,H=size.height;
-    ctx.fillStyle='#0c1923';ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#211f1d';ctx.fillRect(0,0,W,H);
     const {extreme,low,span}=scene;
-    const scale=Math.max(1,Math.min(W,H)*.65/extreme)*camera.zoom;
-    const get=(n:number,e:number,h:number)=>project(n,e,h,camera.az,camera.el,scale,W/2,H*.69);
+    const {minX,maxX,minY,maxY}=bounds;
+    const scale=Math.min(W*.82/Math.max(16,maxX-minX),H*.76/Math.max(16,maxY-minY))*camera.zoom;
+    const get=(n:number,e:number,h:number)=>project(n,e,h,camera.az,camera.el,scale,
+      W/2-(minX+maxX)*scale/2,H/2-(minY+maxY)*scale/2);
     const drawLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width=1)=>{
       ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
     };
     const gridSize=10* Math.ceil(extreme/20);
     for(let v=-gridSize*2;v<=gridSize*2;v+=gridSize/2){
-      drawLine(get(-gridSize*2,v,0),get(gridSize*2,v,0),'#223b4b');
-      drawLine(get(v,-gridSize*2,0),get(v,gridSize*2,0),'#223b4b');
+      drawLine(get(-gridSize*2,v,0),get(gridSize*2,v,0),'#3c3731');
+      drawLine(get(v,-gridSize*2,0),get(v,gridSize*2,0),'#3c3731');
     }
     drawLine(get(0,0,0),get(gridSize,0,0),'#d36f73',2);
     drawLine(get(0,0,0),get(0,gridSize,0),'#56c18f',2);
-    drawLine(get(0,0,0),get(0,0,gridSize),'#7ea6ee',2);
-    ctx.font='12px ui-monospace, monospace';ctx.fillStyle='#b1c5d1';
+    drawLine(get(0,0,0),get(0,0,gridSize),'#c1b5a7',2);
+    ctx.font='12px ui-monospace, monospace';ctx.fillStyle='#ddd1c2';
     for(const [name,p] of [['N',get(gridSize,0,0)],['E',get(0,gridSize,0)],['UP',get(0,0,gridSize)]] as const)
       ctx.fillText(name,p.x+5,p.y-5);
     for(let i=1;i<points.length;i++)
       drawLine(get(points[i-1].north,points[i-1].east,points[i-1].altitude),
-        get(points[i].north,points[i].east,points[i].altitude),'#71899a',1.5);
+        get(points[i].north,points[i].east,points[i].altitude),'#a39685',1.5);
     if(samples.length){
       const stride=Math.max(1,Math.floor(samples.length/1400));
       for(let i=stride;i<samples.length;i+=stride){
         const a=samples[i-stride],b=samples[i];
-        drawLine(get(a.north,a.east,a.altitude),get(b.north,b.east,b.altitude),col((fieldValue(b,field,environment)-low)/span),2.8);
+        drawLine(get(a.north,a.east,a.altitude),get(b.north,b.east,b.altitude),fieldColor((fieldValue(b,field,environment)-low)/span),2.8);
       }
       const last=samples[samples.length-1];
       if(last&&samples.length>1){
         const a=samples[Math.max(0,samples.length-1-stride)];
-        drawLine(get(a.north,a.east,a.altitude),get(last.north,last.east,last.altitude),col((fieldValue(last,field,environment)-low)/span),2.8);
+        drawLine(get(a.north,a.east,a.altitude),get(last.north,last.east,last.altitude),fieldColor((fieldValue(last,field,environment)-low)/span),2.8);
       }
       const s=interpolate(samples,cursor);
       if(s){
         const p=get(s.north,s.east,s.altitude);
-        ctx.fillStyle='#eff9fc';ctx.strokeStyle='#10b9e5';ctx.lineWidth=3;
+        ctx.fillStyle='#fffcf4';ctx.strokeStyle='#eeaa69';ctx.lineWidth=3;
         ctx.beginPath();ctx.arc(p.x,p.y,6,0,Math.PI*2);ctx.fill();ctx.stroke();
-        const heading={x:p.x+Math.sin(s.yaw)*20,y:p.y-Math.cos(s.yaw)*20};
-        drawLine(p,heading,'#fff',2);
+        // NED heading is clockwise from north. Project it through the same camera as the axes.
+        const heading=get(s.north+Math.cos(s.yaw),s.east+Math.sin(s.yaw),s.altitude);
+        const x=heading.x-p.x,y=heading.y-p.y,length=Math.hypot(x,y);
+        if(length>0){
+          const dx=x/length,dy=y/length;
+          const tip={x:p.x+24*dx,y:p.y+24*dy};
+          drawLine(p,tip,'#fff',2);
+          ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(tip.x,tip.y);
+          ctx.lineTo(tip.x-7*dx-4*dy,tip.y-7*dy+4*dx);
+          ctx.lineTo(tip.x-7*dx+4*dy,tip.y-7*dy-4*dx);
+          ctx.closePath();ctx.fill();
+        }
       }
     }
-    ctx.fillStyle='#b7ccd8';ctx.font='12px ui-monospace, monospace';
-    ctx.fillText('NED frame · UP = −Down · equal axis scaling',16,H-16);
-  },[size,camera,points,samples,cursor,field,environment,scene]);
+  },[size,camera,points,samples,cursor,field,environment,scene,bounds]);
   return <div className="viewer">
-    <div className="viewer-tools"><span>3D ORBIT / REFERENCE FIELD</span>
-      <button type="button" title="Reset 3D view" onClick={()=>setCamera({az:-.65,el:.57,zoom:1})}>Reset</button></div>
+    <div className="viewer-tools"><span><Box size={15} aria-hidden="true"/> Reference path</span>
+      <div className="camera-tools">
+        <button type="button" onClick={()=>setCamera(overhead)}><Navigation size={13}/> Top view</button>
+        <button type="button" title="Reset 3D view" onClick={()=>setCamera(orbit)}><RotateCcw size={13}/> Orbit</button>
+      </div></div>
     <canvas ref={ref} aria-label="3D trajectory orbit visualization; drag to rotate and scroll to zoom"
       onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY};e.currentTarget.setPointerCapture(e.pointerId);}}
       onPointerMove={e=>{if(!drag.current)return;const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y;drag.current={x:e.clientX,y:e.clientY};
-        setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(.05,Math.min(1.5,c.el+dy*.008))}));}}
-      onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}
-      onWheel={e=>{e.preventDefault();setCamera(c=>({...c,zoom:Math.max(.35,Math.min(6,c.zoom*(e.deltaY>0?.9:1.1)))}));}}/>
-    <div className="field-legend"><span>{field}</span><span>{Number.isFinite(scene.low)?scene.low.toFixed(2):'—'}</span><div className="gradient-bar"/><span>{Number.isFinite(scene.high)?scene.high.toFixed(2):'—'}</span></div>
+        setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(-Math.PI/2,Math.min(Math.PI/2,c.el+dy*.008))}));}}
+      onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}/>
+    <div className="scene-units">N / E / UP · m</div>
+    {samples.length>0&&<div className="field-legend" aria-label={fields[field].label+' scale'}>
+      <span>{scene.low.toFixed(2)}</span>
+      <div className="gradient-bar" style={{background:`linear-gradient(90deg, ${fieldColor(0)}, ${fieldColor(1)})`}}/>
+      <span>{scene.high.toFixed(2)} {fields[field].unit}</span>
+    </div>}
   </div>;
 }
