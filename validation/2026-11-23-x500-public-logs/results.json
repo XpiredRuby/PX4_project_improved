@@ -1,0 +1,588 @@
+{
+ "referent": "Real vehicle onboard EKF2 estimate (GNSS-aided). Not independent truth.",
+ "source": "PX4 Flight Review public logs, Holybro X500 V2, PX4 v1.14+, real hardware, deduplicated by SHA-256",
+ "gazebo_x500_defaults": {
+  "mass_kg": 2.0,
+  "motor_constant": 8.54858e-06,
+  "time_constant_up_s": 0.0125,
+  "time_constant_down_s": 0.025,
+  "rotor_drag_coefficient": 8.06428e-05
+ },
+ "tracking": {
+  "segments": 47,
+  "windows": 556,
+  "vehicles": 27,
+  "minutes": 193.6,
+  "band_windows": {
+   "slow": 518,
+   "fast": 38
+  },
+  "heldout_model": {
+   "rmse_m": 0.7206272674009359,
+   "p50_m": 0.1336446612300264,
+   "p95_m": 0.9592499250075122,
+   "max_m": 17.192634394605644,
+   "samples": 278000
+  },
+  "heldout_plan_is_flight": {
+   "rmse_m": 0.8751226652806954,
+   "p50_m": 0.21607720088890678,
+   "p95_m": 1.0912552188496156,
+   "max_m": 22.02933764174571,
+   "samples": 278000
+  },
+  "folds": [
+   {
+    "test_vehicles": 6,
+    "horizontal": {
+     "wn_rad_s": 1.25,
+     "zeta": 0.7,
+     "delay_s": 0.0
+    },
+    "vertical": {
+     "wn_rad_s": 0.75,
+     "zeta": 2.8000000000000007,
+     "delay_s": 0.0
+    }
+   },
+   {
+    "test_vehicles": 6,
+    "horizontal": {
+     "wn_rad_s": 1.25,
+     "zeta": 0.7999999999999999,
+     "delay_s": 0.0
+    },
+    "vertical": {
+     "wn_rad_s": 0.5,
+     "zeta": 2.400000000000001,
+     "delay_s": 0.0
+    }
+   },
+   {
+    "test_vehicles": 5,
+    "horizontal": {
+     "wn_rad_s": 1.25,
+     "zeta": 0.7999999999999999,
+     "delay_s": 0.0
+    },
+    "vertical": {
+     "wn_rad_s": 0.75,
+     "zeta": 2.8000000000000007,
+     "delay_s": 0.0
+    }
+   },
+   {
+    "test_vehicles": 5,
+    "horizontal": {
+     "wn_rad_s": 1.5,
+     "zeta": 0.7999999999999999,
+     "delay_s": 0.0
+    },
+    "vertical": {
+     "wn_rad_s": 2.75,
+     "zeta": 3.000000000000001,
+     "delay_s": 0.0
+    }
+   },
+   {
+    "test_vehicles": 5,
+    "horizontal": {
+     "wn_rad_s": 1.25,
+     "zeta": 0.7,
+     "delay_s": 0.0
+    },
+    "vertical": {
+     "wn_rad_s": 0.75,
+     "zeta": 2.400000000000001,
+     "delay_s": 0.0
+    }
+   }
+  ],
+  "loop_all": {
+   "horizontal": {
+    "wn_rad_s": 1.25,
+    "zeta": 0.7,
+    "delay_s": 0.0
+   },
+   "vertical": {
+    "wn_rad_s": 0.75,
+    "zeta": 2.8000000000000007,
+    "delay_s": 0.0
+   }
+  },
+  "envelope_95_m": {
+   "slow": {
+    "1": 0.37096807952692873,
+    "2": 0.6413649949274928,
+    "5": 0.9743364445411823,
+    "10": 1.1172958757764773,
+    "15": 1.1331986099841804,
+    "20": 1.2583227816283629
+   },
+   "fast": {
+    "1": 1.9418966228042212,
+    "2": 3.49622173951387,
+    "5": 5.1062115007296,
+    "10": 5.126596916178265,
+    "15": 5.126596916178265,
+    "20": 5.126596916178265
+   }
+  },
+  "envelope_heldout_coverage": {
+   "slow": {
+    "1": 0.9858657243816255,
+    "2": 0.9929328621908127,
+    "5": 0.9929328621908127,
+    "10": 0.9929328621908127,
+    "15": 0.9929328621908127,
+    "20": 0.9929328621908127
+   },
+   "fast": {
+    "1": 0.95,
+    "2": 0.95,
+    "5": 0.9,
+    "10": 0.9,
+    "15": 0.9,
+    "20": 0.9
+   }
+  },
+  "calibrated_speed_max_m_s": 3.3469969040726544
+ },
+ "propulsion_and_drag": {
+  "hover_thrust_real": {
+   "flights": 85,
+   "p10": 0.4818717181682587,
+   "p50": 0.6196516752243042,
+   "p90": 0.6980887889862061
+  },
+  "hover_thrust_sitl": {
+   "flights": 188,
+   "p50": 0.7278164029121399
+  },
+  "thr_mdl_fac_real": {
+   "p50": 0.0,
+   "flights": 93
+  },
+  "motor_constant_scale_to_match_fleet_median": 1.3795848673612896,
+  "drag_real_linear_quadratic": [
+   0.4467725944838472,
+   -0.029313902762236214
+  ],
+  "drag_sitl_linear_quadratic": [
+   0.16921821409123175,
+   -0.01008285534223284
+  ],
+  "drag_real_binned": [
+   {
+    "speed_m_s": 2.0,
+    "drag_acc_m_s2_p50": 0.913646325740349,
+    "p25": 0.5735877488355218,
+    "p75": 0.9872861587406534,
+    "samples": 13485
+   },
+   {
+    "speed_m_s": 3.0,
+    "drag_acc_m_s2_p50": 1.104541832895476,
+    "p25": 0.9159791453252542,
+    "p75": 1.3411598842528187,
+    "samples": 2732
+   }
+  ],
+  "drag_sitl_binned": [
+   {
+    "speed_m_s": 2.0,
+    "drag_acc_m_s2_p50": 0.22751463132452276,
+    "p25": 0.19782770278247458,
+    "p75": 0.2640448747389681,
+    "samples": 30342
+   },
+   {
+    "speed_m_s": 3.0,
+    "drag_acc_m_s2_p50": 0.33949302315185176,
+    "p25": 0.2523972080520736,
+    "p75": 0.4105991616292784,
+    "samples": 2516
+   },
+   {
+    "speed_m_s": 5.0,
+    "drag_acc_m_s2_p50": 0.5981285697456102,
+    "p25": 0.5563975681701052,
+    "p75": 0.6309221194308186,
+    "samples": 19383
+   }
+  ],
+  "drag_note": "D/m from steady-level tilt, g*tan(tilt). Real values include unmeasured wind (bias and spread)."
+ },
+ "propulsion_esc": {
+  "flights": [
+   {
+    "log_id": "407292d1-cb50-48b7-a13e-142a50245044",
+    "hover_rpm": 4655.259738401653,
+    "k_t_per_mass": 1.031610167164296e-05,
+    "motor_time_constant_s": 0.19
+   },
+   {
+    "log_id": "5d187407-3ddf-490f-8d02-58dd50c41892",
+    "hover_rpm": 4685.921625393902,
+    "k_t_per_mass": 1.0181538487379066e-05,
+    "motor_time_constant_s": 0.13
+   },
+   {
+    "log_id": "d708485d-729d-47b0-ae79-026bd05bf491",
+    "hover_rpm": 5901.212889091421,
+    "k_t_per_mass": 6.419790912803533e-06,
+    "motor_time_constant_s": 0.08
+   },
+   {
+    "log_id": "d71cd659-1c9c-49e7-859a-79664657c857",
+    "hover_rpm": 5042.757428265311,
+    "k_t_per_mass": 8.791587294485366e-06,
+    "motor_time_constant_s": 0.055
+   }
+  ],
+  "hover_rpm_range": [
+   4655.259738401653,
+   5901.212889091421
+  ],
+  "motor_time_constant_range_s": [
+   0.055,
+   0.19
+  ],
+  "gazebo_hover_rpm": 7232.1884126199575,
+  "gazebo_k_t_per_mass": 4.27429e-06,
+  "gazebo_motor_time_constant_up_s": 0.0125
+ },
+ "sitl_replay": {
+  "default": {
+   "rmse_m": 1.5298609309906877,
+   "p50_m": 0.3083001392276181,
+   "p95_m": 3.1435225703279794,
+   "max_m": 14.065149745034935,
+   "samples": 30000
+  },
+  "log_tuning": {
+   "rmse_m": 0.6740746745373186,
+   "p50_m": 0.3007992818533298,
+   "p95_m": 1.227418673314633,
+   "max_m": 3.6789352725274194,
+   "samples": 30000
+  },
+  "studio_model": {
+   "rmse_m": 1.5528908396154968,
+   "p50_m": 0.1773658461636416,
+   "p95_m": 2.66329385409533,
+   "max_m": 14.543854270893565,
+   "samples": 30000
+  },
+  "plan_is_flight": {
+   "rmse_m": 2.0097431127187892,
+   "p50_m": 0.25252158159768423,
+   "p95_m": 3.75187750321047,
+   "max_m": 17.863195008604425,
+   "samples": 30000
+  },
+  "windows": 30,
+  "per_window": [
+   {
+    "log_id": "52aaea0c-12a6-44c1-b111-72293b86fcd3",
+    "config": "default",
+    "rmse_m": 0.5650974285858053
+   },
+   {
+    "log_id": "52aaea0c-12a6-44c1-b111-72293b86fcd3",
+    "config": "log_tuning",
+    "rmse_m": 0.5658574464991001
+   },
+   {
+    "log_id": "191c771b-0168-4c04-9684-2f21d6de8baa",
+    "config": "default",
+    "rmse_m": 0.26925505139304023
+   },
+   {
+    "log_id": "191c771b-0168-4c04-9684-2f21d6de8baa",
+    "config": "log_tuning",
+    "rmse_m": 0.28726110259667215
+   },
+   {
+    "log_id": "7e474862-e6e9-4afc-b9c1-e5be08c80492",
+    "config": "default",
+    "rmse_m": 1.2530339391657694
+   },
+   {
+    "log_id": "7e474862-e6e9-4afc-b9c1-e5be08c80492",
+    "config": "log_tuning",
+    "rmse_m": 1.171912673175975
+   },
+   {
+    "log_id": "0dc593e0-c6a8-47a5-ae1c-406052028b0c",
+    "config": "default",
+    "rmse_m": 0.5825656796066151
+   },
+   {
+    "log_id": "0dc593e0-c6a8-47a5-ae1c-406052028b0c",
+    "config": "log_tuning",
+    "rmse_m": 0.5641663915690628
+   },
+   {
+    "log_id": "227cc2c5-f141-42b5-bccc-3076d946a0be",
+    "config": "default",
+    "rmse_m": 0.3769500276437461
+   },
+   {
+    "log_id": "227cc2c5-f141-42b5-bccc-3076d946a0be",
+    "config": "log_tuning",
+    "rmse_m": 0.33699008494104865
+   },
+   {
+    "log_id": "4f98b499-4852-4bc4-a5b9-d9add36a3e8f",
+    "config": "default",
+    "rmse_m": 0.5619404782358615
+   },
+   {
+    "log_id": "4f98b499-4852-4bc4-a5b9-d9add36a3e8f",
+    "config": "log_tuning",
+    "rmse_m": 0.5158748234854733
+   },
+   {
+    "log_id": "03ece025-ed56-429e-b619-fa1fc6c8c1fc",
+    "config": "default",
+    "rmse_m": 0.39906464634309124
+   },
+   {
+    "log_id": "03ece025-ed56-429e-b619-fa1fc6c8c1fc",
+    "config": "log_tuning",
+    "rmse_m": 0.32425832398584065
+   },
+   {
+    "log_id": "e90b7082-5c30-424b-96dd-e4926a047b7f",
+    "config": "default",
+    "rmse_m": 0.2588813926672732
+   },
+   {
+    "log_id": "e90b7082-5c30-424b-96dd-e4926a047b7f",
+    "config": "log_tuning",
+    "rmse_m": 0.23101740047947686
+   },
+   {
+    "log_id": "d5674a8e-a95b-4d8e-ae7c-d20a64a32051",
+    "config": "default",
+    "rmse_m": 0.23517110687045595
+   },
+   {
+    "log_id": "d5674a8e-a95b-4d8e-ae7c-d20a64a32051",
+    "config": "log_tuning",
+    "rmse_m": 0.23761459373800234
+   },
+   {
+    "log_id": "22692d6c-ef3c-4a0a-a494-51155a72c36d",
+    "config": "default",
+    "rmse_m": 1.7767124846958
+   },
+   {
+    "log_id": "22692d6c-ef3c-4a0a-a494-51155a72c36d",
+    "config": "log_tuning",
+    "rmse_m": 0.9895538370274883
+   },
+   {
+    "log_id": "d5649bcd-0f10-498e-8554-34e6588d642e",
+    "config": "default",
+    "rmse_m": 0.2452767875758658
+   },
+   {
+    "log_id": "d5649bcd-0f10-498e-8554-34e6588d642e",
+    "config": "log_tuning",
+    "rmse_m": 0.24476777400761213
+   },
+   {
+    "log_id": "455fda4f-1542-425e-bd6d-5c83e31ffd4e",
+    "config": "default",
+    "rmse_m": 0.7620536802404999
+   },
+   {
+    "log_id": "455fda4f-1542-425e-bd6d-5c83e31ffd4e",
+    "config": "log_tuning",
+    "rmse_m": 0.7326040753508845
+   },
+   {
+    "log_id": "d69fdc5b-6131-4e8d-8874-6c419c5acf21",
+    "config": "default",
+    "rmse_m": 0.44884687600448936
+   },
+   {
+    "log_id": "d69fdc5b-6131-4e8d-8874-6c419c5acf21",
+    "config": "log_tuning",
+    "rmse_m": 0.45238927676630936
+   },
+   {
+    "log_id": "e8cd045a-41e5-4ecb-b481-b7e7f4d058de",
+    "config": "default",
+    "rmse_m": 3.496993782241336
+   },
+   {
+    "log_id": "e8cd045a-41e5-4ecb-b481-b7e7f4d058de",
+    "config": "log_tuning",
+    "rmse_m": 0.35810553132667206
+   },
+   {
+    "log_id": "1dc1a23c-2db2-4909-a33e-ae632dabeac6",
+    "config": "default",
+    "rmse_m": 2.46763358663413
+   },
+   {
+    "log_id": "1dc1a23c-2db2-4909-a33e-ae632dabeac6",
+    "config": "log_tuning",
+    "rmse_m": 2.448570448305076
+   },
+   {
+    "log_id": "80c2c0ce-b426-45cc-92f8-c86efc7fceb2",
+    "config": "default",
+    "rmse_m": 0.6949104891859075
+   },
+   {
+    "log_id": "80c2c0ce-b426-45cc-92f8-c86efc7fceb2",
+    "config": "log_tuning",
+    "rmse_m": 0.6868342832853239
+   },
+   {
+    "log_id": "421643a5-443f-435b-acbc-fbf9533d2eae",
+    "config": "default",
+    "rmse_m": 0.1291445087826819
+   },
+   {
+    "log_id": "421643a5-443f-435b-acbc-fbf9533d2eae",
+    "config": "log_tuning",
+    "rmse_m": 0.08659753603245633
+   },
+   {
+    "log_id": "61c5c142-6433-42f2-8a3c-0f830fb29e13",
+    "config": "default",
+    "rmse_m": 6.569133747495164
+   },
+   {
+    "log_id": "61c5c142-6433-42f2-8a3c-0f830fb29e13",
+    "config": "log_tuning",
+    "rmse_m": 1.1661799401006017
+   },
+   {
+    "log_id": "025c29b7-9395-464b-bcaf-e4bad61bf0d0",
+    "config": "default",
+    "rmse_m": 0.4503629729980814
+   },
+   {
+    "log_id": "025c29b7-9395-464b-bcaf-e4bad61bf0d0",
+    "config": "log_tuning",
+    "rmse_m": 0.44607857856169686
+   },
+   {
+    "log_id": "02a7e659-0ff5-419a-82f4-b19a435fa11d",
+    "config": "default",
+    "rmse_m": 0.16126346055407229
+   },
+   {
+    "log_id": "02a7e659-0ff5-419a-82f4-b19a435fa11d",
+    "config": "log_tuning",
+    "rmse_m": 0.15072021084132312
+   },
+   {
+    "log_id": "4f4aa24d-4b5e-4360-80fb-d908ca47b1df",
+    "config": "default",
+    "rmse_m": 0.21608028945888563
+   },
+   {
+    "log_id": "4f4aa24d-4b5e-4360-80fb-d908ca47b1df",
+    "config": "log_tuning",
+    "rmse_m": 0.2220107373869383
+   },
+   {
+    "log_id": "64ef898b-acca-4a6e-a0ce-24f26cef4baa",
+    "config": "default",
+    "rmse_m": 0.12196295774273519
+   },
+   {
+    "log_id": "64ef898b-acca-4a6e-a0ce-24f26cef4baa",
+    "config": "log_tuning",
+    "rmse_m": 0.11500468364814247
+   },
+   {
+    "log_id": "3097ef9c-1af8-475b-855c-69427307d9c6",
+    "config": "default",
+    "rmse_m": 0.22099621211668252
+   },
+   {
+    "log_id": "3097ef9c-1af8-475b-855c-69427307d9c6",
+    "config": "log_tuning",
+    "rmse_m": 0.20495123530395104
+   },
+   {
+    "log_id": "1f6d1884-3883-44cf-9d07-c1846a15b3f8",
+    "config": "default",
+    "rmse_m": 0.09554714038900897
+   },
+   {
+    "log_id": "1f6d1884-3883-44cf-9d07-c1846a15b3f8",
+    "config": "log_tuning",
+    "rmse_m": 0.09484232406062419
+   },
+   {
+    "log_id": "4cc95e5c-65b3-4505-84d2-02bc1bafbcf8",
+    "config": "default",
+    "rmse_m": 0.28373651205316314
+   },
+   {
+    "log_id": "4cc95e5c-65b3-4505-84d2-02bc1bafbcf8",
+    "config": "log_tuning",
+    "rmse_m": 0.2933715125991835
+   },
+   {
+    "log_id": "955c93c2-efd9-4cb3-9920-cf0ee36ce674",
+    "config": "default",
+    "rmse_m": 0.1507704129428269
+   },
+   {
+    "log_id": "955c93c2-efd9-4cb3-9920-cf0ee36ce674",
+    "config": "log_tuning",
+    "rmse_m": 0.15047432215598935
+   },
+   {
+    "log_id": "a49ae288-66a5-4cc8-8f0f-a117049fd303",
+    "config": "default",
+    "rmse_m": 0.24231335959738295
+   },
+   {
+    "log_id": "a49ae288-66a5-4cc8-8f0f-a117049fd303",
+    "config": "log_tuning",
+    "rmse_m": 0.2614114607082803
+   },
+   {
+    "log_id": "1234bead-0149-4bb4-8938-6d5d6994ccdc",
+    "config": "default",
+    "rmse_m": 0.22194663324672187
+   },
+   {
+    "log_id": "1234bead-0149-4bb4-8938-6d5d6994ccdc",
+    "config": "log_tuning",
+    "rmse_m": 0.22281568225566323
+   },
+   {
+    "log_id": "5a4e6bcf-46df-4c77-9730-fae66cd56cd9",
+    "config": "default",
+    "rmse_m": 0.6038294168985816
+   },
+   {
+    "log_id": "5a4e6bcf-46df-4c77-9730-fae66cd56cd9",
+    "config": "log_tuning",
+    "rmse_m": 0.6111445961557732
+   },
+   {
+    "log_id": "06b3e240-53a1-416c-b092-6d0d039ed757",
+    "config": "default",
+    "rmse_m": 0.528158387586909
+   },
+   {
+    "log_id": "06b3e240-53a1-416c-b092-6d0d039ed757",
+    "config": "log_tuning",
+    "rmse_m": 0.5132326909088387
+   }
+  ]
+ }
+}
