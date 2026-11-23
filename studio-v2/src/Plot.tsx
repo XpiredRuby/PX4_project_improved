@@ -69,7 +69,7 @@ export default function Plot({samples,field,environment,cursor,onCursor,ceiling}
     <div className="plot-heading"><strong>{fields[field].label}</strong><span>{fields[field].unit} · planned reference</span></div>
     <svg ref={svgRef} viewBox={'0 0 '+W+' '+H} role="img" aria-label={fields[field].label+' against time'} onPointerDown={mouse} onPointerMove={e=>{if(e.buttons===1)mouse(e);}}>
       <defs><linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
-        <stop stopColor="var(--blue)" stopOpacity=".20"/><stop offset="1" stopColor="var(--blue)" stopOpacity="0"/>
+        <stop stopColor="var(--accent)" stopOpacity=".16"/><stop offset="1" stopColor="var(--accent)" stopOpacity="0"/>
       </linearGradient></defs>
       <rect className="plot-grid-frame" x={L} y={T} width={W-L-R} height={H-T-B}/>
       {Array.from({length:ySteps+1},(_,i)=>{
@@ -86,8 +86,8 @@ export default function Plot({samples,field,environment,cursor,onCursor,ceiling}
         <g><path d={'M'+L+' '+Y(ceiling)+'H'+(W-R)} stroke="var(--warning)" strokeDasharray="6 3" strokeWidth="1.4"/>
         <text x={W-R-5} y={Y(ceiling)-5} textAnchor="end" fontSize="10" className="plot-bound">bound {ceiling.toFixed(2)}</text></g>}
       {samples.length>0&&<><path d={area} fill={`url(#${fillId})`}/>
-      <path d={path} stroke="var(--blue)" fill="none" strokeWidth="2" strokeLinejoin="round"/>
-      <path d={'M'+X(cursor)+' '+T+'V'+(H-B)} stroke="#c4d8e4" strokeWidth="1" strokeDasharray="2 4"/></>}
+      <path d={path} stroke="var(--trace)" fill="none" strokeWidth="2" strokeLinejoin="round"/>
+      <path d={'M'+X(cursor)+' '+T+'V'+(H-B)} stroke="var(--accent)" strokeWidth="1" strokeDasharray="2 4"/></>}
       <text x={W/2} y={H-2} fontSize="11" textAnchor="middle">Mission time (s)</text>
     </svg>
     {samples.length===0&&<div className="plot-empty">Compile a verified plan to populate the plot.</div>}
