@@ -1,12 +1,14 @@
 <div align="center">
 
-# PX4 Trajectory Studio
+# Vin Trajectory Planner
+
+**by Vinayak (Vin) Nair** · Aerospace Engineering, Texas A&M University
 
 **Draw a drone route, check it, preview the flight, and see how accurately a real Holybro X500 V2 would fly it, before anyone goes outside.**
 
 ![PX4](https://img.shields.io/badge/PX4-v1.17-1f6feb) ![Gazebo](https://img.shields.io/badge/Gazebo-8.15-f58113) ![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab) ![React](https://img.shields.io/badge/React-19-61dafb) ![Tests](https://img.shields.io/badge/tests-472%20Python%20%2B%2040%20web-2ea44f) ![Status](https://img.shields.io/badge/output-SITL__ONLY-lightgrey)
 
-![Studio demo: load a route, check it, see the accuracy corridor and wind, preview the flight in 3D](docs/img/demo.gif)
+![Demo: load a route, check it, see the accuracy corridor and wind, preview the flight in 3D](docs/img/demo.gif)
 
 </div>
 
@@ -43,7 +45,7 @@ flowchart LR
 
 Needs only **Python 3.10+** ([python.org](https://www.python.org/downloads/)).
 
-1. Download **`PX4-Trajectory-Studio.zip`** from the [latest release](https://github.com/XpiredRuby/PX4_project_improved/releases/latest) and unzip it.
+1. Download **`Vin-Trajectory-Planner.zip`** from the [latest release](https://github.com/XpiredRuby/PX4_project_improved/releases/latest) and unzip it.
 2. Open a terminal **in the unzipped folder** and run:
 
    ```bash
@@ -135,7 +137,7 @@ in both training and test). Nothing here has flown a physical aircraft; all outp
 
 | Question | Answer | Evidence |
 |---|---|---|
-| How well does Studio predict a real X500 from its setpoints? | Median error **0.13 m**, vs 0.22 m if you assume the plan is flown exactly | [X500 public logs](validation/2026-11-23-x500-public-logs/README.md) |
+| How well does the planner predict a real X500 from its setpoints? | Median error **0.13 m**, vs 0.22 m if you assume the plan is flown exactly | [X500 public logs](validation/2026-11-23-x500-public-logs/README.md) |
 | Does the 95% bound hold on drones it never saw? | Yes below 2 m/s: **±1.26 m** at 20 s, 99% held-out coverage. Faster plans are flagged | same |
 | How much does wind push it off the route? | **0.25 m** extra (p95) per m/s of gust σ, from 196 flights with a measured-wind sensor | [Measured wind](validation/2026-11-23-measured-wind/README.md) |
 | What is the biggest simulator-vs-reality gap? | **Controller tuning.** The real aircraft's PX4 tuning cuts Gazebo's p95 error from 3.1 m to 1.2 m | [X500 public logs](validation/2026-11-23-x500-public-logs/README.md) |

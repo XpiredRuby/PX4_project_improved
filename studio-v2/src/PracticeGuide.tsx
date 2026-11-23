@@ -15,7 +15,7 @@ export const practiceLessons = [
   },
   {
     id: 'check', view: 'geometry', title: 'Check the route',
-    text: 'Studio calculates how the drone could fly the path and checks it against the aircraft limits. Your drawing stays available to edit.',
+    text: 'The planner calculates how the drone could fly the path and checks it against the aircraft limits. Your drawing stays available to edit.',
   },
   {
     id: 'results', view: 'analysis', title: 'Read the route checks',

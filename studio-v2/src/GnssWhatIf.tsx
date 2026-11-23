@@ -17,7 +17,7 @@ export default function GnssWhatIf({ windAtAlt, altitude }: { windAtAlt: number;
       <span className="drift-bar" style={{ ['--drift' as string]: Math.min(1, r.driftRealM / 60) }} aria-hidden="true"/>
     </div>
     <ol className="gnss-steps">{r.steps.map(s => <li key={s}>{s}</li>)}</ol>
-    <small className="muted">Wind {windAtAlt.toFixed(1)} m/s at {Math.round(altitude)} m. Checked against three Studio SITL outage cases;
+    <small className="muted">Wind {windAtAlt.toFixed(1)} m/s at {Math.round(altitude)} m. Checked against three SITL outage cases;
       the upper bound scales the wind response by real-fleet tilt drag (partly wind) and has not been flight-tested.</small>
   </section>;
 }

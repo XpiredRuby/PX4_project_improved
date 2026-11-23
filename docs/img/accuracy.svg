@@ -6,7 +6,7 @@
   </defs>
   <rect width="1400" height="470" rx="18" fill="#f8fafc"/>
   <text x="40" y="46" font-size="24" font-weight="800" fill="#0f172a">How the accuracy numbers are earned</text>
-  <text x="40" y="70" font-size="13" fill="#475569">Three public datasets. Tracking is scored only on aircraft the model never saw. Results feed the corridor and badge in the Studio.</text>
+  <text x="40" y="70" font-size="13" fill="#475569">Three public datasets. Tracking is scored only on aircraft the model never saw. Results feed the corridor and badge in the planner.</text>
 
   <!-- lane 1 -->
   <text x="40" y="112" class="lane" fill="#7c3aed">TRACKING · real Holybro X500 V2 (PX4 Flight Review)</text>

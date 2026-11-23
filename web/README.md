@@ -1,4 +1,4 @@
-# Trajectory Studio public planner
+# Vin Trajectory Planner: browser planner build
 
 Open on a modern phone, tablet or computer. No PX4 laptop or account is required. Draw a route, plan and verify, review checks, and download CSV or evidence JSON. The first plan downloads pinned Pyodide 0.27.7 and NumPy from jsDelivr; an internet connection and WebAssembly/Web Worker support are required. Device performance varies; a 120-second worker budget aborts slow requests and enables retry.
 

@@ -46,7 +46,7 @@
   <path d="M810 272 V316 H380" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#r)"/>
   <rect x="40" y="296" width="330" height="58" rx="10" fill="#fef2f2" stroke="#fecaca"/>
   <text x="56" y="320" font-size="14" font-weight="700" fill="#b91c1c">Fails a check?</text>
-  <text x="56" y="341" font-size="13" fill="#7f1d1d">Studio says why and offers the closest safe speed.</text>
+  <text x="56" y="341" font-size="13" fill="#7f1d1d">The planner says why and offers the closest safe speed.</text>
   <path d="M860 272 V325 H920" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="7 6"/>
   <rect x="925" y="296" width="435" height="58" rx="10" fill="#f0fdf4" stroke="#bbf7d0"/>
   <text x="941" y="320" font-size="14" font-weight="700" fill="#15803d">Locked plan artifact</text>

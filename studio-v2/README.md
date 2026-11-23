@@ -1,9 +1,9 @@
-# PX4 Trajectory Studio
+# Vin Trajectory Planner · web app
 
 Use the localhost workbench to draw a route, calculate a time-parameterized reference, compare requested speeds, and replay recorded flights. The default vehicle is the X500 reference model. The aircraft selector also includes the repository's Gazebo X500 SDF profile and three illustrative multicopter profiles. Selecting a different model sends its assessed limits to the planner and invalidates the old result.
 
 For installation through simulator verification and troubleshooting, start with
-the [Trajectory Studio handbook](../docs/trajectory_studio_handbook.md).
+the [handbook](../docs/trajectory_studio_handbook.md).
 The [three full 200 m projects](../validation/2026-11-22-full-200m/README.md)
 include the registered aircraft profile, measured results, and evidence hashes.
 

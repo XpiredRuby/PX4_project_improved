@@ -169,7 +169,7 @@ def main(default_assets=None):
     if not (assets / "index.html").exists():
         parser.error("Build the frontend in studio-v2 with npm install and npm run build.")
     with research_server(args.port, args.studies_dir, assets, jobs=jobs) as server:
-        print(f"Trajectory Studio: http://127.0.0.1:{server.server_port}", flush=True)
+        print(f"Vin Trajectory Planner: http://127.0.0.1:{server.server_port}", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

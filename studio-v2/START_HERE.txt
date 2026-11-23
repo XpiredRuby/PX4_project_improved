@@ -1,4 +1,4 @@
-PX4 Trajectory Studio
+Vin Trajectory Planner · by Vinayak (Vin) Nair
 
 Extract the entire ZIP. Open a terminal in the folder containing this file.
 On Windows, py can be used in place of python.

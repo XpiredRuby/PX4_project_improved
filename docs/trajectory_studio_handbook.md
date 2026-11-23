@@ -1,6 +1,6 @@
-# PX4 Trajectory Studio handbook
+# Vin Trajectory Planner handbook
 
-Trajectory Studio turns a drawing or ordered waypoints into a checked trajectory, lets you inspect the reference, and can run that exact route in a local PX4/Gazebo X500 simulation. The current engineering baseline is the **registered X500 in the flat AFVL validation world**. Three distinct 200 m routes passed the full simulation assessment with a 5 m/s cruise request.
+Vin Trajectory Planner turns a drawing or ordered waypoints into a checked trajectory, lets you inspect the reference, and can run that exact route in a local PX4/Gazebo X500 simulation. The current engineering baseline is the **registered X500 in the flat AFVL validation world**. Three distinct 200 m routes passed the full simulation assessment with a 5 m/s cruise request.
 
 | If you want to… | Start here |
 | --- | --- |

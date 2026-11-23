@@ -589,7 +589,7 @@ export default function App(){
   const fewPoints=project.points.length<2;
   return <div className="app-shell" data-practice-step={guideInPlace?lesson:undefined}>
     <header className="topbar">
-      <div className="brand"><span className="brand-mark"><Route size={17} aria-hidden="true"/></span><strong>PX4 <span>Trajectory Studio</span></strong></div>
+      <div className="brand"><span className="brand-mark"><Route size={17} aria-hidden="true"/></span><strong>Vin <span>Trajectory Planner</span></strong></div>
       <span className="project-title" title={project.title}><FolderOpen size={14} aria-hidden="true"/><span>{project.title}{dirty?' *':''}</span></span>
       {!isStart&&<ConfidenceBadge corridor={accuracy} onEvidence={()=>{setResultPanel('evidence');openStep('analysis');}}/>}
       <div className="top-actions">
@@ -689,7 +689,7 @@ export default function App(){
               <h2>How it works</h2>
               <ol>
                 <li><strong>Build your route</strong><span>Click the map to add points, or use the practice route.</span></li>
-                <li><strong>Check the route</strong><span>Studio works out how the drone could follow your path and flags changes.</span></li>
+                <li><strong>Check the route</strong><span>The planner works out how the drone could follow your path and flags changes.</span></li>
                 <li><strong>Watch the preview</strong><span>See the planned takeoff, flight, and landing in 3D.</span></li>
               </ol>
             </div>
@@ -804,7 +804,7 @@ export default function App(){
           </div>}
         </div>}
         <div className="analysis-panel" hidden={active!=='analysis'||resultPanel!=='simulation'} aria-label="Simulator results">
-          {sitl?<ConnectedRehearsal plan={result} onJob={setJob}/>:<p className="empty-panel">Connect Studio to a local PX4 / Gazebo installation to run a rehearsal.</p>}
+          {sitl?<ConnectedRehearsal plan={result} onJob={setJob}/>:<p className="empty-panel">Connect the planner to a local PX4 / Gazebo installation to run a rehearsal.</p>}
         </div>
         {active==='analysis'&&<div className="analysis-panel charts-panel" hidden={resultPanel!=='charts'} aria-label="Reference charts">
           <div className="dock-bar"><label htmlFor="chart-field">Chart</label>

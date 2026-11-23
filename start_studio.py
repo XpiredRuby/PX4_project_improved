@@ -1,4 +1,4 @@
-"""One-command launcher for PX4 Trajectory Studio.
+"""One-command launcher for Vin Trajectory Planner.
 
     python start_studio.py            (Windows: py start_studio.py)
 

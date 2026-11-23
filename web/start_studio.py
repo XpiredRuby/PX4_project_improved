@@ -1,4 +1,4 @@
-"""Launch the extracted Trajectory Studio offline workbench."""
+"""Launch the extracted Vin Trajectory Planner offline workbench."""
 from pathlib import Path
 import sys
 

@@ -7,7 +7,7 @@ Nothing here is a physical flight: real-flight folders use **public** logs; the 
 
 | Folder | Question it answers | Data |
 |---|---|---|
-| [`2026-11-23-x500-public-logs`](2026-11-23-x500-public-logs/README.md) | How well does Studio predict a real Holybro X500 V2? How far is Gazebo from reality? | PX4 Flight Review, real X500 V2 |
+| [`2026-11-23-x500-public-logs`](2026-11-23-x500-public-logs/README.md) | How well does the planner predict a real Holybro X500 V2? How far is Gazebo from reality? | PX4 Flight Review, real X500 V2 |
 | [`2026-11-23-measured-wind`](2026-11-23-measured-wind/README.md) | How much does measured wind push a quadcopter off its route? | CMU DJI M100, onboard anemometer |
 | [`2026-11-23-nanobench-fidelity`](2026-11-23-nanobench-fidelity/README.md) | Does the prediction method work against independent motion-capture truth? | NanoBench |
 

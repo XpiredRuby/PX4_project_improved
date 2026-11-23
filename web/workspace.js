@@ -8,7 +8,7 @@
  const workspace=document.querySelector('.workspace'),review=byId('planReview');
  const simulation=byId('rehearse').closest('section'),steps=workspace.querySelector('.steps');
  const header=document.querySelector('header');header.className='app-header';header.replaceChildren();
- const brand=node('a','brand');brand.href='/';brand.setAttribute('aria-label','Trajectory Studio home');brand.innerHTML=icon+'<span>Trajectory<span class="brand-secondary"> Studio</span></span>';
+ const brand=node('a','brand');brand.href='/';brand.setAttribute('aria-label','Vin Trajectory Planner home');brand.innerHTML=icon+'<span>Vin Trajectory<span class="brand-secondary"> Planner</span></span>';
  const headerRight=node('div','header-actions');
  const scope=node('span','scope-chip','Browser workspace');
  const settingsButton=node('button','header-button','Settings');settingsButton.id='openSettings';
@@ -74,7 +74,7 @@
  const fidelityHint=node('p','muted');fidelityHint.textContent='Allowed rounding is the hard limit. We aim for one quarter of it, slow down for tighter turns, and show when that closer-fit goal cannot be reached. Mark a corner as a stop when you need it exact.';byId('deviation').after(fidelityHint);
  const closureHint=node('p','muted');closureHint.textContent='Choosing Loop connects END back to START. Open routes stop at END before returning home.';byId('closed').after(closureHint);
 
- document.querySelector('footer').textContent='Trajectory Studio · Planning checks a mathematical model. Gazebo has not run.';
+ document.querySelector('footer').textContent='Vin Trajectory Planner · Planning checks a mathematical model. Gazebo has not run.';
  function syncSummary(){heightButton.innerHTML='<span>Height</span><strong>'+byId('altitude').value+' <small>m</small></strong>';speedButton.innerHTML='<span>Cruising speed</span><strong>'+byId('targetSpeed').value+' <small>m/s</small></strong>';}
  byId('altitude').addEventListener('input',syncSummary);byId('targetSpeed').addEventListener('input',syncSummary);syncSummary();
  let runState='draft',startedAt=null,elapsedTimer=null;

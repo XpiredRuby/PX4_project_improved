@@ -13,15 +13,15 @@
     </style>
   </defs>
   <rect width="1400" height="860" rx="18" fill="#f8fafc"/>
-  <text x="40" y="50" font-size="26" font-weight="800" fill="#0f172a">PX4 Trajectory Studio · system architecture</text>
-  <text x="40" y="76" class="t">Each panel is a folder in this repository. Solid arrows run while you use the Studio; dashed arrows run offline to calibrate it.</text>
+  <text x="40" y="50" font-size="26" font-weight="800" fill="#0f172a">Vin Trajectory Planner · system architecture</text>
+  <text x="40" y="76" class="t">Each panel is a folder in this repository. Solid arrows run while you use the planner; dashed arrows run offline to calibrate it.</text>
 
   <!-- Browser -->
   <g filter="url(#s)"><rect x="40" y="100" width="420" height="430" rx="14" fill="#fff" stroke="#c4b5fd" stroke-width="2"/></g>
   <path d="M40 114 a14 14 0 0 1 14 -14 h392 a14 14 0 0 1 14 14 v52 h-420 z" fill="#7c3aed"/>
   <text x="60" y="132" class="h">① Browser</text><text x="60" y="148" class="f">studio-v2/  ·  React + TypeScript</text>
   <g><rect x="64" y="176" width="372" height="92" rx="10" class="card"/>
-    <text x="82" y="202" class="b">🗺️  Studio UI</text>
+    <text x="82" y="202" class="b">🗺️  Planner UI</text>
     <text x="82" y="224" class="t">Draw or type waypoints · 3D flight preview</text>
     <text x="82" y="244" class="t">Checks, charts, studies, flight comparison</text></g>
   <g><rect x="64" y="282" width="372" height="104" rx="10" class="card"/>

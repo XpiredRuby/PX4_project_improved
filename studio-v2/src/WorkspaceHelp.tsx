@@ -48,7 +48,7 @@ export default function WorkspaceHelp({dialog, topic, onTopic, onPractice}: {
   return <dialog ref={dialog} className="help-dialog" aria-labelledby="help-title">
     <div className="help-header">
       <div className="help-mark"><CircleHelp size={23} aria-hidden="true"/></div>
-      <h2 id="help-title">Studio help</h2>
+      <h2 id="help-title">Planner help</h2>
       <form method="dialog"><button autoFocus className="ghost help-close" aria-label="Close help"><X size={19}/></button></form>
     </div>
     <nav className="help-topics" aria-label="Help topics">
