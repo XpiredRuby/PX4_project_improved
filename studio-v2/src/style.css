@@ -532,6 +532,12 @@ button.landing-button:enabled:hover { background: #644528; }
   .top-actions .help-button { gap: 3px; padding-inline: 4px; }
   .map-frame-label { display: none; }
 }
+@media (max-width: 540px) and (max-height: 700px) {
+  [data-practice-step] .workspace-heading { min-height: 34px; }
+  [data-practice-step=map] .editor-dock,
+  [data-practice-step=check] .editor-dock { grid-template-rows: minmax(0,1fr) 99px; }
+  [data-practice-step] .waypoint-dock .dock-bar > button { white-space: nowrap; }
+}
 @media (max-height: 550px) {
   .editor-dock { grid-template-rows: minmax(0,1fr) clamp(97px,33%,150px); }
   .sample-readout { grid-template-columns: repeat(3,minmax(0,1fr)); }
