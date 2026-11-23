@@ -52,7 +52,7 @@ Needs only **Python 3.10+** ([python.org](https://www.python.org/downloads/)).
    ```
 3. Open **http://127.0.0.1:8767**.
 
-<details><summary>No Python at all? Browser-only mode</summary>
+<details><summary>Cannot install packages? Browser-only mode</summary>
 
 In the unzipped folder run any static server, e.g. `python -m http.server 8767 --bind 127.0.0.1`, and open the same address.
 The planner then runs inside the browser (bundled Python + NumPy). Background studies are unavailable in this mode.
@@ -63,7 +63,7 @@ The planner then runs inside the browser (bundled Python + NumPy). Background st
 Needs **Python 3.10+**, **Git** and **Node.js 22+** ([nodejs.org](https://nodejs.org)).
 
 ```bash
-git clone https://github.com/XpiredRuby/PX4_project_improved.git
+git clone -b docs/clean-readme https://github.com/XpiredRuby/PX4_project_improved.git
 cd PX4_project_improved
 python start_studio.py             # Windows: py start_studio.py
 ```
