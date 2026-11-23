@@ -117,8 +117,9 @@ export type GnssParams = {
   landSpeed: number; // MPC_LAND_SPEED
 };
 export const PX4_GNSS_DEFAULTS: GnssParams = { noaidTimeoutS: 5, posFsDelayS: 1, reacquireS: 6, descentSpeed: 1.5, landAlt: 5, landSpeed: 0.4 };
-// Wind coupling (1/s): fitted on the Studio's own SITL gust + 12 s outage case (29.2 m), then scaled by the
-// measured real/simulator drag ratio for the real aircraft. Model-based; not validated against a real outage.
+// Wind coupling (1/s): fitted on the Studio's own SITL gust + 12 s outage case (29.2 m). The real-aircraft value
+// scales it by the real/simulator tilt-drag ratio, which replays show is partly wind, so it is an upper bound.
+// Model-based; not validated against a real outage.
 export const WIND_COUPLING = { simulator: 0.09, realAircraft: 0.09 * (0.4468 / 0.1692) };
 const DEAD_RECKON_M_PER_S = 0.15; // EKF2 inertial drift while still trusted (SITL: 0.6-0.7 m over 4-6 s)
 

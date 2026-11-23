@@ -1,0 +1,86 @@
+{
+ "windows": 30,
+ "vehicles": 25,
+ "calibration_windows": 17,
+ "holdout_windows": 13,
+ "variants": {
+  "replay-cal-drag1": "thrust=1.38,tau_up=0.08,tau_down=0.10,drag=1",
+  "replay-cal-drag2.5": "thrust=1.38,tau_up=0.08,tau_down=0.10,drag=2.5"
+ },
+ "selected_on_calibration_half": "replay-cal-drag1",
+ "selected_variant": "thrust=1.38,tau_up=0.08,tau_down=0.10,drag=1",
+ "table": {
+  "stock": {
+   "calibration_half": {
+    "rmse_m": 0.7856527972839158,
+    "p50_m": 0.36615219742604377,
+    "p95_m": 1.6419568326411518,
+    "max_m": 3.6789352725274194,
+    "samples": 17000
+   },
+   "holdout_half": {
+    "rmse_m": 0.49131257492378,
+    "p50_m": 0.2711728067950865,
+    "p95_m": 1.0950099542730647,
+    "max_m": 1.7943718191617015,
+    "samples": 13000
+   },
+   "all": {
+    "rmse_m": 0.6740746745373186,
+    "p50_m": 0.3007992818533298,
+    "p95_m": 1.227418673314633,
+    "max_m": 3.6789352725274194,
+    "samples": 30000
+   }
+  },
+  "replay-cal-drag1": {
+   "calibration_half": {
+    "rmse_m": 0.7908989427042871,
+    "p50_m": 0.36004121631568164,
+    "p95_m": 1.6434730659509158,
+    "max_m": 3.66873340541017,
+    "samples": 17000
+   },
+   "holdout_half": {
+    "rmse_m": 0.4866574656212792,
+    "p50_m": 0.2378977617234413,
+    "p95_m": 1.116797279430231,
+    "max_m": 1.8158574028150065,
+    "samples": 13000
+   },
+   "all": {
+    "rmse_m": 0.6760848244041313,
+    "p50_m": 0.2889843480945228,
+    "p95_m": 1.2371380551715212,
+    "max_m": 3.66873340541017,
+    "samples": 30000
+   }
+  },
+  "replay-cal-drag2.5": {
+   "calibration_half": {
+    "rmse_m": 0.7993948953575454,
+    "p50_m": 0.3723971609435316,
+    "p95_m": 1.6773802333166266,
+    "max_m": 3.7407470802511495,
+    "samples": 17000
+   },
+   "holdout_half": {
+    "rmse_m": 0.6107780892584139,
+    "p50_m": 0.24300591630913615,
+    "p95_m": 1.5526631711685877,
+    "max_m": 2.40324725270332,
+    "samples": 13000
+   },
+   "all": {
+    "rmse_m": 0.7237217638576993,
+    "p50_m": 0.2993475878151083,
+    "p95_m": 1.5744319846250694,
+    "max_m": 3.7407470802511495,
+    "samples": 30000
+   }
+  }
+ },
+ "holdout_change_vs_stock_p95": 0.019896919724013085,
+ "holdout_change_vs_stock_rmse": -0.009474842574959452,
+ "note": "All runs use each real aircraft's own PX4 tuning; referent is the real aircraft's EKF2 estimate."
+}

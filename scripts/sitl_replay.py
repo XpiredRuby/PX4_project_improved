@@ -119,8 +119,63 @@ def select_windows(log_dir: Path, max_windows: int, per_vehicle: int = 2):
     return picked[:max_windows]
 
 
+def parse_variant(text: str) -> dict:
+    """'thrust=1.38,tau_up=0.08,tau_down=0.1,drag=2.5' -> scale/override dict ({} = stock x500)."""
+    out = {}
+    for item in filter(None, (text or "").split(",")):
+        key, _, value = item.partition("=")
+        if key not in ("thrust", "tau_up", "tau_down", "drag"):
+            raise ValueError("unknown variant key " + key)
+        out[key] = float(value)
+    return out
+
+
+def write_variant_model(autopilot: Path, dest: Path, variant: dict) -> str:
+    """Copy the stock x500 model to DEST/x500_cal with calibrated motor coefficients; returns the model name."""
+    import re
+
+    model = dest / "x500_cal"
+    if model.exists():
+        shutil.rmtree(model)
+    shutil.copytree(autopilot / "Tools/simulation/gz/models/x500", model)
+    sdf = (model / "model.sdf").read_text()
+    # Included models (e.g. x500_base) must sit beside the variant so Gazebo can resolve them.
+    for dep in re.findall(r"model://([A-Za-z0-9_\-]+)", sdf):
+        target = dest / dep
+        if not target.exists():
+            shutil.copytree(autopilot / "Tools/simulation/gz/models" / dep, target)
+    for tag, key, mode in (
+        ("motorConstant", "thrust", "scale"),
+        ("rotorDragCoefficient", "drag", "scale"),
+        ("timeConstantUp", "tau_up", "set"),
+        ("timeConstantDown", "tau_down", "set"),
+    ):
+        if key not in variant:
+            continue
+        value = variant[key]
+        sdf = re.sub(
+            rf"<{tag}>([^<]+)</{tag}>",
+            lambda m, v=value, md=mode, t=tag: (
+                f"<{t}>{(float(m.group(1)) * v if md == 'scale' else v):.8g}</{t}>"
+            ),
+            sdf,
+        )
+    sdf = re.sub(r"<model name=['\"]x500['\"]", "<model name='x500_cal'", sdf, count=1)
+    (model / "model.sdf").write_text(sdf)
+    cfg = model / "model.config"
+    if cfg.exists():
+        cfg.write_text(
+            re.sub(
+                r"<name>[^<]*</name>", "<name>x500_cal</name>", cfg.read_text(), count=1
+            )
+        )
+    return "x500_cal"
+
+
 class Sitl:
-    def __init__(self, autopilot: Path, workdir: Path, speed: float):
+    def __init__(
+        self, autopilot: Path, workdir: Path, speed: float, variant: dict | None = None
+    ):
         build = autopilot / "build/px4_sitl_default"
         runtime = workdir / "runtime"
         if runtime.exists():
@@ -140,6 +195,13 @@ class Sitl:
             HEADLESS="1",
         )
         env.update({"PX4_PARAM_" + k: str(v) for k, v in SITL_PARAMS.items()})
+        if variant:
+            name = write_variant_model(autopilot, workdir / "models", variant)
+            env["PX4_SIM_MODEL"] = "gz_" + name
+            models = (workdir / "models").resolve()
+            # PX4 spawns file://$PX4_GZ_MODELS/<name>/model.sdf; point this run's private gz_env.sh at the variant.
+            with open(runtime / "gz_env.sh", "a") as fh:
+                fh.write(f"\nexport PX4_GZ_MODELS={models}\nexport GZ_SIM_RESOURCE_PATH={models}:$GZ_SIM_RESOURCE_PATH\n")
         self.log_path = workdir / "simulator.log"
         self.proc = subprocess.Popen(
             [
@@ -347,6 +409,12 @@ def main() -> int:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--max-windows", type=int, default=40)
     ap.add_argument("--speed", type=float, default=2.0)
+    ap.add_argument(
+        "--variant",
+        default="",
+        help="calibrated model, e.g. thrust=1.38,tau_up=0.08,drag=2.5",
+    )
+    ap.add_argument("--configs", default="default,log_tuning")
     args = ap.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     windows = select_windows(args.logs, args.max_windows)
@@ -364,7 +432,9 @@ def main() -> int:
             (r["log_id"], r["t0"], r["config"])
             for r in map(json.loads, results_path.read_text().splitlines())
         }
-    sitl = Sitl(args.autopilot, args.out, args.speed)
+    variant = parse_variant(args.variant)
+    configs = [c for c in args.configs.split(",") if c in ("default", "log_tuning")]
+    sitl = Sitl(args.autopilot, args.out, args.speed, variant)
     try:
         defaults = {k: sitl.param(k) for k in TUNING_KEYS}
         (args.out / "sitl_defaults.json").write_text(json.dumps(defaults, indent=1))
@@ -382,7 +452,7 @@ def main() -> int:
         hold(sitl, home, 8, tol=0.5)
         with results_path.open("a") as out:
             for w in windows:
-                for config in ("default", "log_tuning"):
+                for config in configs:
                     if (w["log_id"], w["t0"], config) in done:
                         continue
                     values = (
@@ -406,6 +476,7 @@ def main() -> int:
                                 "vehicle": w["vehicle"],
                                 "t0": w["t0"],
                                 "config": config,
+                                "variant": args.variant,
                                 "sim_pos": np.round(sim, 4).tolist(),
                             }
                         )

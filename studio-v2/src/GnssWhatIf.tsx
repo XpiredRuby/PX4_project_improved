@@ -12,12 +12,12 @@ export default function GnssWhatIf({ windAtAlt, altitude }: { windAtAlt: number;
       <input type="range" min={1} max={30} value={outage} onChange={e => setOutage(Number(e.target.value))}/></label>
     <div className={`gnss-result ${level}`}>
       {r.failsafe
-        ? <>PX4 failsafe at {r.failsafeAtS} s · expected drift <b>{r.driftSimM.toFixed(0)} m</b> in Gazebo, <b>~{r.driftRealM.toFixed(0)} m</b> on a real X500</>
+        ? <>PX4 failsafe at {r.failsafeAtS} s · expected drift <b>{r.driftSimM.toFixed(0)}–{r.driftRealM.toFixed(0)} m</b> (Gazebo value to real-aircraft upper bound)</>
         : <>No failsafe · drift about <b>{r.driftRealM.toFixed(1)} m</b></>}
       <span className="drift-bar" style={{ ['--drift' as string]: Math.min(1, r.driftRealM / 60) }} aria-hidden="true"/>
     </div>
     <ol className="gnss-steps">{r.steps.map(s => <li key={s}>{s}</li>)}</ol>
     <small className="muted">Wind {windAtAlt.toFixed(1)} m/s at {Math.round(altitude)} m. Checked against three Studio SITL outage cases;
-      the real-aircraft figure scales the wind response by measured real-fleet drag and has not been flight-tested.</small>
+      the upper bound scales the wind response by real-fleet tilt drag (partly wind) and has not been flight-tested.</small>
   </section>;
 }

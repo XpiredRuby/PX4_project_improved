@@ -29,6 +29,11 @@
    "label": "Hover thrust, real vs sim",
    "value": "62% / 73%",
    "note": "default sim x500 has less thrust margin"
+  },
+  {
+   "label": "Calibrated x500_cal, held-out median",
+   "value": "0.27 m \u2192 0.24 m",
+   "note": "p95 1.10 \u2192 1.12 m; tuning matters more than physics"
   }
  ],
  "credibility": [

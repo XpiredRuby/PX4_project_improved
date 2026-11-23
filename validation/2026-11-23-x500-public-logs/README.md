@@ -74,3 +74,26 @@ python scripts/score_x500_logs.py --logs ~/validation-data/x500 --sitl ~/validat
     --esc ~/validation-data/x500/esc --out validation/2026-11-23-x500-public-logs
 ```
 `~/validation-data/sitl` holds earlier Studio SITL logs extracted with `fidelity.px4_logs.extract`.
+
+## 5. Calibrated Gazebo model (`x500_cal`) and what it changes
+Variants of the stock x500 were flown on the same real windows, all with each aircraft's own PX4 tuning
+(`scripts/sitl_replay.py --variant`). The drag scale was chosen on half of the aircraft and scored on the other half
+(`scripts/score_calibrated_x500.py`, `calibrated_model.json`).
+
+| Model (real tuning in all runs) | held-out RMSE | median | p95 |
+|---|---|---|---|
+| Stock x500 | 0.49 m | 0.27 m | 1.10 m |
+| **x500_cal**: motorConstant x1.38, motor time constant 80/100 ms | 0.49 m | **0.24 m** | 1.12 m |
+| x500_cal + rotor drag x2.5 | 0.61 m | 0.24 m | 1.55 m |
+
+- Matching hover throttle and motor lag to the real fleet gives a small median gain and no tail change. Controller
+  tuning (section 2) matters far more than airframe physics for setpoint tracking.
+- Raising rotor drag makes the simulator worse, so the extra tilt seen in the public fleet (section 3) is mostly
+  unmeasured wind, not airframe drag. Studio treats real-fleet drag as an upper bound.
+- Install: `python scripts/install_x500_cal.py --autopilot ~/PX4-Autopilot` (adds `x500_cal`; stock `x500` untouched),
+  then register it with `mission_planner.simulation_binding --model x500_cal`.
+
+## 6. GNSS outages longer than EKF2_NOAID_TOUT
+Studio predicts PX4's documented sequence (dead reckoning, then altitude-only Descend drifting with the wind until
+re-acquisition) instead of a touchdown point. Fitted on the SITL gust + 12 s case (29.2 m recorded, 32 m modelled),
+checked on the calm 12 s (0.69 m) and gust 4 s (0.63 m) cases. Real-aircraft drift for that case: 32-55 m (upper bound).

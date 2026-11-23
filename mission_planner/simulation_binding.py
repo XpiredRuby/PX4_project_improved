@@ -181,7 +181,7 @@ def create_binding(profile, autopilot, model, airframe_id, sitl_tuning=None):
                                       f"CA_ROTOR{i}_KM": rotor["yaw_torque_per_thrust_m"],
                                       f"CA_ROTOR{i}_AX": 0., f"CA_ROTOR{i}_AY": 0., f"CA_ROTOR{i}_AZ": -1.,
                                       f"CA_ROTOR{i}_CT": rotor["maximum_thrust_n"] / max(r["maximum_thrust_n"] for r in inspection["rotors"])})
-    if model == "x500" and airframe.name == "4001_gz_x500":
+    if model in ("x500", "x500_cal") and airframe.name == "4001_gz_x500":
         # PX4's normalized allocation gains are tuned independently of the SDF
         # torque/thrust ratios used for the physical feasibility calculation.
         # The exact installed startup script is fingerprinted above.
