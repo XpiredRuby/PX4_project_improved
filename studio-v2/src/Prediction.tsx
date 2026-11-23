@@ -34,7 +34,7 @@ export default function Prediction({samples,environment,vehicle,digest}:Props){
     <button onClick={run}>Predict tracking</button>
     {error&&<p role="alert">{error}</p>}
     {result&&<><p>Predicted 3D tracking RMS {result.rms.toFixed(3)} m · peak {result.maxError.toFixed(3)} m · time at thrust or tilt limit {result.limitedTime.toFixed(2)} s</p>
-      <svg viewBox="0 0 630 90" aria-label="Predicted tracking error over route time" style={{width:'100%'}}><path d={path} stroke="#52b7ce" fill="none" strokeWidth="2"/></svg>
+      <svg viewBox="0 0 630 90" aria-label="Predicted tracking error over route time" style={{width:'100%'}}><path d={path} stroke="var(--trace)" fill="none" strokeWidth="2"/></svg>
       <small>Route time {samples[0].time.toFixed(1)}–{samples[samples.length-1].time.toFixed(1)} s · error scale 0–{Math.max(.01,result.maxError).toFixed(2)} m</small>
       <p><button onClick={save}>Export predicted positions</button></p></>}
   </section>;

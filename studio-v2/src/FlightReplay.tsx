@@ -87,10 +87,10 @@ export default function FlightReplay({local}:{local:boolean}){
       {flight.segments.length>1&&<label>Continuous coordinate segment <select value={flight.segment} onChange={e=>{setPlay(false);setPos(0);setFlight(readFlight(csv.current,e.target.value));}}>
         {flight.segments.map(id=><option key={id} value={id}>{id}</option>)}</select></label>}
       <label>Recording view <select value={view} onChange={e=>setView(e.target.value as typeof view)}><option value="map">Horizontal track</option><option value="height">Height vs elapsed time</option></select></label>
-      <svg viewBox="0 0 640 220" aria-label={view==='map'?'Horizontal recording and reference':'Recorded height along the timeline'} style={{width:'100%',background:'#10212e'}}>
-        <path d={chart.reference} stroke="#ecbc72" fill="none"/><path d={chart.measured} stroke="#58c8da" fill="none"/>
+      <svg viewBox="0 0 640 220" aria-label={view==='map'?'Horizontal recording and reference':'Recorded height along the timeline'} style={{width:'100%',background:'var(--viewport)'}}>
+        <path d={chart.reference} stroke="var(--accent)" strokeDasharray="5 3" fill="none"/><path d={chart.measured} stroke="var(--trace)" fill="none"/>
         <circle cx={chart.xy(current.time,current.measured)[0]} cy={chart.xy(current.time,current.measured)[1]} r="4" fill="white"/>
-      </svg><small>{view==='map'?(flight.axes.startsWith('Vicon')?'X right / Y up':'North right / East up'):'Seconds right / local height (m) up'}　 Gold · recorded reference　 Cyan · measured track　 White · current sample</small>
+      </svg><small>{view==='map'?(flight.axes.startsWith('Vicon')?'X right / Y up':'North right / East up'):'Seconds right / local height (m) up'}　 Dashed · recorded reference　 Solid · measured track　 Dot · current sample</small>
       <div><button onClick={()=>{if(pos===flight.frames.length-1)setPos(0);setPlay(!play);}}>{play?'Pause replay':'Play replay'}</button>
       <input aria-label="Recording sample" type="range" min="0" max={flight.frames.length-1} value={pos} onChange={e=>{setPlay(false);setPos(Number(e.target.value));}}/></div>
       <p>{current.time.toFixed(2)} s · {current.phase} · {current.measured.map(v=>v.toFixed(2)).join(' / ')} m</p>
