@@ -8,11 +8,17 @@ from .allocation import allocation_margin
 from .rotors import yaw_torque_available_nm
 
 
-@lru_cache(maxsize=4)
-def derivative_bound(order):
+@lru_cache(maxsize=8)
+def derivative_bound(order, progress=None):
     # Restrict the power polynomial to short intervals and use the Bernstein
     # convex hull. This is a continuous upper bound, not a sampled maximum.
-    coefficients = [0.0, 0.0, 0.0, 0.0, 35.0, -84.0, 70.0, -20.0]
+    if progress == "mirrored_ramp":
+        # First half under s = 2u. Reflection preserves absolute extrema.
+        coefficients = [0., 0., 0., 0., 2.5, -3., 1.]
+    elif progress is None:
+        coefficients = [0., 0., 0., 0., 35., -84., 70., -20.]
+    else:
+        raise ValueError("Unknown phase progress profile")
     for _ in range(order):
         coefficients = [i * coefficients[i] for i in range(1, len(coefficients))]
     degree = len(coefficients) - 1
@@ -31,7 +37,7 @@ def derivative_bound(order):
             for i in range(degree + 1)
         ]
         bound = max(bound, *map(abs, bernstein))
-    return bound * (1 + 1e-10)
+    return bound * (1 + 1e-10) * (2**order if progress else 1)
 
 
 def verify_phase(phase, vehicle, environment):
@@ -51,7 +57,10 @@ def verify_phase(phase, vehicle, environment):
         )
     distance = math.dist(start[:3], end[:3])
     turn = abs(end[3] - start[3])
-    bounds = [derivative_bound(i) / duration**i for i in (1, 2, 3)]
+    progress = phase.get("progress")
+    if progress and (phase["name"] != "LEG" or start[2] != end[2] or turn):
+        raise ValueError("Mirrored progress requires a level fixed-heading leg")
+    bounds = [derivative_bound(i, progress) / duration**i for i in (1, 2, 3)]
     speed, acceleration, jerk = [distance * b for b in bounds]
     yaw_rate, yaw_acceleration, yaw_jerk = [turn * b for b in bounds]
     disturbance_a = getattr(vehicle, "disturbance_acceleration_m_s2", 0.0)
@@ -108,5 +117,6 @@ def verify_phase(phase, vehicle, environment):
         acceleration_bound_m_s2=acceleration,
         jerk_bound_m_s3=jerk,
         yaw_rate_bound_rad_s=yaw_rate,
-        method="septic Bernstein interval hulls; monotone straight segment",
+        method=("mirrored Bernstein interval hulls; monotone straight segment" if progress
+                else "septic Bernstein interval hulls; monotone straight segment"),
     )

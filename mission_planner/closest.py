@@ -14,7 +14,7 @@ import json
 import math
 from pathlib import Path
 
-from .aircraft import assess_profile, mission_budget
+from .aircraft import assess_profile, mission_budget, rehearsal_volume
 from .contracts import (
     EnvironmentSnapshot, MissionIntent, VehicleModel, canonical_sha256,
     load_contract, validate_planning_inputs,
@@ -53,8 +53,9 @@ def _models(payload):
     if setup:
         p = setup["profile"]
         vehicle = VehicleModel.from_dict(setup["vehicle_model"])
+        radius, height = rehearsal_volume(p)
         env.update(environment_id="profile-env-" + setup["profile_sha256"][:16],
-                   max_radius_m=p["max_radius_m"], max_height_above_launch_m=p["max_height_m"],
+                   max_radius_m=radius, max_height_above_launch_m=height,
                    max_wind_m_s=p["expected_wind_m_s"])
     return vehicle, EnvironmentSnapshot.from_dict(env), setup
 
@@ -358,9 +359,8 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     heading_mode = intent["motion"]["yaw_mode"]
     fixed = heading_mode == "fixed" or hold_heading
     heading = math.radians(intent["motion"]["fixed_yaw_deg"] or 0.) if fixed else 0.
-    speed = .9 * min(intent["motion"]["maximum_speed_m_s"],
-                      intent["motion"]["target_speed_m_s"] or vehicle.maximum_speed_m_s,
-                      vehicle.maximum_speed_m_s)
+    speed = min(.9 * min(intent["motion"]["maximum_speed_m_s"], vehicle.maximum_speed_m_s),
+                intent["motion"]["target_speed_m_s"] or vehicle.maximum_speed_m_s)
     if setup and any(a[2] != b[2] for a, b in zip(points, points[1:], strict=False)):
         speed = min(speed, .9*min(setup["profile"]["maximum_climb_m_s"], setup["profile"]["maximum_descent_m_s"]))
     phases, row_estimate = [], 0
@@ -369,7 +369,13 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
     def add(name, start, finish):
         nonlocal row_estimate
         phase = _phase(name, start, finish, speed, vehicle, environment)
-        row_estimate += math.ceil(phase["duration_s"]/PERIOD)
+        if setup and fixed and name == "LEG" and start[2] == finish[2]:
+            candidate = _phase(name, start, finish, speed, vehicle, environment, cruise=True)
+            if candidate["duration_s"] < phase["duration_s"]:
+                phase = candidate
+        cruise = phase.get("progress") == "mirrored_ramp"
+        count = math.ceil(phase["duration_s"] / PERIOD)
+        row_estimate += count + (count % 2 if cruise else 0)
         if row_estimate > MAX_ROUTE_ROWS:
             raise PreviewBudgetError("Route sample budget requires a smaller preview.")
         if not phase["verification"]["accepted"]:
@@ -396,11 +402,14 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
         start, finish = clock, clock + phase["duration_s"]
         if rows and any(abs(rows[-1][key]-v) > 1e-9 for key,v in zip(("x","y","z","yaw"), phase["start"], strict=True)):
             raise ValueError("Discontinuous polynomial phase join")
+        cruise = phase.get("progress") == "mirrored_ramp"
         count = math.ceil(phase["duration_s"]/PERIOD)
+        if cruise:
+            count += count % 2
         for i in range(count+1):
             if rows and i == 0:
                 continue
-            row = _evaluate(phase["start"], phase["end"], phase["duration_s"], phase["duration_s"]*i/count)
+            row = _evaluate(phase["start"], phase["end"], phase["duration_s"], phase["duration_s"]*i/count, cruise=cruise)
             row.update(time=clock + phase["duration_s"]*i/count, planner_contract_version=1)
             rows.append(row)
         spans.append(dict(name=phase["name"], start_time_s=start, end_time_s=finish))
@@ -453,7 +462,8 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
         raise ValueError("Polynomial route failed continuous verification")
     verification = dict(
         schema_version=1, accepted=True, release_class="SITL_ONLY",
-        method="stop_turn_septic_bernstein",
+        method=("stop_turn_mixed_bernstein" if any("progress" in p for p in phases)
+                else "stop_turn_septic_bernstein"),
         checks=[dict(requirement_id="INT-007",status="PASS",units="m",
                      margin=intent["path"]["maximum_deviation_m"],detail="Exact ordered segment geometry; polynomial progress is monotone."),
                 dict(requirement_id="ORDER",status="PASS",detail="Vertices and laps visited in order; stationary turns add no geometric deviation."),
@@ -484,6 +494,10 @@ def _polynomial(intent, loops, vehicle, environment, setup, *, hold_heading=Fals
         environment_sha256=canonical_sha256(environment), verification_report_sha256=canonical_sha256(verification),
         point_count=len(rows), controller_cruise_height_m=-points[0][2],
         route_phases=spans, duration_scope="verified constructive trajectory; global optimality not established")
+    if setup:
+        summary.update(aircraft_profile_sha256=setup["profile_sha256"],
+                       mission_budget_sha256=canonical_sha256(budget),
+                       path_error_budget_sha256=canonical_sha256(error_budget))
     stride = max(1,math.ceil((len(rows)-1)/1000))
     indices = {0,len(rows)-1,*range(0,len(rows),stride)}
     # Keep exact stops/turns visible in the plotted path.

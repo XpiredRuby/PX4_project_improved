@@ -12,10 +12,22 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "analysis"))
-from planner_rehearsal import assess_frames, assess_aircraft_envelope, studio_recording  # noqa: E402
+from planner_rehearsal import assess_frames, assess_aircraft_envelope, native_land_commands, studio_recording  # noqa: E402
 
 
 class RehearsalTests(unittest.TestCase):
+    def test_native_land_commands_require_ordered_finite_coverage(self):
+        interval = np.array([100000, 900000])
+        for stamps, speeds, expected in (
+            ([100000, 500000, 900000], [.3, .6, .4], (.6, 3, True)),
+            ([100000, 900000], [.6, .6], (.6, 2, False)),
+            ([100000, 500000, 400000, 900000], [.6]*4, (.6, 4, False)),
+            ([100000, 500000, 900000], [.6, np.nan, .6], (None, 3, False)),
+        ):
+            with self.subTest(stamps=stamps, speeds=speeds):
+                self.assertEqual(native_land_commands(
+                    {"timestamp": stamps, "velocity[2]": speeds}, interval), expected)
+
     def evidence(self):
         time = np.arange(0., 2.01, .05)
         phase = ["TRAJECTORY"] * 21 + ["PX4_LAND"] * 20

@@ -4,11 +4,11 @@ import { airspeed } from './engineering';
 
 type Field = 'speed'|'airspeed'|'acceleration'|'jerk'|'altitude'|'yaw';
 const fields:Record<Field,{label:string;unit:string}> = {
-  speed:{label:'Groundspeed',unit:'m/s'},
+  speed:{label:'3D speed',unit:'m/s'},
   airspeed:{label:'Wind-relative airspeed',unit:'m/s'},
   acceleration:{label:'Acceleration',unit:'m/s²'},
   jerk:{label:'Jerk',unit:'m/s³'},
-  altitude:{label:'Altitude AGL (assumed)',unit:'m'},
+  altitude:{label:'Height above launch',unit:'m'},
   yaw:{label:'Yaw',unit:'rad'}
 };
 export const fieldValue=(sample:Sample,field:Field,env:Environment):number=>field==='airspeed'?airspeed(sample,env):sample[field];

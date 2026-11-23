@@ -2,6 +2,11 @@
 
 Use the localhost workbench to draw a route, calculate a time-parameterized reference, compare requested speeds, and replay recorded flights. The default vehicle is the X500 reference model. The aircraft selector also includes the repository's Gazebo X500 SDF profile and three illustrative multicopter profiles. Selecting a different model sends its assessed limits to the planner and invalidates the old result.
 
+For installation through simulator verification and troubleshooting, start with
+the [Trajectory Studio handbook](../docs/trajectory_studio_handbook.md).
+The [three full 200 m projects](../validation/2026-11-22-full-200m/README.md)
+include the registered aircraft profile, measured results, and evidence hashes.
+
 ## Run locally
 
 From the repository root, with Python 3.10+ and Node 22.13+ installed, run:
@@ -31,7 +36,7 @@ Open **http://127.0.0.1:8767**. Once dependencies are installed, local planning,
 
 ### Mission comparison
 
-The report measures 3D tracking error against the selected route, elapsed time on that phase, ordered stops and horizontal touchdown error. The route clock aligns positions to path progress. The elapsed clock measures how long the maneuver took. A stop requires position and speed to satisfy their respective limits at the same observation. The default thresholds are 0.5 m tracking RMS, 10% elapsed-time error, and 0.5 m at 0.25 m/s within one mission-clock second of each planned stop. The landing band defaults to a 5 m radius in the local horizontal plane. The report records the chosen criteria.
+The report measures 3D tracking error against the selected route, elapsed time on that phase, ordered stops and horizontal touchdown error. The route clock aligns positions to path progress. The default coverage test allows gaps of up to 0.25 s in either the elapsed or route clock. The elapsed clock measures how long the maneuver took. A stop requires position and speed to satisfy their respective limits at the same observation. The default thresholds are 0.5 m tracking RMS, 10% elapsed-time error, and 0.5 m at 0.25 m/s within one mission-clock second of each planned stop. The landing band defaults to a 5 m radius in the local horizontal plane. The report records the chosen criteria.
 
 The retained X500 example uses its original 90.06 s route and 2,539 route-phase truth samples. It yields 0.1601 m tracking RMS, 126.90 s elapsed on the route and 0.0783 m horizontal error at the first on-ground indication during native landing. The longer elapsed time exceeds the 10% study threshold. The target is the last recorded horizontal landing setpoint. This historical manifest identifies the archived route input and lacks a controller runtime receipt. Interior stop declarations are unavailable for this run.
 
@@ -41,7 +46,7 @@ The receipt identifies the source (`retained_sitl`, `hardware` or `synthetic`), 
 
 ### Weather
 
-Manual scenarios accept wind speed, meteorological direction *from*, gust, temperature, pressure and optional relative humidity. Forecast mode uses a selected coordinate and UTC time, retrieves hourly Open-Meteo data and retains the forecast-valid hour separately from retrieval time. Changing site or time clears the active forecast. Air-relative speed uses ground velocity minus the assumed wind vector. **Predict tracking** uses the selected model's mass, thrust and tilt limits, a critically damped position response, and an assumed isotropic drag area. It advances a 3D point mass from the first route state, uses uniform horizontal wind, and exports the predicted positions and deviation. The initial 0.08 m² drag area and 0.8 s response time are editable assumptions. This model does not reproduce the PX4 controller, estimator or landing contacts. Dynamic pressure and aerodynamic drag use a dry-air density estimate. Humidity and gust are recorded descriptors. No aerodynamic tracking or touchdown response to weather has been validated in this milestone.
+Manual scenarios accept wind speed, meteorological direction *from*, gust, temperature, pressure and optional relative humidity. Forecast mode uses a selected coordinate and UTC time, retrieves hourly Open-Meteo data and retains the forecast-valid hour separately from retrieval time. Changing site or time clears the active forecast. Returning to Manual restores the previous manual weather values for that editing session. Air-relative speed uses ground velocity minus the assumed wind vector. **Predict tracking** uses the selected model's mass, thrust and tilt limits, a critically damped position response, and an assumed isotropic drag area. It advances a 3D point mass from the first route state, uses uniform horizontal wind, and exports the predicted positions and deviation. The initial 0.08 m² drag area and 0.8 s response time are editable assumptions. This model does not reproduce the PX4 controller, estimator or landing contacts. Dynamic pressure and aerodynamic drag use a dry-air density estimate. Humidity and gust are recorded descriptors. No aerodynamic tracking or touchdown response to weather has been validated in this milestone.
 
 ### Recorded data and public benchmark
 
@@ -61,6 +66,16 @@ python scripts/benchmark_recorded_tracking.py /path/to/nanobench/datasets/datase
 ```
 
 The [benchmark evidence](benchmarks/nanobench.json) includes input SHA-256 digests, whole-flight splits, coverage, per-axis bias, RMS, p95 and peak errors. Dataset files stay with the original publisher.
+
+## Readiness for the first connected simulation
+
+| Requirement | Offline scope |
+| --- | --- |
+| Route drawing and verified speed | Exercise the straight route, sharp turn, handwriting, reversal, tiny route, explicit stops and multiple profiles. Preferred cruise is retained separately from the operator cap. The hard speed cap applies throughout the ground-to-ground reference. |
+| Playback and artifact identity | The 3D arrow uses NED yaw and the same camera as the route. The timeline uses the reference clock and shows the lifecycle phase. The UI checks the route digest and the full mission digest before presenting either reference. |
+| Recorded evidence | Both clocks, frame resets, required stops, target radius and runtime digests are checked by the scorer. An archived run without a runtime receipt remains diagnostic. |
+| Runner compatibility | The local React workbench executes checked fixed-heading routes on the registered X500. The constructive adapter checks constant altitude, geometry, timing, and artifact hashes. The current benchmark passed the browser-to-Gazebo route and reload workflow. See the [connected setup](../docs/trajectory_studio_handbook.md#4-run-the-current-benchmark). |
+| Reference versus measured motion | Weather tracking is a point-mass analysis. Controller timing, actual landing, and X500 hardware prediction error require separate measurements. Keep the 200 m route and published metrics fixed for the first comparison. Benchmark [fixed-path retiming](https://arxiv.org/abs/2309.11637) only if it improves route time under the same verified bounds and stop constraints. |
 
 ## Validation and static packaging
 

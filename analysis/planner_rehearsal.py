@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import math
 import json
 from io import BytesIO
 from pathlib import Path
@@ -20,6 +21,22 @@ import pandas as pd
 from sitl_ground_truth import audit_ground_truth, interpolation_coverage, ordered_samples, source_window
 from trajectory_quality import distribution
 from simulation_physics import assess_simulation_physics, interpolate_quaternions, quaternion_tilt_deg
+
+
+def native_land_commands(setpoints, native_times_us):
+    """Return peak downward demand and coverage over the observed AUTO LAND interval."""
+    stamp = np.asarray(setpoints.get("timestamp", []), dtype=float)
+    down = np.asarray(setpoints.get("velocity[2]", []))
+    if len(native_times_us) < 2 or len(stamp) != len(down):
+        return None, 0, False
+    start, end = native_times_us[[0, -1]]
+    active = (stamp >= start) & (stamp <= end)
+    commands = down[active]
+    if len(commands) < 2 or not np.isfinite(commands).all():
+        return None, len(commands), False
+    gaps = np.diff(np.r_[start, stamp[active], end])
+    covered = np.all(np.diff(stamp[active]) > 0) and np.max(gaps) <= 500000
+    return float(np.max(commands)), len(commands), bool(covered)
 
 
 def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=4, constructive_phases=None):
@@ -76,7 +93,7 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=
     add("Truth covers every recorded mission sample through contact", len(contacts) > 0 and np.all(coverage[active]),
         {"required_rows": int(active.sum()), "covered_rows": int(coverage[active].sum()),
          "post_contact_rows_excluded": int((~active).sum())})
-    offboard = df.phase.isin(["TAKEOFF", "TRAJECTORY", "RETURN_HOME", "ALIGN"]).to_numpy()
+    offboard = df.phase.isin(["TAKEOFF", "TRAJECTORY", "RETURN_HOME", "APPROACH", "ALIGN"]).to_numpy()
     desired = df[["desired_x", "desired_y", "desired_z"]].to_numpy(dtype=float)
     errors = np.linalg.norm(physical - desired, axis=1)
     yaw_error = np.degrees(np.arctan2(np.sin(yaw - df.target_yaw), np.cos(yaw - df.target_yaw)))
@@ -122,7 +139,7 @@ def assess_frames(df, plan, physical, yaw, velocity, audit, ground, rotor_count=
             "hardware_approval": False, "checks": checks,
             "per_phase": {str(phase): {"position_error_m": distribution(errors[df.phase.eq(phase)]),
                                        "heading_error_deg": distribution(yaw_error[df.phase.eq(phase)])}
-                          for phase in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME", "ALIGN")},
+                          for phase in ("TAKEOFF", "TRAJECTORY", "RETURN_HOME", "APPROACH", "ALIGN")},
             "scope": "sampled tracking, reference binding, land-detector contact, lifecycle and clock evidence; no hardware clearance",
             "timing_scope": "adaptive mission clock; planned derivatives are not a certificate of actual wall-time dynamics",
             "remaining_qualification": ["pre-CSV yaw bootstrap (guarded and retained in ULog, not independently scored here)",
@@ -192,7 +209,7 @@ def assess_case(folder):
     ulog_path = unique((folder / "runtime").rglob("*.ulg"))
     names = ["vehicle_global_position_groundtruth", "vehicle_local_position",
              "vehicle_attitude_groundtruth", "vehicle_local_position_groundtruth"]
-    datasets = {d.name: d.data for d in ULog(str(ulog_path), message_name_filter_list=names).data_list}
+    datasets = {d.name: d.data for d in ULog(str(ulog_path), message_name_filter_list=names + ["trajectory_setpoint"]).data_list}
     df = pd.read_csv(csv_path, low_memory=False)
     truth_audit, physical = audit_ground_truth(df, datasets[names[0]], datasets[names[1]])
     samples = df.position_time_boot_ms.to_numpy(dtype=float) * 1000.
@@ -228,6 +245,52 @@ def assess_case(folder):
                            json.loads((run / "audit.json").read_text()),
                            json.loads((folder / "final_ground.json").read_text()), rotor_count=rotor_count,
                            constructive_phases=constructive_phases)
+    if configuration["case"].get("controller_overrides", {}).get("align_planned_heading"):
+        route = df.phase.eq("TRAJECTORY").to_numpy()
+        heading = math.radians(json.loads((folder / "plan/intent.json").read_text())["motion"]["fixed_yaw_deg"])
+        delta = yaw[route] - heading
+        stats = distribution(np.degrees(np.arctan2(np.sin(delta), np.cos(delta))))
+        passed = bool(stats and stats["p95"] <= 5. and stats["max_abs"] <= 10.)
+        result["checks"].append(dict(name="Ground truth holds requested NED heading", passed=passed,
+                                     detail=dict(target_deg=math.degrees(heading), error_deg=stats)))
+        result["sampled_rehearsal_passed"] &= passed
+    approach_speed = configuration["case"].get("controller_overrides", {}).get("approach_speed_m_s", 0.)
+    if approach_speed:
+        rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())
+        elapsed = df.elapsed_s.to_numpy()
+        duration = float(elapsed[rows[-1]] - elapsed[rows[0]]) if len(rows) > 1 else 0.
+        valid = duration >= 5. and np.all(np.diff(rows) == 1) and np.isfinite(physical[rows]).all()
+        descent = float(physical[rows[-1], 2] - physical[rows[0], 2]) if valid else None
+        mean = descent / duration if valid else None
+        passed = valid and abs(mean - approach_speed) <= .02
+        result["checks"].append(dict(name="Measured slow approach before native LAND", passed=bool(passed),
+                                     detail=dict(target_m_s=approach_speed, mean_down_m_s=mean,
+                                                 descent_m=descent, duration_s=duration,
+                                                 tolerance_m_s=.02, minimum_duration_s=5.)))
+        result["sampled_rehearsal_passed"] &= bool(passed)
+    if configuration["case"].get("controller_overrides", {}).get("sitl_x500_native_land"):
+        parameters = json.loads((folder / "effective_parameters.json").read_text())["verified"]
+        readback = parameters["MPC_LAND_SPEED"]
+        upper_readback = parameters.get("MPC_Z_VEL_MAX_DN")
+        native = (df.phase.eq("PX4_LAND") & df.heartbeat_main_mode.eq(4)
+                  & df.heartbeat_sub_mode.eq(6) & df.landed_state.eq(4))
+        native_rows = np.flatnonzero(native.to_numpy())
+        approach_rows = np.flatnonzero(df.phase.eq("APPROACH").to_numpy())
+        peak, count, covered = native_land_commands(
+            datasets.get("trajectory_setpoint", {}), samples[native_rows])
+        passed = (math.isclose(readback, .6, abs_tol=1e-6)
+                  and upper_readback is not None and math.isclose(upper_readback, .6, abs_tol=1e-6)
+                  and covered and peak is not None and 0 < peak <= .600001
+                  and len(approach_rows) > 1 and native_rows[0] > approach_rows[-1])
+        result["checks"].append(dict(name="PX4 AUTO LAND confirmed after the slow approach",
+                                     passed=bool(passed), detail=dict(
+                                         land_setting_readback_m_s=readback,
+                                         upper_descent_setting_readback_m_s=upper_readback,
+                                         peak_logged_down_command_m_s=peak,
+                                         logged_command_samples=count,
+                                         auto_land_descending_samples=len(native_rows),
+                                         ground_truth_down_speed_m_s=distribution(velocity[native_rows, 2]))))
+        result["sampled_rehearsal_passed"] &= bool(passed)
     if constructive_audit is not None:
         result["constructive_reference_audit"] = constructive_audit
     model_file = folder / "plan/vehicle_model.json"
@@ -314,6 +377,9 @@ def assess_case(folder):
     result["evidence_sha256"] = {str(path.relative_to(folder)): hashlib.sha256(path.read_bytes()).hexdigest()
                                   for path in (csv_path, ulog_path, plan_path, run / "audit.json", folder / "final_ground.json",
                                                unique(run.glob("run_manifest_*.json")), run / "scenario.json")}
+    if configuration["case"].get("controller_overrides", {}).get("sitl_x500_native_land"):
+        for filename in ("effective_parameters.json", "simulation_configuration.json"):
+            result["evidence_sha256"][filename] = hashlib.sha256((folder / filename).read_bytes()).hexdigest()
     if binding and manifest.get("run_id"):
         bundle = studio_recording(df, physical, manifest, plan_digest, selected_digest, dict(result["evidence_sha256"]))
         artifact_digest = hashlib.sha256(bundle).hexdigest()

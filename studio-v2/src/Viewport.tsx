@@ -23,12 +23,28 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
     for(const s of samples){extreme=Math.max(extreme,Math.abs(s.north),Math.abs(s.east),Math.abs(s.altitude));const scalar=fieldValue(s,field,environment);low=Math.min(low,scalar);high=Math.max(high,scalar);}
     return {extreme,low,high,span:Math.max(0.01,high-low)};
   },[points,samples,field,environment]);
+  const bounds=useMemo(()=>{
+    let minX=0,maxX=0,minY=0,maxY=0;
+    for(const sequence of [points,samples]){
+      for(const p of sequence){
+        const {x,y}=project(p.north,p.east,p.altitude,camera.az,camera.el,1,0,0);
+        minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+      }
+    }
+    return {minX,maxX,minY,maxY};
+  },[points,samples,camera.az,camera.el]);
   useEffect(()=>{
     const canvas=ref.current;if(!canvas)return;
     const observer=new ResizeObserver(entries=>{
       const el=entries[0].contentRect;setSize({width:Math.max(10,el.width),height:Math.max(10,el.height)});
     });
-    observer.observe(canvas);return ()=>observer.disconnect();
+    observer.observe(canvas);
+    const zoom=(event:WheelEvent)=>{
+      event.preventDefault();
+      setCamera(c=>({...c,zoom:Math.max(.35,Math.min(6,c.zoom*(event.deltaY>0?.9:1.1)))}));
+    };
+    canvas.addEventListener('wheel',zoom,{passive:false});
+    return ()=>{observer.disconnect();canvas.removeEventListener('wheel',zoom);};
   },[]);
   useEffect(()=>{
     const canvas=ref.current;if(!canvas)return;
@@ -39,8 +55,10 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
     const W=size.width,H=size.height;
     ctx.fillStyle='#0c1923';ctx.fillRect(0,0,W,H);
     const {extreme,low,span}=scene;
-    const scale=Math.max(1,Math.min(W,H)*.65/extreme)*camera.zoom;
-    const get=(n:number,e:number,h:number)=>project(n,e,h,camera.az,camera.el,scale,W/2,H*.69);
+    const {minX,maxX,minY,maxY}=bounds;
+    const scale=Math.min(W*.82/Math.max(16,maxX-minX),H*.76/Math.max(16,maxY-minY))*camera.zoom;
+    const get=(n:number,e:number,h:number)=>project(n,e,h,camera.az,camera.el,scale,
+      W/2-(minX+maxX)*scale/2,H/2-(minY+maxY)*scale/2);
     const drawLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width=1)=>{
       ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
     };
@@ -74,13 +92,23 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
         const p=get(s.north,s.east,s.altitude);
         ctx.fillStyle='#eff9fc';ctx.strokeStyle='#10b9e5';ctx.lineWidth=3;
         ctx.beginPath();ctx.arc(p.x,p.y,6,0,Math.PI*2);ctx.fill();ctx.stroke();
-        const heading={x:p.x+Math.sin(s.yaw)*20,y:p.y-Math.cos(s.yaw)*20};
-        drawLine(p,heading,'#fff',2);
+        // NED heading is clockwise from north. Project it through the same camera as the axes.
+        const heading=get(s.north+Math.cos(s.yaw),s.east+Math.sin(s.yaw),s.altitude);
+        const x=heading.x-p.x,y=heading.y-p.y,length=Math.hypot(x,y);
+        if(length>0){
+          const dx=x/length,dy=y/length;
+          const tip={x:p.x+24*dx,y:p.y+24*dy};
+          drawLine(p,tip,'#fff',2);
+          ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(tip.x,tip.y);
+          ctx.lineTo(tip.x-7*dx-4*dy,tip.y-7*dy+4*dx);
+          ctx.lineTo(tip.x-7*dx+4*dy,tip.y-7*dy-4*dx);
+          ctx.closePath();ctx.fill();
+        }
       }
     }
     ctx.fillStyle='#b7ccd8';ctx.font='12px ui-monospace, monospace';
     ctx.fillText('NED frame · UP = −Down · equal axis scaling',16,H-16);
-  },[size,camera,points,samples,cursor,field,environment,scene]);
+  },[size,camera,points,samples,cursor,field,environment,scene,bounds]);
   return <div className="viewer">
     <div className="viewer-tools"><span>3D ORBIT / REFERENCE FIELD</span>
       <button type="button" title="Reset 3D view" onClick={()=>setCamera({az:-.65,el:.57,zoom:1})}>Reset</button></div>
@@ -88,8 +116,7 @@ export default function Viewport({points,samples,cursor,field,environment}:{poin
       onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY};e.currentTarget.setPointerCapture(e.pointerId);}}
       onPointerMove={e=>{if(!drag.current)return;const dx=e.clientX-drag.current.x,dy=e.clientY-drag.current.y;drag.current={x:e.clientX,y:e.clientY};
         setCamera(c=>({...c,az:c.az+dx*.009,el:Math.max(.05,Math.min(1.5,c.el+dy*.008))}));}}
-      onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}
-      onWheel={e=>{e.preventDefault();setCamera(c=>({...c,zoom:Math.max(.35,Math.min(6,c.zoom*(e.deltaY>0?.9:1.1)))}));}}/>
+      onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}/>
     <div className="field-legend"><span>{field}</span><span>{Number.isFinite(scene.low)?scene.low.toFixed(2):'—'}</span><div className="gradient-bar"/><span>{Number.isFinite(scene.high)?scene.high.toFixed(2):'—'}</span></div>
   </div>;
 }

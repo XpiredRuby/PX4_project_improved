@@ -85,3 +85,20 @@ test('a saved case uses its own exact route and declared stops without recompila
   payload.result.trajectory_csv+='\n';
   await assert.rejects(openSavedCase(JSON.stringify(payload)),/identity mismatch/);
 });
+
+test('dense elapsed samples cannot conceal a gap in route-clock coverage',async()=>{
+ const result=await edit(d=>{
+   for(let i=1;i<d.length-2;i++)d[i][2]=String(i<=40?(i-1)/20:2.45+(i-41)*(1.55/40));
+   return d;
+ });
+ assert.ok(result.coverage.maxGapS<.1);
+ assert.ok(Math.abs(result.coverage.maxRouteClockGapS-.5)<1e-12);
+ assert.equal(check(result,'Route coverage and frame'),'insufficient');
+});
+
+test('an explicitly selected route takes precedence over an archived default even without a runtime receipt',async()=>{
+ const result=await compareMission(plan,fixture.telemetry,{...fixture.receipt,controller_runtime:undefined,
+   selected_trajectory_sha256:await sha256(plan),source_sha256:{'trajectory.csv':'0'.repeat(64)}},points);
+ assert.equal(result.identity,'selected input');
+ assert.equal(result.verdict,'diagnostic only');
+});

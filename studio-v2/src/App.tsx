@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, ArrowDownToLine, Box as BoxIcon, CheckCircle2, ChevronDown, CircleDot, CloudSun, Crosshair, FolderOpen, Grip, HelpCircle, Layers, Map as MapIcon, MousePointer2, Pause, Play, Plus, RotateCcw, Save, Settings2, ShieldCheck, SlidersHorizontal, Trash2, TriangleAlert, Wind, X } from 'lucide-react';
 import type { Environment, Point, Preview, Project, Sample, Tool } from './types';
-import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, parseCsv, projectFromJson, sampleProject, validateProject } from './engineering';
+import { airspeed, buildRequest, exportBlob, getPreviewSummary, initialEnvironment, interpolate, metrics, nextWaypointId, parseCsv, projectFromJson, sampleProject, updateEnvironment, validateProject } from './engineering';
 import fiveStopStudy from '../examples/200m-five-stops.px4-project.json';
+import {sha256} from './missionReport';
+import ConnectedRehearsal from './ConnectedRehearsal';
+import type {Job} from './rehearsalHandoff';
 import MissionComparison from './MissionComparison';
 import StudyBatches from './StudyBatches';
 import FlightReplay from './FlightReplay';
@@ -50,6 +53,15 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   const [aspect,setAspect]=useState(1.65);
   useEffect(()=>{if(!ref.current)return;const obs=new ResizeObserver(es=>{const e=es[0];if(e.contentRect.height>0)setAspect(e.contentRect.width/e.contentRect.height);});obs.observe(ref.current);return()=>obs.disconnect();},[]);
   const visibleHeight=view/aspect;
+  const fitRoute=()=>{
+    let minNorth=0,maxNorth=0,minEast=0,maxEast=0;
+    for(const p of points){
+      minNorth=Math.min(minNorth,p.north);maxNorth=Math.max(maxNorth,p.north);
+      minEast=Math.min(minEast,p.east);maxEast=Math.max(maxEast,p.east);
+    }
+    setCenter({north:(minNorth+maxNorth)/2,east:(minEast+maxEast)/2});
+    setRange(Math.max(12,.6*Math.max(maxEast-minEast,(maxNorth-minNorth)*aspect)));
+  };
   const pointerToNE=(event:React.PointerEvent<SVGSVGElement>)=>{
     const rect=event.currentTarget.getBoundingClientRect();
     return {east:center.east+((event.clientX-rect.left)/rect.width-.5)*view,
@@ -83,7 +95,8 @@ function TopMap({points,selected,onSelect,onChange,tool,onAdd,onDraw,onFinishDra
   return <div className="map-frame">
     <div className="map-controls"><span>TOP / N ↑ / E →</span><div>
       <button onClick={()=>setRange(Math.max(12,range/1.25))} title="Zoom in">+</button>
-      <button onClick={()=>setRange(Math.min(120,range*1.25))} title="Zoom out">−</button>
+      <button onClick={()=>setRange(Math.min(Math.max(1200,1200*aspect),range*1.25))} title="Zoom out">−</button>
+      <button onClick={fitRoute} title="Fit route to map">Fit route</button>
       <button onClick={()=>{setRange(45);setCenter({north:0,east:0});}} title="Reset view"><Crosshair size={13}/></button>
     </div></div>
     <svg ref={ref} className={'map-svg tool-'+tool} viewBox={[center.east-range,-center.north-visibleHeight/2,view,visibleHeight].join(' ')}
@@ -136,6 +149,10 @@ export default function App(){
   const [viewScope,setViewScope]=useState<'route'|'full'>('full');
   const [cursor,setCursor]=useState(0);
   const [playing,setPlaying]=useState(false);
+  const [registered,setRegistered]=useState(false);
+  const [sitl,setSitl]=useState(false);
+  const [job,setJob]=useState<Job|null>(null);
+  const selectedJob=job&&result?.plan_id===job.plan_id?job:null;
   const [hasQueue,setHasQueue]=useState(false);
   const [engine,setEngine]=useState<'unknown'|'browser'|'local'>('unknown');
   const [weatherBusy,setWeatherBusy]=useState(false);
@@ -148,7 +165,7 @@ export default function App(){
   const fileRef=useRef<HTMLInputElement>(null);
   const pointsCsvRef=useRef<HTMLInputElement>(null);
   const frame=useRef<number>(0);
-  const clock=useRef<number>(0);
+  const playbackStart=useRef(0);
   const lastDraw=useRef<Point|null>(null);
   const geometryRevision=useRef(0);
   const history=useRef<Project[]>([]);
@@ -163,59 +180,91 @@ export default function App(){
     setPaneWidths(p=>({...p,[r.edge]:Math.max(r.edge==='left'?180:230,Math.min(r.edge==='left'?400:440,r.start+delta))}));
   };
   const onResizeEnd=()=>{resizing.current=null;};
-  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);}).catch(()=>setEngine('unknown'));},[]);
+  useEffect(()=>{fetch('/api/capabilities').then(r=>r.json()).then(d=>{setEngine(d.execution_location==='browser'?'browser':'local');setHasQueue(d.study_queue===true);setSitl(d.sitl_enabled===true);setRegistered(d.registered_aircraft===true);}).catch(()=>setEngine('unknown'));},[]);
   useEffect(()=>()=>{abort.current?.abort();cancelAnimationFrame(frame.current);},[]);
-  const update=useCallback((f:(p:Project)=>Project)=>{
+  const projectRef=useRef(project);
+  const manualWeather=useRef(initialEnvironment);
+  const replaceProject=(next:Project)=>{
+    projectRef.current=next;
+    setProject(next);
+  };
+  const invalidate=()=>{
     geometryRevision.current++;
     abort.current?.abort();
-    setProject(prev=>{const next=f(prev);if(next!==prev){history.current=[...history.current.slice(-19),prev];}return next;});
     setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setCursor(0);setPlaying(false);setDirty(true);setError('');setNotice('');
-  },[]);
+  };
+  const update=(f:(p:Project)=>Project)=>{
+    const previous=projectRef.current,next=f(previous);
+    if(next===previous)return;
+    history.current=[...history.current.slice(-19),previous];
+    if(next.environment!==previous.environment)manualWeather.current=next.environment.mode==='manual'?next.environment:initialEnvironment;
+    replaceProject(next);
+    invalidate();
+  };
   const selectAircraft=async(preset:string)=>{
     if(preset==='baseline'){update(p=>({...p,aircraft:undefined}));return;}
     setProfileBusy(true);
+    const revision=geometryRevision.current;
     try{
-      const response=await fetch('/api/aircraft/example/'+preset);
+      const response=await fetch(preset==='registered'?'/api/aircraft/binding':'/api/aircraft/example/'+preset);
       if(!response.ok)throw Error('Aircraft preset unavailable');
-      const profile=await response.json();
+      const data=await response.json();
+      const profile=preset==='registered'?data.profile:data;
       const assessed=await fetch('/api/aircraft/assess',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile)});
       const setup=await assessed.json();
       if(!assessed.ok||!setup.ready)throw Error('Aircraft profile could not be assessed');
-      update(p=>({...p,aircraft:{preset,profile,sha256:setup.profile_sha256}}));
+      if(revision===geometryRevision.current)update(p=>({...p,aircraft:{preset,profile,sha256:setup.profile_sha256}}));
     }catch(e){setError((e as Error).message);}finally{setProfileBusy(false);}
   };
   const changeValue=(key:keyof Project,value:number|string)=>{
     update(p=>({...p,[key]:value}));
   };
-  const currentEnvironment=useRef(project.environment);
-  currentEnvironment.current=project.environment;
-  const weatherVersion=useRef(0);
   const changeEnv=(patch:Partial<Environment>)=>{
-    weatherVersion.current++;
-    const stale=project.environment.mode==='live' && ['latitude','longitude','timestamp'].some(k=>Object.prototype.hasOwnProperty.call(patch,k));
-    setProject(p=>({...p,environment:{...p.environment,...(stale?{forecastValidAt:undefined,humidity:undefined,source:'Awaiting new location/time forecast',fetchedAt:undefined}:{}),...patch}}));
+    const current=projectRef.current;
+    const environment=updateEnvironment(current.environment,patch);
+    if(environment.mode==='manual')manualWeather.current=environment;
+    replaceProject({...current,environment});
     setDirty(true);
-    if(patch.mode!==undefined)setWeatherError('');
+    setWeatherError('');
+  };
+  const setWeatherMode=(mode:Environment['mode'])=>{
+    const current=projectRef.current.environment;
+    if(mode===current.mode)return;
+    changeEnv(mode==='manual'?{...manualWeather.current,mode,latitude:current.latitude,longitude:current.longitude,
+      timestamp:current.timestamp,fetchedAt:undefined,forecastValidAt:undefined,source:initialEnvironment.source}:{mode});
   };
   const editPoint=(index:number,point:Point)=>update(p=>({...p,points:p.points.map((v,i)=>i===index?point:v)}));
   const newPoint=(north:number,east:number)=>{
-    update(p=>({...p,points:[...p.points,{id:'P'+String(p.points.length+1).padStart(2,'0'),north,east,altitude:p.altitude,hard:false,exact:false}]}));
-    setSelected(project.points.length);
+    const index=projectRef.current.points.length;
+    if(index>=8192){setError('This route already has 8,192 points.');return;}
+    update(p=>({...p,points:[...p.points,{id:nextWaypointId(p.points),north,east,altitude:p.altitude,hard:false,exact:false}]}));
+    setSelected(index);
   };
   const drawPoint=(north:number,east:number,first:boolean)=>{
-    if(first)history.current=[...history.current.slice(-19),project];
+    const current=projectRef.current;
+    if(current.points.length>=8192){setError('This route already has 8,192 points.');return;}
     const previous=lastDraw.current;
     if(!first&&previous&&Math.hypot(previous.north-north,previous.east-east)<.6)return;
-    const p:Point={id:'D'+sid(),north,east,altitude:project.altitude,hard:false,exact:false};
-    lastDraw.current=p;
-    geometryRevision.current++;
-    abort.current?.abort();
-    setProject(old=>old.points.length>=8192?old:{...old,points:[...old.points,p]});
-    setDirty(true);setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setPlaying(false);setCursor(0);
+    if(first)history.current=[...history.current.slice(-19),current];
+    const point:Point={id:'D'+sid(),north,east,altitude:current.altitude,hard:false,exact:false};
+    lastDraw.current=point;
+    replaceProject({...current,points:[...current.points,point]});
+    invalidate();
   };
-  const finishDraw=()=>{lastDraw.current=null;setNotice('Sketch added. Run verification; the planner may adjust this route to satisfy constraints.');};
+  const finishDraw=()=>{
+    if(lastDraw.current)setNotice('Sketch added. Run verification to review the planned route.');
+    lastDraw.current=null;
+  };
   const clearRoute=()=>{update(p=>({...p,title:'New mission',points:[]}));setTool('draw');setSelected(-1);};
-  const undo=()=>{const previous=history.current.pop();if(previous){geometryRevision.current++;abort.current?.abort();setProject(previous);setResult(null);setSamples([]);setRouteSamples([]);setFullMissionSamples([]);setPlaying(false);setDirty(true);}};
+  const undo=()=>{
+    const previous=history.current.pop();
+    if(!previous)return;
+    if(previous.environment!==projectRef.current.environment)
+      manualWeather.current=previous.environment.mode==='manual'?previous.environment:initialEnvironment;
+    replaceProject(previous);
+    setSelected(-1);
+    invalidate();
+  };
   const applyExample=(name:string)=>{
     update(p=>name==='five-stops'?projectFromJson(structuredClone(fiveStopStudy)):{...p,title:name+' study',points:example(name,p.altitude)});
     setSelected(-1);
@@ -231,11 +280,12 @@ export default function App(){
 
   useEffect(()=>{
     if(!playing||samples.length<2)return;
-    clock.current=performance.now();
+    const t0=performance.now(),start=playbackStart.current,end=samples[samples.length-1].time;
     const tick=(now:number)=>{
-      const dt=Math.min(.1,Math.max(0,(now-clock.current)/1000));clock.current=now;
-      setCursor(old=>{const next=old+dt;if(next>=samples[samples.length-1].time){setPlaying(false);return samples[samples.length-1].time;}return next;});
-      frame.current=requestAnimationFrame(tick);
+      const next=Math.min(end,start+Math.max(0,(now-t0)/1000));
+      setCursor(next);
+      if(next<end)frame.current=requestAnimationFrame(tick);
+      else setPlaying(false);
     };
     frame.current=requestAnimationFrame(tick);
     return()=>cancelAnimationFrame(frame.current);
@@ -252,8 +302,15 @@ export default function App(){
       const data=await response.json() as Preview;
       if(!data.accepted||!response.ok)throw Error(data.error||'Planner rejected the requested route');
       if(!data.trajectory_csv)throw Error('Planner accepted but returned no reference CSV');
+      const routeDigest=await sha256(data.trajectory_csv);
+      if(routeDigest!==data.summary?.controller_trajectory_sha256)
+        throw Error('The verified route and its checksum differ.');
+      if(data.mission?.trajectory_csv&&(data.mission.controller_route_sha256!==routeDigest||
+        data.mission.trajectory_sha256!==await sha256(data.mission.trajectory_csv)))
+        throw Error('The full mission checksum or its linked route differs.');
       const parsed=parseCsv(data.trajectory_csv);
       const full=data.mission?.trajectory_csv?parseCsv(data.mission.trajectory_csv):[];
+      controller.signal.throwIfAborted();
       if(submittedRevision!==geometryRevision.current){setNotice('Edited during compilation; discarded the obsolete result. Run verification again.');return;}
       if(!parsed.length)throw Error('Verified plan returned no usable samples');
       setResult(data);setRouteSamples(parsed);setFullMissionSamples(full);setViewScope(full.length?'full':'route');setSamples(full.length?full:parsed);setCursor(0);setActive('analysis');setDirty(false);
@@ -263,9 +320,8 @@ export default function App(){
   };
   const fetchWeather=async()=>{
     setWeatherBusy(true);setWeatherError('');
+    const env=projectRef.current.environment;
     try{
-      const version=++weatherVersion.current;
-      const env=project.environment;
       if(!Number.isFinite(env.latitude)||!Number.isFinite(env.longitude)||Math.abs(env.latitude)>90||Math.abs(env.longitude)>180)
         throw Error('Enter valid latitude and longitude');
       const q=new URLSearchParams({latitude:String(env.latitude),longitude:String(env.longitude),timezone:'GMT',wind_speed_unit:'ms',
@@ -283,12 +339,13 @@ export default function App(){
       const h=json.hourly;
       const vals=['relative_humidity_2m','wind_speed_10m','wind_direction_10m','wind_gusts_10m','temperature_2m','surface_pressure'];
       if(vals.some(k=>!Number.isFinite(h[k]?.[i])))throw Error('Forecast contains missing required weather values');
-      if(version!==weatherVersion.current || env!==currentEnvironment.current)return;
+      if(env!==projectRef.current.environment)return;
       changeEnv({humidity:h.relative_humidity_2m[i], forecastValidAt:times[i]+'Z', windSpeed:h.wind_speed_10m[i],windDirection:h.wind_direction_10m[i],gust:h.wind_gusts_10m[i],
         temperature:h.temperature_2m[i],pressure:h.surface_pressure[i],
         fetchedAt:new Date().toISOString(),
         source:'Open-Meteo forecast · 10 m modeled wind · hourly UTC snapshot'});
-    }catch(e){setWeatherError((e as Error).message);}finally{setWeatherBusy(false);}
+    }catch(e){if(env===projectRef.current.environment)setWeatherError((e as Error).message);}
+    finally{setWeatherBusy(false);}
   };
   const searchPlace=async()=>{
     setSearchingPlace(true);setWeatherError('');setPlaceMatches([]);
@@ -318,14 +375,12 @@ export default function App(){
         if(cells.length!==headings.length)throw Error('Invalid CSV column count at row '+(i+2));
         const read=(k:string)=>cells[headings.indexOf(k)];
         const number=(k:string)=>{const raw=read(k);if(raw==='')throw Error('Empty '+k+' at row '+(i+2));const n=Number(raw);if(!Number.isFinite(n))throw Error('Invalid '+k+' at row '+(i+2));return n;};
-        const safeId=(read('point_id')||'P'+String(i+1).padStart(2,'0')).replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,50);
+        const safeId=read('point_id')||'P'+String(i+1).padStart(2,'0');
         return {id:safeId,north:number('north_m'),east:number('east_m'),altitude:number('altitude_m'),
           hard:read('hard')==='true'||read('hard')==='1'||i===0||i===rows.length-1,
           exact:(read('exact')==='true'||read('exact')==='1') && !(read('hard')==='true'||read('hard')==='1'||i===0||i===rows.length-1)} satisfies Point;
       });
-      const identifiers=new Set(imported.map(p=>p.id));
-      if(identifiers.size!==imported.length)throw Error('CSV point identifiers must be unique');
-      const next={...project,title:file.name.replace(/\.csv$/i,''),points:imported};
+      const next={...projectRef.current,title:file.name.replace(/\.csv$/i,''),points:imported};
       validateProject(next);
       update(()=>next);setSelected(-1);
       setNotice('Imported '+imported.length+' waypoint rows. Re-run verification to generate a reference.');
@@ -381,7 +436,7 @@ export default function App(){
           <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(false)}><BoxIcon size={14}/> Aircraft <span>{project.aircraft?.profile.profile_id??'x500'}</span></button>
           <button className="tree-child tree-button" onClick={()=>setEnvironmentTab(true)}><CloudSun size={14}/> Environment <span>{project.environment.mode}</span></button>
           <div className="tree-child"><Activity size={14}/> Reference <span>{result?.accepted?'Verified':'Not verified'}</span></div>
-          <div className="tree-sub">PX4 / Gazebo <span className="pending">Milestone 3</span></div>
+          <div className="tree-sub">PX4 / Gazebo <span className="pending">{sitl?'Connected':'Offline'}</span></div>
         </div>
         <div className="pane-title second-title"><SlidersHorizontal size={14}/> OPERATIONS</div>
         <div className="operations">
@@ -448,24 +503,29 @@ export default function App(){
         </section>:
         <section className="data-section">
           <div className="section-heading"><div><strong>Reference timeline</strong><span>Play, scrub, and inspect the verified CSV at original time coordinates.</span></div>
-          <div className="timeline-buttons"><div className="scope-tabs"><button className={viewScope==='route'?'scope-current':''} disabled={!routeSamples.length} onClick={()=>changeScope('route')}>Route</button><button className={viewScope==='full'?'scope-current':''} disabled={!fullMissionSamples.length} onClick={()=>changeScope('full')}>Full mission</button></div><button aria-label="Play or pause" onClick={()=>{if(cursor>= (samples[samples.length-1]?.time||0))setCursor(samples[0]?.time||0);setPlaying(!playing);}} disabled={!samples.length}>{playing?<Pause size={16}/>:<Play size={16}/>}</button>
-            <button onClick={()=>setCursor(samples[0]?.time||0)} disabled={!samples.length} title="Reset time"><RotateCcw size={15}/></button></div></div>
+          <div className="timeline-buttons"><div className="scope-tabs"><button className={viewScope==='route'?'scope-current':''} disabled={!routeSamples.length} onClick={()=>changeScope('route')}>Route</button><button className={viewScope==='full'?'scope-current':''} disabled={!fullMissionSamples.length} onClick={()=>changeScope('full')}>Full mission</button></div><button aria-label="Play or pause" onClick={()=>{if(playing){setPlaying(false);return;}
+              const start=cursor>=samples[samples.length-1].time?samples[0].time:cursor;
+              playbackStart.current=start;setCursor(start);setPlaying(true);}} disabled={!samples.length}>{playing?<Pause size={16}/>:<Play size={16}/>}</button>
+            <button onClick={()=>{setPlaying(false);setCursor(samples[0]?.time||0);}} disabled={!samples.length} title="Reset time"><RotateCcw size={15}/></button></div></div>
           <div className="scrubber"><input aria-label="Reference time" type="range" min={samples[0]?.time||0} max={samples[samples.length-1]?.time||1} step=".01" value={cursor} disabled={!samples.length} onChange={e=>{setPlaying(false);setCursor(Number(e.target.value));}}/>
             <span>{display(cursor,'s')} / {display(duration,'s')}</span></div>
           {active==='analysis'&&<><div className="field-select">
               <label>Scalar</label><select value={visibleField} onChange={e=>setField(e.target.value as Field)}>
-                <option value="speed">Groundspeed</option><option disabled={!weatherReady} value="airspeed">Wind-relative airspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
+                <option value="speed">3D speed</option><option disabled={!weatherReady} value="airspeed">Wind-relative airspeed</option><option value="acceleration">Acceleration</option><option value="jerk">Jerk</option>
                 <option value="altitude">Altitude</option><option value="yaw">Yaw</option></select>
               <span>Computed field, not an FEA stress solution</span></div>
             <div className="plot-grid">{(['speed','airspeed','acceleration','jerk','altitude','yaw'] as const).filter(metric=>metric!=='airspeed'||weatherReady).map(metric=>
               <Plot key={metric} samples={samples} field={metric} environment={project.environment} cursor={cursor} onCursor={t=>{setPlaying(false);setCursor(t);}}
-                ceiling={metric==='speed'?cap:metric==='acceleration'?1:metric==='jerk'?1.5:undefined}/>)}</div>
+                ceiling={metric==='speed'?(viewScope==='route'?Number(summary.speed.planning_cap_m_s)||cap:cap):
+                  metric==='acceleration'?result?.vehicle_model?.maximum_acceleration_m_s2:
+                  metric==='jerk'?result?.vehicle_model?.maximum_jerk_m_s3:undefined}/>)}</div>
           </>}
           {current&&<div className="sample-readout">
-            <div><span>TIME</span><strong>{display(current.time,'s')}</strong></div>
+            <div><span>TIME</span><strong>{display(current.time,'s')}</strong>{current.phase&&<span>{current.phase.replaceAll('_',' ')}</span>}</div>
             <div><span>N / E</span><strong>{round(current.north)} / {round(current.east)} m</strong></div>
             <div><span>HEIGHT</span><strong>{display(current.altitude,'m')}</strong></div>
-            <div><span>GROUND SPEED</span><strong>{display(current.speed,'m/s')}</strong></div>
+            <div><span>3D SPEED</span><strong>{display(current.speed,'m/s')}</strong></div>
+            <div><span>YAW FROM NORTH</span><strong>{display((current.yaw*180/Math.PI%360+360)%360,'°')}</strong></div>
             <div><span>WIND-RELATIVE</span><strong>{display(airspeed(current,project.environment),'m/s')}</strong></div>
           </div>}
         </section>}
@@ -478,18 +538,19 @@ export default function App(){
         {stats&&<section className="metrics-row">
           <div><span>REFERENCE DURATION</span><strong>{display(stats.duration,'s',1)}</strong></div>
           <div><span>PATH DISTANCE</span><strong>{display(stats.distance,'m',1)}</strong></div>
-          <div><span>PEAK GROUND SPEED</span><strong>{display(stats.peak,'m/s')}</strong></div>
+          <div><span>PEAK 3D SPEED</span><strong>{display(stats.peak,'m/s')}</strong></div>
           <div><span>PEAK AIR-RELATIVE</span><strong>{display(stats.air,'m/s')}</strong></div>
           <div><span>PEAK ACCEL.</span><strong>{display(stats.accel,'m/s²')}</strong></div>
           <div><span>PEAK JERK</span><strong>{display(stats.jerk,'m/s³')}</strong></div>
           <div><span>EST. DRY AIR DENSITY</span><strong>{display(stats.density,'kg/m³',3)}</strong></div>
           <div><span>PEAK DYNAMIC PRESSURE</span><strong>{display(stats.peakDynamicPressure,'Pa',1)}</strong></div>
         </section>}
+        {sitl&&<ConnectedRehearsal plan={result} onJob={setJob}/>}
         {result&&<section className="data-section">
           <div className="section-heading"><div><strong>Verification & artifact exports</strong><span>Mathematical reference — not simulated or physically measured flight</span></div>
             <div className="section-actions"><button onClick={saveReference}><ArrowDownToLine size={14}/> Route CSV</button>
               {result.mission?.trajectory_csv&&<button title="Display-only lifecycle reference; not controller execution input" onClick={()=>exportBlob('planned-full-mission-reference.csv',result.mission?.trajectory_csv||'','text/csv')}><ArrowDownToLine size={14}/> Full mission CSV</button>}
-              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
+              <button onClick={()=>downloadJson('planner-evidence.json',{schema:'trajectory-studio.scenario.v1',executionBackend:engine,solverSourceSha256:import.meta.env.VITE_SOLVER_DIGEST,project,request:buildRequest(project),result:{...result,trajectory_csv:undefined,mission:{...result.mission,trajectory_csv:undefined}},analysisWeather:project.environment,liveExecution:selectedJob||{status:'not_run',firmware:null,simulationStep:null,seed:null},scope:'verified reference and analytical weather sensitivity'})}><ArrowDownToLine size={14}/> Report JSON</button></div></div>
           <div className="verification-grid">
             <div><span>RESULT</span><strong className="pass-label">ACCEPTED REFERENCE</strong></div>
             <div><span>RELEASE CLASS</span><strong>{result.release_class||'SITL_ONLY'}</strong></div>
@@ -498,8 +559,11 @@ export default function App(){
             <div><span>MODEL CAP</span><strong>{display(modelCap,'m/s')}</strong></div>
             <div><span>REQUESTED NEVER-EXCEED</span><strong>{display(project.speedCap,'m/s')}</strong></div>
             <div><span>PLANNED CAP</span><strong>{String(summary.speed.planning_cap_m_s??'—')} m/s</strong></div>
-            <div><span>GAZEBO CAMPAIGN</span><strong>NOT RUN</strong></div>
+            <div><span>GAZEBO CAMPAIGN</span><strong>{selectedJob?.stage||'NOT RUN'}</strong></div>
           </div>
+          {result.simulation_compatible===false&&<p>{result.preview_settings?.planner_backend==='stop_turn'
+            ?'Connected stop-and-turn rehearsal requires a level route starting over launch, a fixed heading, and a matching local simulator.'
+            :'Rehearsal requires a simulator configuration matched to this aircraft profile.'}</p>}
           {Array.isArray(summary.speed.reasons)&&<p>Speed limits reported by the planner · {summary.speed.reasons.map(String).join(', ').replaceAll('_',' ')||'No adjustment'}</p>}
           {result.planning_adjustments&&<div className="adjustments"><strong>Requested vs accepted trajectory</strong>
             <p>Original drawing tolerance: {display(result.planning_adjustments.requested_rounding_m??0,'m')}. Maximum documented requested-path bound: {display(result.planning_adjustments.curve_error_bound_from_requested_m??0,'m')}. Fidelity criterion: {result.planning_adjustments.original_rounding_met?'Met':'Not met; modified route requires review'}.</p>
@@ -515,7 +579,7 @@ export default function App(){
           <div className="inspector-section">
             <div className="group-title">VEHICLE MODEL <ChevronDown size={14}/></div>
             <label>Aircraft preset</label><select aria-label="Aircraft model" value={project.aircraft?.preset??'baseline'} disabled={busy||profileBusy||sweeping} onChange={e=>selectAircraft(e.target.value)}>
-              <option value="baseline">X500 · reference model</option><option value="x500">X500 · Gazebo SDF profile</option>
+              <option value="baseline">X500 · reference model</option>{registered&&<option value="registered">Registered Gazebo aircraft</option>}<option value="x500">X500 · Gazebo SDF profile</option>
               <option value="quad">Illustrative quadrotor</option><option value="hex">Illustrative hexacopter</option><option value="octo">Illustrative octocopter</option></select>
             <div className="hint">{project.aircraft?.profile.name??'X500 reference model'} · modeled speed limit {display(modelCap,'m/s')}.</div>
             <div className="form-row"><label>Reference altitude (m)<input type="number" min=".1" max="30" step=".5" value={project.altitude}
@@ -534,8 +598,8 @@ export default function App(){
           <div className="inspector-section">
             <button className="group-title group-click" aria-expanded={environmentTab} onClick={()=>setEnvironmentTab(!environmentTab)}><Wind size={15}/> ENVIRONMENT <ChevronDown size={14}/></button>
             {environmentTab&&<><div className="mode-switch">
-              <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>changeEnv({mode:'manual',forecastValidAt:undefined,source:'User-specified manual scenario',fetchedAt:undefined})}>Manual</button>
-              <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>changeEnv({mode:'live',forecastValidAt:undefined,source:'Awaiting forecast; last values are not current',fetchedAt:undefined})}>Live forecast</button>
+              <button className={project.environment.mode==='manual'?'mode-active':''} onClick={()=>setWeatherMode('manual')}>Manual</button>
+              <button className={project.environment.mode==='live'?'mode-active':''} onClick={()=>setWeatherMode('live')}>Live forecast</button>
             </div>
             <label>Search city or place name</label>
             <div className="place-search"><input aria-label="Search location" value={placeQuery} placeholder="e.g. College Station, Texas" onChange={e=>setPlaceQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchPlace();}}/><button disabled={searchingPlace} onClick={searchPlace}>{searchingPlace?'...':'Find'}</button></div>

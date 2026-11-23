@@ -60,7 +60,8 @@ class ResearchHandler(PreviewHandler):
         queue = getattr(self.server, "study_queue", None)
         if path == "/api/capabilities":
             return self._json(200, {"execution_location": "local", "study_queue": queue is not None,
-                                    "sitl_enabled": False, "hardware_enabled": False})
+                                    "sitl_enabled": getattr(self.server, "jobs", None) is not None, "registered_aircraft": bool(getattr(getattr(self.server, "jobs", None), "binding", None)),
+                                    "hardware_enabled": False})
         if queue and path == "/api/studies":
             return self._json(200, {"studies": queue.list()})
         match = re.fullmatch(r"/api/studies/([a-f0-9-]{36})(?:/(export|cases/([0-9]+)))?", path)
@@ -136,8 +137,9 @@ class ResearchHandler(PreviewHandler):
 
 
 @contextmanager
-def research_server(port, directory, assets=None):
+def research_server(port, directory, assets=None, *, jobs=None):
     with ThreadingHTTPServer(("127.0.0.1", port), ResearchHandler) as server:
+        server.jobs = jobs
         server.assets = Path(assets or ROOT / "studio-v2/dist").resolve()
         server.study_queue = StudyQueue(directory)
         try:
@@ -150,11 +152,23 @@ def main(default_assets=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8767)
     parser.add_argument("--studies-dir", type=Path, default=Path.home() / ".px4-trajectory-studio/studies")
+    parser.add_argument("--sitl-autopilot", type=Path, help="compiled PX4 tree for local Gazebo rehearsals")
+    parser.add_argument("--runs", type=Path, help="directory for retained plans and simulation results")
+    parser.add_argument("--sim-binding", type=Path, help="registered local simulator aircraft")
     args = parser.parse_args()
+    if args.sim_binding and not args.sitl_autopilot:
+        parser.error("--sim-binding requires --sitl-autopilot")
+    if bool(args.sitl_autopilot) != bool(args.runs):
+        parser.error("--sitl-autopilot and --runs must be supplied together")
+    jobs = None
+    if args.sitl_autopilot:
+        from .studio_jobs import StudioJobs
+        binding = json.loads(args.sim_binding.read_text()) if args.sim_binding else None
+        jobs = StudioJobs(args.runs, args.sitl_autopilot, gui=False, binding=binding)
     assets = Path(default_assets or ROOT / "studio-v2/dist")
     if not (assets / "index.html").exists():
         parser.error("Build the frontend in studio-v2 with npm install and npm run build.")
-    with research_server(args.port, args.studies_dir, assets) as server:
+    with research_server(args.port, args.studies_dir, assets, jobs=jobs) as server:
         print(f"Trajectory Studio: http://127.0.0.1:{server.server_port}", flush=True)
         try:
             server.serve_forever()

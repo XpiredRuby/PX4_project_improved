@@ -13,6 +13,7 @@ class MissionPhase(TextEnum):
     TRAJECTORY = "TRAJECTORY"
     RETURN_HOME = "RETURN_HOME"
     ALIGN = "ALIGN"
+    APPROACH = "APPROACH"
     HANDOFF = "HANDOFF"
 
 
@@ -41,7 +42,8 @@ MISSION_TRANSITIONS = {
     MissionPhase.TAKEOFF: frozenset((MissionPhase.TRAJECTORY,)),
     MissionPhase.TRAJECTORY: frozenset((MissionPhase.RETURN_HOME,)),
     MissionPhase.RETURN_HOME: frozenset((MissionPhase.ALIGN,)),
-    MissionPhase.ALIGN: frozenset((MissionPhase.HANDOFF,)),
+    MissionPhase.ALIGN: frozenset((MissionPhase.APPROACH, MissionPhase.HANDOFF)),
+    MissionPhase.APPROACH: frozenset((MissionPhase.ALIGN,)),
     MissionPhase.HANDOFF: frozenset(),
 }
 

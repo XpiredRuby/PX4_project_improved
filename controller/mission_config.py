@@ -37,6 +37,10 @@ class MissionConfig:
     position_prediction_max_age_s: float = 0.075
     position_prediction_max_displacement_m: float = 0.15
     # Retimed cruise reference leaves feedback room inside the normal cap.
+    align_planned_heading: bool = False
+    sitl_x500_native_land: bool = False
+    approach_speed_m_s: float = 0.0
+    trajectory_velocity_lead_s: float = 0.0
     cruise_reference_speed_m_s: float = 1.0
     cruise_command_speed_limit_m_s: float = 1.25
     max_horizontal_speed_m_s: float = 3.0
@@ -133,10 +137,10 @@ class MissionConfig:
         import math
         from dataclasses import fields
 
-        booleans = {"tracking_governor_enabled", "position_prediction_enabled"}
+        booleans = {"align_planned_heading", "sitl_x500_native_land", "tracking_governor_enabled", "position_prediction_enabled"}
         signed = {"ground_offset_min_m", "ground_offset_max_m", "bootstrap_pitch_deg",
                   "bootstrap_thrust_bias"}
-        nonnegative = {"bootstrap_min_thrust", "navigation_degraded_entry_s",
+        nonnegative = {"approach_speed_m_s", "trajectory_velocity_lead_s", "bootstrap_min_thrust", "navigation_degraded_entry_s",
                        "navigation_hold_velocity_damping"}
         for field in fields(self):
             value = getattr(self, field.name)
@@ -168,6 +172,10 @@ class MissionConfig:
             raise ValueError("tracking_governor_enabled must be boolean")
         if not isinstance(self.position_prediction_enabled, bool):
             raise ValueError("position_prediction_enabled must be boolean")
+        if self.approach_speed_m_s > min(.1, self.max_vertical_speed_m_s):
+            raise ValueError("Offboard approach rate exceeds its vertical speed limit")
+        if self.trajectory_velocity_lead_s > .5:
+            raise ValueError("trajectory velocity lead must be at most 0.5 s")
         if not (0 < self.position_prediction_max_age_s <= .1
                 and 0 < self.position_prediction_max_displacement_m <= .25):
             raise ValueError("position prediction must remain short and bounded")

@@ -164,6 +164,7 @@ class PositionController:
         self.land_yaw_unwrapped = None
         self.return_segment = None
         self.return_yaw_start = None
+        self.approach_started = False
         self.align_ready_since = None
 
         self.log_file = None
@@ -1235,13 +1236,19 @@ class PositionController:
             segment_start = (self.x0, self.y0, self.z0)
             start_velocity = (0.0, 0.0, 0.0)
 
+        heading_duration = 0.
+        if self.config.align_planned_heading:
+            turn = abs(math.degrees(wrapped_angle(self.trajectory_origin.yaw - self.yaw0)))
+            heading_duration = max(1.875 * turn / self.config.max_yaw_rate_deg_s,
+                                   math.sqrt(5.78 * turn / self.config.max_yaw_acceleration_deg_s2),
+                                   (60. * turn / self.config.max_yaw_jerk_deg_s3) ** (1/3))
         self.takeoff_segment = MinimumJerkSegment.from_limits(
             segment_start,
             (self.target_x, self.target_y, self.target_z),
             max_speed=self.config.takeoff_max_speed_m_s,
             max_accel=self.config.max_accel_m_s2,
             max_jerk=self.config.max_jerk_m_s3,
-            minimum_duration=self.config.minimum_segment_duration_s,
+            minimum_duration=max(self.config.minimum_segment_duration_s, heading_duration),
             start_velocity=start_velocity,
         )
 
@@ -1259,6 +1266,7 @@ class PositionController:
         self.land_yaw_unwrapped = None
         self.return_segment = None
         self.return_yaw_start = None
+        self.approach_started = False
         self.align_ready_since = None
         self.navigation_unhealthy_since = None
         self.navigation_recovered_since = None
@@ -1545,7 +1553,7 @@ class PositionController:
     def _start_return_home(self, x, y, z, snapshot, now_mono):
         self.land_x = self.x0
         self.land_y = self.y0
-        self.land_yaw_unwrapped = self.yaw0
+        self.land_yaw_unwrapped = self.trajectory_origin.yaw if self.config.align_planned_heading else self.yaw0
         self.return_yaw_start = snapshot["yaw"]
         start_velocity = (
             snapshot["vx"],
@@ -1650,7 +1658,26 @@ class PositionController:
                 and now_mono - self.align_ready_since
                 >= self.config.align_hold_s
             ):
-                self._transition(MissionPhase.HANDOFF, now_mono)
+                if self.config.approach_speed_m_s and not self.approach_started and not self.return_request_reason:
+                    self.approach_started = True
+                    self.approach_start_z = self.target_z
+                    self._transition(MissionPhase.APPROACH, now_mono)
+                else:
+                    self._transition(MissionPhase.HANDOFF, now_mono)
+
+        elif self.phase == MissionPhase.APPROACH:
+            # Finish above the measured GNSS clearance budget. Native LAND owns
+            # the remaining descent and the contact transition.
+            floor = self._required_cruise_height(snapshot["gps_vertical_accuracy_m"])
+            floor += self.config.clearance_budget_hysteresis_m
+            limit_z = self.z0 - floor
+            next_z = self.approach_start_z + self.phase_clock_s * self.config.approach_speed_m_s
+            if self.navigation_state != NavigationState.HEALTHY or next_z >= limit_z or z >= limit_z:
+                self.target_z = min(self.target_z, limit_z)
+                self.align_ready_since = None
+                self._transition(MissionPhase.ALIGN, now_mono)
+            else:
+                self.target_z = next_z
 
     @staticmethod
     def _zero_pid_terms():
@@ -1843,6 +1870,10 @@ class PositionController:
         self._set_navigation_state(NavigationState.HEALTHY, snapshot)
 
     def _advance_phase_clock(self, loop_dt):
+        if self.phase == MissionPhase.APPROACH:
+            if self.navigation_state == NavigationState.HEALTHY:
+                self.phase_clock_s += clamp(loop_dt, 0., self.max_trajectory_clock_step_s)
+            return
         self.trajectory_clock_limited = False
         if self.phase not in (
             MissionPhase.TAKEOFF,
@@ -1955,6 +1986,11 @@ class PositionController:
             target.vz * speed_scale + correction_z,
         )
 
+        heading = self.yaw0
+        if self.config.align_planned_heading:
+            ratio = clamp(elapsed / self.takeoff_segment.duration, 0., 1.)
+            blend = ratio**3 * (10. - 15.*ratio + 6.*ratio**2)
+            heading += blend * wrapped_angle(self.trajectory_origin.yaw - self.yaw0)
         return self._control_result(
             target=target,
             desired=(target.x, target.y, target.z),
@@ -1970,7 +2006,7 @@ class PositionController:
             ),
             command=command,
             limited=limited,
-            yaw_unwrapped=self.yaw0,
+            yaw_unwrapped=heading,
         )
 
     def trajectory_controller(self, x, y, z, dt):
@@ -1989,15 +2025,19 @@ class PositionController:
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
 
+        # Compensate measured horizontal velocity response lag on the SITL X500.
+        # Route acceleration scales quadratically under constant clock scaling.
+        lead = self.config.trajectory_velocity_lead_s * speed_scale**2
+        lead_x = lead * target.ax if lead and math.isfinite(target.ax) else 0.
+        lead_y = lead * target.ay if lead and math.isfinite(target.ay) else 0.
         command, limited = self._limit_velocity_command(
-            target.vx * speed_scale + correction_x,
-            target.vy * speed_scale + correction_y,
+            target.vx * speed_scale + correction_x + lead_x,
+            target.vy * speed_scale + correction_y + lead_y,
             target.vz * speed_scale + correction_z,
         )
 
-        yaw_unwrapped = (
-            self.yaw0 + target.yaw - self.trajectory_origin.yaw
-        )
+        yaw_unwrapped = (target.yaw if self.config.align_planned_heading
+                         else self.yaw0 + target.yaw - self.trajectory_origin.yaw)
         return self._control_result(
             target=target,
             desired=(desired_x, desired_y, desired_z),
@@ -2068,10 +2108,11 @@ class PositionController:
         correction_x = self.pid_x.update(x, dt)
         correction_y = self.pid_y.update(y, dt)
         correction_z = self.pid_z.update(z, dt)
+        descent = self.config.approach_speed_m_s if self.phase == MissionPhase.APPROACH else 0.
         command, limited = self._limit_velocity_command(
             correction_x,
             correction_y,
-            correction_z,
+            correction_z + descent,
         )
         target = TrajectoryPoint(
             time=0.0,
@@ -2080,7 +2121,7 @@ class PositionController:
             z=self.target_z - self.z0,
             vx=0.0,
             vy=0.0,
-            vz=0.0,
+            vz=descent,
             yaw=wrapped_angle(
                 self.land_yaw_unwrapped - self.yaw0
             ),
@@ -2089,7 +2130,7 @@ class PositionController:
         return self._control_result(
             target=target,
             desired=(self.land_x, self.land_y, self.target_z),
-            planned=(0.0, 0.0, 0.0),
+            planned=(0.0, 0.0, descent),
             pid_terms=(
                 self._pid_terms(self.pid_x),
                 self._pid_terms(self.pid_y),
@@ -2369,6 +2410,7 @@ class PositionController:
             )
 
         active_phases = (
+            MissionPhase.APPROACH,
             MissionPhase.TAKEOFF,
             MissionPhase.TRAJECTORY,
             MissionPhase.RETURN_HOME,
@@ -2500,6 +2542,7 @@ class PositionController:
                         effective_dt,
                     )
                 elif self.phase in (
+                    MissionPhase.APPROACH,
                     MissionPhase.ALIGN,
                     MissionPhase.HANDOFF,
                 ):

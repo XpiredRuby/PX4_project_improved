@@ -79,8 +79,14 @@ class StudioJobs:
         self.log = None
 
     def compatible(self, result):
-        if result.get('preview_settings', {}).get('planner_backend') == 'stop_turn':
-            return False  # The connected runner accepts its original spline contract only.
+        if result["intent"]["motion"]["yaw_mode"] != "fixed":
+            return False
+        if result.get("preview_settings", {}).get("planner_backend") == "stop_turn":
+            points = result["intent"]["path"]["points"]
+            height = result["summary"]["controller_cruise_height_m"]
+            if (abs(points[0]["north_m"]) + abs(points[0]["east_m"]) > 1e-9
+                    or any(abs(p["down_m"] + height) > 1e-9 for p in points)):
+                return False
         if self.binding is None:
             default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
             return (result.get("aircraft_setup") is None
@@ -184,8 +190,7 @@ class StudioJobs:
         identifier = payload["plan_id"]
         folder = self.folder(identifier)
         summary = json.loads((folder / "summary.json").read_text())
-        if summary.get("retiming", {}).get("limiting_constraint") == "stop_and_turn":
-            raise ValueError("Adjusted stop/turn plans are available for preview and download; connected playback is not registered.")
+        stop_turn = summary.get("retiming", {}).get("limiting_constraint") == "stop_and_turn"
         if self.binding is None:
             default = load_contract(ROOT / "config/planner/x500_sitl_vehicle_model.json", dict)
             if ("aircraft_profile_sha256" in summary
@@ -206,6 +211,9 @@ class StudioJobs:
         intent = json.loads((folder / "intent.json").read_text())
         if intent["motion"]["yaw_mode"] != "fixed":
             raise ValueError("connected rehearsal currently requires fixed heading; tangent launch alignment is not yet qualified")
+        if stop_turn:
+            from .stop_turn_execution import audit_stop_turn_artifacts
+            audit_stop_turn_artifacts(folder)
         ack = issue_sitl_acknowledgement(
             **{key: summary[key] for key in ("controller_trajectory_sha256",
                                            "candidate_trajectory_sha256", "verification_report_sha256")},
@@ -218,6 +226,8 @@ class StudioJobs:
                      "--confirm-sitl", "--autopilot", str(self.autopilot),
                      "--output", str(folder / "rehearsal"), "--reviewed-plan", str(folder),
                      "--cases", "reviewed-plan"]
+        if stop_turn:
+            arguments.append("--experimental-stop-turn")
         if self.gui:
             arguments.append("--gui")
         self.log = (folder / "worker.log").open("w")

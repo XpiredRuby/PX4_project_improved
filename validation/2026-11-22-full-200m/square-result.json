@@ -1,0 +1,287 @@
+{
+  "sampled_rehearsal_passed": true,
+  "per_phase": {
+    "TAKEOFF": {
+      "position_error_m": {
+        "samples": 1167,
+        "rms": 0.054155581554707635,
+        "p95": 0.13568563805582576,
+        "max_abs": 0.1639473022346326
+      },
+      "heading_error_deg": {
+        "samples": 1167,
+        "rms": 0.37302860730893866,
+        "p95": 0.7574930179401587,
+        "max_abs": 2.2014100422370464
+      }
+    },
+    "TRAJECTORY": {
+      "position_error_m": {
+        "samples": 1670,
+        "rms": 0.15452898077018443,
+        "p95": 0.23876624992918555,
+        "max_abs": 0.29243611885885157
+      },
+      "heading_error_deg": {
+        "samples": 1670,
+        "rms": 0.08034381100812478,
+        "p95": 0.15642549440029493,
+        "max_abs": 0.22909778362523606
+      }
+    },
+    "RETURN_HOME": {
+      "position_error_m": {
+        "samples": 43,
+        "rms": 0.11056046567939705,
+        "p95": 0.1603535103644089,
+        "max_abs": 0.1620081063681651
+      },
+      "heading_error_deg": {
+        "samples": 43,
+        "rms": 0.05326081855010223,
+        "p95": 0.08663593477461409,
+        "max_abs": 0.08729891070190286
+      }
+    },
+    "APPROACH": {
+      "position_error_m": {
+        "samples": 389,
+        "rms": 0.05506356104591362,
+        "p95": 0.09999439810026764,
+        "max_abs": 0.10190326491437712
+      },
+      "heading_error_deg": {
+        "samples": 389,
+        "rms": 0.024246153499836047,
+        "p95": 0.03582757773251393,
+        "max_abs": 0.04036339142174416
+      }
+    },
+    "ALIGN": {
+      "position_error_m": {
+        "samples": 44,
+        "rms": 0.056629061200693005,
+        "p95": 0.09506767618829895,
+        "max_abs": 0.10679023133738014
+      },
+      "heading_error_deg": {
+        "samples": 44,
+        "rms": 0.017139942891282636,
+        "p95": 0.025930948554191504,
+        "max_abs": 0.026125348375525062
+      }
+    }
+  },
+  "evidence_sha256": {
+    "batch/reviewed-plan/research_log_20261123T023920447293Z.csv": "cbb5a91e2317c8bcb65c492311498e6a0a40b7d7da78a587dcb2f4219109bcc8",
+    "runtime/log/2026-11-23/02_39_13.ulg": "536244b8544a0ff0048dc9ae05df4158b376bc7c5a50bbe03b67df120ec1975d",
+    "plan/trajectory.csv": "7c93f63eeeacd5948e40be8a63555f4761f7c8bfe716a3672a9b01167601db3e",
+    "batch/reviewed-plan/audit.json": "974a2ef6a1ee54dcd988e1f6c2f1339dcd623674434433c1a85a9ad6f77c4742",
+    "final_ground.json": "b8159c7919a58d608393c89934650244f2696a97869a38aecb83aa248306a65a",
+    "batch/reviewed-plan/run_manifest_20261123T023920447293Z.json": "927906c8a1d56ef0952a41bb9ae004fbb9df4752281eca1046c1361024049ffa",
+    "batch/reviewed-plan/scenario.json": "58a073a3186cec678959292002bbe7d64290cd6624eaa420fc5f1466cf81d0d1",
+    "effective_parameters.json": "d675017b148044f30174270245726f6ed3179dc6746e139b5031ec36536ead65",
+    "simulation_configuration.json": "e726489ad2e590258ed020e5bf3d4b4fed4bbad096f06a3f7a4accb637c1584a",
+    "studio-recording-9106f2aeced8bddd0f570c126f0d4f5e2c9eb1c971d8849a33cec1ca86ffb223.zip": "9106f2aeced8bddd0f570c126f0d4f5e2c9eb1c971d8849a33cec1ca86ffb223",
+    "plan/summary.json": "36499c2cb8cc20826da7ea6df03389bea8b0bbe1cfda0dccef8da2415fc910dc",
+    "plan/verification.json": "96d164eedf88c8fbdec87086f5de519f8a5ac214fe2364530a95cde83aba8f2c",
+    "plan/intent.json": "8863aee3bb8ddb85290324333eb24a5ea1271beea0f6e6a24915124a6b281ffe",
+    "plan/vehicle_model.json": "92919b3d44e184a1c980bed2883b8b49bb1778b185cd30ef5f5306f520dbbb3c",
+    "plan/environment.json": "c49e1ccb9bd40ceeefca1bf3a18cbbd33d318f767f8ddd9e165f5da096db565c"
+  },
+  "assessment_implementation_sha256": {
+    "planner_rehearsal.py": "bae6e39ac13bdbf6ba502ae43dabab29a10da55da1cba4ede04689c86eba5866",
+    "sitl_ground_truth.py": "58ecad1d940c74aea65e2d362b79c77da2f61d329b48ae4773a21b678ea7b8fd",
+    "simulation_physics.py": "9658d6f9fe024a38c472c00fad5c8128f40fa460042dd1f55519fd05522b086a",
+    "stop_turn_execution.py": "91dfab245c4cf9ff94c620919b2fc36aec476e21c5831b977afb1e74e3abbe8b"
+  },
+  "id": "57981f238cdd1816c258402e72ec8925",
+  "checks": [
+    {
+      "name": "Existing lifecycle/scenario audit",
+      "passed": true
+    },
+    {
+      "name": "Telemetry gaps at most 0.25 s",
+      "passed": true
+    },
+    {
+      "name": "Entire planned mission clock covered",
+      "passed": true
+    },
+    {
+      "name": "Runtime reference follows exact CSV with one translation",
+      "passed": true
+    },
+    {
+      "name": "Runtime heading follows exact CSV with one launch offset",
+      "passed": true
+    },
+    {
+      "name": "Truth covers every recorded mission sample through contact",
+      "passed": true
+    },
+    {
+      "name": "Physical position tracking p95 <= 0.5 m and max <= 1 m",
+      "passed": true
+    },
+    {
+      "name": "Physical heading tracking p95 <= 5 deg and max <= 10 deg",
+      "passed": true
+    },
+    {
+      "name": "Touchdown truth within predeclared position/speed targets",
+      "passed": true
+    },
+    {
+      "name": "Fresh ground/disarm/zero outputs continuously confirmed for 2 s",
+      "passed": true
+    },
+    {
+      "name": "Measured mean real-time factor in 0.95–1.05",
+      "passed": true
+    },
+    {
+      "name": "Ground truth holds requested NED heading",
+      "passed": true
+    },
+    {
+      "name": "Measured slow approach before native LAND",
+      "passed": true
+    },
+    {
+      "name": "PX4 AUTO LAND confirmed after the slow approach",
+      "passed": true
+    },
+    {
+      "name": "Independent Gazebo velocity/attitude/acceleration covers every trajectory sample",
+      "passed": true
+    },
+    {
+      "name": "Simulated physical trajectory speed stays within vehicle hard speed limit",
+      "passed": true
+    },
+    {
+      "name": "Simulated physical trajectory tilt stays within vehicle hard tilt limit",
+      "passed": true
+    },
+    {
+      "name": "Sampled navigation error fits the aircraft allowance",
+      "passed": true
+    },
+    {
+      "name": "Sampled estimated tracking error fits the aircraft allowance",
+      "passed": true
+    },
+    {
+      "name": "Observed nominal lifecycle fits the declared energy/time budget",
+      "passed": true
+    },
+    {
+      "name": "Executed CSV digest matches retained plan and runner manifest",
+      "passed": true
+    },
+    {
+      "name": "Sampled physical route stays inside user's geometric tolerance",
+      "passed": true
+    }
+  ],
+  "measurements": {
+    "Touchdown truth within predeclared position/speed targets": {
+      "position_error_m": 0.01061947618317268,
+      "horizontal_speed_m_s": 0,
+      "vertical_speed_m_s": 0,
+      "contact_source": "first PX4 ON_GROUND sample during native landing; rigid-body contact timing not independently identified"
+    },
+    "Ground truth holds requested NED heading": {
+      "target_deg": 0,
+      "error_deg": {
+        "samples": 1670,
+        "rms": 0.08034381100812478,
+        "p95": 0.15642549440029493,
+        "max_abs": 0.22909778362523606
+      }
+    },
+    "Measured slow approach before native LAND": {
+      "target_m_s": 0.1,
+      "mean_down_m_s": 0.09975388599554356,
+      "descent_m": 1.9352239227294916,
+      "duration_s": 19.399985308000396,
+      "tolerance_m_s": 0.02,
+      "minimum_duration_s": 5
+    },
+    "PX4 AUTO LAND confirmed after the slow approach": {
+      "land_setting_readback_m_s": 0.6000000238418579,
+      "upper_descent_setting_readback_m_s": 0.6000000238418579,
+      "peak_logged_down_command_m_s": 0.6000000238418579,
+      "logged_command_samples": 90,
+      "auto_land_descending_samples": 361,
+      "ground_truth_down_speed_m_s": {
+        "samples": 361,
+        "rms": 0.571915922678009,
+        "p95": 0.6207292556762696,
+        "max_abs": 0.64388507604599
+      }
+    },
+    "Simulated physical trajectory speed stays within vehicle hard speed limit": {
+      "maximum_speed_m_s": 6.5,
+      "measured_speed_m_s": {
+        "samples": 1670,
+        "rms": 3.0284494631410137,
+        "p95": 4.8234797998907295,
+        "max_abs": 4.880273498371183
+      }
+    }
+  },
+  "reference_distance_m": 200,
+  "reference_sha256": "7c93f63eeeacd5948e40be8a63555f4761f7c8bfe716a3672a9b01167601db3e",
+  "reference_duration_s": 83.4,
+  "time_budget": {
+    "route_duration_s": 83.4,
+    "route_wall_time_budget_s": 125.10000000000001,
+    "kinematic_lifecycle_floor_s": 47,
+    "lifecycle_and_contingency_s": 210,
+    "total_budgeted_s": 335.1,
+    "allowed_flight_s": 337.5,
+    "upper_bound_energy_wh": 74.46666666666667,
+    "available_at_launch_wh": 100,
+    "reserve_fraction": 0.25,
+    "remaining_margin_s": 2.3999999999999773,
+    "passed": true
+  },
+  "measured_horizontal_distance_m": 200.28623789614932,
+  "measured_elapsed_route_s": 83.46399999999998,
+  "peak_horizontal_speed_m_s": 4.880272674560547,
+  "longest_continuous_time_within_0_25_m_s_of_5_m_s": 2.8319999999999936,
+  "observed_interior_stops": [
+    {
+      "point": "P1",
+      "passed": true,
+      "distance_m": 0.11446816956079657,
+      "speed_m_s": 0.07330812066793566
+    },
+    {
+      "point": "P2",
+      "passed": true,
+      "distance_m": 0.17461141234178987,
+      "speed_m_s": 0.0562806881964209
+    },
+    {
+      "point": "P3",
+      "passed": true,
+      "distance_m": 0.1129160596401413,
+      "speed_m_s": 0.04952056184411063
+    }
+  ],
+  "final_ground": {
+    "actuators": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "landed_state": 1,
+    "armed": false,
+    "continuous_confirmation_s": 2.000017876000129
+  }
+}
